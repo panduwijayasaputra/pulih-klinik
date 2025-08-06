@@ -3,7 +3,7 @@ import { MainHeader } from '@/components/layout';
 
 export const metadata: Metadata = {
   title: 'Dashboard - Smart Therapy',
-  description: 'Dashboard utama sistem AI Hipnoterapi Indonesia',
+  description: 'Main dashboard of the Indonesian AI Hypnotherapy system',
 };
 
 export default function DashboardPage() {
@@ -11,34 +11,34 @@ export default function DashboardPage() {
     <div className="space-content">
       <MainHeader
         title="Dashboard"
-        description="Selamat datang di sistem AI Hipnoterapi Indonesia"
+        description="Welcome to the Indonesian AI Hypnotherapy system"
       />
 
       <div className="responsive-card-grid">
         <div className="glass rounded-lg padding-responsive">
           <h3 className="text-responsive-lg font-semibold mb-2">
-            Klien Aktif
+            Active Clients
           </h3>
           <p className="text-responsive-sm text-muted-foreground">
-            Kelola profil dan riwayat klien Anda
+            Manage your client profiles and history
           </p>
         </div>
 
         <div className="glass rounded-lg padding-responsive">
           <h3 className="text-responsive-lg font-semibold mb-2">
-            Asesmen AI
+            AI Assessment
           </h3>
           <p className="text-responsive-sm text-muted-foreground">
-            Analisis dan rekomendasi teknik hipnoterapi
+            Analyze and recommend hypnotherapy techniques
           </p>
         </div>
 
         <div className="glass rounded-lg padding-responsive">
           <h3 className="text-responsive-lg font-semibold mb-2">
-            Skrip Sesi
+            Session Scripts
           </h3>
           <p className="text-responsive-sm text-muted-foreground">
-            Generate skrip hipnoterapi 7 fase
+            Generate 7-phase hypnotherapy scripts
           </p>
         </div>
       </div>

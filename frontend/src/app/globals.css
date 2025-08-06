@@ -12,17 +12,17 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Professional Blue Primary */
-    --primary: 221 83% 53%;
+    /* Smart Therapy Purple Primary */
+    --primary: 262 83% 58%;
     --primary-foreground: 210 40% 98%;
 
-    /* Neutral Secondary */
+    /* Professional Gray Secondary */
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
 
-    /* Subtle Accent */
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+    /* Indigo Accent */
+    --accent: 239 84% 67%;
+    --accent-foreground: 210 40% 98%;
 
     /* Clean Muted Colors */
     --muted: 210 40% 96%;
@@ -31,7 +31,7 @@
     /* Minimal Borders */
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
+    --ring: 262 83% 58%;
 
     /* Destructive */
     --destructive: 0 84.2% 60.2%;
@@ -41,7 +41,7 @@
     --success: 142 76% 36%;
     --warning: 48 100% 67%;
     --error: 0 84.2% 60.2%;
-    --info: 221 83% 53%;
+    --info: 217 91% 60%;
 
     /* Subtle Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -109,6 +109,16 @@
     cursor: pointer;
     border: none;
     background: none;
+  }
+
+  /* Ensure no yellow text on links */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: inherit;
   }
 }
 

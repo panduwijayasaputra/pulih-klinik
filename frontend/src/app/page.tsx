@@ -1,249 +1,644 @@
-import Link from 'next/link';
 import type { Route } from 'next';
+import { CustomLink } from '@/components/ui/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Navbar } from '@/components/layout/navbar';
-import { 
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import {
+  ChartBarIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  DocumentDuplicateIcon,
   DocumentTextIcon,
   LightBulbIcon,
-  DocumentDuplicateIcon,
-  UserGroupIcon,
-  ClockIcon,
+  PlayIcon,
   ShieldCheckIcon,
-  BoltIcon,
   SparklesIcon,
-  FlagIcon
+  StarIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
+                <span className="text-white font-bold text-sm">ST</span>
+              </div>
+              <span className="text-xl font-semibold text-gray-900">Smart Therapy</span>
+            </div>
+
+            <div className="hidden md:flex items-center space-x-8">
+              <a href="#fitur" className="text-gray-600 hover:text-gray-900">Fitur</a>
+              <a href="#cara-kerja" className="text-gray-600 hover:text-gray-900">Cara Kerja</a>
+              <a href="#harga" className="text-gray-600 hover:text-gray-900">Harga</a>
+              <a href="#bantuan" className="text-gray-600 hover:text-gray-900">Bantuan</a>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <CustomLink href={'/masuk' as Route} variant="ghost" className="text-gray-600">
+                Masuk
+              </CustomLink>
+              <CustomLink href={'/daftar' as Route} className="bg-purple-600 hover:bg-purple-700 text-white">
+                Mulai Gratis
+              </CustomLink>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <section className="relative pt-16 pb-12 lg:pt-20 lg:pb-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6">
-                Smart Therapy
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left Content */}
+            <div>
+              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                Masa Depan
+                <br />
+                <span className="text-purple-600">Hipnoterapi AI</span>
               </h1>
-              <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
-                Sistem AI Hipnoterapi Indonesia
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                Platform canggih yang mentransformasi sesi perencanaan manual 2 jam menjadi workflow AI-assisted 15 menit untuk terapis Indonesia berlisensi.
               </p>
-              <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-                Transformasi perencanaan sesi manual 2 jam menjadi workflow AI 15 menit 
-                dengan konten yang sesuai budaya Indonesia untuk terapis berlisensi
-              </p>
-            </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button asChild size="lg" className="text-lg px-8 py-3">
-                <Link href={'/masuk' as Route}>
-                  Masuk ke Sistem
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="text-lg px-8 py-3">
-                <Link href={'/daftar' as Route}>
-                  Daftar Sebagai Terapis
-                </Link>
-              </Button>
-            </div>
+              <div className="flex items-center space-x-4 mb-12">
+                <CustomLink
+                  href={'/daftar' as Route}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3"
+                >
+                  Mulai Sekarang
+                </CustomLink>
+                <Button variant="ghost" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 p-0">
+                  <div className="w-10 h-10 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center">
+                    <PlayIcon className="w-4 h-4 ml-1" />
+                  </div>
+                  <span>Lihat Demo</span>
+                </Button>
+              </div>
 
-            {/* Key Benefits */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <div className="text-3xl mb-3">⚡</div>
-                <h3 className="font-semibold text-lg mb-2">Efisiensi Tinggi</h3>
-                <p className="text-gray-600">Dari 2 jam menjadi 15 menit</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <div className="text-3xl mb-3">🤖</div>
-                <h3 className="font-semibold text-lg mb-2">AI Cerdas</h3>
-                <p className="text-gray-600">Rekomendasi teknik yang tepat</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <div className="text-3xl mb-3">🇮🇩</div>
-                <h3 className="font-semibold text-lg mb-2">Budaya Indonesia</h3>
-                <p className="text-gray-600">Konten sesuai budaya lokal</p>
+              {/* Partner Logos */}
+              <div className="flex items-center space-x-4">
+                <Badge variant="outline" className="text-gray-600">
+                  <ShieldCheckIcon className="w-4 h-4 mr-2" />
+                  HIPAA
+                </Badge>
+                <Badge variant="outline" className="text-gray-600">
+                  <DocumentTextIcon className="w-4 h-4 mr-2" />
+                  ISO 27001
+                </Badge>
+                <Badge variant="outline" className="text-gray-600">
+                  <SparklesIcon className="w-4 h-4 mr-2" />
+                  AI-Powered
+                </Badge>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Fitur Utama Platform
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Solusi lengkap untuk terapis hipnoterapi Indonesia dalam mengelola klien dan sesi terapi
-            </p>
-          </div>
+            {/* Right Content - Dashboard Preview */}
+            <div className="relative">
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 to-blue-50">
+                <CardContent className="p-0">
+                  <Card className="bg-white rounded-xl p-6 mb-4 border-0">
+                    <CardHeader className="p-0 pb-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">Analytics Sesi</CardTitle>
+                        <span className="text-sm text-gray-500">Real-time</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <div className="text-2xl font-bold text-purple-600">847</div>
+                          <div className="text-sm text-gray-600">Total Sesi</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-blue-600">24.5k</div>
+                          <div className="text-sm text-gray-600">Menit Terapi</div>
+                        </div>
+                      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <DocumentTextIcon className="w-6 h-6 text-blue-600" />
-                </div>
-                <CardTitle>Sistem Asesmen Digital</CardTitle>
-                <CardDescription>
-                  Form asesmen digital dengan 3 jenis: Umum, Kecanduan, dan Minor. 
-                  Analisis mendalam dengan skala emosional 0-10 untuk 20 emosi berbeda.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+                      {/* Session Progress */}
+                      <div className="space-y-3 mb-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">Sesi Assessment</span>
+                          </div>
+                          <span className="text-sm text-green-600 font-semibold">Selesai</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <DocumentTextIcon className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">Skrip Terapi</span>
+                          </div>
+                          <span className="text-sm text-blue-600 font-semibold">Selesai</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                              <PlayIcon className="w-4 h-4 text-purple-600" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">Sesi Hipnoterapi</span>
+                          </div>
+                          <span className="text-sm text-purple-600 font-semibold">Berikutnya</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                              <ChartBarIcon className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-400">Evaluasi</span>
+                          </div>
+                          <span className="text-sm text-gray-400">Menunggu</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <LightBulbIcon className="w-6 h-6 text-green-600" />
-                </div>
-                <CardTitle>AI Rekomendasi Teknik</CardTitle>
-                <CardDescription>
-                  Algoritma AI cerdas untuk menganalisis asesmen dan memberikan rekomendasi 
-                  teknik hipnoterapi yang optimal dengan pertimbangan budaya Indonesia.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <DocumentDuplicateIcon className="w-6 h-6 text-purple-600" />
-                </div>
-                <CardTitle>Generator Skrip Sesi</CardTitle>
-                <CardDescription>
-                  Generate skrip sesi lengkap 7 fase dalam bahasa Indonesia. 
-                  Dapat diekspor ke PDF untuk digunakan langsung dalam sesi terapi.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                  <UserGroupIcon className="w-6 h-6 text-orange-600" />
-                </div>
-                <CardTitle>Manajemen Klien</CardTitle>
-                <CardDescription>
-                  Sistem manajemen klien terintegrasi dengan profil lengkap, 
-                  riwayat asesmen, dan tracking progress terapi.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
-                  <ClockIcon className="w-6 h-6 text-red-600" />
-                </div>
-                <CardTitle>Manajemen Sesi</CardTitle>
-                <CardDescription>
-                  Penjadwalan dan tracking sesi terapi dengan checklist evaluasi 
-                  dan catatan progress untuk setiap klien.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                  <ShieldCheckIcon className="w-6 h-6 text-indigo-600" />
-                </div>
-                <CardTitle>Keamanan & Privasi</CardTitle>
-                <CardDescription>
-                  Sistem keamanan tingkat tinggi dengan enkripsi data, 
-                  autentikasi terapis berlisensi, dan perlindungan privasi klien.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Workflow Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Workflow AI yang Efisien
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Dari asesmen hingga skrip sesi dalam 15 menit
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">1</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Asesmen Digital</h3>
-              <p className="text-gray-600">Form asesmen lengkap dengan skala emosional</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">2</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">AI Analisis</h3>
-              <p className="text-gray-600">Analisis mendalam dengan algoritma AI</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">3</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Rekomendasi</h3>
-              <p className="text-gray-600">Rekomendasi teknik optimal</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">4</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Skrip Sesi</h3>
-              <p className="text-gray-600">Generate skrip 7 fase siap pakai</p>
+                  {/* Bottom Cards */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Card className="p-4">
+                      <CardContent className="p-0">
+                        <div className="text-lg font-bold text-gray-900">45</div>
+                        <div className="text-sm text-gray-600">Klien Aktif</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="p-4">
+                      <CardContent className="p-0">
+                        <div className="text-lg font-bold text-gray-900">98%</div>
+                        <div className="text-sm text-gray-600">Kepuasan</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-blue-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Siap Memulai?
+      <Separator />
+
+      {/* Dark Features Section */}
+      <section className="py-20 bg-slate-900" id="fitur">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Dari data ke keputusan
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Bergabunglah dengan terapis hipnoterapi Indonesia lainnya dalam 
-            revolusi digital kesehatan mental
+          <p className="text-lg text-slate-300 mb-16 max-w-2xl mx-auto">
+            Semua yang Anda butuhkan untuk mengelola klien dan sesi terapi—dibangun untuk menjadi sederhana, aman, dan cerdas.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" variant="secondary" className="text-lg px-8 py-3">
-              <Link href={'/daftar' as Route}>
-                Daftar Sekarang
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="text-lg px-8 py-3 border-white text-white hover:bg-white hover:text-blue-600">
-              <Link href={'/masuk' as Route}>
-                Masuk ke Sistem
-              </Link>
-            </Button>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <Card className="bg-slate-800 border-slate-700 rounded-2xl p-8 text-left">
+              <CardContent className="p-0">
+                <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
+                  <DocumentTextIcon className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle className="text-xl font-semibold text-white mb-4">
+                  Asesmen Komprehensif
+                </CardTitle>
+                <CardDescription className="text-slate-300 mb-6">
+                  Sistem asesmen digital yang mengkategorikan masalah klien dengan akurat dan menunjukkan fokus terapi yang tepat.
+                </CardDescription>
+                <Card className="bg-slate-700 border-slate-600">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-slate-300">Progress Asesmen</span>
+                      <span className="text-sm font-semibold text-white">87%</span>
+                    </div>
+                    <Progress value={87} className="w-full" />
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
+
+            {/* Feature 2 */}
+            <Card className="bg-slate-800 border-slate-700 rounded-2xl p-8 text-left">
+              <CardContent className="p-0">
+                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
+                  <LightBulbIcon className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle className="text-xl font-semibold text-white mb-4">
+                  AI Rekomendasi Cerdas
+                </CardTitle>
+                <CardDescription className="text-slate-300 mb-6">
+                  Algoritma AI yang memberikan rekomendasi teknik hipnoterapi yang dipersonalisasi berdasarkan profil dan kondisi klien.
+                </CardDescription>
+                <Card className="bg-slate-700 border-slate-600">
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-300">Progressive Relaxation</span>
+                        <Badge variant="success" className="text-xs">95%</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-300">Guided Imagery</span>
+                        <Badge variant="success" className="text-xs">87%</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
+
+            {/* Feature 3 */}
+            <Card className="bg-slate-800 border-slate-700 rounded-2xl p-8 text-left">
+              <CardContent className="p-0">
+                <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mb-6">
+                  <DocumentDuplicateIcon className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle className="text-xl font-semibold text-white mb-4">
+                  Generator Skrip Otomatis
+                </CardTitle>
+                <CardDescription className="text-slate-300 mb-6">
+                  Hasilkan skrip sesi hipnoterapi profesional dalam 7 fase dengan AI yang disesuaikan untuk budaya Indonesia.
+                </CardDescription>
+                <Card className="bg-slate-700 border-slate-600">
+                  <CardContent className="p-4">
+                    <div className="text-xs text-slate-400 mb-1">Fase 1: Persiapan</div>
+                    <div className="text-sm text-slate-200">"Mari kita mulai dengan posisi yang nyaman..."</div>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
           </div>
+        </div>
+      </section>
+
+      {/* Simple and Powerful Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Fitur kami sederhana dan powerful
+          </h2>
+          <p className="text-lg text-gray-600 mb-16 max-w-2xl mx-auto">
+            Semua yang Anda butuhkan untuk mengelola klien dan sesi terapi dalam satu platform yang terintegrasi.
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left - Feature Description */}
+            <div className="text-left">
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">
+                Lacak metrik yang tepat dengan zero setup
+              </h3>
+              <p className="text-gray-600 mb-8 leading-relaxed">
+                Sistem tracking otomatis yang memantau progress terapi klien Anda tanpa perlu konfigurasi rumit. Dapatkan insight mendalam dalam hitungan detik.
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                  <span className="text-gray-700">Tracking progress otomatis</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                  <span className="text-gray-700">Dashboard real-time</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                  <span className="text-gray-700">Laporan komprehensif</span>
+                </div>
+              </div>
+
+              <CustomLink href="/daftar" className="mt-8 bg-purple-600 hover:bg-purple-700 text-white">
+                Coba Gratis
+              </CustomLink>
+            </div>
+
+            {/* Right - Chart Mockup */}
+            <div className="relative">
+              <Card className="p-6 shadow-xl">
+                <CardHeader className="p-0 pb-6">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">Metrik Terapi</CardTitle>
+                    <span className="text-sm text-gray-500">Minggu ini</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {/* Chart bars mockup */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 text-sm text-gray-600">Sen</div>
+                      <div className="flex-1">
+                        <Progress value={85} className="h-3" />
+                      </div>
+                      <div className="w-8 text-sm text-gray-900 font-medium">85</div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 text-sm text-gray-600">Sel</div>
+                      <div className="flex-1">
+                        <Progress value={72} className="h-3" />
+                      </div>
+                      <div className="w-8 text-sm text-gray-900 font-medium">72</div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 text-sm text-gray-600">Rab</div>
+                      <div className="flex-1">
+                        <Progress value={90} className="h-3" />
+                      </div>
+                      <div className="w-8 text-sm text-gray-900 font-medium">90</div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 text-sm text-gray-600">Kam</div>
+                      <div className="flex-1">
+                        <Progress value={65} className="h-3" />
+                      </div>
+                      <div className="w-8 text-sm text-gray-900 font-medium">65</div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 text-sm text-gray-600">Jum</div>
+                      <div className="flex-1">
+                        <Progress value={78} className="h-3" />
+                      </div>
+                      <div className="w-8 text-sm text-gray-900 font-medium">78</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Why Love Section */}
+      <section className="py-20 bg-white" id="cara-kerja">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Mengapa Anda akan menyukai Smart Therapy
+          </h2>
+          <p className="text-lg text-gray-600 mb-16 max-w-3xl mx-auto">
+            Platform yang dirancang khusus untuk kebutuhan terapis Indonesia dengan pendekatan yang mudah dan efektif.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <ClockIcon className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Setup 2 Menit
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Daftar dan mulai menggunakan platform dalam hitungan menit tanpa konfigurasi yang rumit.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <SparklesIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                AI yang Dapat Diandalkan
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Algoritma AI yang telah dilatih khusus untuk konteks budaya dan praktik hipnoterapi Indonesia.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <ShieldCheckIcon className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Keamanan Terjamin
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Data klien Anda dilindungi dengan enkripsi tingkat enterprise dan compliance HIPAA.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <UsersIcon className="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Komunitas Terapis
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Bergabung dengan komunitas terapis Indonesia untuk berbagi pengalaman dan best practices.
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <DocumentTextIcon className="w-6 h-6 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Dokumentasi Lengkap
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Panduan lengkap dan dokumentasi yang mudah dipahami untuk memaksimalkan penggunaan platform.
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <ChartBarIcon className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Analytics Mendalam
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Laporan analytics yang memberikan insight mendalam tentang progress dan efektivitas terapi.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Dipercaya oleh Tim Marketing
+          </h2>
+          <p className="text-lg text-gray-600 mb-16 max-w-3xl mx-auto">
+            Ribuan terapis Indonesia telah mempercayai Smart Therapy untuk meningkatkan efektivitas praktik mereka.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Testimonial 1 */}
+            <Card className="p-8 text-left shadow-sm">
+              <CardContent className="p-0">
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                  ))}
+                  <Badge variant="success" className="ml-2 text-xs">+95%</Badge>
+                </div>
+                <blockquote className="text-gray-700 mb-6 leading-relaxed">
+                  "Platform ini benar-benar mengubah cara saya mengelola praktik. Yang tadinya butuh 2 jam untuk persiapan, sekarang hanya 15 menit."
+                </blockquote>
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback className="bg-purple-100 text-purple-600 text-sm font-semibold">DR</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">Dr. Rina Sari</p>
+                    <p className="text-gray-500 text-xs">Hipnoterapis - Jakarta</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Testimonial 2 */}
+            <Card className="p-8 text-left shadow-sm">
+              <CardContent className="p-0">
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                  ))}
+                  <Badge variant="success" className="ml-2 text-xs">+90%</Badge>
+                </div>
+                <blockquote className="text-gray-700 mb-6 leading-relaxed">
+                  "AI rekomendasi sangat akurat dan sesuai dengan konteks budaya Indonesia. Klien saya juga merasa lebih nyaman."
+                </blockquote>
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-semibold">AP</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">Ahmad Pratama</p>
+                    <p className="text-gray-500 text-xs">Psikolog - Bandung</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Testimonial 3 */}
+            <Card className="p-8 text-left shadow-sm">
+              <CardContent className="p-0">
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                  ))}
+                  <Badge variant="success" className="ml-2 text-xs">+92%</Badge>
+                </div>
+                <blockquote className="text-gray-700 mb-6 leading-relaxed">
+                  "Dokumentasi dan tracking yang sistematis membuat saya lebih percaya diri dalam memberikan terapi kepada klien."
+                </blockquote>
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback className="bg-green-100 text-green-600 text-sm font-semibold">SW</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">Sari Wulandari</p>
+                    <p className="text-gray-500 text-xs">Konselor - Surabaya</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Final CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-purple-600 to-indigo-600">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Setup Smart Therapy dalam 2 Menit
+          </h2>
+          <p className="text-lg text-purple-100 mb-8">
+            Mulai transformasi praktik terapi Anda hari ini dengan platform yang dirancang khusus untuk terapis Indonesia.
+          </p>
+          <CustomLink
+            href="/daftar"
+            className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+          >
+            Mulai Gratis Sekarang
+          </CustomLink>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 bg-gray-900 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-lg font-semibold mb-2">Smart Therapy</p>
-          <p className="text-gray-400 mb-4">Sistem AI Hipnoterapi Indonesia</p>
-          <p className="text-sm text-gray-500">
-            Untuk Kesehatan Mental dan Kesejahteraan Masyarakat Indonesia
-          </p>
+      <footer className="bg-white border-t border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+            {/* Company */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">Perusahaan</h3>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Tentang Kami</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Karir</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Press</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Investor</a></li>
+              </ul>
+            </div>
+
+            {/* Product */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">Produk</h3>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#fitur" className="hover:text-gray-900 transition-colors">Fitur</a></li>
+                <li><a href="#harga" className="hover:text-gray-900 transition-colors">Harga</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Keamanan</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Enterprise</a></li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">Sumber Daya</h3>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Dokumentasi</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Tutorial</a></li>
+                <li><a href="#bantuan" className="hover:text-gray-900 transition-colors">Bantuan</a></li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Privasi</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Terms</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Cookies</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">Lisensi</a></li>
+              </ul>
+            </div>
+
+            {/* Logo and Copyright */}
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">ST</span>
+                </div>
+                <span className="text-xl font-semibold text-gray-900">Smart Therapy</span>
+              </div>
+              <p className="text-gray-600 text-sm">
+                © 2025 Smart Therapy.<br />
+                Semua Hak Dilindungi.
+              </p>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
