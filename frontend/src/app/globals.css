@@ -3,9 +3,526 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Base Colors */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Primary Colors - Indonesian Orange */
+    --primary: 18 85% 56%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary Colors - Indonesian Green */
+    --secondary: 142 76% 36%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Accent Colors - Professional Blue-Gray */
+    --accent: 215 27.9% 39.2%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Muted Colors */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* Border and Input */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 18 85% 56%;
+
+    /* Destructive */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Indonesian Cultural Colors */
+    --indonesian-red: 0 84.2% 60.2%;
+    --indonesian-white: 0 0% 100%;
+    --indonesian-gold: 48 100% 67%;
+    --batik-brown: 30 40% 30%;
+    --tropical-green: 142 76% 36%;
+
+    /* Semantic Colors */
+    --success: 142 76% 36%;
+    --warning: 48 100% 67%;
+    --error: 0 84.2% 60.2%;
+    --info: 215 27.9% 39.2%;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* Spacing */
+    --radius: 0.5rem;
+    --header-height: 3.5rem;
+    --sidebar-width: 16rem;
+    --sidebar-collapsed-width: 4rem;
+
+    /* Typography */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --font-size-4xl: 2.25rem;
+
+    /* Line Heights */
+    --line-height-tight: 1.25;
+    --line-height-snug: 1.375;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.625;
+    --line-height-loose: 2;
+
+    /* Z-Index Scale */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-toast: 1080;
+
+    /* Responsive Breakpoints (for JavaScript) */
+    --breakpoint-xs: 475px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+
+    /* Indonesian mobile considerations */
+    --mobile-min-touch-target: 44px;
+    --mobile-safe-area-top: env(safe-area-inset-top, 0);
+    --mobile-safe-area-bottom: env(safe-area-inset-bottom, 0);
+    --mobile-safe-area-left: env(safe-area-inset-left, 0);
+    --mobile-safe-area-right: env(safe-area-inset-right, 0);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 18 85% 56%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 142 76% 36%;
+    --secondary-foreground: 210 40% 98%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 18 85% 56%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
   body {
+    @apply bg-background text-foreground;
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
+    font-variation-settings: 'opsz' 32;
+  }
+
+  /* Improved focus styles for accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Smooth scrolling for better UX */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Remove default button styles */
+  button {
+    @apply focus-visible:outline-none;
+  }
+}
+
+@layer components {
+  /* Indonesian Cultural Patterns */
+  .batik-pattern {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      hsl(var(--batik-brown)) 1px,
+      transparent 0
+    );
+    background-size: 20px 20px;
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    @apply bg-white/20 backdrop-blur-md border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-black/20 backdrop-blur-md border border-white/10;
+  }
+
+  /* Indonesian Flag gradient */
+  .indonesian-gradient {
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--indonesian-red)) 0%,
+      hsl(var(--indonesian-red)) 50%,
+      hsl(var(--indonesian-white)) 50%,
+      hsl(var(--indonesian-white)) 100%
+    );
+  }
+
+  /* Professional gradient for headers */
+  .professional-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 100%
+    );
+  }
+
+  /* Shadow utilities */
+  .shadow-soft {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .shadow-medium {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-strong {
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Typography utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Layout utilities */
+  .sidebar-width {
+    width: var(--sidebar-width);
+  }
+
+  .sidebar-collapsed-width {
+    width: var(--sidebar-collapsed-width);
+  }
+
+  .header-height {
+    height: var(--header-height);
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+  }
+
+  /* Scroll utilities */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--accent));
+  }
+}
+
+@layer utilities {
+  /* Accessibility utilities */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Indonesian cultural spacing */
+  .space-cultural {
+    @apply space-y-6;
+  }
+
+  /* Professional content spacing */
+  .space-content {
+    @apply space-y-4;
+  }
+
+  /* Form spacing */
+  .space-form {
+    @apply space-y-3;
+  }
+
+  /* Responsive Layout Utilities */
+  .responsive-grid {
+    @apply grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .responsive-card-grid {
+    @apply grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .responsive-form-grid {
+    @apply grid gap-4 grid-cols-1 md:grid-cols-2;
+  }
+
+  /* Mobile-first responsive text */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl md:text-3xl;
+  }
+
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl;
+  }
+
+  /* Responsive spacing */
+  .space-responsive {
+    @apply space-y-4 md:space-y-6 lg:space-y-8;
+  }
+
+  .gap-responsive {
+    @apply gap-4 md:gap-6 lg:gap-8;
+  }
+
+  .padding-responsive {
+    @apply p-4 md:p-6 lg:p-8;
+  }
+
+  .margin-responsive {
+    @apply m-4 md:m-6 lg:m-8;
+  }
+
+  /* Container utilities for different screen sizes */
+  .container-xs {
+    @apply max-w-xs mx-auto px-4;
+  }
+
+  .container-sm {
+    @apply max-w-sm mx-auto px-4;
+  }
+
+  .container-md {
+    @apply max-w-md mx-auto px-4;
+  }
+
+  .container-lg {
+    @apply max-w-lg mx-auto px-4;
+  }
+
+  .container-xl {
+    @apply max-w-xl mx-auto px-4;
+  }
+
+  .container-2xl {
+    @apply max-w-2xl mx-auto px-4;
+  }
+
+  .container-responsive {
+    @apply max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Mobile navigation utilities */
+  .mobile-nav-open {
+    @apply block md:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur;
+  }
+
+  .mobile-nav-closed {
+    @apply hidden md:block;
+  }
+
+  /* Responsive sidebar utilities */
+  .sidebar-desktop {
+    @apply hidden md:flex md:w-64 lg:w-72;
+  }
+
+  .sidebar-mobile {
+    @apply md:hidden;
+  }
+
+  /* Touch-friendly button sizes */
+  .btn-touch {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
+  }
+
+  /* Responsive image utilities */
+  .img-responsive {
+    @apply w-full h-auto max-w-full;
+  }
+
+  .img-cover {
+    @apply object-cover w-full h-full;
+  }
+
+  .img-contain {
+    @apply object-contain w-full h-full;
+  }
+
+  /* Responsive table utilities */
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+
+  .table-stack {
+    @apply block sm:table;
+  }
+
+  .table-stack thead {
+    @apply hidden sm:table-header-group;
+  }
+
+  .table-stack tbody {
+    @apply block sm:table-row-group;
+  }
+
+  .table-stack tr {
+    @apply block sm:table-row border-b sm:border-b-0 pb-4 sm:pb-0 mb-4 sm:mb-0;
+  }
+
+  .table-stack td {
+    @apply block sm:table-cell text-right sm:text-left pl-0 sm:pl-4;
+  }
+
+  .table-stack td:before {
+    @apply content-[attr(data-label)':'] float-left font-medium text-foreground sm:content-none;
+  }
+
+  /* Print utilities */
+  @media print {
+    .print-hidden {
+      @apply hidden;
+    }
+
+    .print-visible {
+      @apply block;
+    }
+
+    .print-break-before {
+      break-before: page;
+    }
+
+    .print-break-after {
+      break-after: page;
+    }
+
+    .print-no-break {
+      break-inside: avoid;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .high-contrast-border {
+      @apply border-2 border-foreground;
+    }
+
+    .high-contrast-bg {
+      @apply bg-background text-foreground;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .motion-reduce {
+      @apply transition-none animate-none;
+    }
+
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
