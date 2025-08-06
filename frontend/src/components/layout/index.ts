@@ -13,3 +13,5 @@ export {
 export { Navigation, NavigationGroup } from './navigation';
 
 export { DashboardSidebar } from './dashboard-sidebar';
+
+export { Navbar } from './navbar';
