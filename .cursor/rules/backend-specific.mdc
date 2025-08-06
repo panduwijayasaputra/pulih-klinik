@@ -1,0 +1,184 @@
+
+---
+description: Backend-specific development rules for NestJS/TypeScript/MikroORM with Zod - ONLY applies to backend/ folder
+globs: backend/**/*
+---
+
+# Backend Development Rules for NestJS/TypeScript
+
+You are an expert NestJS backend developer. Follow these rules ONLY when working on backend code in the backend/ folder.
+
+## Architecture & Structure
+
+- Follow NestJS modular architecture patterns
+- Each feature should have its own module in `src/modules/`
+- Use kebab-case for files: `user-profile.service.ts`
+- Follow NestJS suffixes: `*.controller.ts`, `*.service.ts`, `*.module.ts`, `*.schema.ts`, `*.entity.ts`
+
+## Validation with Zod
+
+### Schema Definition
+Use Zod for all validation and type generation:
+
+```typescript
+import { z } from 'zod';
+
+export const createUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  firstName: z.string().optional(),
+});
+
+export type CreateUserDto = z.infer<typeof createUserSchema>;
+```
+
+### Schema Composition
+```typescript
+const baseUserSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().optional(),
+});
+
+export const createUserSchema = baseUserSchema.extend({
+  password: z.string().min(8),
+});
+
+export const updateUserSchema = baseUserSchema.partial();
+```
+
+### ZodValidationPipe
+```typescript
+import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
+import { ZodSchema, ZodError } from 'zod';
+
+@Injectable()
+export class ZodValidationPipe implements PipeTransform {
+  constructor(private schema: ZodSchema) {}
+
+  transform(value: unknown) {
+    try {
+      return this.schema.parse(value);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errors = error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new BadRequestException('Validation failed', { cause: errors });
+      }
+      throw new BadRequestException('Validation failed');
+    }
+  }
+}
+```
+
+## API Development
+
+### Controllers
+- Use appropriate HTTP methods and status codes
+- Validate requests using Zod schemas with ZodValidationPipe
+- Use guards for authentication/authorization
+- Keep Swagger minimal - just `@ApiTags()` for grouping
+
+```typescript
+@ApiTags('Users')
+@Controller('users')
+export class UsersController {
+  @Post()
+  @UsePipes(new ZodValidationPipe(createUserSchema))
+  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
+    return this.usersService.create(dto);
+  }
+}
+```
+
+### Services
+- Keep business logic in services
+- Use dependency injection
+- Use async/await for asynchronous operations
+
+## Database & MikroORM
+
+### Entity Definitions
+- Use decorators for entity mapping
+- Use `@Property({ onCreate: () => new Date() })` for timestamps
+- Define indexes for frequently queried fields
+
+### Repository Pattern
+- Inject repositories via `@InjectRepository()`
+- Use transactions for multi-table operations
+
+### Database Migrations Naming
+- Migration filenames format: timestamp_feature (all separated by underscores)
+
+## Configuration
+
+Use Zod for environment variable validation:
+
+```typescript
+import { z } from 'zod';
+import { registerAs } from '@nestjs/config';
+
+const databaseConfigSchema = z.object({
+  host: z.string().default('localhost'),
+  port: z.number().int().positive().default(1433),
+  username: z.string(),
+  password: z.string(),
+  database: z.string(),
+});
+
+export default registerAs('database', () => {
+  return databaseConfigSchema.parse({
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT, 10),
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  });
+});
+```
+
+## Security
+
+- Use environment variables for JWT secrets
+- Hash passwords using bcryptjs (minimum 10 salt rounds)
+- Use `@UseGuards()` decorator appropriately
+- Use `@Public()` decorator for public endpoints
+
+## Testing
+
+Test Zod schemas directly:
+
+```typescript
+describe('createUserSchema', () => {
+  it('should validate correct data', () => {
+    const validData = { email: 'test@example.com', password: 'password123' };
+    expect(() => createUserSchema.parse(validData)).not.toThrow();
+  });
+});
+```
+
+## Essential Rules
+
+### Do:
+- Use Zod for all validation and type generation
+- Use `z.infer<>` for automatic type inference
+- Keep business logic in services
+- Use dependency injection
+- Write comprehensive tests
+
+### Don't:
+- Use `any` type - use Zod's type inference
+- Put business logic in controllers
+- Use class-validator decorators - use Zod schemas
+- Hardcode configuration values
+- Skip input validation
+
+## Migration from class-validator
+
+1. Replace DTO classes with Zod schemas
+2. Replace `@IsString()`, `@IsEmail()` etc. with Zod validators
+3. Use `z.infer<>` to generate TypeScript types
+4. Replace ValidationPipe with ZodValidationPipe
+
+**Note: These rules apply ONLY to files in the backend/ directory.**

@@ -1,0 +1,672 @@
+---
+description: Frontend-specific development rules for React/TypeScript/TailwindCSS with Zod - ONLY applies to frontend/ folder
+globs: frontend/**/*
+---
+
+# Frontend Development Rules for React/TypeScript
+
+You are an expert React frontend developer. Follow these rules ONLY when working on frontend code in the frontend/ folder.
+
+## Architecture & Structure
+
+### Folder Structure
+```
+frontend/
+├── public/
+├── src/
+│   ├── components/
+│   │   ├── ui/              # shadcn/ui components
+│   │   ├── forms/           # Form components
+│   │   ├── layout/          # Layout components (Header, Footer, Sidebar)
+│   │   └── common/          # Reusable components
+│   ├── pages/               # Page components
+│   ├── hooks/               # Custom React hooks
+│   ├── lib/                 # Utility functions, API clients
+│   ├── schemas/             # Zod schemas
+│   ├── types/               # TypeScript type definitions
+│   ├── stores/              # State management (if using Zustand/Redux)
+│   ├── assets/              # Images, icons, fonts
+│   ├── styles/              # Global CSS, Tailwind configs
+│   └── __tests__/           # Test files
+├── package.json
+├── tailwind.config.js
+├── tsconfig.json
+└── vite.config.ts
+```
+
+### File Naming Conventions
+- **Components**: PascalCase (e.g., `UserProfile.tsx`, `LoginForm.tsx`)
+- **Hooks**: camelCase with "use" prefix (e.g., `useAuth.ts`, `useUserData.ts`)
+- **Utilities**: camelCase (e.g., `apiClient.ts`, `formatDate.ts`)
+- **Types**: PascalCase (e.g., `User.ts`, `ApiResponse.ts`)
+- **Schemas**: camelCase with "Schema" suffix (e.g., `userSchema.ts`)
+- **Constants**: SCREAMING_SNAKE_CASE (e.g., `API_ENDPOINTS.ts`)
+
+## TypeScript Standards
+
+### Core Rules
+- **Always use TypeScript**: No `.js` or `.jsx` files allowed in src/
+- **Strict mode**: Enable all strict TypeScript compiler options
+- **Explicit types**: Always define return types for functions
+- **No `any` type**: Use proper typing or `unknown` if necessary
+- **Interface over type**: Use interfaces for object shapes, types for unions/primitives
+
+```typescript
+// ✅ Good
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+const fetchUser = async (id: string): Promise<User> => {
+  // implementation
+};
+
+// ❌ Bad
+const fetchUser = async (id: any) => {
+  // implementation
+};
+```
+
+## Validation & Forms with Zod
+
+### Schema Definition
+Use Zod for all validation and type generation:
+
+```typescript
+import { z } from 'zod';
+
+export const userSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email'),
+  age: z.number().min(18, 'Must be 18 or older'),
+});
+
+export type UserFormData = z.infer<typeof userSchema>;
+```
+
+### Schema Composition
+```typescript
+const baseUserSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+});
+
+export const createUserSchema = baseUserSchema.extend({
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+export const updateUserSchema = baseUserSchema.partial();
+```
+
+### Form Implementation with React Hook Form
+```typescript
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const UserForm: React.FC = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm<UserFormData>({
+    resolver: zodResolver(userSchema),
+  });
+
+  const onSubmit = (data: UserFormData): void => {
+    // Handle form submission
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('name')} />
+      {errors.name && <span>{errors.name.message}</span>}
+    </form>
+  );
+};
+```
+
+## React Component Standards
+
+### Component Rules
+- **Functional components only**: No class components
+- **One component per file**: Each component should have its own file
+- **Props interface**: Always define props interface for components
+- **Default exports**: Use default exports for components
+- **Component composition**: Prefer composition over inheritance
+
+```typescript
+// ✅ Good
+interface UserCardProps {
+  user: User;
+  onEdit?: (user: User) => void;
+}
+
+const UserCard: React.FC<UserCardProps> = ({ user, onEdit }) => {
+  return (
+    <div className="p-4 border rounded-lg">
+      <h3 className="text-lg font-semibold">{user.name}</h3>
+      <p className="text-gray-600">{user.email}</p>
+      {onEdit && (
+        <button onClick={() => onEdit(user)}>Edit</button>
+      )}
+    </div>
+  );
+};
+
+export default UserCard;
+```
+
+### Hook Rules
+- **Custom hooks**: Extract reusable logic into custom hooks
+- **Hook composition**: Compose multiple hooks for complex state management
+- **Proper dependencies**: Always include proper dependencies in useEffect
+
+```typescript
+// ✅ Good - Custom hook
+const useUser = (userId: string) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async (): Promise<void> => {
+      try {
+        setLoading(true);
+        const userData = await apiClient.getUser(userId);
+        setUser(userData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchUser();
+    }
+  }, [userId]);
+
+  return { user, loading, error };
+};
+```
+
+## Styling with TailwindCSS
+
+### CSS Rules
+- **Tailwind first**: Use Tailwind utility classes for styling
+- **Custom CSS last resort**: Only create custom CSS when Tailwind is insufficient
+- **Responsive design**: Always implement mobile-first responsive design
+- **Consistent spacing**: Use Tailwind's spacing scale (4, 8, 12, 16, etc.)
+- **shadcn/ui components**: Prefer shadcn/ui components over custom implementations
+
+```typescript
+// ✅ Good
+<div className="flex flex-col gap-4 p-6 bg-white rounded-lg shadow-md md:flex-row md:gap-6">
+  <div className="flex-1">
+    <h2 className="text-xl font-bold text-gray-900">Title</h2>
+  </div>
+</div>
+
+// ❌ Bad - inline styles
+<div style={{ display: 'flex', padding: '24px', backgroundColor: 'white' }}>
+```
+
+### Component Styling Patterns
+```typescript
+// ✅ Good - Conditional classes with clsx
+import { clsx } from 'clsx';
+
+interface ButtonProps {
+  variant: 'primary' | 'secondary';
+  size: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+}
+
+const Button: React.FC<ButtonProps> = ({ variant, size, disabled, children }) => {
+  return (
+    <button
+      className={clsx(
+        'rounded font-medium transition-colors',
+        {
+          'bg-blue-600 text-white hover:bg-blue-700': variant === 'primary',
+          'bg-gray-200 text-gray-900 hover:bg-gray-300': variant === 'secondary',
+          'px-2 py-1 text-sm': size === 'sm',
+          'px-4 py-2 text-base': size === 'md',
+          'px-6 py-3 text-lg': size === 'lg',
+          'opacity-50 cursor-not-allowed': disabled,
+        }
+      )}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+};
+```
+
+## Data Fetching with React Query
+
+### Query Implementation
+```typescript
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// ✅ Good - Query with proper typing
+const useUser = (userId: string) => {
+  return useQuery({
+    queryKey: ['user', userId],
+    queryFn: (): Promise<User> => apiClient.getUser(userId),
+    enabled: !!userId,
+  });
+};
+
+// ✅ Good - Mutation with optimistic updates
+const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: UpdateUserData): Promise<User> => apiClient.updateUser(data),
+    onSuccess: (user) => {
+      queryClient.invalidateQueries({ queryKey: ['user', user.id] });
+    },
+    onError: (error) => {
+      console.error('Failed to update user:', error);
+    },
+  });
+};
+```
+
+### Query Key Patterns
+```typescript
+// ✅ Good - Hierarchical query keys
+const queryKeys = {
+  users: ['users'] as const,
+  user: (id: string) => ['users', id] as const,
+  userPosts: (id: string) => ['users', id, 'posts'] as const,
+};
+```
+
+## Code Formatting & Linting
+
+### Prettier Configuration
+```json
+// .prettierrc
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false,
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "avoid",
+  "endOfLine": "lf",
+  "jsxSingleQuote": true,
+  "quoteProps": "as-needed"
+}
+```
+
+### ESLint Configuration
+```json
+// .eslintrc.json
+{
+  "extends": [
+    "eslint:recommended",
+    "@typescript-eslint/recommended",
+    "@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:@typescript-eslint/strict",
+    "plugin:jsx-a11y/recommended",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "project": "./tsconfig.json",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "react",
+    "react-hooks",
+    "jsx-a11y",
+    "import"
+  ],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-non-null-assertion": "error",
+    "@typescript-eslint/prefer-nullish-coalescing": "error",
+    "@typescript-eslint/prefer-optional-chain": "error",
+    
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react/jsx-key": "error",
+    "react/no-direct-mutation-state": "error",
+    "react/self-closing-comp": "error",
+    
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
+    
+    "no-console": "warn",
+    "no-debugger": "error",
+    "prefer-const": "error"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}
+```
+
+### Package.json Scripts
+```json
+{
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "type-check": "tsc --noEmit"
+  }
+}
+```
+
+## Git Practices
+
+### Branch Naming
+- **Feature branches**: `feature/description-of-feature`
+- **Bug fixes**: `fix/description-of-fix`
+- **Hotfixes**: `hotfix/description-of-hotfix`
+- **Use kebab-case**: All lowercase with hyphens
+
+### Commit Messages
+Follow conventional commits format:
+```
+type(scope): description
+
+Types: feat, fix, docs, style, refactor, test, chore
+Scope: optional, component or area affected
+Description: imperative mood, lowercase, no period
+```
+
+Examples:
+- `feat(auth): add user login functionality`
+- `fix(user-card): resolve display issue on mobile`
+- `docs(readme): update installation instructions`
+
+## Testing Standards
+
+### Test Structure
+```typescript
+// UserCard.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, jest } from '@jest/globals';
+
+import UserCard from './UserCard';
+
+describe('UserCard', () => {
+  const mockUser = {
+    id: '1',
+    name: 'John Doe',
+    email: 'john@example.com',
+  };
+
+  it('should display user name and email', () => {
+    render(<UserCard user={mockUser} />);
+    
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText('john@example.com')).toBeInTheDocument();
+  });
+
+  it('should call onEdit when edit button is clicked', () => {
+    const mockOnEdit = jest.fn();
+    
+    render(<UserCard user={mockUser} onEdit={mockOnEdit} />);
+    fireEvent.click(screen.getByText('Edit'));
+    
+    expect(mockOnEdit).toHaveBeenCalledWith(mockUser);
+  });
+});
+```
+
+### Zod Schema Testing
+```typescript
+// userSchema.test.ts
+import { describe, it, expect } from '@jest/globals';
+
+import { userSchema } from './userSchema';
+
+describe('userSchema', () => {
+  it('should validate correct user data', () => {
+    const validData = {
+      name: 'John Doe',
+      email: 'john@example.com',
+      age: 25,
+    };
+    
+    expect(() => userSchema.parse(validData)).not.toThrow();
+  });
+
+  it('should reject invalid email', () => {
+    const invalidData = {
+      name: 'John Doe',
+      email: 'invalid-email',
+      age: 25,
+    };
+    
+    expect(() => userSchema.parse(invalidData)).toThrow();
+  });
+});
+```
+
+## Performance & Optimization
+
+### Performance Rules
+- **Lazy loading**: Use React.lazy for route-based code splitting
+- **Memoization**: Use React.memo, useMemo, useCallback appropriately
+- **Bundle analysis**: Monitor bundle size and optimize imports
+- **Image optimization**: Use proper image formats and lazy loading
+
+```typescript
+// ✅ Good - Lazy loading
+const UserProfile = lazy(() => import('./pages/UserProfile'));
+
+// ✅ Good - Memoization
+const ExpensiveComponent = React.memo(({ data }: Props) => {
+  const processedData = useMemo(() => {
+    return data.map(item => processItem(item));
+  }, [data]);
+
+  const handleClick = useCallback((id: string) => {
+    onItemClick(id);
+  }, [onItemClick]);
+
+  return <div>{/* Render processed data */}</div>;
+});
+```
+
+## Error Handling
+
+### Error Boundary Implementation
+```typescript
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class ErrorBoundary extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render(): React.ReactNode {
+    if (this.state.hasError) {
+      return (
+        <div className="text-center p-8">
+          <h2 className="text-xl font-semibold text-red-600">Something went wrong</h2>
+          <p className="text-gray-600 mt-2">Please refresh the page and try again</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+### API Error Handling
+```typescript
+// ✅ Good - Consistent error handling
+const useApiCall = <T>(apiCall: () => Promise<T>) => {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const execute = useCallback(async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await apiCall();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, [apiCall]);
+
+  return { data, loading, error, execute };
+};
+```
+
+## Accessibility & UX
+
+### Accessibility Requirements
+- **Semantic HTML**: Use proper HTML elements
+- **ARIA labels**: Add ARIA labels where necessary
+- **Keyboard navigation**: Ensure all interactive elements are keyboard accessible
+- **Color contrast**: Maintain WCAG AA compliance
+- **Screen reader support**: Test with screen readers
+
+```typescript
+// ✅ Good - Accessible component
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="modal-title" className="text-xl font-semibold mb-4">
+          {title}
+        </h2>
+        {children}
+        <button
+          onClick={onClose}
+          className="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          aria-label="Close modal"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+};
+```
+
+## Essential Rules
+
+### Do:
+- Use Zod for all validation and type generation
+- Use `z.infer<>` for automatic type inference
+- Use React Query for data fetching
+- Use Tailwind for styling
+- Use TypeScript strict mode
+- Write comprehensive tests
+- Use semantic HTML and proper accessibility
+
+### Don't:
+- Use `any` type - use Zod's type inference
+- Use inline styles - use Tailwind classes
+- Use class components - use functional components
+- Skip input validation - always validate with Zod
+- Ignore accessibility requirements
+- Put business logic in components - use custom hooks
+
+## Migration Patterns
+
+### From class-validator to Zod
+```typescript
+// ❌ Old - class-validator
+class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsEmail()
+  email: string;
+}
+
+// ✅ New - Zod
+const createUserSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email'),
+});
+
+type CreateUserDto = z.infer<typeof createUserSchema>;
+```
+
+**Note: These rules apply ONLY to files in the frontend/ directory.**

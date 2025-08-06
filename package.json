@@ -1,0 +1,54 @@
+{
+  "name": "smart-therapy",
+  "version": "1.0.0",
+  "description": "Indonesian Hypnotherapy AI System - A comprehensive web platform for licensed Indonesian hypnotherapists",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "pnpm run dev:frontend",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "dev:all": "concurrently \"pnpm dev:frontend\" \"pnpm dev:backend\"",
+    "build": "pnpm run build:frontend && pnpm run build:backend",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:backend": "pnpm --filter backend build",
+    "start": "pnpm run start:frontend",
+    "start:frontend": "pnpm --filter frontend start",
+    "start:backend": "pnpm --filter backend start:prod",
+    "lint": "pnpm --filter frontend lint && pnpm --filter backend lint",
+    "lint:fix": "pnpm --filter frontend lint:fix && pnpm --filter backend lint:fix",
+    "format": "pnpm --filter frontend format && pnpm --filter backend format",
+    "format:check": "pnpm --filter frontend format:check && pnpm --filter backend format:check",
+    "type-check": "pnpm --filter frontend type-check && pnpm --filter backend type-check",
+    "test": "pnpm --filter frontend test && pnpm --filter backend test",
+    "test:watch": "pnpm --filter frontend test:watch && pnpm --filter backend test:watch",
+    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules frontend/.next backend/dist",
+    "clean:cache": "rm -rf frontend/.next backend/dist && pnpm clean",
+    "setup": "pnpm install && pnpm --filter frontend install && pnpm --filter backend install",
+    "reset": "pnpm clean && pnpm setup",
+    "pre-commit": "pnpm lint:fix && pnpm format && pnpm type-check"
+  },
+  "keywords": [
+    "hypnotherapy",
+    "ai",
+    "indonesia",
+    "healthcare",
+    "nextjs",
+    "nestjs",
+    "typescript"
+  ],
+  "author": "Smart Therapy Team",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3"
+  }
+}

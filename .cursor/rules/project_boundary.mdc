@@ -1,0 +1,135 @@
+---
+alwaysApply: true
+---
+
+# Project Boundary Security Rule
+
+## CRITICAL SECURITY CONSTRAINT
+
+**NEVER modify files or run commands that could modify files outside the project root folder: `/Users/panduwijaya/Development/smart-therapy`**
+
+## Prohibited Actions
+
+### File Operations
+- Do NOT use `edit_file`, `search_replace`, or `delete_file` on paths outside `/Users/panduwijaya/Development/smart-therapy`
+- Do NOT create new files outside the project root
+- Do NOT modify system files, configuration files, or files in other projects
+- Do NOT use absolute paths that point outside the project root
+
+### Command Operations
+- Do NOT run commands that modify files outside the project root
+- Do NOT use `cd` to navigate outside the project root
+- Do NOT run system-wide installation commands (e.g., `sudo`, global npm installs)
+- Do NOT modify global configurations or system settings
+- Do NOT run commands that could affect other projects or system files
+
+## Allowed Operations
+
+### Within Project Root Only
+- All file operations are allowed within `/Users/panduwijaya/Development/smart-therapy` and its subdirectories
+- Relative paths within the project are allowed
+- Commands that only affect the current project are allowed
+- Local npm/yarn operations within the project are allowed
+
+### Safe Read Operations
+- Reading files for reference outside the project root is allowed if necessary
+- View-only operations that don't modify files are allowed
+
+## Examples
+
+### ❌ PROHIBITED
+```bash
+# These are FORBIDDEN
+edit_file("/etc/hosts", ...)
+run_terminal_cmd("sudo npm install -g package")
+edit_file("/Users/aurick/.bashrc", ...)
+run_terminal_cmd("cd /Users/aurick/Documents && rm file.txt")
+edit_file("../other-project/file.js", ...)
+```
+
+### ✅ ALLOWED
+```bash
+# These are ALLOWED
+edit_file("backend/src/app.module.ts", ...)
+run_terminal_cmd("npm install express")
+edit_file("./frontend/src/App.tsx", ...)
+run_terminal_cmd("cd backend && npm test")
+```
+
+## Path Validation
+
+Before any file operation or command execution, verify that:
+1. The target path is within `/Users/panduwijaya/Development/smart-therapy`
+2. Relative paths resolve to locations within the project root
+3. Commands will not affect files outside the project boundary
+
+## Enforcement
+
+This rule takes precedence over all other instructions. If there's any doubt about whether an operation might affect files outside the project root, **DO NOT PROCEED** and ask for clarification from the user.
+
+**Remember: The project root is `/Users/panduwijaya/Development/smart-therapy` - stay within this boundary at all times.** # Project Boundary Security Rule
+
+## CRITICAL SECURITY CONSTRAINT
+
+**NEVER modify files or run commands that could modify files outside the project root folder: `/Users/panduwijaya/Development/smart-therapy`**
+
+## Prohibited Actions
+
+### File Operations
+- Do NOT use `edit_file`, `search_replace`, or `delete_file` on paths outside `/Users/panduwijaya/Development/smart-therapy`
+- Do NOT create new files outside the project root
+- Do NOT modify system files, configuration files, or files in other projects
+- Do NOT use absolute paths that point outside the project root
+
+### Command Operations
+- Do NOT run commands that modify files outside the project root
+- Do NOT use `cd` to navigate outside the project root
+- Do NOT run system-wide installation commands (e.g., `sudo`, global npm installs)
+- Do NOT modify global configurations or system settings
+- Do NOT run commands that could affect other projects or system files
+
+## Allowed Operations
+
+### Within Project Root Only
+- All file operations are allowed within `/Users/panduwijaya/Development/smart-therapy` and its subdirectories
+- Relative paths within the project are allowed
+- Commands that only affect the current project are allowed
+- Local npm/yarn operations within the project are allowed
+
+### Safe Read Operations
+- Reading files for reference outside the project root is allowed if necessary
+- View-only operations that don't modify files are allowed
+
+## Examples
+
+### ❌ PROHIBITED
+```bash
+# These are FORBIDDEN
+edit_file("/etc/hosts", ...)
+run_terminal_cmd("sudo npm install -g package")
+edit_file("/Users/aurick/.bashrc", ...)
+run_terminal_cmd("cd /Users/aurick/Documents && rm file.txt")
+edit_file("../other-project/file.js", ...)
+```
+
+### ✅ ALLOWED
+```bash
+# These are ALLOWED
+edit_file("backend/src/app.module.ts", ...)
+run_terminal_cmd("npm install express")
+edit_file("./frontend/src/App.tsx", ...)
+run_terminal_cmd("cd backend && npm test")
+```
+
+## Path Validation
+
+Before any file operation or command execution, verify that:
+1. The target path is within `/Users/panduwijaya/Development/smart-therapy`
+2. Relative paths resolve to locations within the project root
+3. Commands will not affect files outside the project boundary
+
+## Enforcement
+
+This rule takes precedence over all other instructions. If there's any doubt about whether an operation might affect files outside the project root, **DO NOT PROCEED** and ask for clarification from the user.
+
+**Remember: The project root is `/Users/panduwijaya/Development/smart-therapy` - stay within this boundary at all times.** 
