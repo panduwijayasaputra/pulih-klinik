@@ -1,66 +1,216 @@
 'use client';
 
 import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigation } from '@/hooks/useNavigation';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, isMultiRole } = useAuth();
+  const { 
+    activeRole, 
+    availableRoles, 
+    getRoleDisplayInfo,
+    switchToRole,
+    clearActiveRole 
+  } = useNavigation();
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div>Loading...</div>
-      </div>
-    );
+    return null; // RouteGuard will handle this
   }
 
+  const primaryRole = user.roles[0];
+  const primaryRoleInfo = primaryRole ? getRoleDisplayInfo(primaryRole) : null;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">Selamat datang, {user.name}</p>
-            </div>
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-            >
-              Keluar
-            </button>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Welcome Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Selamat datang, {user.name}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {activeRole ? 
+                `Saat ini Anda bekerja sebagai ${getRoleDisplayInfo(activeRole).label}` :
+                `Anda memiliki akses sebagai ${primaryRoleInfo?.label || 'Pengguna'}`
+              }
+            </p>
           </div>
+          
+          {/* Role Badge */}
+          {primaryRoleInfo && (
+            <div className="flex items-center space-x-2">
+              <Badge 
+                variant="outline" 
+                className={`${primaryRoleInfo.color} ${primaryRoleInfo.bgColor} border-current`}
+              >
+                <primaryRoleInfo.icon className="h-4 w-4 mr-1" />
+                {activeRole ? getRoleDisplayInfo(activeRole).label : primaryRoleInfo.label}
+              </Badge>
+            </div>
+          )}
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-blue-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">Informasi Pengguna</h3>
-              <div className="space-y-2 text-sm">
-                <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>Role(s):</strong> {user.roles.join(', ')}</p>
-                {user.clinicId && <p><strong>Clinic ID:</strong> {user.clinicId}</p>}
-                {user.subscriptionTier && <p><strong>Subscription:</strong> {user.subscriptionTier}</p>}
+        {/* Multi-Role Dashboard */}
+        {isMultiRole() && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                Multi-Role Access
+              </CardTitle>
+              <CardDescription>
+                Anda memiliki akses ke beberapa role. Pilih role untuk menyaring navigasi.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={!activeRole ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => clearActiveRole()}
+                >
+                  Tampilkan Semua
+                </Button>
+                {availableRoles.map((role) => {
+                  const roleInfo = getRoleDisplayInfo(role);
+                  return (
+                    <Button
+                      key={role}
+                      variant={activeRole === role ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => switchToRole(role)}
+                      className="flex items-center space-x-1"
+                    >
+                      <roleInfo.icon className="h-4 w-4" />
+                      <span>{roleInfo.label}</span>
+                    </Button>
+                  );
+                })}
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        )}
 
-            <div className="bg-green-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-green-900 mb-2">Status Multi-Role</h3>
-              <p className="text-sm text-green-800">
-                {user.roles.length > 1 
-                  ? `Anda memiliki ${user.roles.length} role aktif`
-                  : 'Anda memiliki 1 role'
-                }
-              </p>
-            </div>
+        {/* Dashboard Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* User Info Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Informasi Pengguna</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Email:</span>
+                  <span className="font-medium">{user.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Role(s):</span>
+                  <span className="font-medium">{user.roles.join(', ')}</span>
+                </div>
+                {user.clinicId && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Clinic ID:</span>
+                    <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                      {user.clinicId}
+                    </span>
+                  </div>
+                )}
+                {user.subscriptionTier && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subscription:</span>
+                    <Badge variant="secondary">{user.subscriptionTier}</Badge>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="bg-purple-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">Akses Cepat</h3>
-              <p className="text-sm text-purple-800">
-                Dashboard sedang dalam pengembangan...
-              </p>
-            </div>
-          </div>
+          {/* Role Status Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Status Role</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  {user.roles.length > 1 
+                    ? `Anda memiliki ${user.roles.length} role aktif`
+                    : 'Anda memiliki 1 role'
+                  }
+                </p>
+                
+                <div className="space-y-2">
+                  {user.roles.map((role) => {
+                    const roleInfo = getRoleDisplayInfo(role);
+                    return (
+                      <div key={role} className="flex items-center space-x-2">
+                        <roleInfo.icon className={`h-4 w-4 ${roleInfo.color}`} />
+                        <span className="text-sm font-medium">{roleInfo.label}</span>
+                        {role === activeRole && (
+                          <Badge variant="default" className="text-xs">Aktif</Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Akses Cepat</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {primaryRole === 'administrator' && (
+                  <>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      Kelola Klinik
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      Lihat Analytics
+                    </Button>
+                  </>
+                )}
+                
+                {primaryRole === 'clinic_admin' && (
+                  <>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      Kelola Therapist
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      Lihat Data Klien
+                    </Button>
+                  </>
+                )}
+                
+                {primaryRole === 'therapist' && (
+                  <>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      Klien Hari Ini
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      Sesi Terjadwal
+                    </Button>
+                  </>
+                )}
+                
+                <p className="text-xs text-muted-foreground mt-3">
+                  Fitur lengkap sedang dalam pengembangan...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
