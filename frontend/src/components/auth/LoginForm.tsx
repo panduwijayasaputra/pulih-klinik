@@ -43,17 +43,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold text-gray-900">
+        <CardTitle className="text-2xl font-bold text-foreground">
           Masuk ke Terapintar
         </CardTitle>
-        <CardDescription className="text-gray-600">
+        <CardDescription className="text-muted-foreground">
           Masukkan email dan password Anda untuk mengakses sistem
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+            <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
               {error}
             </div>
           )}
@@ -65,10 +65,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               id="email"
               type="email"
               placeholder="nama@email.com"
-              className={errors.email ? 'border-red-500' : ''}
+              className={errors.email ? 'border-destructive' : ''}
             />
             {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message}</p>
+              <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
 
@@ -80,7 +80,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password Anda"
-                className={`pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                className={`pr-10 ${errors.password ? 'border-destructive' : ''}`}
               />
               <button
                 type="button"
@@ -88,14 +88,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeSlashIcon className="h-4 w-4 text-gray-400" />
+                  <EyeSlashIcon className="h-4 w-4 text-muted-foreground" />
                 ) : (
-                  <EyeIcon className="h-4 w-4 text-gray-400" />
+                  <EyeIcon className="h-4 w-4 text-muted-foreground" />
                 )}
               </button>
             </div>
             {errors.password && (
-              <p className="text-sm text-red-600">{errors.password.message}</p>
+              <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
           </div>
 
@@ -104,9 +104,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               {...register('rememberMe')}
               id="rememberMe"
               type="checkbox"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             />
-            <Label htmlFor="rememberMe" className="text-sm text-gray-600">
+            <Label htmlFor="rememberMe" className="text-sm text-muted-foreground">
               Ingat saya
             </Label>
           </div>
@@ -121,18 +121,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Belum memiliki akun?{' '}
-            <a href="/register" className="text-blue-600 hover:text-blue-500 font-medium">
+            <a href="/register" className="text-primary-600 hover:text-primary-500 font-medium">
               Daftar sekarang
             </a>
           </p>
         </div>
 
         {/* Demo credentials info */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Demo Login:</h4>
-          <div className="text-xs text-gray-600 space-y-1">
+        <div className="mt-6 p-4 bg-muted rounded-lg">
+          <h4 className="text-sm font-medium text-foreground mb-2">Demo Login:</h4>
+          <div className="text-xs text-muted-foreground space-y-1">
             <p><strong>Administrator:</strong> admin@terapintar.com / admin123</p>
             <p><strong>Clinic Admin:</strong> admin@kliniksehat.com / clinic123</p>
             <p><strong>Therapist:</strong> therapist@kliniksehat.com / therapist123</p>
