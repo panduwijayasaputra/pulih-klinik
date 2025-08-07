@@ -34,7 +34,9 @@ export default function LoginPage() {
     // Redirect is handled by the useEffect above
   };
 
-  if (isLoading) {
+  // Only show loading if we're actually checking authentication
+  // and we might have a user (avoid showing loader on first visit)
+  if (isLoading && (user || isAuthenticated)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

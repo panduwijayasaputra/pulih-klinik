@@ -14,12 +14,22 @@ export const useAuth = () => {
     checkAuth,
   } = useAuthStore();
 
-  // Check authentication status on mount
+  // Only check auth if explicitly needed (not on every mount)
+  // The persistence layer will handle initial state
   useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      checkAuth();
+    // Only check if we have no user data and we're not authenticated 
+    // This prevents the loader from showing unnecessarily
+    if (!user && !isAuthenticated && !isLoading) {
+      const timer = setTimeout(() => {
+        checkAuth();
+      }, 100); // Small delay to let persistence hydrate first
+      
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, isLoading, checkAuth]);
+    // Return empty cleanup function if condition not met
+    return () => {};
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     user,
