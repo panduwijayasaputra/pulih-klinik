@@ -59,7 +59,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-foreground">Email</Label>
             <Input
               {...register('email')}
               id="email"
@@ -73,7 +73,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-foreground">Password</Label>
             <div className="relative">
               <Input
                 {...register('password')}
@@ -106,7 +106,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               type="checkbox"
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             />
-            <Label htmlFor="rememberMe" className="text-sm text-muted-foreground">
+            <Label htmlFor="rememberMe" className="text-sm text-foreground">
               Ingat saya
             </Label>
           </div>

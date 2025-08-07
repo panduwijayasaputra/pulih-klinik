@@ -4,44 +4,46 @@
 
 @layer base {
   :root {
-    /* Clean Minimal Color Palette */
+    /* Smart Therapy Color Palette from tailwind.config.js */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Smart Therapy Purple Primary */
-    --primary: 262 83% 58%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary (Purple) */
+    --primary: 262 83% 58%; /* #a855f7 */
+    --primary-foreground: 210 40% 98%; /* #f9fafb */
 
-    /* Professional Gray Secondary */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
+    /* Secondary (Slate Gray) */
+    --secondary: 210 40% 96%; /* #f1f5f9 */
+    --secondary-foreground: 222.2 84% 4.9%; /* #18181b */
 
-    /* Indigo Accent */
-    --accent: 239 84% 67%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent (Indigo) */
+    --accent: 239 84% 67%; /* #6366f1 */
+    --accent-foreground: 210 40% 98%; /* #f9fafb */
 
-    /* Clean Muted Colors */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted */
+    --muted: 210 40% 96%; /* #f1f5f9 */
+    --muted-foreground: 215.4 16.3% 46.9%; /* #64748b */
 
-    /* Minimal Borders */
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 262 83% 58%;
+    /* Border/Input/Ring */
+    --border: 214.3 31.8% 91.4%; /* #e5e7eb */
+    --input: 214.3 31.8% 91.4%; /* #e5e7eb */
+    --ring: 262 83% 58%; /* #a855f7 */
 
     /* Destructive */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%; /* #ef4444 */
+    --destructive-foreground: 210 40% 98%; /* #f9fafb */
 
     /* Semantic Colors */
-    --success: 142 76% 36%;
-    --warning: 48 100% 67%;
-    --error: 0 84.2% 60.2%;
-    --info: 217 91% 60%;
+    --success: 142 76% 36%; /* #22c55e */
+    --warning: 48 100% 67%; /* #f59e0b */
+    --error: 0 84.2% 60.2%; /* #ef4444 */
+    --info: 217 91% 60%; /* #3b82f6 */
 
     /* Subtle Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -57,25 +59,33 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
+    --background: 222.2 84% 4.9%; /* #18181b */
+    --foreground: 210 40% 98%; /* #f9fafb */
+
+    --card: 222.2 84% 4.9%; /* #18181b */
+    --card-foreground: 210 40% 98%; /* #f9fafb */
+
+    --popover: 222.2 84% 4.9%; /* #18181b */
+    --popover-foreground: 210 40% 98%; /* #f9fafb */
+
+    --primary: 262 83% 58%; /* #a855f7 */
+    --primary-foreground: 210 40% 98%; /* #f9fafb */
+
+    --secondary: 217.2 32.6% 17.5%; /* #1e293b */
+    --secondary-foreground: 210 40% 98%; /* #f9fafb */
+
+    --muted: 217.2 32.6% 17.5%; /* #1e293b */
+    --muted-foreground: 215 20.2% 65.1%; /* #94a3b8 */
+
+    --accent: 217.2 32.6% 17.5%; /* #1e293b */
+    --accent-foreground: 210 40% 98%; /* #f9fafb */
+
+    --destructive: 0 62.8% 30.6%; /* #991b1b */
+    --destructive-foreground: 210 40% 98%; /* #f9fafb */
+
+    --border: 217.2 32.6% 17.5%; /* #1e293b */
+    --input: 217.2 32.6% 17.5%; /* #1e293b */
+    --ring: 262 83% 58%; /* #a855f7 */
   }
 
   * {
@@ -85,8 +95,8 @@
   }
 
   body {
-    color: rgb(var(--foreground));
-    background: rgb(var(--background));
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -95,7 +105,7 @@
   }
 
   *:focus-visible {
-    outline: 2px solid rgb(var(--ring));
+    outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
   }
 
