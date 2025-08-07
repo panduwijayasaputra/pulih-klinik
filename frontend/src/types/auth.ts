@@ -1,0 +1,75 @@
+import { z } from 'zod';
+
+// User roles enum
+export type UserRole = 'administrator' | 'clinic_admin' | 'therapist';
+
+// Login form validation schema
+export const loginSchema = z.object({
+  email: z.string().email('Email tidak valid'),
+  password: z.string().min(6, 'Password minimal 6 karakter'),
+  rememberMe: z.boolean().optional(),
+});
+
+export type LoginFormData = z.infer<typeof loginSchema>;
+
+// User interface
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  roles: UserRole[];
+  clinicId?: string;
+  subscriptionTier?: 'alpha' | 'beta' | 'gamma';
+}
+
+// Authentication state
+export interface AuthState {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
+}
+
+// API response types
+export interface LoginResponse {
+  success: boolean;
+  user?: User;
+  message?: string;
+}
+
+// Mock users data
+export const mockUsers: Record<string, User & { password: string }> = {
+  'admin@terapintar.com': {
+    id: 'admin-001',
+    email: 'admin@terapintar.com',
+    password: 'admin123',
+    roles: ['administrator'],
+    name: 'System Administrator'
+  },
+  'admin@kliniksehat.com': {
+    id: 'clinic-001',
+    email: 'admin@kliniksehat.com',
+    password: 'clinic123',
+    roles: ['clinic_admin'],
+    name: 'Dr. Sari Wulandari',
+    clinicId: 'clinic-001',
+    subscriptionTier: 'beta'
+  },
+  'therapist@kliniksehat.com': {
+    id: 'therapist-001',
+    email: 'therapist@kliniksehat.com',
+    password: 'therapist123',
+    roles: ['therapist'],
+    name: 'Ahmad Pratama',
+    clinicId: 'clinic-001'
+  },
+  'dr.ahmad@kliniksehat.com': {
+    id: 'multi-001',
+    email: 'dr.ahmad@kliniksehat.com',
+    password: 'multi123',
+    roles: ['clinic_admin', 'therapist'],
+    name: 'Dr. Ahmad Pratama',
+    clinicId: 'clinic-001',
+    subscriptionTier: 'beta'
+  }
+};

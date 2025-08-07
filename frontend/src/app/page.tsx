@@ -29,9 +29,9 @@ export default function HomePage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">ST</span>
+                <span className="text-white font-bold text-sm">TP</span>
               </div>
-              <span className="text-xl font-semibold text-gray-900">Smart Therapy</span>
+              <span className="text-xl font-semibold text-gray-900">Terapintar</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
@@ -42,11 +42,11 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <CustomLink href={'/masuk' as Route} variant="ghost" className="text-gray-600">
+              <CustomLink href={'/login' as Route} variant="ghost" className="text-gray-600">
                 Masuk
               </CustomLink>
-              <CustomLink href={'/daftar' as Route} className="bg-purple-600 hover:bg-purple-700 text-white">
-                Mulai Gratis
+              <CustomLink href={'/register' as Route} className="bg-purple-600 hover:bg-purple-700 text-white">
+                Daftar
               </CustomLink>
             </div>
           </div>
@@ -381,7 +381,7 @@ export default function HomePage() {
       <section className="py-20 bg-white" id="cara-kerja">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Mengapa Anda akan menyukai Smart Therapy
+            Mengapa Anda akan menyukai Terapintar
           </h2>
           <p className="text-lg text-gray-600 mb-16 max-w-3xl mx-auto">
             Platform yang dirancang khusus untuk kebutuhan terapis Indonesia dengan pendekatan yang mudah dan efektif.
@@ -465,6 +465,245 @@ export default function HomePage() {
                 Laporan analytics yang memberikan insight mendalam tentang progress dan efektivitas terapi.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Pricing Section */}
+      <section className="py-20 bg-white" id="harga">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Pilih Paket yang Tepat untuk Klinik Anda
+          </h2>
+          <p className="text-lg text-gray-600 mb-16 max-w-3xl mx-auto">
+            Skalakan praktik terapi Anda dengan paket yang fleksibel dan terjangkau. Semua paket termasuk fitur AI lengkap dan dukungan teknis.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Beta Plan */}
+            <Card className="relative border-2 border-gray-200 hover:border-purple-300 transition-colors">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl font-semibold text-gray-900">Beta</CardTitle>
+                <div className="mt-4">
+                  <span className="text-3xl font-bold text-gray-900">Rp 30k</span>
+                  <span className="text-gray-600">/bulan</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">Cocok untuk praktik kecil</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="space-y-3 text-left mb-8">
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">1 Terapis</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">1 Klien Baru/hari</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">1 Skrip/klien/sesi</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">10 Teknik Rekomendasi</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Deteksi Masalah Mental</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Dukungan Email</span>
+                  </li>
+                </ul>
+                <CustomLink
+                  href="/daftar"
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Mulai Beta
+                </CustomLink>
+              </CardContent>
+            </Card>
+
+            {/* Alpha Plan */}
+            <Card className="relative border-2 border-purple-500 shadow-lg">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-purple-600 text-white px-3 py-1 text-xs font-medium">
+                  Paling Populer
+                </Badge>
+              </div>
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl font-semibold text-gray-900">Alpha</CardTitle>
+                <div className="mt-4">
+                  <span className="text-3xl font-bold text-gray-900">Rp 50k</span>
+                  <span className="text-gray-600">/bulan</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">Ideal untuk klinik menengah</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="space-y-3 text-left mb-8">
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">2 Terapis</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">4 Klien Baru/hari</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">2 Skrip/klien/sesi</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">25 Teknik Rekomendasi</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Deteksi Masalah Mental</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Analytics Lanjutan</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Dukungan Prioritas</span>
+                  </li>
+                </ul>
+                <CustomLink
+                  href="/daftar"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Mulai Alpha
+                </CustomLink>
+              </CardContent>
+            </Card>
+
+            {/* Theta Plan */}
+            <Card className="relative border-2 border-gray-200 hover:border-purple-300 transition-colors">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl font-semibold text-gray-900">Theta</CardTitle>
+                <div className="mt-4">
+                  <span className="text-3xl font-bold text-gray-900">Rp 100k</span>
+                  <span className="text-gray-600">/bulan</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">Untuk klinik berkembang</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="space-y-3 text-left mb-8">
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">4 Terapis</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">15 Klien Baru/hari</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">3 Skrip/klien/sesi</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">40 Teknik Rekomendasi</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Deteksi Masalah Mental</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Analytics Lanjutan</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Integrasi API</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Dukungan Telepon</span>
+                  </li>
+                </ul>
+                <CustomLink
+                  href="/daftar"
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Mulai Theta
+                </CustomLink>
+              </CardContent>
+            </Card>
+
+            {/* Delta Plan */}
+            <Card className="relative border-2 border-gray-200 hover:border-purple-300 transition-colors">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl font-semibold text-gray-900">Delta</CardTitle>
+                <div className="mt-4">
+                  <span className="text-3xl font-bold text-gray-900">Rp 150k</span>
+                  <span className="text-gray-600">/bulan</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">Untuk klinik besar</p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="space-y-3 text-left mb-8">
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">6 Terapis</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">30 Klien Baru/hari</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">5 Skrip/klien/sesi</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Semua 67 Teknik</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Deteksi Masalah Mental</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Analytics Enterprise</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Integrasi API Lengkap</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Dedicated Support</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Custom Branding</span>
+                  </li>
+                </ul>
+                <CustomLink
+                  href="/daftar"
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Mulai Delta
+                </CustomLink>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Additional Info */}
+          <div className="mt-16 text-center">
+            <p className="text-gray-600 mb-4">
+              Semua paket termasuk fitur dasar: Asesmen AI, Rekomendasi Teknik, dan Generator Skrip
+            </p>
+            <p className="text-sm text-gray-500">
+              * Harga dalam Rupiah Indonesia. Pembayaran bulanan. Dapat dibatalkan kapan saja.
+            </p>
           </div>
         </div>
       </section>
@@ -563,7 +802,7 @@ export default function HomePage() {
       <section className="py-20 bg-gradient-to-r from-purple-600 to-indigo-600">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Setup Smart Therapy dalam 2 Menit
+            Setup Terapintar dalam 2 Menit
           </h2>
           <p className="text-lg text-purple-100 mb-8">
             Mulai transformasi praktik terapi Anda hari ini dengan platform yang dirancang khusus untuk terapis Indonesia.
@@ -629,12 +868,12 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">ST</span>
+                  <span className="text-white font-bold text-sm">TP</span>
                 </div>
-                <span className="text-xl font-semibold text-gray-900">Smart Therapy</span>
+                <span className="text-xl font-semibold text-gray-900">Terapintar</span>
               </div>
               <p className="text-gray-600 text-sm">
-                © 2025 Smart Therapy.<br />
+                © 2025 Terapintar.<br />
                 Semua Hak Dilindungi.
               </p>
             </div>

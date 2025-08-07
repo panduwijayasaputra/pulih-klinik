@@ -4,23 +4,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      <div className="flex min-h-screen items-center justify-center padding-responsive">
-        <div className="w-full max-w-md">
-          <div className="glass rounded-lg p-8 shadow-strong">
-            {children}
-          </div>
-          
-          {/* Indonesian cultural footer */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-muted-foreground">
-              Sistem AI Hipnoterapi Indonesia
-            </p>
-            <p className="text-xs text-muted-foreground/80">
-              Untuk Kesehatan Mental dan Kesejahteraan Masyarakat
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="absolute inset-0 bg-white/30" />
+      <div className="relative z-10">
+        {children}
       </div>
     </div>
   );
