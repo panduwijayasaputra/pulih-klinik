@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EmploymentTypeEnum, TherapistLicenseTypeEnum } from '@/types/enums';
+import { EmploymentTypeEnum, TherapistLicenseTypeEnum, UserRoleEnum } from '@/types/enums';
 import {
   AcademicCapIcon,
   BriefcaseIcon,
@@ -38,6 +38,16 @@ const TherapistRegistrationSchema = z.object({
   yearsExperience: z.number().min(0, 'Pengalaman tidak boleh negatif').max(50, 'Pengalaman maksimal 50 tahun'),
   education: z.string().min(1, 'Pendidikan wajib diisi'),
   certifications: z.string().optional(),
+
+  // Enums (required)
+  licenseType: z.nativeEnum(TherapistLicenseTypeEnum, {
+    required_error: 'Tipe lisensi wajib dipilih',
+    invalid_type_error: 'Tipe lisensi tidak valid'
+  }),
+  employmentType: z.nativeEnum(EmploymentTypeEnum, {
+    required_error: 'Tipe pekerjaan wajib dipilih',
+    invalid_type_error: 'Tipe pekerjaan tidak valid'
+  }),
 
   // Clinic admin notes (optional)
   adminNotes: z.string().max(500, 'Catatan maksimal 500 karakter').optional()
@@ -535,6 +545,60 @@ export const TherapistForm: React.FC<TherapistFormProps> = ({
                       Spesialisasi dipilih
                     </p>
                   )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <Label>Tipe Lisensi *</Label>
+                    <Select
+                      value={watch('licenseType')}
+                      onValueChange={(value) => {
+                        const event = { target: { value } } as any;
+                        register('licenseType').onChange(event);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih tipe lisensi" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(TherapistLicenseTypeEnum).map((val) => (
+                          <SelectItem key={val} value={val}>{val}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.licenseType && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <XCircleIcon className="w-3 h-3 mr-1" />
+                        {errors.licenseType.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label>Tipe Pekerjaan *</Label>
+                    <Select
+                      value={watch('employmentType')}
+                      onValueChange={(value) => {
+                        const event = { target: { value } } as any;
+                        register('employmentType').onChange(event);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih tipe pekerjaan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(EmploymentTypeEnum).map((val) => (
+                          <SelectItem key={val} value={val}>{val}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.employmentType && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <XCircleIcon className="w-3 h-3 mr-1" />
+                        {errors.employmentType.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
