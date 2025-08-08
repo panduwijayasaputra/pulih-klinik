@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Therapist, TherapistFormData, TherapistFilters, TherapistAssignment } from '@/types/therapist';
+import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from '@/types/enums';
 
 // Mock therapist data for development
 const mockTherapists: Therapist[] = [
@@ -12,7 +13,7 @@ const mockTherapists: Therapist[] = [
     avatar: '/avatars/ahmad-pratama.jpg',
     
     licenseNumber: 'PSI-001234',
-    licenseType: 'psychologist',
+    licenseType: TherapistLicenseTypeEnum.Psychologist,
     specializations: ['anxiety-depression', 'stress-management'],
     education: [
       {
@@ -41,8 +42,8 @@ const mockTherapists: Therapist[] = [
     ],
     yearsOfExperience: 6,
     
-    status: 'active',
-    employmentType: 'full_time',
+    status: TherapistStatusEnum.Active,
+    employmentType: EmploymentTypeEnum.FullTime,
     joinDate: '2023-01-15',
     
     assignedClients: ['client-001', 'client-002', 'client-003'],
@@ -80,7 +81,7 @@ const mockTherapists: Therapist[] = [
     avatar: '/avatars/sari-wulandari.jpg',
     
     licenseNumber: 'PSI-001235',
-    licenseType: 'psychologist',
+    licenseType: TherapistLicenseTypeEnum.Psychologist,
     specializations: ['addiction-therapy', 'trauma-ptsd'],
     education: [
       {
@@ -103,8 +104,8 @@ const mockTherapists: Therapist[] = [
     ],
     yearsOfExperience: 7,
     
-    status: 'active',
-    employmentType: 'full_time',
+    status: TherapistStatusEnum.Active,
+    employmentType: EmploymentTypeEnum.FullTime,
     joinDate: '2023-02-01',
     
     assignedClients: ['client-004', 'client-005'],
@@ -141,7 +142,7 @@ const mockTherapists: Therapist[] = [
     phone: '+62-812-3456-7892',
     
     licenseNumber: 'PSI-001236',
-    licenseType: 'counselor',
+    licenseType: TherapistLicenseTypeEnum.Counselor,
     specializations: ['child-adolescent', 'couples-family'],
     education: [
       {
@@ -164,8 +165,8 @@ const mockTherapists: Therapist[] = [
     ],
     yearsOfExperience: 4,
     
-    status: 'active',
-    employmentType: 'part_time',
+    status: TherapistStatusEnum.Active,
+    employmentType: EmploymentTypeEnum.PartTime,
     joinDate: '2023-06-15',
     
     assignedClients: ['client-006'],
@@ -201,7 +202,7 @@ const mockAssignments: TherapistAssignment[] = [
     clientId: 'client-001',
     assignedDate: '2023-11-01',
     assignedBy: 'admin-001',
-    status: 'active',
+    status: TherapistAssignmentStatusEnum.Active,
     notes: 'Client dengan kecemasan sosial'
   },
   {
@@ -210,7 +211,7 @@ const mockAssignments: TherapistAssignment[] = [
     clientId: 'client-004',
     assignedDate: '2023-11-15',
     assignedBy: 'admin-001',
-    status: 'active',
+    status: TherapistAssignmentStatusEnum.Active,
     notes: 'Klien dengan masalah kecanduan alkohol'
   }
 ];
@@ -335,22 +336,22 @@ export const useTherapists = () => {
         id: `therapist-${Date.now()}`,
         clinicId: 'clinic-001', // Would come from context/auth
         ...formData,
-        avatar: undefined,
+        avatar: '',
         
         assignedClients: [],
         currentLoad: 0,
-        status: 'active',
-        joinDate: new Date().toISOString().split('T')[0],
+        status: TherapistStatusEnum.Active,
+        joinDate: new Date().toISOString().split('T')[0] as string,
         
 
         
         schedule: [],
         timezone: 'Asia/Jakarta',
         
-        certifications: formData.certifications.map((cert, index) => ({
+        certifications: (formData.certifications ?? []).map((cert, index) => ({
           ...cert,
           id: `cert-${Date.now()}-${index}`,
-          status: 'active' as const
+          status: 'active'
         })),
         
         createdAt: new Date().toISOString(),
@@ -425,10 +426,10 @@ export const useTherapists = () => {
         id: `assign-${Date.now()}`,
         therapistId,
         clientId,
-        assignedDate: new Date().toISOString().split('T')[0],
-        assignedBy,
-        status: 'active',
-        notes
+        assignedDate: new Date().toISOString().split('T')[0] as string,
+        assignedBy: assignedBy ?? '',
+        status: TherapistAssignmentStatusEnum.Active,
+        notes: notes ?? ''
       };
       
       setAssignments(prev => [...prev, newAssignment]);
@@ -473,12 +474,12 @@ export const useTherapists = () => {
       // Update assignment status
       setAssignments(prev => prev.map(assign =>
         assign.id === assignmentId
-          ? {
+          ? ({
               ...assign,
-              status: 'transferred' as const,
-              endDate: new Date().toISOString().split('T')[0],
-              transferReason: reason
-            }
+              status: TherapistAssignmentStatusEnum.Transferred,
+              endDate: new Date().toISOString().split('T')[0] as string,
+              transferReason: (reason ?? '') as string
+            } as TherapistAssignment)
           : assign
       ));
       
