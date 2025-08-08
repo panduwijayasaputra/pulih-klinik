@@ -1,6 +1,7 @@
 'use client';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigation } from '@/hooks/useNavigation';
+import { UserRoleEnum } from '@/types/enums';
 import { AdminDashboard, ClinicDashboard, TherapistDashboard } from '@/components/portal';
 
 export default function PortalPage() {
@@ -17,11 +18,11 @@ export default function PortalPage() {
   // Render role-specific dashboard component
   const renderRoleSpecificDashboard = () => {
     switch (currentRole) {
-      case 'administrator':
+      case UserRoleEnum.Administrator:
         return <AdminDashboard />;
-      case 'clinic_admin':
+      case UserRoleEnum.ClinicAdmin:
         return <ClinicDashboard />;
-      case 'therapist':
+      case UserRoleEnum.Therapist:
         return <TherapistDashboard />;
       default:
         return <ClinicDashboard />; // Default fallback

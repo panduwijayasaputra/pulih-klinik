@@ -18,7 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
-import { UserRoleEnum } from '@/types/enums';
+import { TherapistStatusEnum, UserRoleEnum } from '@/types/enums';
 
 interface Therapist {
   id: string;
@@ -400,7 +400,7 @@ export const TherapistList: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
+      case TherapistStatusEnum.Active:
         return (
           <Badge variant="success">
             <CheckCircleIcon className="w-3 h-3 mr-1" />
@@ -414,7 +414,7 @@ export const TherapistList: React.FC = () => {
             Menunggu Setup
           </Badge>
         );
-      case 'inactive':
+      case TherapistStatusEnum.Inactive:
         return (
           <Badge variant="destructive">
             <XCircleIcon className="w-3 h-3 mr-1" />
