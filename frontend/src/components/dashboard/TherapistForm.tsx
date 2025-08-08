@@ -649,7 +649,7 @@ export const TherapistForm: React.FC<TherapistFormProps> = ({
             )}
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4 border-gray-200">
+            <div className="flex justify-end pt-6 border-gray-200 border-t">
               <div className="space-x-4">
                 <Button
                   type="button"

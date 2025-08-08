@@ -400,21 +400,21 @@ export const TherapistList: React.FC = () => {
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+          <Badge variant="success">
             <CheckCircleIcon className="w-3 h-3 mr-1" />
             Aktif
           </Badge>
         );
       case 'pending_setup':
         return (
-          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+          <Badge variant="warning">
             <ClockIcon className="w-3 h-3 mr-1" />
             Menunggu Setup
           </Badge>
         );
       case 'inactive':
         return (
-          <Badge className="bg-red-100 text-red-800 border-red-200">
+          <Badge variant="destructive">
             <XCircleIcon className="w-3 h-3 mr-1" />
             Tidak Aktif
           </Badge>

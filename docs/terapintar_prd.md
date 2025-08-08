@@ -112,7 +112,7 @@ A web-based platform that enables clinics to manage clients, therapists, and the
 
 1. Created by Clinic Admin.
 2. Therapist receives email with registration link.
-3. Set new password.
+3. Go to new password page on registration link click.
 4. On success, redirect to login.
 
 ---

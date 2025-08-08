@@ -7,8 +7,11 @@ import { TherapistForm } from '@/components/dashboard/TherapistForm';
 import { ArrowLeftIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
+import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { useRouter } from 'next/navigation';
 
 export default function NewTherapistPage() {
+  const router = useRouter();
   // Clinic admin access control
   const { user, isLoading } = useAuth();
 
@@ -42,24 +45,14 @@ export default function NewTherapistPage() {
   }
 
   return (
+    <PortalPageWrapper
+      title="Register New Therapist"
+      description="Create a new therapist account. The therapist will receive an email to set their password."
+      showBackButton={true}
+      backButtonLabel="Back to Therapist Management"
+      onBackClick={() => router.back()}
+    >
     <div className="space-y-6">
-      {/* Navigation Header */}
-      <div className="flex items-center space-x-4">
-        <Link href="/portal/therapists">
-          <Button variant="ghost" size="sm" className="flex items-center">
-            <ArrowLeftIcon className="w-4 h-4 mr-2" />
-            Back to Therapist Management
-          </Button>
-        </Link>
-      </div>
-
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Register New Therapist</h1>
-        <p className="text-gray-600 mt-2">
-          Create a new therapist account. The therapist will receive an email to set their password.
-        </p>
-      </div>
 
       {/* Registration Form */}
       <TherapistForm />
@@ -91,5 +84,6 @@ export default function NewTherapistPage() {
         </CardContent>
       </Card>
     </div>
+    </PortalPageWrapper>
   );
 }

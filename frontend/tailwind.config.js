@@ -167,6 +167,9 @@ module.exports = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      maxWidth: {
+        '8xl': '1408px', // Custom 8xl max-width class
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

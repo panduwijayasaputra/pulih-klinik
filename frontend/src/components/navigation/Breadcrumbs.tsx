@@ -14,10 +14,27 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ className = '' }) => {
     return null;
   }
 
+  // Filter out obvious slug-like breadcrumbs (ids, uuids), keep meaningful labels
+  const filteredBreadcrumbs = breadcrumbs.filter((breadcrumb) => {
+    const label = breadcrumb.label?.trim() ?? '';
+    if (!label) return false;
+
+    // Heuristics for slug-like labels: UUIDs, long hashes, numeric ids
+    const isUuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(label);
+    const isLongHex = /^[0-9a-f]{16,}$/i.test(label);
+    const isNumericId = /^\d{6,}$/.test(label);
+
+    return !(isUuidLike || isLongHex || isNumericId);
+  });
+
+  if (filteredBreadcrumbs.length === 0) {
+    return null;
+  }
+
   return (
     <nav className={`flex items-center space-x-1 text-sm ${className}`}>
-      {breadcrumbs.map((breadcrumb, index) => {
-        const isLast = index === breadcrumbs.length - 1;
+      {filteredBreadcrumbs.map((breadcrumb, index) => {
+        const isLast = index === filteredBreadcrumbs.length - 1;
         const isFirst = index === 0;
 
         return (

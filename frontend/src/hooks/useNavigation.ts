@@ -5,12 +5,9 @@ import { useNavigationStore } from '@/store/navigation';
 import { 
   getNavigationItemsForUser, 
   getPrimaryDashboardConfig,
-  roleDisplayInfo 
-} from '@/lib/navigation-config';
-import { 
-  getDashboardNavigationForRoles,
+  roleDisplayInfo,
   dashboardBreadcrumbMapping 
-} from '@/lib/dashboard-navigation-config';
+} from '@/lib/navigation-config';
 import { BreadcrumbItem, NavigationItem } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
 
