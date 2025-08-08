@@ -21,6 +21,7 @@ import {
   TrashIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline';
+import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum } from '@/types/enums';
 
 interface DocumentManagerProps {
   onDeleteDocument?: (documentId: string) => void;
@@ -29,25 +30,25 @@ interface DocumentManagerProps {
 }
 
 const DOCUMENT_TYPE_LABELS = {
-  license: 'Izin Praktik',
-  certificate: 'Sertifikat', 
-  insurance: 'Asuransi',
-  tax: 'Dokumen Pajak',
-  other: 'Lainnya',
+  [ClinicDocumentTypeEnum.License]: 'Izin Praktik',
+  [ClinicDocumentTypeEnum.Certificate]: 'Sertifikat', 
+  [ClinicDocumentTypeEnum.Insurance]: 'Asuransi',
+  [ClinicDocumentTypeEnum.Tax]: 'Dokumen Pajak',
+  [ClinicDocumentTypeEnum.Other]: 'Lainnya',
 } as const;
 
 const STATUS_CONFIG = {
-  pending: {
+  [ClinicDocumentStatusEnum.Pending]: {
     label: 'Menunggu',
     color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     icon: ClockIcon
   },
-  approved: {
+  [ClinicDocumentStatusEnum.Approved]: {
     label: 'Disetujui',
     color: 'bg-green-100 text-green-800 border-green-200',
     icon: CheckCircleIcon
   },
-  rejected: {
+  [ClinicDocumentStatusEnum.Rejected]: {
     label: 'Ditolak',
     color: 'bg-red-100 text-red-800 border-red-200',
     icon: XCircleIcon

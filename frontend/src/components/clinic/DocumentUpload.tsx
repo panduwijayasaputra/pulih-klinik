@@ -23,6 +23,7 @@ import {
   ExclamationTriangleIcon,
   DocumentIcon
 } from '@heroicons/react/24/outline';
+import { ClinicDocumentTypeEnum } from '@/types/enums';
 
 interface DocumentUploadProps {
   onUploadSuccess?: (document: ClinicDocument) => void;
@@ -42,11 +43,11 @@ interface UploadingFile {
 }
 
 const DOCUMENT_TYPES = [
-  { value: 'license', label: 'Izin Praktik' },
-  { value: 'certificate', label: 'Sertifikat' },
-  { value: 'insurance', label: 'Asuransi' },
-  { value: 'tax', label: 'Dokumen Pajak' },
-  { value: 'other', label: 'Lainnya' },
+  { value: ClinicDocumentTypeEnum.License, label: 'Izin Praktik' },
+  { value: ClinicDocumentTypeEnum.Certificate, label: 'Sertifikat' },
+  { value: ClinicDocumentTypeEnum.Insurance, label: 'Asuransi' },
+  { value: ClinicDocumentTypeEnum.Tax, label: 'Dokumen Pajak' },
+  { value: ClinicDocumentTypeEnum.Other, label: 'Lainnya' },
 ] as const;
 
 export const DocumentUpload: React.FC<DocumentUploadProps> = ({
