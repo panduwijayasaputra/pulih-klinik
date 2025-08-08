@@ -27,7 +27,7 @@
 ## Tasks
 
 - [ ] 1.0 Frontend Client Management UI
-  - [ ] 1.1 Create TypeScript types and validation schemas
+  - [x] 1.1 Create TypeScript types and validation schemas
     - Add `frontend/src/types/client.ts` defining `Client`, `ClientFormData`, `ClientContact`, `ClientStatus` (active, archived), and light session summary types
     - Create Zod schemas for create/update payloads and search/filter params
     - Export inferred types for use across app
