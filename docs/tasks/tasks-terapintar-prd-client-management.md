@@ -31,12 +31,12 @@
     - Add `frontend/src/types/client.ts` defining `Client`, `ClientFormData`, `ClientContact`, `ClientStatus` (active, archived), and light session summary types
     - Create Zod schemas for create/update payloads and search/filter params
     - Export inferred types for use across app
-  - [ ] 1.2 Build `ClientForm` (create/update)
+  - [x] 1.2 Build `ClientForm` (create/update)
     - Use React Hook Form + Zod resolver; fields: name, email, phone, WhatsApp, DOB, gender, address, notes, status
     - Use `@/components/ui` inputs, select, textarea; add inline error messages
     - Expose props: `mode: 'create'|'edit'`, `defaultValues`, `onSubmitSuccess`
     - Show submit/cancel buttons with loading state; success and error toasts
-  - [ ] 1.3 Build `ClientList` with search and filters
+  - [x] 1.3 Build `ClientList` with search and filters
     - Table or card list with columns: name, contact, status, assigned therapist, createdAt, actions
     - Search by name/phone/email; filters by status and assigned therapist
     - Empty state, loading skeletons, pagination controls (client-side for now)
@@ -49,7 +49,7 @@
     - List available therapists with capacity indicator (active clients / max)
     - Disable selection when therapist at capacity; show explanatory tooltip
     - Confirm assignment with short Bahasa copy; success/error toasts
-  - [ ] 1.6 Pages and navigation
+  - [x] 1.6 Pages and navigation
     - `app/portal/clients/page.tsx` (index) uses `ClientList`
     - `app/portal/clients/[id]/page.tsx` (details) uses `ClientDetails` + `SessionHistory`
     - Add role guard (clinic_admin, therapist with assigned clients read-only)
