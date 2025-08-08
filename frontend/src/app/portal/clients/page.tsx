@@ -6,10 +6,11 @@ import { ClientList } from '@/components/dashboard/ClientList';
 import { ClientForm } from '@/components/dashboard/ClientForm';
 import { ClientProfile } from '@/components/dashboard/ClientProfile';
 import { ClientAssignment } from '@/components/dashboard/ClientAssignment';
+import { UsageMetrics } from '@/components/dashboard/UsageMetrics';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Users, UserCheck } from 'lucide-react';
+import { Plus, Users, UserCheck, BarChart3 } from 'lucide-react';
 
 export default function ClientsPage() {
   const { clients, loading, error, addClient } = useClients();
@@ -54,7 +55,7 @@ export default function ClientsPage() {
 
       {/* Tabs for Different Views */}
       <Tabs defaultValue="list" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="list" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Daftar Klien
@@ -62,6 +63,10 @@ export default function ClientsPage() {
           <TabsTrigger value="assignment" className="flex items-center gap-2">
             <UserCheck className="h-4 w-4" />
             Penugasan Terapis
+          </TabsTrigger>
+          <TabsTrigger value="metrics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Metrik Penggunaan
           </TabsTrigger>
         </TabsList>
 
@@ -79,6 +84,10 @@ export default function ClientsPage() {
             clients={clients} 
             onAssignmentChange={handleAssignmentChange}
           />
+        </TabsContent>
+
+        <TabsContent value="metrics" className="space-y-6">
+          <UsageMetrics />
         </TabsContent>
       </Tabs>
 

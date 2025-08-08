@@ -9,3 +9,7 @@ export { ClientList } from './ClientList';
 export { ClientForm } from './ClientForm';
 export { ClientProfile } from './ClientProfile';
 export { ClientAssignment } from './ClientAssignment';
+export { UsageMetrics } from './UsageMetrics';
+export { LimitWarnings } from './LimitWarnings';
+export { UsageAnalytics } from './UsageAnalytics';
+export { UpgradePrompt, useUpgradePrompt } from './UpgradePrompt';
