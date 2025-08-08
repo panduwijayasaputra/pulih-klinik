@@ -2,7 +2,7 @@ export interface Client {
   id: string;
   name: string;
   age: number;
-  gender: 'male' | 'female' | 'other';
+  gender: 'male' | 'female';
   phone: string;
   email: string;
   occupation: string;
@@ -16,7 +16,7 @@ export interface Client {
   primaryIssue: string;
   progress: number;
   notes?: string | undefined;
-  religion?: 'Islam' | 'Christianity' | 'Catholicism' | 'Hinduism' | 'Buddhism' | 'Other' | undefined;
+  religion?: 'Islam' | 'Christianity' | 'Catholicism' | 'Hinduism' | 'Buddhism' | 'Konghucu' | undefined;
   province?: string | undefined;
   emergencyContact?: {
     name: string;
