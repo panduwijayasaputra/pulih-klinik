@@ -72,8 +72,7 @@ export const dashboardNavigationItems: NavigationItem[] = [
     requiredRoles: ['clinic_admin'],
   },
 
-  // Future sections (commented out - will be enabled in future releases)
-  /*
+  // Client Management (now enabled)
   {
     id: 'client-management',
     label: 'Manajemen Klien',
@@ -82,25 +81,6 @@ export const dashboardNavigationItems: NavigationItem[] = [
     description: 'Kelola data dan histori klien',
     requiredRoles: ['clinic_admin', 'therapist'],
   },
-  
-  {
-    id: 'assessment-system',
-    label: 'Sistem Assessment',
-    href: '/portal/assessments',
-    icon: ClipboardDocumentListIcon,
-    description: 'Assessment dan evaluasi klien',
-    requiredRoles: ['clinic_admin', 'therapist'],
-  },
-  
-  {
-    id: 'reports-analytics',
-    label: 'Laporan & Analytics',
-    href: '/portal/reports',
-    icon: ChartBarIcon,
-    description: 'Analytics dan laporan kinerja',
-    requiredRoles: ['clinic_admin'],
-  },
-  */
 ];
 
 // Common navigation items (available to all authenticated users)
