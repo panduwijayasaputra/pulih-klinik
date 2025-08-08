@@ -4,31 +4,18 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuth } from '@/hooks/useAuth';
+import { getDefaultRouteForUser } from '@/lib/route-protection';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, user, getPrimaryRole } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Redirect based on primary role
-      const primaryRole = getPrimaryRole();
-      
-      switch (primaryRole) {
-        case 'administrator':
-          router.push('/dashboard');
-          break;
-        case 'clinic_admin':
-          router.push('/dashboard');
-          break;
-        case 'therapist':
-          router.push('/dashboard');
-          break;
-        default:
-          router.push('/dashboard');
-      }
+      const defaultRoute = getDefaultRouteForUser(user);
+      router.push(defaultRoute as any);
     }
-  }, [isAuthenticated, user, router, getPrimaryRole]);
+  }, [isAuthenticated, user, router]);
 
   const handleLoginSuccess = () => {
     // Redirect is handled by the useEffect above

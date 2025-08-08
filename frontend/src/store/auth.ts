@@ -65,6 +65,11 @@ export const useAuthStore = create<AuthStore>()(
             isLoading: false,
             error: null,
           });
+          
+          // Redirect to landing page after logout
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
         } catch {
           set({ isLoading: false });
         }

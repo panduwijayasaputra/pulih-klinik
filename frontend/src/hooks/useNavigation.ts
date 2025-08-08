@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './useAuth';
 import { useNavigationStore } from '@/store/navigation';
@@ -59,46 +59,48 @@ export const useNavigation = () => {
   }, [user?.roles]);
 
   // Check if current path matches navigation item
-  const isActiveItem = (item: NavigationItem): boolean => {
+  const isActiveItem = useCallback((item: NavigationItem): boolean => {
     if (item.href === pathname) return true;
     
     // Handle dynamic routes
     const dynamicPattern = item.href.replace(/\[.*?\]/g, '[^/]+');
     const regex = new RegExp(`^${dynamicPattern}(/|$)`);
     return regex.test(pathname);
-  };
+  }, [pathname]);
 
   // Get active navigation item
   const activeNavigationItem = useMemo(() => {
     return navigationItems.find(item => isActiveItem(item));
-  }, [navigationItems, pathname]);
+  }, [navigationItems, isActiveItem]);
 
-  // Role switching functions
-  const switchToRole = (role: UserRole) => {
+  // Role switching functions with validation
+  const switchToRole = useCallback((role: UserRole) => {
     if (availableRoles.includes(role)) {
       setActiveRole(role);
+    } else {
+      console.warn(`Cannot switch to role ${role}: not available for current user`);
     }
-  };
+  }, [availableRoles, setActiveRole]);
 
-  const clearActiveRole = () => {
+  const clearActiveRole = useCallback(() => {
     setActiveRole(null);
-  };
+  }, [setActiveRole]);
 
   // Role display helpers
-  const getRoleDisplayInfo = (role: UserRole) => {
+  const getRoleDisplayInfo = useCallback((role: UserRole) => {
     return roleDisplayInfo[role];
-  };
+  }, []);
 
-  const getRoleOptions = () => {
+  const getRoleOptions = useMemo(() => {
     return availableRoles.map(role => ({
       role,
       ...roleDisplayInfo[role],
       isActive: activeRole === role,
     }));
-  };
+  }, [availableRoles, activeRole, getRoleDisplayInfo]);
 
   // Breadcrumb helpers
-  const generateBreadcrumbs = (): BreadcrumbItem[] => {
+  const generateBreadcrumbs = useCallback((): BreadcrumbItem[] => {
     const pathSegments = pathname.split('/').filter(Boolean);
     const breadcrumbs: BreadcrumbItem[] = [
       {
@@ -108,10 +110,20 @@ export const useNavigation = () => {
       }
     ];
 
+    // If we're already on the dashboard route, don't add additional breadcrumbs
+    if (pathname === '/portal' || pathname === primaryDashboard?.defaultRoute) {
+      return breadcrumbs;
+    }
+
     // Build breadcrumbs based on path segments
     let currentPath = '';
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
+      
+      // Skip if this is the dashboard route (already added as first breadcrumb)
+      if (currentPath === '/portal' || currentPath === primaryDashboard?.defaultRoute) {
+        return;
+      }
       
       // Find navigation item for this path
       const navItem = navigationItems.find(item => 
@@ -137,13 +149,13 @@ export const useNavigation = () => {
     });
 
     return breadcrumbs;
-  };
+  }, [pathname, navigationItems, primaryDashboard]);
 
   // Auto-update breadcrumbs when pathname changes
   useEffect(() => {
     const newBreadcrumbs = generateBreadcrumbs();
     setBreadcrumbs(newBreadcrumbs);
-  }, [pathname, navigationItems, primaryDashboard, setBreadcrumbs]);
+  }, [generateBreadcrumbs, setBreadcrumbs]);
 
   return {
     // State

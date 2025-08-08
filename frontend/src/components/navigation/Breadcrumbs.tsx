@@ -12,7 +12,7 @@ interface BreadcrumbsProps {
 export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ className = '' }) => {
   const { breadcrumbs } = useNavigation();
 
-  if (!breadcrumbs || breadcrumbs.length <= 1) {
+  if (!breadcrumbs || breadcrumbs.length === 0) {
     return null;
   }
 

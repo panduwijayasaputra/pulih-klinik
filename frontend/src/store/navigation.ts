@@ -23,15 +23,27 @@ export const useNavigationStore = create<NavigationStore>()(
       breadcrumbs: [],
 
       setActiveRole: (role: UserRole | null) => {
+        const { availableRoles } = get();
+        // Validate that the role is available for the current user
+        if (role && !availableRoles.includes(role)) {
+          console.warn(`Role ${role} is not available for current user`);
+          return;
+        }
         set({ activeRole: role });
       },
 
       setAvailableRoles: (roles: UserRole[]) => {
         const { activeRole } = get();
+        let newActiveRole = activeRole;
+        
+        // Validate and reset active role if it's no longer valid
+        if (activeRole && !roles.includes(activeRole)) {
+          newActiveRole = roles.length > 0 ? roles[0] : null;
+        }
+        
         set({ 
           availableRoles: roles,
-          // Set active role to first available role if not set or invalid
-          activeRole: !activeRole || !roles.includes(activeRole) ? roles[0] || null : activeRole
+          activeRole: newActiveRole
         });
       },
 
@@ -73,6 +85,7 @@ export const useNavigationStore = create<NavigationStore>()(
       partialize: (state) => ({ 
         menuCollapsed: state.menuCollapsed,
         activeRole: state.activeRole,
+        availableRoles: state.availableRoles, // Include availableRoles in persistence
       }),
     }
   )

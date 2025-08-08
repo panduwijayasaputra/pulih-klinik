@@ -13,20 +13,12 @@ import {
 import { DashboardConfig, NavigationItem } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
 
-// Navigation items for Administrator
+// Navigation items for Administrator (without dashboard - handled separately)
 export const adminNavigationItems: NavigationItem[] = [
-  {
-    id: 'admin-dashboard',
-    label: 'Dashboard Admin',
-    href: '/admin',
-    icon: HomeIcon,
-    description: 'Ringkasan sistem dan statistik',
-    requiredRoles: ['administrator'],
-  },
   {
     id: 'admin-clinics',
     label: 'Kelola Klinik',
-    href: '/admin/clinics',
+    href: '/portal#clinics',
     icon: BuildingOfficeIcon,
     description: 'Manajemen klinik terdaftar',
     requiredRoles: ['administrator'],
@@ -34,7 +26,7 @@ export const adminNavigationItems: NavigationItem[] = [
   {
     id: 'admin-users',
     label: 'Kelola Pengguna',
-    href: '/admin/users',
+    href: '/portal#users',
     icon: UserGroupIcon,
     description: 'Manajemen akun pengguna',
     requiredRoles: ['administrator'],
@@ -42,7 +34,7 @@ export const adminNavigationItems: NavigationItem[] = [
   {
     id: 'admin-system',
     label: 'Pengaturan Sistem',
-    href: '/admin/system',
+    href: '/portal#system',
     icon: CogIcon,
     description: 'Konfigurasi sistem global',
     requiredRoles: ['administrator'],
@@ -50,27 +42,19 @@ export const adminNavigationItems: NavigationItem[] = [
   {
     id: 'admin-analytics',
     label: 'Analytics',
-    href: '/admin/analytics',
+    href: '/portal#analytics',
     icon: ChartBarIcon,
     description: 'Laporan dan analisis penggunaan',
     requiredRoles: ['administrator'],
   },
 ];
 
-// Navigation items for Clinic Admin
+// Navigation items for Clinic Admin (without dashboard - handled separately)
 export const clinicAdminNavigationItems: NavigationItem[] = [
-  {
-    id: 'clinic-dashboard',
-    label: 'Dashboard Klinik',
-    href: '/dashboard',
-    icon: HomeIcon,
-    description: 'Ringkasan aktivitas klinik',
-    requiredRoles: ['clinic_admin'],
-  },
   {
     id: 'clinic-therapists',
     label: 'Kelola Therapist',
-    href: '/clinic/therapists',
+    href: '/portal/clinic/therapists',
     icon: UserGroupIcon,
     description: 'Manajemen therapist klinik',
     requiredRoles: ['clinic_admin'],
@@ -78,7 +62,7 @@ export const clinicAdminNavigationItems: NavigationItem[] = [
   {
     id: 'clinic-clients',
     label: 'Data Klien',
-    href: '/clients',
+    href: '/portal/clients',
     icon: UserIcon,
     description: 'Manajemen data klien',
     requiredRoles: ['clinic_admin', 'therapist'],
@@ -86,7 +70,7 @@ export const clinicAdminNavigationItems: NavigationItem[] = [
   {
     id: 'clinic-sessions',
     label: 'Sesi Hipnoterapi',
-    href: '/sessions',
+    href: '/portal/sessions',
     icon: ClipboardDocumentListIcon,
     description: 'Riwayat dan jadwal sesi',
     requiredRoles: ['clinic_admin', 'therapist'],
@@ -94,7 +78,7 @@ export const clinicAdminNavigationItems: NavigationItem[] = [
   {
     id: 'clinic-scripts',
     label: 'Script Library',
-    href: '/scripts',
+    href: '/portal/scripts',
     icon: DocumentTextIcon,
     description: 'Koleksi script hipnoterapi',
     requiredRoles: ['clinic_admin', 'therapist'],
@@ -102,7 +86,7 @@ export const clinicAdminNavigationItems: NavigationItem[] = [
   {
     id: 'clinic-billing',
     label: 'Billing & Tagihan',
-    href: '/clinic/billing',
+    href: '/portal/clinic/billing',
     icon: BanknotesIcon,
     description: 'Manajemen pembayaran',
     requiredRoles: ['clinic_admin'],
@@ -110,27 +94,19 @@ export const clinicAdminNavigationItems: NavigationItem[] = [
   {
     id: 'clinic-settings',
     label: 'Pengaturan Klinik',
-    href: '/clinic/settings',
+    href: '/portal/clinic/settings',
     icon: CogIcon,
     description: 'Konfigurasi klinik',
     requiredRoles: ['clinic_admin'],
   },
 ];
 
-// Navigation items for Therapist
+// Navigation items for Therapist (without dashboard - handled separately)
 export const therapistNavigationItems: NavigationItem[] = [
-  {
-    id: 'therapist-dashboard',
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: HomeIcon,
-    description: 'Ringkasan aktivitas harian',
-    requiredRoles: ['therapist'],
-  },
   {
     id: 'therapist-clients',
     label: 'Klien Saya',
-    href: '/clients',
+    href: '/portal/clients',
     icon: UserIcon,
     description: 'Daftar klien yang ditangani',
     requiredRoles: ['clinic_admin', 'therapist'],
@@ -138,7 +114,7 @@ export const therapistNavigationItems: NavigationItem[] = [
   {
     id: 'therapist-sessions',
     label: 'Sesi Hari Ini',
-    href: '/sessions',
+    href: '/portal/sessions',
     icon: ClipboardDocumentListIcon,
     description: 'Jadwal sesi hipnoterapi',
     requiredRoles: ['clinic_admin', 'therapist'],
@@ -146,19 +122,29 @@ export const therapistNavigationItems: NavigationItem[] = [
   {
     id: 'therapist-scripts',
     label: 'Script Hipnoterapi',
-    href: '/scripts',
+    href: '/portal/scripts',
     icon: DocumentTextIcon,
     description: 'Koleksi script tersedia',
     requiredRoles: ['clinic_admin', 'therapist'],
   },
 ];
 
+// Dashboard navigation item (appears first for all users)
+export const dashboardNavigationItem: NavigationItem = {
+  id: 'main-dashboard',
+  label: 'Dashboard',
+  href: '/portal',
+  icon: HomeIcon,
+  description: 'Halaman utama dashboard',
+  requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
+};
+
 // Common navigation items (available to all authenticated users)
 export const commonNavigationItems: NavigationItem[] = [
   {
     id: 'profile',
     label: 'Profil Saya',
-    href: '/profile',
+    href: '/portal/profile',
     icon: UserIcon,
     description: 'Pengaturan akun pribadi',
     requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
@@ -169,66 +155,70 @@ export const commonNavigationItems: NavigationItem[] = [
 export const dashboardConfigs: Record<UserRole, DashboardConfig> = {
   administrator: {
     role: 'administrator',
-    defaultRoute: '/admin',
+    defaultRoute: '/portal',
     allowedRoutes: [
-      '/admin',
-      '/admin/clinics',
-      '/admin/users', 
-      '/admin/system',
-      '/admin/analytics',
-      '/profile',
+      '/portal',
+      '/portal/profile',
     ],
     menuItems: [...adminNavigationItems, ...commonNavigationItems],
   },
   clinic_admin: {
     role: 'clinic_admin',
-    defaultRoute: '/dashboard',
+    defaultRoute: '/portal',
     allowedRoutes: [
-      '/dashboard',
-      '/clinic/therapists',
-      '/clients',
-      '/clients/[code]',
-      '/sessions',
-      '/scripts',
-      '/clinic/billing',
-      '/clinic/settings',
-      '/profile',
+      '/portal',
+      '/portal/clinic/therapists',
+      '/portal/clients',
+      '/portal/clients/[code]',
+      '/portal/sessions',
+      '/portal/scripts',
+      '/portal/clinic/billing',
+      '/portal/clinic/settings',
+      '/portal/profile',
     ],
     menuItems: [...clinicAdminNavigationItems, ...commonNavigationItems],
   },
   therapist: {
     role: 'therapist',
-    defaultRoute: '/dashboard',
+    defaultRoute: '/portal',
     allowedRoutes: [
-      '/dashboard',
-      '/clients',
-      '/clients/[code]',
-      '/sessions', 
-      '/scripts',
-      '/profile',
+      '/portal',
+      '/portal/clients',
+      '/portal/clients/[code]',
+      '/portal/sessions', 
+      '/portal/scripts',
+      '/portal/profile',
     ],
     menuItems: [...therapistNavigationItems, ...commonNavigationItems],
   },
 };
 
-// Get navigation items for user based on their roles
+// Get navigation items for user based on their roles with proper ordering
 export const getNavigationItemsForUser = (userRoles: UserRole[]): NavigationItem[] => {
   const allItems = new Map<string, NavigationItem>();
 
-  // Collect all navigation items from user's roles
-  userRoles.forEach(role => {
-    const config = dashboardConfigs[role];
-    if (config) {
-      config.menuItems.forEach(item => {
-        // Check if user has required role for this item
-        const hasRequiredRole = item.requiredRoles.some(requiredRole => 
-          userRoles.includes(requiredRole)
-        );
-        
-        if (hasRequiredRole) {
-          allItems.set(item.id, item);
-        }
-      });
+  // Always add dashboard first
+  allItems.set(dashboardNavigationItem.id, dashboardNavigationItem);
+
+  // Define priority order for navigation sections
+  const rolePriority: UserRole[] = ['administrator', 'clinic_admin', 'therapist'];
+  
+  // Add items in priority order
+  rolePriority.forEach(role => {
+    if (userRoles.includes(role)) {
+      const config = dashboardConfigs[role];
+      if (config) {
+        config.menuItems.forEach(item => {
+          // Check if user has required role for this item
+          const hasRequiredRole = item.requiredRoles.some(requiredRole => 
+            userRoles.includes(requiredRole)
+          );
+          
+          if (hasRequiredRole) {
+            allItems.set(item.id, item);
+          }
+        });
+      }
     }
   });
 

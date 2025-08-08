@@ -9,74 +9,53 @@ export const routeConfigs: RouteConfig[] = [
   { path: '/register', allowPublic: true, requiredRoles: [] },
   { path: '/thankyou', allowPublic: true, requiredRoles: [] },
 
-  // Protected routes - Administrator only
+
+  // Portal routes - Clinic Admin only
   { 
-    path: '/admin', 
-    requiredRoles: ['administrator'],
-    redirectTo: '/dashboard'
+    path: '/portal/clinic/settings', 
+    requiredRoles: ['clinic_admin'],
+    redirectTo: '/portal'
   },
   { 
-    path: '/admin/users', 
-    requiredRoles: ['administrator'],
-    redirectTo: '/dashboard'
+    path: '/portal/clinic/therapists', 
+    requiredRoles: ['clinic_admin'],
+    redirectTo: '/portal'
   },
   { 
-    path: '/admin/clinics', 
-    requiredRoles: ['administrator'],
-    redirectTo: '/dashboard'
-  },
-  { 
-    path: '/admin/system', 
-    requiredRoles: ['administrator'],
-    redirectTo: '/dashboard'
+    path: '/portal/clinic/billing', 
+    requiredRoles: ['clinic_admin'],
+    redirectTo: '/portal'
   },
 
-  // Protected routes - Clinic Admin only
+  // Portal routes - Clinic Admin or Therapist
   { 
-    path: '/clinic/settings', 
-    requiredRoles: ['clinic_admin'],
-    redirectTo: '/dashboard'
+    path: '/portal/clients', 
+    requiredRoles: ['clinic_admin', 'therapist'],
+    redirectTo: '/portal'
   },
   { 
-    path: '/clinic/therapists', 
-    requiredRoles: ['clinic_admin'],
-    redirectTo: '/dashboard'
+    path: '/portal/clients/[code]', 
+    requiredRoles: ['clinic_admin', 'therapist'],
+    redirectTo: '/portal'
   },
   { 
-    path: '/clinic/billing', 
-    requiredRoles: ['clinic_admin'],
-    redirectTo: '/dashboard'
+    path: '/portal/scripts', 
+    requiredRoles: ['clinic_admin', 'therapist'],
+    redirectTo: '/portal'
+  },
+  { 
+    path: '/portal/sessions', 
+    requiredRoles: ['clinic_admin', 'therapist'],
+    redirectTo: '/portal'
   },
 
-  // Protected routes - Clinic Admin or Therapist
+  // Portal routes - All authenticated users
   { 
-    path: '/clients', 
-    requiredRoles: ['clinic_admin', 'therapist'],
-    redirectTo: '/dashboard'
-  },
-  { 
-    path: '/clients/[code]', 
-    requiredRoles: ['clinic_admin', 'therapist'],
-    redirectTo: '/dashboard'
-  },
-  { 
-    path: '/scripts', 
-    requiredRoles: ['clinic_admin', 'therapist'],
-    redirectTo: '/dashboard'
-  },
-  { 
-    path: '/sessions', 
-    requiredRoles: ['clinic_admin', 'therapist'],
-    redirectTo: '/dashboard'
-  },
-
-  // Protected routes - All authenticated users
-  { 
-    path: '/dashboard', 
+    path: '/portal', 
     requiredRoles: ['administrator', 'clinic_admin', 'therapist']
   },
   { 
-    path: '/profile', 
+    path: '/portal/profile', 
     requiredRoles: ['administrator', 'clinic_admin', 'therapist']
   },
 ];
@@ -156,18 +135,8 @@ export const getDefaultRouteForUser = (user: User | null): string => {
     return '/login';
   }
 
-  const primaryRole = user.roles[0];
-
-  switch (primaryRole) {
-    case 'administrator':
-      return '/admin';
-    case 'clinic_admin':
-      return '/dashboard';
-    case 'therapist':
-      return '/dashboard';
-    default:
-      return '/dashboard';
-  }
+  // All authenticated users now go to the unified portal page
+  return '/portal';
 };
 
 // Get available routes for user based on their roles

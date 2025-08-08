@@ -1,4 +1,6 @@
-import type { Route } from 'next';
+'use client';
+
+import React from 'react';
 import { CustomLink } from '@/components/ui/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/useAuth';
 import {
   ChartBarIcon,
   CheckCircleIcon,
@@ -21,6 +24,19 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function HomePage() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -28,7 +44,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary-600 rounded flex items-center justify-center">
                 <span className="text-white font-bold text-sm">TP</span>
               </div>
               <span className="text-xl font-semibold text-gray-900">Terapintar</span>
@@ -42,12 +58,25 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <CustomLink href={'/login' as Route} variant="ghost" className="text-gray-600">
-                Masuk
-              </CustomLink>
-              <CustomLink href={'/register' as Route} className="bg-purple-600 hover:bg-purple-700 text-white">
-                Daftar
-              </CustomLink>
+              {isAuthenticated && user ? (
+                <>
+                  <span className="text-gray-600 text-sm">
+                    Halo, {user.name}
+                  </span>
+                  <CustomLink href="/portal" variant="default">
+                    Portal
+                  </CustomLink>
+                </>
+              ) : (
+                <>
+                  <CustomLink href="/login" variant="ghost">
+                    Masuk
+                  </CustomLink>
+                  <CustomLink href="/register">
+                    Daftar
+                  </CustomLink>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -62,20 +91,31 @@ export default function HomePage() {
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
                 Masa Depan
                 <br />
-                <span className="text-purple-600">Hipnoterapi AI</span>
+                <span className="text-primary-600">Hipnoterapi AI</span>
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                 Platform canggih yang mentransformasi sesi perencanaan manual 2 jam menjadi workflow AI-assisted 15 menit untuk terapis Indonesia berlisensi.
               </p>
 
               <div className="flex items-center space-x-4 mb-12">
-                <CustomLink
-                  href={'/daftar' as Route}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3"
-                >
-                  Mulai Sekarang
-                </CustomLink>
-                <Button variant="ghost" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 p-0">
+                {isAuthenticated ? (
+                  <CustomLink
+                    href="/portal"
+                    className=" text-white px-6 py-3"
+                    variant="default"
+                  >
+                    Masuk ke Portal
+                  </CustomLink>
+                ) : (
+                  <CustomLink
+                    href="/register"
+                    variant="default"
+                    className="px-6 py-3"
+                  >
+                    Mulai Sekarang
+                  </CustomLink>
+                )}
+                <Button variant="ghost" className="flex items-center space-x-2 p-0">
                   <div className="w-10 h-10 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center">
                     <PlayIcon className="w-4 h-4 ml-1" />
                   </div>
@@ -85,15 +125,15 @@ export default function HomePage() {
 
               {/* Partner Logos */}
               <div className="flex items-center space-x-4">
-                <Badge variant="outline" className="text-gray-600">
+                <Badge variant="outline">
                   <ShieldCheckIcon className="w-4 h-4 mr-2" />
                   HIPAA
                 </Badge>
-                <Badge variant="outline" className="text-gray-600">
+                <Badge variant="outline">
                   <DocumentTextIcon className="w-4 h-4 mr-2" />
                   ISO 27001
                 </Badge>
-                <Badge variant="outline" className="text-gray-600">
+                <Badge variant="outline">
                   <SparklesIcon className="w-4 h-4 mr-2" />
                   AI-Powered
                 </Badge>
@@ -102,7 +142,7 @@ export default function HomePage() {
 
             {/* Right Content - Dashboard Preview */}
             <div className="relative">
-              <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 to-blue-50">
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-primary-50 to-primary-100">
                 <CardContent className="p-0">
                   <Card className="bg-white rounded-xl p-6 mb-4 border-0">
                     <CardHeader className="p-0 pb-4">
@@ -114,11 +154,11 @@ export default function HomePage() {
                     <CardContent className="p-0">
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                          <div className="text-2xl font-bold text-purple-600">847</div>
+                          <div className="text-2xl font-bold text-primary-600">847</div>
                           <div className="text-sm text-gray-600">Total Sesi</div>
                         </div>
                         <div>
-                          <div className="text-2xl font-bold text-blue-600">24.5k</div>
+                          <div className="text-2xl font-bold text-primary-600">24.5k</div>
                           <div className="text-sm text-gray-600">Menit Terapi</div>
                         </div>
                       </div>
@@ -134,27 +174,27 @@ export default function HomePage() {
                           </div>
                           <span className="text-sm text-green-600 font-semibold">Selesai</span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <DocumentTextIcon className="w-4 h-4 text-blue-600" />
+                            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                              <DocumentTextIcon className="w-4 h-4 text-primary-600" />
                             </div>
                             <span className="text-sm font-medium text-gray-700">Skrip Terapi</span>
                           </div>
-                          <span className="text-sm text-blue-600 font-semibold">Selesai</span>
+                          <span className="text-sm text-primary-600 font-semibold">Selesai</span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                              <PlayIcon className="w-4 h-4 text-purple-600" />
+                            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                              <PlayIcon className="w-4 h-4 text-primary-600" />
                             </div>
                             <span className="text-sm font-medium text-gray-700">Sesi Hipnoterapi</span>
                           </div>
-                          <span className="text-sm text-purple-600 font-semibold">Berikutnya</span>
+                          <span className="text-sm text-primary-600 font-semibold">Berikutnya</span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -206,7 +246,7 @@ export default function HomePage() {
             {/* Feature 1 */}
             <Card className="bg-slate-800 border-slate-700 rounded-2xl p-8 text-left">
               <CardContent className="p-0">
-                <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
+                <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center mb-6">
                   <DocumentTextIcon className="w-6 h-6 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold text-white mb-4">
@@ -230,7 +270,7 @@ export default function HomePage() {
             {/* Feature 2 */}
             <Card className="bg-slate-800 border-slate-700 rounded-2xl p-8 text-left">
               <CardContent className="p-0">
-                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
+                <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center mb-6">
                   <LightBulbIcon className="w-6 h-6 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold text-white mb-4">
@@ -244,11 +284,11 @@ export default function HomePage() {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-slate-300">Progressive Relaxation</span>
-                        <Badge variant="success" className="text-xs">95%</Badge>
+                        <Badge variant="secondary" className="text-xs">95%</Badge>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-slate-300">Guided Imagery</span>
-                        <Badge variant="success" className="text-xs">87%</Badge>
+                        <Badge variant="secondary" className="text-xs">87%</Badge>
                       </div>
                     </div>
                   </CardContent>
@@ -315,9 +355,13 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <CustomLink href="/daftar" className="mt-8 bg-purple-600 hover:bg-purple-700 text-white">
-                Coba Gratis
-              </CustomLink>
+                              <CustomLink
+                  href={isAuthenticated ? "/portal" : "/register"}
+                  variant="default"
+                  className="mt-8"
+                >
+                  {isAuthenticated ? "Masuk ke Portal" : "Coba Gratis"}
+                </CustomLink>
             </div>
 
             {/* Right - Chart Mockup */}
@@ -390,8 +434,8 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Feature 1 */}
             <div className="text-center p-6">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <ClockIcon className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <ClockIcon className="w-6 h-6 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
                 Setup 2 Menit
@@ -403,8 +447,8 @@ export default function HomePage() {
 
             {/* Feature 2 */}
             <div className="text-center p-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <SparklesIcon className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <SparklesIcon className="w-6 h-6 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
                 AI yang Dapat Diandalkan
@@ -483,7 +527,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Beta Plan */}
-            <Card className="relative border-2 border-gray-200 hover:border-purple-300 transition-colors">
+            <Card className="relative border-2 border-gray-200 hover:border-primary-300 transition-colors">
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-xl font-semibold text-gray-900">Beta</CardTitle>
                 <div className="mt-4">
@@ -520,8 +564,9 @@ export default function HomePage() {
                   </li>
                 </ul>
                 <CustomLink
-                  href="/daftar"
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                  href="/register"
+                  variant="outline"
+                  className="w-full"
                 >
                   Mulai Beta
                 </CustomLink>
@@ -529,9 +574,9 @@ export default function HomePage() {
             </Card>
 
             {/* Alpha Plan */}
-            <Card className="relative border-2 border-purple-500 shadow-lg">
+            <Card className="relative border-2 border-primary-600 shadow-lg">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-purple-600 text-white px-3 py-1 text-xs font-medium">
+                <Badge variant="default">
                   Paling Populer
                 </Badge>
               </div>
@@ -575,8 +620,9 @@ export default function HomePage() {
                   </li>
                 </ul>
                 <CustomLink
-                  href="/daftar"
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                  href="/register"
+                  variant="default"
+                  className="w-full"
                 >
                   Mulai Alpha
                 </CustomLink>
@@ -584,7 +630,7 @@ export default function HomePage() {
             </Card>
 
             {/* Theta Plan */}
-            <Card className="relative border-2 border-gray-200 hover:border-purple-300 transition-colors">
+            <Card className="relative border-2 border-gray-200 hover:border-primary-300 transition-colors">
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-xl font-semibold text-gray-900">Theta</CardTitle>
                 <div className="mt-4">
@@ -629,8 +675,9 @@ export default function HomePage() {
                   </li>
                 </ul>
                 <CustomLink
-                  href="/daftar"
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                  href="/register"
+                  variant="outline"
+                  className="w-full"
                 >
                   Mulai Theta
                 </CustomLink>
@@ -638,7 +685,7 @@ export default function HomePage() {
             </Card>
 
             {/* Delta Plan */}
-            <Card className="relative border-2 border-gray-200 hover:border-purple-300 transition-colors">
+            <Card className="relative border-2 border-gray-200 hover:border-primary-300 transition-colors">
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-xl font-semibold text-gray-900">Delta</CardTitle>
                 <div className="mt-4">
@@ -687,8 +734,9 @@ export default function HomePage() {
                   </li>
                 </ul>
                 <CustomLink
-                  href="/daftar"
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                  href="/register"
+                  variant="outline"
+                  className="w-full"
                 >
                   Mulai Delta
                 </CustomLink>
@@ -728,14 +776,14 @@ export default function HomePage() {
                   {[...Array(5)].map((_, i) => (
                     <StarIcon key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                   ))}
-                  <Badge variant="success" className="ml-2 text-xs">+95%</Badge>
+                  <Badge variant="secondary" className="ml-2 text-xs">+95%</Badge>
                 </div>
                 <blockquote className="text-gray-700 mb-6 leading-relaxed">
                   "Platform ini benar-benar mengubah cara saya mengelola praktik. Yang tadinya butuh 2 jam untuk persiapan, sekarang hanya 15 menit."
                 </blockquote>
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
-                    <AvatarFallback className="bg-purple-100 text-purple-600 text-sm font-semibold">DR</AvatarFallback>
+                    <AvatarFallback className="bg-primary-100 text-primary-600 text-sm font-semibold">DR</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">Dr. Rina Sari</p>
@@ -752,14 +800,14 @@ export default function HomePage() {
                   {[...Array(5)].map((_, i) => (
                     <StarIcon key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                   ))}
-                  <Badge variant="success" className="ml-2 text-xs">+90%</Badge>
+                  <Badge variant="secondary" className="ml-2 text-xs">+90%</Badge>
                 </div>
                 <blockquote className="text-gray-700 mb-6 leading-relaxed">
                   "AI rekomendasi sangat akurat dan sesuai dengan konteks budaya Indonesia. Klien saya juga merasa lebih nyaman."
                 </blockquote>
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
-                    <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-semibold">AP</AvatarFallback>
+                    <AvatarFallback className="bg-primary-100 text-primary-600 text-sm font-semibold">AP</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">Ahmad Pratama</p>
@@ -776,7 +824,7 @@ export default function HomePage() {
                   {[...Array(5)].map((_, i) => (
                     <StarIcon key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                   ))}
-                  <Badge variant="success" className="ml-2 text-xs">+92%</Badge>
+                  <Badge variant="secondary" className="ml-2 text-xs">+92%</Badge>
                 </div>
                 <blockquote className="text-gray-700 mb-6 leading-relaxed">
                   "Dokumentasi dan tracking yang sistematis membuat saya lebih percaya diri dalam memberikan terapi kepada klien."
@@ -799,19 +847,20 @@ export default function HomePage() {
       <Separator />
 
       {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 to-indigo-600">
+      <section className="py-20 bg-gradient-to-r from-primary-600 to-indigo-600">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Setup Terapintar dalam 2 Menit
           </h2>
-          <p className="text-lg text-purple-100 mb-8">
+          <p className="text-lg text-primary-100 mb-8">
             Mulai transformasi praktik terapi Anda hari ini dengan platform yang dirancang khusus untuk terapis Indonesia.
           </p>
           <CustomLink
-            href="/daftar"
-            className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+            href={isAuthenticated ? "/portal" : "/register"}
+            variant="secondary"
+            className="px-8 py-4 text-lg font-semibold"
           >
-            Mulai Gratis Sekarang
+            {isAuthenticated ? "Masuk ke Portal" : "Mulai Gratis Sekarang"}
           </CustomLink>
         </div>
       </section>
@@ -867,7 +916,7 @@ export default function HomePage() {
             {/* Logo and Copyright */}
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary-600 rounded flex items-center justify-center">
                   <span className="text-white font-bold text-sm">TP</span>
                 </div>
                 <span className="text-xl font-semibold text-gray-900">Terapintar</span>
