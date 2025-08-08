@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -22,7 +22,6 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
     activeRole,
     availableRoles,
     switchToRole,
-    clearActiveRole,
     getRoleDisplayInfo,
     isMultiRole,
   } = useNavigation();
