@@ -23,6 +23,8 @@ export const useSubscription = () => {
     getRemainingQuota,
   } = useClinicStore();
 
+  console.log('useSubscription hook:', { subscription, usageMetrics, usageAlerts });
+
   // Get available subscription plans
   const getAvailablePlans = useCallback((): SubscriptionPlan[] => {
     return TIER_ORDER.map((tier) => {

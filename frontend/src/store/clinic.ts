@@ -52,6 +52,7 @@ export const useClinicStore = create<ClinicStore>()(
       },
 
       setSubscription: (subscription) => {
+        console.log('Setting subscription in store:', subscription);
         set({ subscription, error: null });
         get().calculateUsageMetrics();
         get().checkUsageAlerts();

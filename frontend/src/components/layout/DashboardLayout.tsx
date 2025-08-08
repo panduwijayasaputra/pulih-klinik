@@ -20,8 +20,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Header */}
-          <header className="bg-card border-b border-border sticky top-0 z-30 flex-shrink-0">
-            <div className="px-6 py-6 lg:pl-6 pl-16 flex items-center justify-between">
+          <header className="bg-card border-b border-border z-30 flex-shrink-0">
+            <div className="px-6 h-12 lg:pl-6 pl-16 flex items-center justify-between">
               {/* Left: Breadcrumbs */}
               <div className="flex-1">
                 <Breadcrumbs />

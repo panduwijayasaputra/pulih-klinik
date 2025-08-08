@@ -37,6 +37,8 @@ export const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
 
   const [, setShowUpgradeModal] = useState(false);
 
+  console.log('SubscriptionInfo render:', { subscription, currentTierInfo, usageMetrics });
+
   if (!subscription || !currentTierInfo || !usageMetrics) {
     return (
       <Card className={className}>

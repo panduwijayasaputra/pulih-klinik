@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { SubscriptionInfo, UsageMetrics } from '@/components/dashboard';
-import { initializeMockData } from '@/lib/mock-data';
+import { SubscriptionInfo, UsageMetrics, SubscriptionTest } from '@/components/dashboard';
+import { useClinicStore } from '@/store/clinic';
+import { mockSubscriptionData } from '@/lib/mock-data';
 import { 
   ChartBarIcon,
   ClipboardDocumentListIcon,
@@ -17,11 +18,15 @@ import {
 
 export const ClinicDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { setSubscription, subscription } = useClinicStore();
 
   // Initialize mock data for development
   useEffect(() => {
-    initializeMockData();
-  }, []);
+    if (!subscription) {
+      console.log('Setting up mock subscription data...');
+      setSubscription(mockSubscriptionData);
+    }
+  }, [subscription, setSubscription]);
 
   return (
     <div className="space-y-6">
@@ -36,6 +41,9 @@ export const ClinicDashboard: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Debug Test Component */}
+      <SubscriptionTest />
 
       {/* Subscription and Usage Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

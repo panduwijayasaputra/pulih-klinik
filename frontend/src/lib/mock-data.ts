@@ -29,14 +29,23 @@ export const mockSubscriptionData: ClinicSubscription = {
 };
 
 // Initialize mock data in clinic store
-export const initializeMockData = () => {
+export const initializeMockData = async () => {
   if (typeof window !== 'undefined') {
     // Only run in browser environment
-    import('@/store/clinic').then(({ useClinicStore }) => {
+    try {
+      const { useClinicStore } = await import('@/store/clinic');
       const store = useClinicStore.getState();
+      
       if (!store.subscription) {
+        console.log('Initializing mock subscription data...');
         store.setSubscription(mockSubscriptionData);
+        
+        // Verify data was set
+        const updatedStore = useClinicStore.getState();
+        console.log('Mock data initialized:', updatedStore.subscription);
       }
-    });
+    } catch (error) {
+      console.error('Failed to initialize mock data:', error);
+    }
   }
 };
