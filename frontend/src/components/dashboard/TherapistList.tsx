@@ -330,16 +330,17 @@ export const TherapistList: React.FC = () => {
       return;
     }
 
-    const actionText = newStatus === 'active' ? 'activate' : 'deactivate';
+    const actionTextId = newStatus === 'active' ? 'aktifkan' : 'nonaktifkan';
+    const actionTitleId = newStatus === 'active' ? 'Aktifkan Akun Therapist' : 'Nonaktifkan Akun Therapist';
     const actionColor = newStatus === 'active' ? 'success' : 'warning';
-    
-    // Enhanced confirmation dialog with more context
+
+    // Konfirmasi sederhana dalam Bahasa Indonesia
     showConfirmation({
       type: actionColor,
-      title: `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} Therapist Account`,
-      message: `Are you sure you want to ${actionText} ${therapist.name}?\n\n• Current Status: ${therapist.status}\n• Specialization: ${therapist.specialization}\n• Sessions Completed: ${therapist.sessions_completed}\n\nThis action will ${newStatus === 'active' ? 'allow them to access their account and conduct sessions' : 'prevent them from accessing their account and conducting new sessions'}.`,
-      confirmText: actionText.charAt(0).toUpperCase() + actionText.slice(1),
-      cancelText: 'Cancel'
+      title: actionTitleId,
+      message: `Yakin ingin ${actionTextId} akun ${therapist.name}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
+      confirmText: actionTextId.charAt(0).toUpperCase() + actionTextId.slice(1),
+      cancelText: 'Batal'
     }, () => executeStatusChange(therapistId, newStatus));
   };
 
