@@ -4,6 +4,7 @@ export { CustomLink, linkVariants } from "./link"
 export { Input } from "./input"
 export { Label } from "./label"
 export { Textarea } from "./textarea"
+export { Checkbox } from "./checkbox"
 export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem, SelectSeparator, SelectScrollUpButton, SelectScrollDownButton } from "./select"
 
 // Layout Components

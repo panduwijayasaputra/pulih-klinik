@@ -7,6 +7,10 @@ import {
   getPrimaryDashboardConfig,
   roleDisplayInfo 
 } from '@/lib/navigation-config';
+import { 
+  getDashboardNavigationForRoles,
+  dashboardBreadcrumbMapping 
+} from '@/lib/dashboard-navigation-config';
 import { BreadcrumbItem, NavigationItem } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
 
@@ -40,7 +44,9 @@ export const useNavigation = () => {
   // Get navigation items for current user
   const navigationItems = useMemo(() => {
     if (!user?.roles) return [];
-    return getNavigationItemsForUser(user.roles);
+    
+    // Use portal-based dashboard navigation for all portal routes
+    return getDashboardNavigationForRoles(user.roles);
   }, [user?.roles]);
 
   // Get filtered navigation items for active role (if multi-role user wants to focus)
@@ -102,54 +108,85 @@ export const useNavigation = () => {
   // Breadcrumb helpers
   const generateBreadcrumbs = useCallback((): BreadcrumbItem[] => {
     const pathSegments = pathname.split('/').filter(Boolean);
+    
+    // Portal-based breadcrumbs
     const breadcrumbs: BreadcrumbItem[] = [
       {
         id: 'home',
         label: 'Dashboard',
-        href: primaryDashboard?.defaultRoute || '/dashboard',
+        href: '/portal',
       }
     ];
 
-    // If we're already on the dashboard route, don't add additional breadcrumbs
-    if (pathname === '/portal' || pathname === primaryDashboard?.defaultRoute) {
+    // If we're already on the root portal route, don't add additional breadcrumbs
+    if (pathname === '/portal') {
       return breadcrumbs;
     }
 
-    // Build breadcrumbs based on path segments
-    let currentPath = '';
-    pathSegments.forEach((segment, index) => {
-      currentPath += `/${segment}`;
+    // Use the dashboard breadcrumb mapping for portal routes
+    const mapping = dashboardBreadcrumbMapping[pathname];
+    if (mapping) {
+      // Build breadcrumb chain
+      const chain: BreadcrumbItem[] = [];
+      let currentPath = pathname;
+      let counter = 0;
       
-      // Skip if this is the dashboard route (already added as first breadcrumb)
-      if (currentPath === '/portal' || currentPath === primaryDashboard?.defaultRoute) {
-        return;
+      while (currentPath && counter < 10) { // Prevent infinite loops
+        const pathMapping = dashboardBreadcrumbMapping[currentPath];
+        if (pathMapping) {
+          chain.unshift({
+            id: `breadcrumb-${counter}`,
+            label: pathMapping.label,
+            href: currentPath,
+            isActive: currentPath === pathname,
+          });
+          currentPath = pathMapping.parent || '';
+        } else {
+          break;
+        }
+        counter++;
       }
       
-      // Find navigation item for this path
-      const navItem = navigationItems.find(item => 
-        item.href === currentPath || item.href.includes(`[${segment}]`)
-      );
+      // Remove the portal breadcrumb if it's already added
+      const filteredChain = chain.filter(item => item.href !== '/portal');
+      breadcrumbs.push(...filteredChain);
+    } else {
+      // Fallback for unmapped routes
+      let currentPath = '';
+      pathSegments.forEach((segment, index) => {
+        currentPath += `/${segment}`;
+        
+        // Skip if this is the portal route (already added as first breadcrumb)
+        if (currentPath === '/portal') {
+          return;
+        }
+        
+        // Find navigation item for this path
+        const navItem = navigationItems.find(item => 
+          item.href === currentPath || item.href.includes(`[${segment}]`)
+        );
 
-      if (navItem) {
-        breadcrumbs.push({
-          id: `breadcrumb-${index}`,
-          label: navItem.label,
-          href: currentPath,
-          isActive: index === pathSegments.length - 1,
-        });
-      } else {
-        // Fallback for dynamic segments
-        breadcrumbs.push({
-          id: `breadcrumb-${index}`,
-          label: segment.charAt(0).toUpperCase() + segment.slice(1),
-          href: currentPath,
-          isActive: index === pathSegments.length - 1,
-        });
-      }
-    });
+        if (navItem) {
+          breadcrumbs.push({
+            id: `breadcrumb-${index}`,
+            label: navItem.label,
+            href: currentPath,
+            isActive: index === pathSegments.length - 1,
+          });
+        } else {
+          // Fallback for dynamic segments
+          breadcrumbs.push({
+            id: `breadcrumb-${index}`,
+            label: segment.charAt(0).toUpperCase() + segment.slice(1),
+            href: currentPath,
+            isActive: index === pathSegments.length - 1,
+          });
+        }
+      });
+    }
 
     return breadcrumbs;
-  }, [pathname, navigationItems, primaryDashboard]);
+  }, [pathname, navigationItems]);
 
   // Auto-update breadcrumbs when pathname changes
   useEffect(() => {
