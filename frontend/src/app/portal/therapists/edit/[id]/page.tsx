@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { TherapistForm } from '@/components/dashboard/TherapistForm';
 import { ArrowLeftIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
+import { UserRoleEnum } from '@/types/enums';
 import { useParams } from 'next/navigation';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { useRouter } from 'next/navigation';
@@ -27,9 +28,8 @@ export default function EditTherapistPage() {
     );
   }
 
-  // Temporarily bypass authentication for testing
-  const isAuthorized = true; // Force bypass for testing
-  // const isAuthorized = user && user.roles.includes('clinic_admin');
+  // Access control
+  const isAuthorized = !!(user && user.roles.includes(UserRoleEnum.ClinicAdmin));
   
   if (!isAuthorized) {
     return (

@@ -1,4 +1,5 @@
 import { User, UserRole } from '@/types/auth';
+import { UserRoleEnum } from '@/types/enums';
 import { RouteConfig } from '@/types/navigation';
 
 // Route configurations with role requirements
@@ -13,17 +14,17 @@ export const routeConfigs: RouteConfig[] = [
   // Portal routes - Clinic Admin only
   { 
     path: '/portal/clinic/settings', 
-    requiredRoles: ['clinic_admin'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
     redirectTo: '/portal'
   },
   { 
     path: '/portal/therapists', 
-    requiredRoles: ['clinic_admin'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
     redirectTo: '/portal'
   },
   { 
     path: '/portal/therapists/new', 
-    requiredRoles: ['clinic_admin'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
     redirectTo: '/portal'
   },
   { 
@@ -34,40 +35,40 @@ export const routeConfigs: RouteConfig[] = [
   },
   { 
     path: '/portal/clinic/billing', 
-    requiredRoles: ['clinic_admin'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
     redirectTo: '/portal'
   },
 
   // Portal routes - Clinic Admin or Therapist
   { 
     path: '/portal/clients', 
-    requiredRoles: ['clinic_admin', 'therapist'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
     redirectTo: '/portal'
   },
   { 
     path: '/portal/clients/[code]', 
-    requiredRoles: ['clinic_admin', 'therapist'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
     redirectTo: '/portal'
   },
   { 
     path: '/portal/scripts', 
-    requiredRoles: ['clinic_admin', 'therapist'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
     redirectTo: '/portal'
   },
   { 
     path: '/portal/sessions', 
-    requiredRoles: ['clinic_admin', 'therapist'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
     redirectTo: '/portal'
   },
 
   // Portal routes - All authenticated users
   { 
     path: '/portal', 
-    requiredRoles: ['administrator', 'clinic_admin', 'therapist']
+    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
   },
   { 
     path: '/portal/profile', 
-    requiredRoles: ['administrator', 'clinic_admin', 'therapist']
+    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
   },
 ];
 

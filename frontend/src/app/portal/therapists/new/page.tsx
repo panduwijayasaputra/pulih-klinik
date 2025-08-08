@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { TherapistForm } from '@/components/dashboard/TherapistForm';
 import { ArrowLeftIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
+import { UserRoleEnum } from '@/types/enums';
 import { Card, CardContent } from '@/components/ui/card';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { useRouter } from 'next/navigation';
@@ -25,7 +26,7 @@ export default function NewTherapistPage() {
     );
   }
 
-  if (!user || !user.roles.includes('clinic_admin')) {
+  if (!user || !user.roles.includes(UserRoleEnum.ClinicAdmin)) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">

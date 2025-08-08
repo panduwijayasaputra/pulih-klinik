@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   ArrowPathIcon,
   CheckCircleIcon,
   ClockIcon,
@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
+import { UserRoleEnum } from '@/types/enums';
 
 interface Therapist {
   id: string;
@@ -74,7 +75,7 @@ export const TherapistList: React.FC = () => {
       try {
         // Mock API call
         await new Promise(resolve => setTimeout(resolve, 800));
-        
+
         // Mock therapists data
         const mockTherapists = [
           {
@@ -146,15 +147,15 @@ export const TherapistList: React.FC = () => {
             lastActive: 'Never'
           }
         ];
-        
+
         setTherapists(mockTherapists);
         console.log('✅ TherapistList: Therapist data loaded successfully');
       } catch (error) {
         console.error('Failed to load therapists:', error);
         addToast({
           type: 'error',
-                  title: 'Kesalahan Koneksi',
-        message: 'Gagal terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.'
+          title: 'Kesalahan Koneksi',
+          message: 'Gagal terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.'
         });
       } finally {
         setLoading(false);
@@ -170,7 +171,7 @@ export const TherapistList: React.FC = () => {
     try {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       // Mock therapists data
       const mockTherapists = [
         {
@@ -242,7 +243,7 @@ export const TherapistList: React.FC = () => {
           lastActive: 'Never'
         }
       ];
-      
+
       setTherapists(mockTherapists);
     } catch (error) {
       console.error('Failed to refresh therapists:', error);
@@ -286,13 +287,13 @@ export const TherapistList: React.FC = () => {
     try {
       // Mock API call to resend email
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Set cooldown timer (60 seconds)
       setResendCooldowns(prev => ({
         ...prev,
         [therapistId]: 60
       }));
-      
+
       addToast({
         type: 'success',
         title: 'Email Berhasil Dikirim Ulang',
@@ -311,7 +312,7 @@ export const TherapistList: React.FC = () => {
   };
 
   const handleStatusChangeRequest = (therapistId: string, newStatus: 'active' | 'inactive') => {
-    if (!user || !user.roles.includes('clinic_admin')) {
+    if (!user || !user.roles.includes(UserRoleEnum.ClinicAdmin)) {
       addToast({
         type: 'error',
         title: 'Access Denied',
@@ -358,18 +359,18 @@ export const TherapistList: React.FC = () => {
     try {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const therapist = therapists.find(t => t.id === therapistId);
-      
+
       // Update local state
-      setTherapists(prev => 
-        prev.map(therapist => 
-          therapist.id === therapistId 
+      setTherapists(prev =>
+        prev.map(therapist =>
+          therapist.id === therapistId
             ? { ...therapist, status: newStatus }
             : therapist
         )
       );
-      
+
       // Log clinic admin action for audit
       console.warn('Clinic Admin Action:', {
         adminId: user.id,
@@ -454,8 +455,8 @@ export const TherapistList: React.FC = () => {
         <p className="text-gray-600 mb-4">
           Mulai dengan menambahkan therapist pertama ke klinik.
         </p>
-        <Button 
-          onClick={refreshTherapists} 
+        <Button
+          onClick={refreshTherapists}
           disabled={loading}
           variant="outline"
           className="mt-4"
@@ -481,8 +482,8 @@ export const TherapistList: React.FC = () => {
       {/* Header with refresh button */}
       <div className="flex items-center justify-end">
         <div className="flex items-center space-x-2">
-          <Button 
-            onClick={refreshTherapists} 
+          <Button
+            onClick={refreshTherapists}
             disabled={loading}
             variant="outline"
             size="sm"
@@ -509,7 +510,7 @@ export const TherapistList: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              
+
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
                   <h3 className="text-lg font-medium text-gray-900">
@@ -517,13 +518,13 @@ export const TherapistList: React.FC = () => {
                   </h3>
                   {getStatusBadge(therapist.status)}
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                   <div>
                     <p><span className="font-medium">Email:</span> {therapist.email}</p>
                     <p><span className="font-medium">Specialization:</span> {therapist.specialization}</p>
                   </div>
-                  
+
                   <div>
                     <p><span className="font-medium">Sessions:</span> {therapist.sessions_completed}</p>
                     <div className="flex items-center">
@@ -532,7 +533,7 @@ export const TherapistList: React.FC = () => {
                       <span>{formatRating(therapist.client_satisfaction)}</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {/* Status-specific information */}
                     {therapist.status === 'pending_setup' && (
@@ -552,8 +553,8 @@ export const TherapistList: React.FC = () => {
 
             <div className="flex items-center space-x-2 ml-4">
               {/* View Details Button */}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => handleViewDetails(therapist)}
               >
@@ -562,9 +563,9 @@ export const TherapistList: React.FC = () => {
               </Button>
 
               {/* Edit Button (Clinic Admin Only) */}
-              {user?.roles.includes('clinic_admin') && (
-                <Button 
-                  variant="outline" 
+              {user?.roles.includes(UserRoleEnum.ClinicAdmin) && (
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => handleEditTherapist(therapist.id)}
                   className="text-blue-600 border-blue-300 hover:bg-blue-50"
@@ -575,7 +576,7 @@ export const TherapistList: React.FC = () => {
               )}
 
               {/* Status Action Buttons (Clinic Admin Only) */}
-              {user?.roles.includes('clinic_admin') && (
+              {user?.roles.includes(UserRoleEnum.ClinicAdmin) && (
                 <>
                   {therapist.status === 'active' && (
                     <Button
@@ -592,7 +593,7 @@ export const TherapistList: React.FC = () => {
                       )}
                     </Button>
                   )}
-                  
+
                   {therapist.status === 'inactive' && (
                     <Button
                       variant="outline"
@@ -608,11 +609,11 @@ export const TherapistList: React.FC = () => {
                       )}
                     </Button>
                   )}
-                  
+
                   {therapist.status === 'pending_setup' && (() => {
                     const cooldown = resendCooldowns[therapist.id];
                     const isInCooldown = Boolean(cooldown && cooldown > 0);
-                    
+
                     return (
                       <Button
                         variant="outline"
@@ -654,21 +655,21 @@ export const TherapistList: React.FC = () => {
       ))}
 
       {/* Clinic Admin Action Log Note */}
-      {user?.roles.includes('clinic_admin') && (
+      {user?.roles.includes(UserRoleEnum.ClinicAdmin) && (
         <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
           <p>
             <strong>Admin Note:</strong> All therapist management actions are logged with your admin ID and timestamp for audit purposes.
           </p>
         </div>
       )}
-      
+
       {/* Confirmation Dialog */}
       {ConfirmationDialog}
 
-              {/* Therapist Details Modal */}
-        {showDetailsModal && selectedTherapist && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" style={{ margin: 0 }}>
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-4">
+      {/* Therapist Details Modal */}
+      {showDetailsModal && selectedTherapist && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" style={{ margin: 0 }}>
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-4">
             <div className="p-6">
               {/* Modal Header */}
               <div className="flex items-center justify-between mb-6">
@@ -826,19 +827,19 @@ export const TherapistList: React.FC = () => {
               {/* Modal Footer */}
               <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
                 {/* Temporarily bypass role check for testing */}
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => handleEditTherapist(selectedTherapist.id)}
                   className="text-blue-600 border-blue-300 hover:bg-blue-50"
                 >
                   Edit Therapist
                 </Button>
-                {user?.roles.includes('clinic_admin') && selectedTherapist.status === 'pending_setup' && (() => {
+                {user?.roles.includes(UserRoleEnum.ClinicAdmin) && selectedTherapist.status === 'pending_setup' && (() => {
                   const cooldown = resendCooldowns[selectedTherapist.id];
                   const isInCooldown = Boolean(cooldown && cooldown > 0);
-                  
+
                   return (
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => handleResendEmail(selectedTherapist.id)}
                       disabled={actionLoading === selectedTherapist.id || isInCooldown}
@@ -866,29 +867,29 @@ export const TherapistList: React.FC = () => {
                 <Button variant="outline" onClick={handleCloseDetails}>
                   Tutup
                 </Button>
-                {user?.roles.includes('clinic_admin') && selectedTherapist.status === 'active' && (
-                                      <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        handleCloseDetails();
-                        handleStatusChangeRequest(selectedTherapist.id, 'inactive');
-                      }}
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                    >
-                      Nonaktifkan Akun
-                    </Button>
+                {user?.roles.includes(UserRoleEnum.ClinicAdmin) && selectedTherapist.status === 'active' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleCloseDetails();
+                      handleStatusChangeRequest(selectedTherapist.id, 'inactive');
+                    }}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    Nonaktifkan Akun
+                  </Button>
                 )}
-                {user?.roles.includes('clinic_admin') && selectedTherapist.status === 'inactive' && (
-                                      <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        handleCloseDetails();
-                        handleStatusChangeRequest(selectedTherapist.id, 'active');
-                      }}
-                      className="text-green-600 border-green-300 hover:bg-green-50"
-                    >
-                      Aktifkan Akun
-                    </Button>
+                {user?.roles.includes(UserRoleEnum.ClinicAdmin) && selectedTherapist.status === 'inactive' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleCloseDetails();
+                      handleStatusChangeRequest(selectedTherapist.id, 'active');
+                    }}
+                    className="text-green-600 border-green-300 hover:bg-green-50"
+                  >
+                    Aktifkan Akun
+                  </Button>
                 )}
               </div>
             </div>

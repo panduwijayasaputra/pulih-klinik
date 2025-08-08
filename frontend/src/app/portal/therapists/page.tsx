@@ -6,6 +6,7 @@ import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { TherapistList } from '@/components/dashboard/TherapistList';
 import { PlusIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
+import { UserRoleEnum } from '@/types/enums';
 
 function TherapistsPageContent() {
   const headerActions = (
@@ -42,7 +43,7 @@ export default function TherapistsPage() {
     );
   }
 
-  if (!user || !user.roles.includes('clinic_admin')) {
+  if (!user || !user.roles.includes(UserRoleEnum.ClinicAdmin)) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">

@@ -81,6 +81,8 @@ export const useCanAccessRoute = (routePath: string) => {
 };
 
 // Hook for role-based conditional rendering
+import { UserRoleEnum } from '@/types/enums';
+
 export const useRoleAccess = () => {
   const { user, hasRole, hasAnyRole, getPrimaryRole } = useAuth();
 
@@ -89,11 +91,11 @@ export const useRoleAccess = () => {
     hasRole,
     hasAnyRole,
     getPrimaryRole,
-    isAdmin: () => hasRole('administrator'),
-    isClinicAdmin: () => hasRole('clinic_admin'),
-    isTherapist: () => hasRole('therapist'),
-    canManageClinic: () => hasAnyRole(['administrator', 'clinic_admin']),
-    canManageClients: () => hasAnyRole(['clinic_admin', 'therapist']),
-    canAccessSessions: () => hasAnyRole(['clinic_admin', 'therapist']),
+    isAdmin: () => hasRole(UserRoleEnum.Administrator),
+    isClinicAdmin: () => hasRole(UserRoleEnum.ClinicAdmin),
+    isTherapist: () => hasRole(UserRoleEnum.Therapist),
+    canManageClinic: () => hasAnyRole([UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin]),
+    canManageClients: () => hasAnyRole([UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]),
+    canAccessSessions: () => hasAnyRole([UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]),
   };
 };
