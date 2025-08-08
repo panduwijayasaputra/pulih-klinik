@@ -6,7 +6,7 @@ The Indonesian Hypnotherapy AI System is a comprehensive web platform designed t
 
 **Problem Statement:** Indonesian hypnotherapists currently spend 2+ hours manually planning sessions, creating scripts, and adapting techniques to cultural contexts. This time-intensive process reduces their capacity to serve clients and increases operational costs. Additionally, clinics lack efficient systems for managing therapists and client assignments.
 
-**Solution:** An AI-powered platform with role-based access control that enables clinic administrators to manage therapists and clients, while providing therapists with automated assessment analysis, technique recommendation, and script generation incorporating Indonesian cultural considerations.
+**Solution:** An AI-powered platform with role-based access control that enables clinic administrators to manage therapists and clients, while providing therapists with automated assessment analysis, technique recommendation, and script generation incorporating Indonesian cultural considerations. The system uses a token-based payment model where each therapy session consumes one token.
 
 ## Goals
 
@@ -17,6 +17,7 @@ The Indonesian Hypnotherapy AI System is a comprehensive web platform designed t
 5. **Maintain Cultural Sensitivity:** Ensure all recommendations and scripts are culturally appropriate for Indonesian clients
 6. **Ensure Professional Standards:** Maintain therapist autonomy and decision-making authority
 7. **Achieve High Adoption Rate:** Target 80% adoption rate among Indonesian clinics within 12 months
+8. **Implement Token-Based Billing:** Provide flexible pay-per-session billing model using tokens
 
 ## Role-Based User Stories
 
@@ -40,42 +41,51 @@ As a clinic administrator, I want to assign clients to specific therapists so th
 **US-006: Clinic Analytics**
 As a clinic administrator, I want to view clinic-wide analytics and reports so that I can monitor performance and make informed management decisions.
 
+**US-007: Token Management**
+As a clinic administrator, I want to purchase and manage tokens for my clinic so that therapists can conduct therapy sessions using the AI system.
+
 ### Secondary User: Licensed Indonesian Hypnotherapist
 
-**US-007: Therapist Authentication**
+**US-008: Therapist Authentication**
 As a licensed Indonesian hypnotherapist, I want to login with credentials provided by my clinic admin so that I can access the AI system securely and professionally.
 
-**US-008: Assigned Client Management**
+**US-009: Assigned Client Management**
 As a therapist, I want to view and manage my assigned client profiles so that I can maintain organized client records and track progress over time.
 
-**US-009: Comprehensive Assessment**
-As a therapist, I want to conduct detailed assessments (general, addiction, and minor) for my assigned clients so that I can gather comprehensive data for AI analysis and technique recommendations.
+**US-010: Pre-Session Assessment**
+As a therapist, I want to conduct pre-session assessments for my clients so that I can gather current mental health status and track changes from previous sessions.
 
-**US-010: AI-Powered Recommendations**
-As a therapist, I want to receive AI-generated technique recommendations with cultural adaptations so that I can make informed decisions about session planning while maintaining professional autonomy.
+**US-011: Mental Health Issue Detection**
+As a therapist, I want to identify and update mental health issues based on direct assessment interviews so that I can provide accurate treatment planning.
 
-**US-011: Script Generation**
-As a therapist, I want to generate complete 7-phase session scripts in both PDF and digital formats so that I can have professional, ready-to-use materials for my sessions.
+**US-012: Technique Selection**
+As a therapist, I want to view all 67 hypnotherapy techniques ordered by compatibility percentage so that I can select up to 3 techniques for script generation.
 
-**US-012: Session Management**
-As a therapist, I want to track session effectiveness and client progress so that I can measure outcomes and plan follow-up sessions effectively.
+**US-013: Script Generation**
+As a therapist, I want to generate complete session scripts based on assessment data and selected techniques so that I can have professional, ready-to-use materials for my sessions.
 
-**US-013: Cultural Adaptation**
+**US-014: Final Session Assessment**
+As a therapist, I want to conduct final session assessments to track therapy progress compared to pre-session assessments so that I can measure treatment effectiveness.
+
+**US-015: Homework Recommendations**
+As a therapist, I want to receive AI-generated homework recommendations based on assessment data and session content so that I can provide clients with effective between-session activities.
+
+**US-016: Cultural Adaptation**
 As a therapist, I want the system to automatically consider age, gender, and background factors so that my sessions are culturally appropriate and effective for Indonesian clients.
 
 ### System Administrator
 
-**US-014: Clinic Approval Management**
+**US-017: Clinic Approval Management**
 As a system administrator, I want to review and approve clinic registration requests so that I can ensure only legitimate clinics access the system.
 
-**US-015: System Monitoring**
+**US-018: System Monitoring**
 As a system administrator, I want to monitor system-wide analytics and user activity so that I can maintain system performance and security.
 
-**US-016: Subscription Management**
-As a system administrator, I want to manage clinic subscription tiers and client limits so that I can control system usage and ensure fair resource allocation.
+**US-019: Token Management**
+As a system administrator, I want to manage token sales and distribution so that I can control system usage and ensure fair resource allocation.
 
-**US-017: Clinic Limits Management**
-As a system administrator, I want to set and modify client limits for clinics based on their subscription tier so that I can enforce usage policies and encourage upgrades.
+**US-020: Pricing Management**
+As a system administrator, I want to set and modify token pricing so that I can maintain sustainable business operations.
 
 ## Functional Requirements
 
@@ -88,20 +98,17 @@ As a system administrator, I want to set and modify client limits for clinics ba
 1.6 The system must allow clinic admins to create and manage therapist accounts
 1.7 The system must enforce password security requirements
 
-### 2. Subscription & Billing Management System
-2.1 The system must support four subscription tiers: Beta, Alpha, Theta, and Delta
-2.2 The system must enforce the following limits per subscription tier:
-   - Beta: 1 therapist, 4 new clients/day, 10 script generations/day
-   - Alpha: 3 therapists, 15 new clients/day, 50 script generations/day
-   - Theta: 5 therapists, 30 new clients/day, 120 script generations/day
-   - Delta: 10 therapists, 100 new clients/day, 500 script generations/day
-2.3 The system must allow system administrators to define and modify client limits for each subscription tier
-2.4 The system must enforce client limits based on clinic subscription status
-2.5 The system must provide subscription upgrade/downgrade functionality
-2.6 The system must track usage metrics against subscription limits
-2.7 The system must notify clinic admins when approaching client limits
-2.8 The system must allow system administrators to override limits for special cases
-2.9 The system must support monthly billing cycles with Indonesian Rupiah pricing
+### 2. Token-Based Payment System
+2.1 The system must implement a token-based payment model where each therapy session consumes one token
+2.2 The system must allow clinic administrators to purchase tokens in bulk packages
+2.3 The system must provide token balance tracking for each clinic
+2.4 The system must prevent session initiation when token balance is insufficient
+2.5 The system must display current token balance and usage history
+2.6 The system must provide token purchase interface with multiple payment options
+2.7 The system must support Indonesian Rupiah pricing for token packages
+2.8 The system must generate invoices for token purchases
+2.9 The system must allow system administrators to manage token pricing and packages
+2.10 The system must provide token usage analytics and reporting
 
 ### 3. Clinic Management System
 3.1 The system must allow clinic admins to setup clinic properties and branding
@@ -109,10 +116,10 @@ As a system administrator, I want to set and modify client limits for clinics ba
 3.3 The system must provide clinic-specific customization options
 3.4 The system must allow clinic admins to manage clinic settings and preferences
 3.5 The system must provide clinic-wide analytics and reporting
-3.6 The system must display current subscription tier and client usage limits
-3.7 The system must prevent adding clients when limit is reached
-3.8 The system must display current pricing and subscription details
-3.9 The system must provide subscription upgrade/downgrade interface for clinic admins
+3.6 The system must display current token balance and usage statistics
+3.7 The system must provide token purchase and management interface
+3.8 The system must display current pricing and token package options
+3.9 The system must provide usage analytics and cost tracking
 
 ### 4. Therapist Management System
 4.1 The system must allow clinic admins to create therapist accounts with role assignment
@@ -120,8 +127,8 @@ As a system administrator, I want to set and modify client limits for clinics ba
 4.3 The system must allow clinic admins to assign clients to specific therapists
 4.4 The system must provide therapist performance tracking and analytics
 4.5 The system must allow clinic admins to manage therapist status (active/inactive)
-4.6 The system must enforce therapist count limits based on subscription tier
-4.7 The system must prevent adding therapists when subscription limit is reached
+4.6 The system must track token usage per therapist for cost allocation
+4.7 The system must provide therapist-specific analytics and reporting
 
 ### 5. Client Management System
 5.1 The system must allow clinic admins to add new clients with required demographic information
@@ -131,75 +138,92 @@ As a system administrator, I want to set and modify client limits for clinics ba
 5.5 The system must maintain client status (active, inactive, completed)
 5.6 The system must provide a searchable client list with filtering options
 5.7 The system must allow therapists to view only their assigned clients
-5.8 The system must validate client count against subscription limits before adding new clients
-5.9 The system must enforce daily client addition limits based on subscription tier
+5.8 The system must track session history and token consumption per client
 
-### 6. Assessment System (All Three Types)
-6.1 The system must support three assessment types: General, Addiction, and Minor
-6.2 The system must provide multi-step forms with progress tracking
-6.3 The system must auto-save assessment progress to prevent data loss
-6.4 The system must validate all required fields before submission
-6.5 The system must calculate completion time for each assessment
-6.6 The system must store assessment data in structured JSON format
-6.7 The system must allow therapists to view assessment history for their assigned clients
+### 6. Session Workflow System
 
-### 7. AI Recommendation Engine
-7.1 The system must analyze assessment data to identify primary mental health issues
-7.2 The system must calculate technique compatibility scores (0-100) based on client data
-7.3 The system must recommend three techniques: primary, supporting, and integration
-7.4 The system must provide detailed reasoning for each recommendation in Indonesian
-7.5 The system must require therapist approval for ALL recommendations regardless of confidence level
-7.6 The system must adapt recommendations based on client age, gender, and background
-7.7 The system must display confidence scores and cultural considerations for each technique
+#### 6.1 Pre-Session Assessment
+6.1.1 The system must support pre-session assessments for each therapy session
+6.1.2 The system must allow therapists to conduct direct assessments with clients
+6.1.3 The system must track changes from previous sessions for returning clients
+6.1.4 The system must validate homework effectiveness for follow-up sessions
+6.1.5 The system must auto-save assessment progress to prevent data loss
+6.1.6 The system must calculate completion time for each assessment
+6.1.7 The system must store assessment data in structured JSON format
 
-### 8. Script Generation System
-8.1 The system must generate complete 7-phase session scripts (preparation, preinduction, induction, deepening, therapeutic, ego-strengthening, reorientation)
-8.2 The system must create scripts in both PDF and digital formats
-8.3 The system must include timing boxes for manual session tracking
-8.4 The system must provide technique highlights and instructions within scripts
-8.5 The system must include cultural notes and safety protocols
-8.6 The system must allow therapists to preview and edit scripts before finalization
-8.7 The system must generate scripts in formal Indonesian language
-8.8 The system must enforce daily script generation limits based on subscription tier
-8.9 The system must track script generation usage and display remaining daily quota
+#### 6.2 Mental Health Issue Detection
+6.2.1 The system must support mental health issue identification for first-time clients
+6.2.2 The system must allow therapists to update mental health issues based on direct assessment interviews
+6.2.3 The system must provide a comprehensive list of mental health conditions
+6.2.4 The system must allow multiple issue selection with priority ranking
+6.2.5 The system must track issue changes across sessions
+6.2.6 The system must provide issue-specific recommendations and considerations
 
-### 9. Session Management & Progress Tracking
-9.1 The system must allow therapists to schedule and track sessions for their assigned clients
-9.2 The system must provide effectiveness rating system (1-10 scale)
-9.3 The system must track client progress across multiple sessions
-9.4 The system must generate progress reports and analytics for both therapists and clinic admins
-9.5 The system must allow therapists to plan follow-up sessions based on progress data
+#### 6.3 Technique Selection System
+6.3.1 The system must provide access to all 67 hypnotherapy techniques
+6.3.2 The system must calculate compatibility percentages for each technique based on assessment data
+6.3.3 The system must display techniques ordered by compatibility percentage (highest to lowest)
+6.3.4 The system must allow therapists to select maximum 3 techniques per session
+6.3.5 The system must provide detailed descriptions and cultural considerations for each technique
+6.3.6 The system must show technique compatibility reasoning in Indonesian
+6.3.7 The system must allow technique selection modification before script generation
 
-### 10. Cultural Adaptation System
-10.1 The system must consider client age for technique and language appropriateness
-10.2 The system must adapt recommendations based on client gender
-10.3 The system must incorporate client background (occupation, education) into recommendations
-10.4 The system must use appropriate Indonesian language formality based on client characteristics
-10.5 The system must provide cultural notes and considerations in all recommendations
+#### 6.4 Script Generation System
+6.4.1 The system must generate complete session scripts based on pre-session assessment and selected techniques
+6.4.2 The system must create scripts in both PDF and digital formats
+6.4.3 The system must include timing boxes for manual session tracking
+6.4.4 The system must provide technique highlights and instructions within scripts
+6.4.5 The system must include cultural notes and safety protocols
+6.4.6 The system must allow therapists to preview and edit scripts before finalization
+6.4.7 The system must generate scripts in formal Indonesian language
+6.4.8 The system must consume one token per script generation
+6.4.9 The system must track script generation usage and display remaining token balance
 
-### 11. Data Security & Privacy
-11.1 The system must encrypt all client data at rest and in transit
-11.2 The system must comply with Indonesian data protection laws
-11.3 The system must implement GDPR-level privacy controls
-11.4 The system must provide secure data backup and recovery
-11.5 The system must maintain audit logs for all data access and modifications
-11.6 The system must allow clients to request data deletion
-11.7 The system must implement role-based access controls
-11.8 The system must ensure clinic data isolation and privacy
+#### 6.5 Final Session Assessment
+6.5.1 The system must support final session assessments to track therapy progress
+6.5.2 The system must compare final assessment results with pre-session assessment data
+6.5.3 The system must provide progress metrics and improvement indicators
+6.5.4 The system must allow therapists to rate session effectiveness (1-10 scale)
+6.5.5 The system must track client progress across multiple sessions
+6.5.6 The system must generate progress reports and analytics
+
+#### 6.6 Homework Recommendation System
+6.6.1 The system must generate AI-powered homework recommendations based on assessment data and session content
+6.6.2 The system must provide culturally appropriate homework activities
+6.6.3 The system must consider client age, gender, and background for homework recommendations
+6.6.4 The system must provide detailed instructions and expected outcomes
+6.6.5 The system must track homework completion and effectiveness
+6.6.6 The system must allow therapists to customize homework recommendations
+
+### 7. Cultural Adaptation System
+7.1 The system must consider client age for technique and language appropriateness
+7.2 The system must adapt recommendations based on client gender
+7.3 The system must incorporate client background (occupation, education) into recommendations
+7.4 The system must use appropriate Indonesian language formality based on client characteristics
+7.5 The system must provide cultural notes and considerations in all recommendations
+
+### 8. Data Security & Privacy
+8.1 The system must encrypt all client data at rest and in transit
+8.2 The system must comply with Indonesian data protection laws
+8.3 The system must implement GDPR-level privacy controls
+8.4 The system must provide secure data backup and recovery
+8.5 The system must maintain audit logs for all data access and modifications
+8.6 The system must allow clients to request data deletion
+8.7 The system must implement role-based access controls
+8.8 The system must ensure clinic data isolation and privacy
 
 ## Non-Goals (Out of Scope)
 
 - **Direct Client Access:** Clients will not have direct access to the system
 - **Video/Audio Sessions:** The system will not provide real-time video or audio session capabilities
-- **Payment Processing:** The system will not handle billing or payment processing (subscription management only)
 - **Third-party Integrations:** No integration with external EHR or scheduling systems
 - **Mobile Applications:** No native mobile app development (desktop web only)
 - **Multi-language Support:** Indonesian language only (no English or regional languages)
 - **Automated Diagnosis:** The system will not provide medical diagnoses or replace professional judgment
 - **Real-time AI Chat:** No conversational AI interface for direct therapist interaction
 - **Multi-clinic Management:** System administrators will not manage multiple clinics from a single interface
-- **Free Tier:** No free tier or trial period (all subscriptions are paid)
-- **Pay-per-use:** No usage-based billing (monthly subscription only)
+- **Free Tier:** No free tier or trial period (token-based payment only)
+- **Subscription Model:** No monthly subscription billing (pay-per-session token model only)
 
 ## Design Considerations
 
@@ -210,6 +234,7 @@ As a system administrator, I want to set and modify client limits for clinics ba
 - Accessibility compliance for users with disabilities
 - Consistent color scheme and typography throughout the application
 - Clinic-specific branding and customization options
+- Clear token balance and usage indicators
 
 ### Cultural Design Elements
 - Use of appropriate Indonesian cultural imagery and colors
@@ -218,18 +243,19 @@ As a system administrator, I want to set and modify client limits for clinics ba
 - Respectful representation of diverse Indonesian backgrounds
 
 ### Data Visualization
-- Clear progress indicators for multi-step forms
-- Visual representation of technique recommendations with confidence scores
+- Clear progress indicators for multi-step session workflow
+- Visual representation of technique compatibility scores
 - Progress tracking charts and analytics for client outcomes
 - Intuitive dashboard with key metrics and recent activities
 - Role-based dashboard views for different user types
+- Token usage analytics and cost tracking visualizations
 
 ## Technical Considerations
 
 ### Performance Requirements
 - Page load times under 3 seconds for all major functions
 - Assessment form auto-save within 30 seconds of inactivity
-- AI recommendation generation within 10 seconds
+- Technique compatibility calculation within 5 seconds
 - Script generation within 30 seconds
 - Support for concurrent users without performance degradation
 
@@ -238,6 +264,7 @@ As a system administrator, I want to set and modify client limits for clinics ba
 - Database must handle 10,000+ client records per clinic
 - AI processing must scale with increased usage
 - File storage must accommodate growing script and assessment data
+- Token management system must handle high-volume transactions
 
 ### Security Requirements
 - End-to-end encryption for all sensitive data
@@ -247,6 +274,7 @@ As a system administrator, I want to set and modify client limits for clinics ba
 - Regular security updates and patch management
 - Role-based access control enforcement
 - Clinic data isolation and privacy protection
+- Secure token transaction processing
 
 ## Success Metrics
 
@@ -255,15 +283,15 @@ As a system administrator, I want to set and modify client limits for clinics ba
 2. **Clinic Adoption Rate:** Achieve 80% adoption rate among Indonesian clinics within 12 months
 3. **Client Outcomes:** Measure 25% improvement in client satisfaction and therapeutic outcomes
 4. **Therapist Capacity:** Enable therapists to serve 30% more clients through workflow optimization
-5. **Subscription Management:** Achieve 90% compliance with subscription tier limits
+5. **Token Usage Efficiency:** Achieve 90% token utilization rate across all clinics
 
 ### Secondary Metrics
 1. **System Performance:** Maintain 99.9% uptime and sub-3-second response times
-2. **Data Quality:** Achieve 95% accuracy in AI recommendations as validated by therapists
+2. **Data Quality:** Achieve 95% accuracy in technique recommendations as validated by therapists
 3. **Cultural Appropriateness:** Achieve 90% satisfaction rate for cultural adaptation features
 4. **User Satisfaction:** Maintain 4.5+ star rating from clinic admins and therapists
 5. **Clinic Management Efficiency:** Reduce clinic administrative overhead by 40%
-6. **Subscription Conversion:** Achieve 25% upgrade rate from Basic to Professional/Enterprise tiers
+6. **Token Purchase Conversion:** Achieve 25% repeat token purchase rate
 
 ### Measurement Methods
 - Automated time tracking for session planning workflows
@@ -272,7 +300,7 @@ As a system administrator, I want to set and modify client limits for clinics ba
 - System performance monitoring and alerting
 - Regular user feedback collection and analysis
 - Clinic management efficiency metrics
-- Subscription usage tracking and limit enforcement monitoring
+- Token usage tracking and purchase analytics
 
 ## Open Questions
 
@@ -285,119 +313,125 @@ As a system administrator, I want to set and modify client limits for clinics ba
 7. **Feature Prioritization:** Which features should be prioritized for the initial MVP release?
 8. **Integration Future:** What external systems might need integration in future phases?
 9. **Clinic Size Limits:** Should there be limits on the number of therapists or clients per clinic?
-10. **Subscription Tier Pricing:** What should be the pricing structure for different subscription tiers?
-11. **Limit Enforcement:** How strictly should client limits be enforced, and what exceptions should be allowed?
-12. **Pricing Strategy:** Should there be annual discounts or promotional pricing for new clinics?
+10. **Token Pricing Strategy:** What should be the pricing structure for different token packages?
+11. **Token Expiration:** Should tokens have expiration dates or remain valid indefinitely?
+12. **Bulk Purchase Discounts:** Should there be volume discounts for large token purchases?
 13. **Usage Monitoring:** How frequently should usage metrics be updated and displayed to clinic admins?
 
 ## Pricing Structure
 
-### Subscription Tiers
+### Token-Based Payment Model
 
-The system offers four subscription tiers designed to accommodate clinics of different sizes and needs:
+The system uses a token-based payment model where each therapy session consumes one token, providing flexibility and cost control for clinics:
 
-#### Beta Plan - Rp 50,000/month
+#### Token Packages
+
+**Starter Package - Rp 500,000 for 50 tokens**
 **Target:** Small practices and individual therapists
-- **Therapists:** 1
-- **New Clients:** 4 per day
-- **Script Generations:** 10 per day
-- **Features:** Basic AI assessment, script generation, email support
+- **Tokens:** 50 sessions
+- **Price per Session:** Rp 10,000
+- **Features:** All core session features, email support
 - **Best For:** Solo practitioners and small clinics starting with AI-assisted therapy
 
-#### Alpha Plan - Rp 100,000/month
+**Professional Package - Rp 900,000 for 100 tokens**
 **Target:** Growing clinics and medium-sized practices
-- **Therapists:** 3
-- **New Clients:** 15 per day
-- **Script Generations:** 50 per day
-- **Features:** Advanced analytics, priority support, all Alpha features
-- **Best For:** Established clinics with multiple therapists
+- **Tokens:** 100 sessions
+- **Price per Session:** Rp 9,000
+- **Features:** Advanced analytics, priority support, all core features
+- **Best For:** Established clinics with regular client volume
 
-#### Theta Plan - Rp 150,000/month
+**Enterprise Package - Rp 1,600,000 for 200 tokens**
 **Target:** Expanding clinics with high client volume
-- **Therapists:** 5
-- **New Clients:** 30 per day
-- **Script Generations:** 120 per day
-- **Features:** API integration, phone support, all Alpha features
+- **Tokens:** 200 sessions
+- **Price per Session:** Rp 8,000
+- **Features:** API integration, phone support, all Professional features
 - **Best For:** Busy clinics requiring integration capabilities
 
-#### Delta Plan - Rp 200,000/month
+**Premium Package - Rp 3,000,000 for 400 tokens**
 **Target:** Large clinics and therapy centers
-- **Therapists:** 10
-- **New Clients:** 100 per day
-- **Script Generations:** 500 per day
-- **Features:** Enterprise analytics, dedicated support, custom branding, all Theta features
+- **Tokens:** 400 sessions
+- **Price per Session:** Rp 7,500
+- **Features:** Enterprise analytics, dedicated support, custom branding, all Enterprise features
 - **Best For:** Large therapy centers and multi-location clinics
 
 ### Pricing Principles
-- **Monthly Billing:** All subscriptions are billed monthly in Indonesian Rupiah
+- **Pay-Per-Session:** Each therapy session consumes exactly one token
 - **No Hidden Fees:** Transparent pricing with no additional charges
-- **Scalable Limits:** Clear daily and monthly usage limits per tier
-- **Upgrade Flexibility:** Easy upgrade/downgrade between tiers
-- **No Long-term Contracts:** Month-to-month billing with cancellation flexibility
+- **Volume Discounts:** Larger packages provide better per-session pricing
+- **No Expiration:** Tokens remain valid until used
+- **Flexible Usage:** Tokens can be used across all therapists in the clinic
+- **No Long-term Contracts:** Purchase tokens as needed
 
 ### Billing & Payment
 - **Currency:** Indonesian Rupiah (IDR)
-- **Billing Cycle:** Monthly
-- **Payment Methods:** Bank transfer, digital wallets (to be determined)
-- **Invoicing:** Automated monthly invoices
+- **Payment Methods:** Bank transfer, digital wallets, credit cards
+- **Invoicing:** Automated invoices for token purchases
 - **Tax Compliance:** Includes applicable Indonesian taxes
+- **Refund Policy:** Unused tokens can be refunded within 30 days
 
-### Usage Limits & Enforcement
+### Token Management & Usage
 
-#### Daily Limits
-- **Client Addition:** Limits reset daily at 00:00 WIB (Western Indonesian Time)
-- **Script Generation:** Limits reset daily at 00:00 WIB
-- **Therapist Accounts:** Static limit based on subscription tier
+#### Session Workflow Token Consumption
+- **Pre-Session Assessment:** Included in session token
+- **Mental Health Issue Detection:** Included in session token
+- **Technique Selection:** Included in session token
+- **Script Generation:** Consumes 1 token per session
+- **Final Session Assessment:** Included in session token
+- **Homework Recommendations:** Included in session token
 
-#### Limit Enforcement
-- **Real-time Validation:** System prevents exceeding daily limits
-- **Usage Tracking:** Real-time dashboard showing current usage
-- **Warning Notifications:** Alerts at 80% and 95% usage thresholds
-- **Grace Period:** 24-hour grace period for limit overages
-- **Administrator Override:** System administrators can override limits for special cases
+#### Token Management Features
+- **Real-time Balance Tracking:** Live token balance display
+- **Usage History:** Detailed session and token consumption logs
+- **Low Balance Alerts:** Notifications at 10, 5, and 1 token remaining
+- **Purchase Reminders:** Automated suggestions for token replenishment
+- **Usage Analytics:** Detailed reports on token consumption patterns
+- **Cost Allocation:** Track token usage per therapist and client
 
 #### Usage Monitoring
-- **Dashboard Display:** Real-time usage metrics in clinic admin dashboard
+- **Dashboard Display:** Real-time token balance and usage metrics
 - **Reporting:** Daily, weekly, and monthly usage reports
-- **Analytics:** Usage trends and pattern analysis
-- **Notifications:** Email alerts for approaching limits
-- **Upgrade Prompts:** Suggestions for plan upgrades when limits are consistently reached
+- **Analytics:** Usage trends and cost analysis
+- **Notifications:** Email alerts for low balance and purchase confirmations
+- **Purchase Prompts:** Suggestions for package upgrades when consistently using higher volumes
 
 ## Implementation Phases
+
+### Phase 1: Foundation & Authentication (Weeks 1-4)
 - Role-based authentication and user management
 - Clinic registration and approval system
 - Basic clinic and therapist management
 - Core database structure and API
-- Subscription tier management system with pricing tiers (Beta, Alpha, Theta, Delta)
+- Token-based payment system implementation
 
-### Phase 2: Clinic Management (Weeks 5-8)
+### Phase 2: Clinic Management & Token System (Weeks 5-8)
 - Clinic onboarding and property setup
 - Therapist account creation and management
 - Client management and assignment system
-- Clinic analytics and reporting
-- Subscription limit enforcement and usage tracking
-- Pricing display and subscription management interface
+- Token purchase and management interface
+- Usage tracking and analytics
 
-### Phase 3: Assessment System (Weeks 9-12)
-- All three assessment types (General, Addiction, Minor)
-- Form validation and data storage
-- Assessment history and management
-- Role-based access to assessments
+### Phase 3: Session Workflow Foundation (Weeks 9-12)
+- Pre-session assessment system
+- Mental health issue detection and management
+- Basic session workflow implementation
+- Token consumption tracking
 
-### Phase 4: AI Engine (Weeks 13-16)
-- Recommendation algorithm implementation
+### Phase 4: Technique Selection System (Weeks 13-16)
+- Implementation of all 67 hypnotherapy techniques
+- Compatibility scoring algorithm
+- Technique selection interface
 - Cultural adaptation logic
-- Confidence scoring system
 
-### Phase 5: Script Generation (Weeks 17-20)
-- 7-phase script generation
-- PDF and digital format output
-- Script preview and editing capabilities
+### Phase 5: Script Generation & Assessment (Weeks 17-20)
+- AI-powered script generation based on assessment and techniques
+- Final session assessment system
+- Progress tracking and comparison
+- Homework recommendation system
 
 ### Phase 6: Analytics & Polish (Weeks 21-24)
-- Progress tracking and analytics
+- Comprehensive analytics and reporting
 - Performance optimization
 - Security hardening and compliance validation
-- Role-based dashboard optimization
+- Token usage optimization and cost tracking
 
-This PRD provides a comprehensive roadmap for developing the Indonesian Hypnotherapy AI System with role-based access control, ensuring it meets the specific needs of Indonesian clinics and therapists while maintaining professional standards and cultural sensitivity. 
+This PRD provides a comprehensive roadmap for developing the Indonesian Hypnotherapy AI System with token-based payment and a complete session workflow, ensuring it meets the specific needs of Indonesian clinics and therapists while maintaining professional standards and cultural sensitivity. 
