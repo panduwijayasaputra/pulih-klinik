@@ -3,7 +3,8 @@
 import React from 'react';
 import { useRegistrationStore } from '@/store/registration';
 import { ClinicForm } from './ClinicForm';
-import { SubscriptionSelector } from './SubscriptionSelector';
+import { EmailVerification } from './EmailVerification';
+import { RegistrationSummary } from './RegistrationSummary';
 import { PaymentModal } from '../payment/PaymentModal';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -11,14 +12,16 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 const stepTitles = {
   clinic: 'Informasi Klinik',
-  subscription: 'Pilih Paket',
+  verification: 'Verifikasi Email',
+  summary: 'Ringkasan Registrasi',
   payment: 'Pembayaran',
   complete: 'Selesai'
 };
 
 const stepDescriptions = {
   clinic: 'Masukkan informasi lengkap klinik Anda',
-  subscription: 'Pilih paket berlangganan yang sesuai',
+  verification: 'Verifikasi email admin untuk keamanan akun',
+  summary: 'Tinjau informasi registrasi dan ketentuan layanan',
   payment: 'Pilih metode pembayaran dan selesaikan transaksi',
   complete: 'Registrasi berhasil! Ikuti langkah selanjutnya'
 };
@@ -29,16 +32,19 @@ export const RegisterFlow: React.FC = () => {
     prevStep, 
     error, 
     clearError,
-    resetRegistration 
+    resetRegistration,
+    data,
+    nextStep,
+    setStep
   } = useRegistrationStore();
 
   const getStepNumber = () => {
-    const steps = ['clinic', 'subscription', 'payment', 'complete'];
+    const steps = ['clinic', 'verification', 'summary', 'payment', 'complete'];
     return steps.indexOf(currentStep) + 1;
   };
 
   const getProgressPercentage = () => {
-    const steps = ['clinic', 'subscription', 'payment', 'complete'];
+    const steps = ['clinic', 'verification', 'summary', 'payment', 'complete'];
     return (steps.indexOf(currentStep) / (steps.length - 1)) * 100;
   };
 
@@ -57,8 +63,25 @@ export const RegisterFlow: React.FC = () => {
     switch (currentStep) {
       case 'clinic':
         return <ClinicForm />;
-      case 'subscription':
-        return <SubscriptionSelector />;
+      case 'verification':
+        return (
+          <EmailVerification
+            email={data.clinic?.adminEmail || ''}
+            onVerificationSuccess={() => nextStep()}
+            onResendEmail={async () => {
+              // Mock resend email functionality
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }}
+          />
+        );
+              case 'summary':
+          return (
+            <RegistrationSummary
+              clinicData={data.clinic}
+              onEditClinic={() => setStep('clinic')}
+              onProceedToPayment={() => nextStep()}
+            />
+          );
       case 'payment':
         return <PaymentModal />;
       case 'complete':
@@ -114,7 +137,7 @@ export const RegisterFlow: React.FC = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">
-                Langkah {getStepNumber()} dari 4
+                Langkah {getStepNumber()} dari 5
               </span>
               <span className="text-sm text-gray-500">
                 {Math.round(getProgressPercentage())}% selesai

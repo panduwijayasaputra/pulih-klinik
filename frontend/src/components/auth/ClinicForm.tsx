@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { useRegistrationStore } from '@/store/registration';
 
 export const ClinicForm: React.FC = () => {
   const { data, updateClinicData, nextStep, clearError } = useRegistrationStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -35,10 +36,24 @@ export const ClinicForm: React.FC = () => {
     },
   });
 
-  const onSubmit = (formData: ClinicDataFormData) => {
-    clearError();
-    updateClinicData(formData);
-    nextStep();
+  const onSubmit = async (formData: ClinicDataFormData) => {
+    try {
+      setIsSubmitting(true);
+      clearError();
+      
+      // Mock email verification sending
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Update store and proceed
+      updateClinicData(formData);
+      nextStep();
+    } catch (error) {
+      clearError();
+      // In a real implementation, this would show an error message
+      console.error('Failed to send verification email:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -230,8 +245,19 @@ export const ClinicForm: React.FC = () => {
 
       {/* Submit Button */}
       <div className="flex justify-end pt-4 border-t border-gray-200">
-        <Button type="submit" className="px-8">
-          Lanjutkan ke Paket Berlangganan
+        <Button 
+          type="submit" 
+          className="px-8"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+              Mengirim Email Verifikasi...
+            </>
+          ) : (
+            'Lanjutkan ke Verifikasi Email'
+          )}
         </Button>
       </div>
 

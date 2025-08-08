@@ -1,7 +1,16 @@
 import { z } from 'zod';
 
 // Registration step enum
-export type RegistrationStep = 'clinic' | 'subscription' | 'payment' | 'complete';
+export type RegistrationStep = 'clinic' | 'verification' | 'summary' | 'payment' | 'complete';
+
+// Verification data interface
+export interface VerificationData {
+  code: string;
+  emailSent: boolean;
+  attempts: number;
+  lastSentAt?: Date;
+  verified: boolean;
+}
 
 // Clinic data validation schema
 export const clinicDataSchema = z.object({
@@ -26,25 +35,23 @@ export const clinicDataSchema = z.object({
 
 export type ClinicDataFormData = z.infer<typeof clinicDataSchema>;
 
-// Subscription tier type
-export interface SubscriptionTier {
-  id: 'alpha' | 'beta' | 'gamma';
-  name: string;
-  price: number;
-  period: string;
-  features: string[];
-  recommended?: boolean;
+// Token package type
+export interface TokenPackage {
+  registrationFee: number;
+  includedTokens: number;
+  tokenPrice: number;
+  totalValue: number;
   description: string;
 }
 
-// Subscription selection schema
-export const subscriptionSchema = z.object({
-  tier: z.enum(['alpha', 'beta', 'gamma'], {
-    message: 'Pilih paket berlangganan'
-  }),
-});
-
-export type SubscriptionFormData = z.infer<typeof subscriptionSchema>;
+// Business rules type
+export interface BusinessRules {
+  maxTherapists: number;
+  maxDailyClients: number;
+  tokenPerSession: number;
+  tokenExpirationDays: number;
+  description: string;
+}
 
 // Payment method type
 export type PaymentMethod = 'bank_transfer' | 'credit_card' | 'ewallet';
@@ -64,68 +71,38 @@ export type PaymentFormData = z.infer<typeof paymentSchema>;
 // Complete registration data
 export interface RegistrationData {
   clinic: ClinicDataFormData;
-  subscription: SubscriptionFormData;
+  verification: VerificationData;
   payment: PaymentFormData;
+  tokenPackage: TokenPackage;
+  businessRules: BusinessRules;
 }
 
 // Registration state
 export interface RegistrationState {
   currentStep: RegistrationStep;
   data: Partial<RegistrationData>;
+  verificationData: VerificationData;
   isLoading: boolean;
   error: string | null;
 }
 
-// Mock subscription tiers data
-export const mockSubscriptionTiers: SubscriptionTier[] = [
-  {
-    id: 'alpha',
-    name: 'Alpha (Beta Tester)',
-    price: 50000,
-    period: 'per bulan',
-    description: 'Paket untuk beta tester dengan fitur terbatas',
-    features: [
-      '2 Therapists',
-      '4 Clients/day',
-      '2 Scripts/client/session',
-      '25 Techniques',
-      'Basic Support'
-    ],
-  },
-  {
-    id: 'beta',
-    name: 'Beta (Standard)',
-    price: 150000,
-    period: 'per bulan',
-    description: 'Paket standar untuk klinik kecil hingga menengah',
-    recommended: true,
-    features: [
-      '5 Therapists',
-      '10 Clients/day',
-      '5 Scripts/client/session',
-      '50 Techniques',
-      'Priority Support',
-      'Advanced Analytics'
-    ],
-  },
-  {
-    id: 'gamma',
-    name: 'Gamma (Premium)',
-    price: 300000,
-    period: 'per bulan',
-    description: 'Paket premium untuk klinik besar dengan fitur lengkap',
-    features: [
-      'Unlimited Therapists',
-      '25 Clients/day',
-      'Unlimited Scripts',
-      '100+ Techniques',
-      '24/7 Premium Support',
-      'Advanced Analytics',
-      'Custom Integration',
-      'White-label Option'
-    ],
-  },
-];
+// Token package constants
+export const TOKEN_PACKAGE: TokenPackage = {
+  registrationFee: 100000,
+  includedTokens: 3,
+  tokenPrice: 20000,
+  totalValue: 160000,
+  description: 'Paket registrasi termasuk 3 token sesi terapi'
+};
+
+// Business rules constants
+export const BUSINESS_RULES: BusinessRules = {
+  maxTherapists: 3,
+  maxDailyClients: 5,
+  tokenPerSession: 1,
+  tokenExpirationDays: 365,
+  description: 'Batas maksimal 3 therapist dan 5 klien baru per hari'
+};
 
 // Mock registration completion data
 export const mockRegistrationResult = {

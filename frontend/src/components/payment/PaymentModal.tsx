@@ -12,7 +12,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { 
   PaymentFormData, 
-  mockSubscriptionTiers, 
   paymentSchema
 } from '@/types/registration';
 import { useRegistrationStore } from '@/store/registration';
@@ -63,7 +62,30 @@ export const PaymentModal: React.FC = () => {
   });
 
   const selectedMethod = watch('method');
-  const selectedTier = mockSubscriptionTiers.find(t => t.id === data.subscription?.tier);
+
+  // Define pricing tiers
+  const pricingTiers = {
+    free: {
+      name: 'Free Trial',
+      price: 0,
+      description: 'Coba gratis selama 14 hari'
+    },
+    pro: {
+      name: 'Pro',
+      price: 150000,
+      description: 'Akses seumur hidup'
+    },
+    premium: {
+      name: 'Premium',
+      price: 500000,
+      description: 'Akses seumur hidup dengan fitur lengkap'
+    }
+  };
+
+  // For now, default to 'pro' tier - in a real implementation, this would come from the summary step
+  // TODO: Pass selected tier from RegistrationSummary component
+  const selectedTierKey = 'pro'; // This should be passed from the previous step
+  const selectedTier = pricingTiers[selectedTierKey];
 
   const onSubmit = async (formData: PaymentFormData) => {
     clearError();
@@ -88,7 +110,7 @@ export const PaymentModal: React.FC = () => {
   if (!selectedTier) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600">Error: Paket berlangganan tidak ditemukan</p>
+        <p className="text-red-600">Error: Paket tidak ditemukan</p>
       </div>
     );
   }
@@ -102,16 +124,29 @@ export const PaymentModal: React.FC = () => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Paket {selectedTier.name}</span>
-              <span className="font-medium">{formatPrice(selectedTier.price)}</span>
+              <span className="font-medium">
+                {selectedTier.price === 0 ? 'GRATIS' : formatPrice(selectedTier.price)}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">PPN (11%)</span>
-              <span className="font-medium">{formatPrice(selectedTier.price * 0.11)}</span>
-            </div>
-            <div className="border-t border-gray-200 pt-2 flex justify-between">
-              <span className="font-medium text-gray-900">Total</span>
-              <span className="font-bold text-lg">{formatPrice(calculateTotal())}</span>
-            </div>
+            {selectedTier.price > 0 && (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">PPN (11%)</span>
+                  <span className="font-medium">{formatPrice(selectedTier.price * 0.11)}</span>
+                </div>
+                <div className="border-t border-gray-200 pt-2 flex justify-between">
+                  <span className="font-medium text-gray-900">Total</span>
+                  <span className="font-bold text-lg">{formatPrice(calculateTotal())}</span>
+                </div>
+              </>
+            )}
+            {selectedTier.price === 0 && (
+              <div className="border-t border-gray-200 pt-2">
+                <p className="text-sm text-green-600 font-medium">
+                  Tidak ada biaya untuk trial gratis
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -235,10 +270,21 @@ export const PaymentModal: React.FC = () => {
       <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
         <h4 className="font-medium text-gray-900 mb-2">Ketentuan Pembayaran:</h4>
         <ul className="space-y-1">
-          <li>• Akun akan diaktivasi setelah pembayaran dikonfirmasi</li>
-          <li>• Garansi uang kembali 14 hari jika tidak puas</li>
-          <li>• Perpanjangan otomatis setiap bulan (dapat dinonaktifkan)</li>
-          <li>• Support 24/7 tersedia untuk bantuan teknis</li>
+          {selectedTier.price === 0 ? (
+            <>
+              <li>• Akun trial akan diaktivasi segera setelah konfirmasi</li>
+              <li>• Trial berlaku selama 14 hari tanpa biaya</li>
+              <li>• Setelah trial berakhir, Anda dapat upgrade ke Pro atau Premium</li>
+              <li>• Support tersedia selama masa trial</li>
+            </>
+          ) : (
+            <>
+              <li>• Akun akan diaktivasi setelah pembayaran dikonfirmasi</li>
+              <li>• Garansi uang kembali 14 hari jika tidak puas</li>
+              <li>• Akses seumur hidup tanpa biaya berulang</li>
+              <li>• Support 24/7 tersedia untuk bantuan teknis</li>
+            </>
+          )}
         </ul>
       </div>
 
@@ -254,6 +300,8 @@ export const PaymentModal: React.FC = () => {
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
               Memproses...
             </>
+          ) : selectedTier.price === 0 ? (
+            'Mulai Trial Gratis'
           ) : (
             `Bayar ${formatPrice(calculateTotal())}`
           )}

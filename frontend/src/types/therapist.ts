@@ -198,3 +198,31 @@ export const THERAPIST_STATUS = [
   { value: 'on_leave', label: 'Cuti', color: 'yellow' },
   { value: 'suspended', label: 'Suspended', color: 'red' }
 ] as const;
+
+// Therapist Registration Types
+export interface TherapistRegistration {
+  name: string;
+  email: string;
+  phone: string;
+  specialization: string;
+  licenseNumber: string;
+  yearsExperience: number;
+  education: string;
+  certifications: string[];
+  bio?: string;
+  password: string;
+  passwordConfirmation: string;
+}
+
+// Therapist Performance Types
+export interface TherapistPerformance {
+  therapistId: string;
+  sessionsCompleted: number;
+  clientSatisfaction: number;
+  tokensUsed: number;
+  activeClients: number;
+  completionRate: number;
+  averageSessionDuration: number;
+  periodStart: string;
+  periodEnd: string;
+}

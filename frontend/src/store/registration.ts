@@ -5,7 +5,7 @@ import {
   PaymentFormData, 
   RegistrationState,
   RegistrationStep,
-  SubscriptionFormData,
+  VerificationData,
   mockRegistrationResult
 } from '@/types/registration';
 
@@ -14,20 +14,29 @@ interface RegistrationStore extends RegistrationState {
   nextStep: () => void;
   prevStep: () => void;
   updateClinicData: (data: ClinicDataFormData) => void;
-  updateSubscriptionData: (data: SubscriptionFormData) => void;
+  updateVerificationData: (data: VerificationData) => void;
   updatePaymentData: (data: PaymentFormData) => void;
+  validateVerificationCode: (code: string) => boolean;
+  resendVerificationEmail: () => Promise<void>;
+  clearVerificationData: () => void;
   submitRegistration: () => Promise<boolean>;
   resetRegistration: () => void;
   clearError: () => void;
 }
 
-const stepOrder: RegistrationStep[] = ['clinic', 'subscription', 'payment', 'complete'];
+const stepOrder: RegistrationStep[] = ['clinic', 'verification', 'summary', 'payment', 'complete'];
 
 export const useRegistrationStore = create<RegistrationStore>()(
   persist(
     (set, get) => ({
       currentStep: 'clinic',
       data: {},
+      verificationData: {
+        code: '',
+        emailSent: false,
+        attempts: 0,
+        verified: false
+      },
       isLoading: false,
       error: null,
 
@@ -65,13 +74,54 @@ export const useRegistrationStore = create<RegistrationStore>()(
         });
       },
 
-      updateSubscriptionData: (subscriptionData: SubscriptionFormData) => {
-        const { data } = get();
+      updateVerificationData: (verificationData: VerificationData) => {
+        set({ verificationData });
+      },
+
+      validateVerificationCode: (code: string) => {
+        const { verificationData } = get();
+        // Mock validation - in real implementation, this would call an API
+        const isValid = code === '123456';
+        if (isValid) {
+          set({
+            verificationData: {
+              ...verificationData,
+              verified: true,
+              code
+            }
+          });
+        } else {
+          set({
+            verificationData: {
+              ...verificationData,
+              attempts: verificationData.attempts + 1
+            }
+          });
+        }
+        return isValid;
+      },
+
+      resendVerificationEmail: async () => {
+        const { verificationData } = get();
+        // Mock API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
         set({
-          data: {
-            ...data,
-            subscription: subscriptionData,
-          },
+          verificationData: {
+            ...verificationData,
+            emailSent: true,
+            lastSentAt: new Date()
+          }
+        });
+      },
+
+      clearVerificationData: () => {
+        set({
+          verificationData: {
+            code: '',
+            emailSent: false,
+            attempts: 0,
+            verified: false
+          }
         });
       },
 
@@ -121,6 +171,12 @@ export const useRegistrationStore = create<RegistrationStore>()(
         set({
           currentStep: 'clinic',
           data: {},
+          verificationData: {
+            code: '',
+            emailSent: false,
+            attempts: 0,
+            verified: false
+          },
           isLoading: false,
           error: null,
         });
