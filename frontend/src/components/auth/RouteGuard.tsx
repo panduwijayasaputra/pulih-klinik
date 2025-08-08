@@ -17,6 +17,10 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
   const router = useRouter();
   const pathname = usePathname();
 
+  // Development mode - bypass auth for client management
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isClientRoute = pathname.startsWith('/portal/clients');
+
   // Handle redirects for authenticated users accessing auth pages
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
@@ -35,6 +39,11 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         return;
       }
       
+      // In development, allow direct access to client routes
+      if (isDevelopment && isClientRoute) {
+        return;
+      }
+      
       // Redirect to login for protected routes
       const protectedRoutes = ['/portal'];
       const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
@@ -45,6 +54,11 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
       }
     }
   }, [isAuthenticated, isLoading, user, pathname, router]);
+
+  // In development mode, allow client routes without auth
+  if (isDevelopment && isClientRoute) {
+    return <>{children}</>;
+  }
 
   // Show loading state while checking permissions
   if (isLoading) {

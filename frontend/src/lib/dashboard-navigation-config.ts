@@ -119,33 +119,38 @@ export const dashboardNavigationItems: NavigationItem[] = [
     ]
   },
 
-  // Client Management (to be implemented in next task)
+  // Client Management - Now Implemented!
   {
     id: 'client-management',
     label: 'Manajemen Klien',
-    href: '/clients',
+    href: '/portal/clients',
     icon: UserIcon,
     description: 'Kelola data dan sesi klien',
     requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
-    isDisabled: true, // Will be enabled when 4.0-FE-Client-Management is implemented
     children: [
       {
         id: 'client-list',
         label: 'Daftar Klien',
-        href: '/clients',
+        href: '/portal/clients',
         icon: UsersIcon,
         description: 'Lihat dan kelola klien',
         requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
-        isDisabled: true,
       },
       {
-        id: 'client-new',
-        label: 'Tambah Klien',
-        href: '/clients/new',
-        icon: UserIcon,
-        description: 'Daftarkan klien baru',
-        requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
-        isDisabled: true,
+        id: 'client-assignment',
+        label: 'Penugasan Terapis',
+        href: '/portal/clients?tab=assignment',
+        icon: CalendarIcon,
+        description: 'Kelola penugasan klien ke terapis',
+        requiredRoles: ['administrator', 'clinic_admin'],
+      },
+      {
+        id: 'usage-metrics',
+        label: 'Metrik Penggunaan',
+        href: '/portal/clients?tab=metrics',
+        icon: ChartBarIcon,
+        description: 'Pantau penggunaan dan analitik',
+        requiredRoles: ['administrator', 'clinic_admin'],
       },
     ]
   },

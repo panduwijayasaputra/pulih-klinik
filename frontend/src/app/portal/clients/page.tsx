@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useClientFilters, useClients } from '@/hooks/useClients';
 import { useClientStore } from '@/store/clients';
 import { ClientList } from '@/components/dashboard/ClientList';
@@ -13,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Users, UserCheck, BarChart3 } from 'lucide-react';
 
 export default function ClientsPage() {
+  const searchParams = useSearchParams();
   const { clients, loading, error, addClient } = useClients();
   const {
     filters,
@@ -26,6 +29,9 @@ export default function ClientsPage() {
   } = useClientStore();
 
   const filteredClients = useClientFilters(clients, filters);
+
+  // Get initial tab from URL params
+  const initialTab = searchParams.get('tab') || 'list';
 
   const handleAssignmentChange = () => {
     // Trigger a refresh or re-fetch if needed
@@ -54,7 +60,7 @@ export default function ClientsPage() {
       )}
 
       {/* Tabs for Different Views */}
-      <Tabs defaultValue="list" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="list" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
