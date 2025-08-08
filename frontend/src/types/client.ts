@@ -1,22 +1,26 @@
+import { ClientEducationEnum, ClientGenderEnum, ClientReligionEnum, ClientStatusEnum } from './enums';
+
+type EnumValue<T> = T[keyof T];
+
 export interface Client {
   id: string;
   name: string;
   age: number;
-  gender: 'male' | 'female';
+  gender: EnumValue<typeof ClientGenderEnum>;
   phone: string;
   email: string;
   occupation: string;
-  education: 'Elementary' | 'Middle' | 'High School' | 'Associate' | 'Bachelor' | 'Master' | 'Doctorate';
+  education: EnumValue<typeof ClientEducationEnum>;
   address: string;
   assignedTherapist?: string | undefined;
-  status: 'active' | 'inactive' | 'completed' | 'pending';
+  status: EnumValue<typeof ClientStatusEnum>;
   joinDate: string;
   totalSessions: number;
   lastSession?: string | undefined;
   primaryIssue: string;
   progress: number;
   notes?: string | undefined;
-  religion?: 'Islam' | 'Christianity' | 'Catholicism' | 'Hinduism' | 'Buddhism' | 'Konghucu' | undefined;
+  religion?: EnumValue<typeof ClientReligionEnum> | undefined;
   province?: string | undefined;
   emergencyContact?: {
     name: string;

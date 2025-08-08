@@ -1,7 +1,10 @@
 import { z } from 'zod';
+import { PaymentMethodEnum, RegistrationStepEnum } from './enums';
+
+type EnumValue<T> = T[keyof T];
 
 // Registration step enum
-export type RegistrationStep = 'clinic' | 'verification' | 'summary' | 'payment' | 'complete';
+export type RegistrationStep = EnumValue<typeof RegistrationStepEnum>;
 
 // Verification data interface
 export interface VerificationData {
@@ -54,11 +57,11 @@ export interface BusinessRules {
 }
 
 // Payment method type
-export type PaymentMethod = 'bank_transfer' | 'credit_card' | 'ewallet';
+export type PaymentMethod = EnumValue<typeof PaymentMethodEnum>;
 
 // Payment form validation schema
 export const paymentSchema = z.object({
-  method: z.enum(['bank_transfer', 'credit_card', 'ewallet'], {
+  method: z.enum([PaymentMethodEnum.BankTransfer, PaymentMethodEnum.CreditCard, PaymentMethodEnum.Ewallet], {
     message: 'Pilih metode pembayaran'
   }),
   agreeTerms: z.boolean().refine(val => val === true, {

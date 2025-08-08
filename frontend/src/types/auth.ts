@@ -1,7 +1,10 @@
 import { z } from 'zod';
+import { AuthSubscriptionTierEnum, UserRoleEnum } from './enums';
 
-// User roles enum
-export type UserRole = 'administrator' | 'clinic_admin' | 'therapist';
+type EnumValue<T> = T[keyof T];
+
+// User roles
+export type UserRole = EnumValue<typeof UserRoleEnum>;
 
 // Login form validation schema
 export const loginSchema = z.object({
@@ -19,7 +22,7 @@ export interface User {
   name: string;
   roles: UserRole[];
   clinicId?: string;
-  subscriptionTier?: 'alpha' | 'beta' | 'gamma';
+  subscriptionTier?: EnumValue<typeof AuthSubscriptionTierEnum>;
 }
 
 // Authentication state

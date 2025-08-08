@@ -11,6 +11,10 @@ export interface TherapistEducation {
   field: string;
 }
 
+import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from './enums';
+
+type EnumValue<T> = T[keyof T];
+
 export interface TherapistCertification {
   id: string;
   name: string;
@@ -50,15 +54,15 @@ export interface Therapist {
   
   // Professional Info
   licenseNumber: string;
-  licenseType: 'psychologist' | 'psychiatrist' | 'counselor' | 'hypnotherapist';
+  licenseType: EnumValue<typeof TherapistLicenseTypeEnum>;
   specializations: string[];
   education: TherapistEducation[];
   certifications: TherapistCertification[];
   yearsOfExperience: number;
   
   // Status & Availability
-  status: 'active' | 'inactive' | 'on_leave' | 'suspended';
-  employmentType: 'full_time' | 'part_time' | 'contract' | 'freelance';
+  status: EnumValue<typeof TherapistStatusEnum>;
+  employmentType: EnumValue<typeof EmploymentTypeEnum>;
   joinDate: string;
   
   // Assignment Info
@@ -118,7 +122,7 @@ export interface TherapistAssignment {
   clientId: string;
   assignedDate: string;
   assignedBy: string; // Admin/clinic owner ID
-  status: 'active' | 'completed' | 'transferred' | 'cancelled';
+  status: EnumValue<typeof TherapistAssignmentStatusEnum>;
   notes?: string;
   endDate?: string;
   transferReason?: string;

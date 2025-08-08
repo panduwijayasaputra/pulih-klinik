@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum, ClinicSubscriptionTierEnum, ClinicLanguageEnum } from './enums';
+
+type EnumValue<T> = T[keyof T];
 
 export interface ClinicBranding {
   primaryColor: string;
@@ -21,11 +24,11 @@ export interface ClinicSettings {
 export interface ClinicDocument {
   id: string;
   name: string;
-  type: 'license' | 'certificate' | 'insurance' | 'tax' | 'other';
+  type: EnumValue<typeof ClinicDocumentTypeEnum>;
   fileName: string;
   fileSize: number;
   uploadedAt: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: EnumValue<typeof ClinicDocumentStatusEnum>;
   url: string;
   description?: string;
 }
@@ -43,7 +46,7 @@ export interface ClinicProfile {
   branding: ClinicBranding;
   settings: ClinicSettings;
   documents?: ClinicDocument[];
-  subscriptionTier: 'beta' | 'alpha' | 'theta' | 'delta';
+  subscriptionTier: EnumValue<typeof ClinicSubscriptionTierEnum>;
   createdAt: string;
   updatedAt: string;
 }
@@ -118,7 +121,7 @@ export const clinicBrandingSchema = z.object({
 export const clinicSettingsSchema = z.object({
   timezone: z.string()
     .min(1, 'Zona waktu wajib dipilih'),
-  language: z.enum(['id', 'en'], {
+  language: z.enum([ClinicLanguageEnum.Indonesian, ClinicLanguageEnum.English], {
     message: 'Pilih bahasa yang valid'
   }),
   notifications: z.object({
