@@ -1,6 +1,4 @@
 'use client';
-
-import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigation } from '@/hooks/useNavigation';
 import { AdminDashboard, ClinicDashboard, TherapistDashboard } from '@/components/portal';

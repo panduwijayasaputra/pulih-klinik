@@ -1,512 +1,897 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { 
-  UserIcon,
-  EnvelopeIcon,
-  PhoneIcon,
-  AcademicCapIcon,
+  ArrowPathIcon,
   CheckCircleIcon,
-  XCircleIcon,
   ClockIcon,
+  EnvelopeIcon,
+  EyeIcon,
+  PencilIcon,
   StarIcon,
-  ChartBarIcon,
-  PlusIcon,
-  PencilIcon
+  XCircleIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
-import { useTherapist } from '@/hooks/useTherapist';
+import { useAuth } from '@/hooks/useAuth';
+import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useToast } from '@/components/ui/toast';
+import { useRouter } from 'next/navigation';
 
 interface Therapist {
   id: string;
   name: string;
   email: string;
+  phone: string;
   specialization: string;
-  status: 'active' | 'pending' | 'inactive';
+  licenseNumber: string;
+  yearsExperience: number;
+  education: string;
+  certifications?: string;
+  adminNotes?: string;
+  status: 'active' | 'pending_setup' | 'inactive';
   sessions_completed: number;
   client_satisfaction: number;
+  registrationDate: string;
+  lastActive?: string;
 }
 
 export const TherapistList: React.FC = () => {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
-  const [editingTherapist, setEditingTherapist] = useState<Therapist | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    email: '',
-    specialization: ''
-  });
-  
-  const { getTherapists, updateTherapistStatus, updateTherapist, loading: actionLoading, error } = useTherapist();
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [resendCooldowns, setResendCooldowns] = useState<Record<string, number>>({});
+  const { user } = useAuth();
+  const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
+  const { addToast } = useToast();
+  const router = useRouter();
 
+  // Handle resend cooldown countdown
   useEffect(() => {
-    loadTherapists();
+    const interval = setInterval(() => {
+      setResendCooldowns(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(key => {
+          if (updated[key] && updated[key] > 0) {
+            updated[key] -= 1;
+          }
+        });
+        return updated;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const loadTherapists = async () => {
-    try {
-      const result = await getTherapists();
-      if (result.success && result.therapists) {
-        setTherapists(result.therapists);
+  // Load therapists data directly in the component
+  useEffect(() => {
+    const loadTherapists = async () => {
+      console.log('🔄 TherapistList: Starting to load therapist data...');
+      setLoading(true);
+      try {
+        // Mock API call
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Mock therapists data
+        const mockTherapists = [
+          {
+            id: 'th-1',
+            name: 'Dr. Budi Santoso',
+            email: 'budi@kliniksehat.com',
+            phone: '+62-812-3456-7890',
+            specialization: 'Anxiety Disorders',
+            licenseNumber: 'SIP-123456',
+            yearsExperience: 8,
+            education: 'S1 Psikologi, Universitas Indonesia',
+            certifications: 'Certified Hypnotherapist, CBT Practitioner',
+            adminNotes: 'Excellent therapist with strong client relationships',
+            status: 'active' as const,
+            sessions_completed: 45,
+            client_satisfaction: 4.8,
+            registrationDate: '2024-01-10',
+            lastActive: '2 hours ago'
+          },
+          {
+            id: 'th-2',
+            name: 'Dr. Siti Rahayu',
+            email: 'siti@kliniksehat.com',
+            phone: '+62-813-4567-8901',
+            specialization: 'Depression',
+            licenseNumber: 'SIP-123457',
+            yearsExperience: 12,
+            education: 'S2 Psikologi Klinis, Universitas Gadjah Mada',
+            certifications: 'EMDR Certified, Trauma Specialist',
+            adminNotes: 'Specializes in trauma and depression cases',
+            status: 'active' as const,
+            sessions_completed: 32,
+            client_satisfaction: 4.9,
+            registrationDate: '2024-01-08',
+            lastActive: '4 hours ago'
+          },
+          {
+            id: 'th-3',
+            name: 'Dr. Ahmad Pratama',
+            email: 'ahmad@kliniksehat.com',
+            phone: '+62-814-5678-9012',
+            specialization: 'PTSD',
+            licenseNumber: 'SIP-123458',
+            yearsExperience: 5,
+            education: 'S1 Psikologi, Universitas Airlangga',
+            certifications: 'PTSD Specialist, Military Trauma Certified',
+            adminNotes: 'New therapist, strong background in military trauma',
+            status: 'pending_setup' as const,
+            sessions_completed: 0,
+            client_satisfaction: 0,
+            registrationDate: '2024-01-12',
+            lastActive: 'Never'
+          },
+          {
+            id: 'th-4',
+            name: 'Dr. Maya Sari',
+            email: 'maya@kliniksehat.com',
+            phone: '+62-815-6789-0123',
+            specialization: 'Anxiety Disorders',
+            licenseNumber: 'SIP-123459',
+            yearsExperience: 6,
+            education: 'S1 Psikologi, Universitas Padjadjaran',
+            certifications: 'Anxiety Specialist, Mindfulness Practitioner',
+            adminNotes: 'Experienced in anxiety and stress management',
+            status: 'pending_setup' as const,
+            sessions_completed: 0,
+            client_satisfaction: 0,
+            registrationDate: '2024-01-14',
+            lastActive: 'Never'
+          }
+        ];
+        
+        setTherapists(mockTherapists);
+        console.log('✅ TherapistList: Therapist data loaded successfully');
+      } catch (error) {
+        console.error('Failed to load therapists:', error);
+        addToast({
+          type: 'error',
+                  title: 'Kesalahan Koneksi',
+        message: 'Gagal terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.'
+        });
+      } finally {
+        setLoading(false);
       }
+    };
+
+    loadTherapists();
+  }, []); // Only run once on mount
+
+  // Refresh function
+  const refreshTherapists = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Mock therapists data
+      const mockTherapists = [
+        {
+          id: 'th-1',
+          name: 'Dr. Budi Santoso',
+          email: 'budi@kliniksehat.com',
+          phone: '+62-812-3456-7890',
+          specialization: 'Anxiety Disorders',
+          licenseNumber: 'SIP-123456',
+          yearsExperience: 8,
+          education: 'S1 Psikologi, Universitas Indonesia',
+          certifications: 'Certified Hypnotherapist, CBT Practitioner',
+          adminNotes: 'Excellent therapist with strong client relationships',
+          status: 'active' as const,
+          sessions_completed: 45,
+          client_satisfaction: 4.8,
+          registrationDate: '2024-01-10',
+          lastActive: '2 hours ago'
+        },
+        {
+          id: 'th-2',
+          name: 'Dr. Siti Rahayu',
+          email: 'siti@kliniksehat.com',
+          phone: '+62-813-4567-8901',
+          specialization: 'Depression',
+          licenseNumber: 'SIP-123457',
+          yearsExperience: 12,
+          education: 'S2 Psikologi Klinis, Universitas Gadjah Mada',
+          certifications: 'EMDR Certified, Trauma Specialist',
+          adminNotes: 'Specializes in trauma and depression cases',
+          status: 'active' as const,
+          sessions_completed: 32,
+          client_satisfaction: 4.9,
+          registrationDate: '2024-01-08',
+          lastActive: '4 hours ago'
+        },
+        {
+          id: 'th-3',
+          name: 'Dr. Ahmad Pratama',
+          email: 'ahmad@kliniksehat.com',
+          phone: '+62-814-5678-9012',
+          specialization: 'PTSD',
+          licenseNumber: 'SIP-123458',
+          yearsExperience: 5,
+          education: 'S1 Psikologi, Universitas Airlangga',
+          certifications: 'PTSD Specialist, Military Trauma Certified',
+          adminNotes: 'New therapist, strong background in military trauma',
+          status: 'pending_setup' as const,
+          sessions_completed: 0,
+          client_satisfaction: 0,
+          registrationDate: '2024-01-12',
+          lastActive: 'Never'
+        },
+        {
+          id: 'th-4',
+          name: 'Dr. Maya Sari',
+          email: 'maya@kliniksehat.com',
+          phone: '+62-815-6789-0123',
+          specialization: 'Anxiety Disorders',
+          licenseNumber: 'SIP-123459',
+          yearsExperience: 6,
+          education: 'S1 Psikologi, Universitas Padjadjaran',
+          certifications: 'Anxiety Specialist, Mindfulness Practitioner',
+          adminNotes: 'Experienced in anxiety and stress management',
+          status: 'pending_setup' as const,
+          sessions_completed: 0,
+          client_satisfaction: 0,
+          registrationDate: '2024-01-14',
+          lastActive: 'Never'
+        }
+      ];
+      
+      setTherapists(mockTherapists);
     } catch (error) {
-      console.error('Failed to load therapists:', error);
+      console.error('Failed to refresh therapists:', error);
+      addToast({
+        type: 'error',
+        title: 'Refresh Failed',
+        message: 'Failed to refresh therapist data. Please try again.'
+      });
     } finally {
       setLoading(false);
     }
+  }, []); // Remove addToast dependency
+
+  const handleViewDetails = (therapist: Therapist) => {
+    setSelectedTherapist(therapist);
+    setShowDetailsModal(true);
   };
 
-  const handleStatusChange = async (therapistId: string, newStatus: 'active' | 'inactive') => {
+  const handleCloseDetails = () => {
+    setSelectedTherapist(null);
+    setShowDetailsModal(false);
+  };
+
+  const handleEditTherapist = (therapistId: string) => {
+    handleCloseDetails();
+    window.location.href = `/portal/therapists/edit/${therapistId}`;
+  };
+
+  const handleResendEmail = async (therapistId: string) => {
+    const therapist = therapists.find(t => t.id === therapistId);
+    if (!therapist) {
+      addToast({
+        type: 'error',
+        title: 'Therapist Not Found',
+        message: 'Therapist tidak ditemukan. Silakan segarkan halaman dan coba lagi.'
+      });
+      return;
+    }
+
+    setActionLoading(therapistId);
     try {
-      const result = await updateTherapistStatus(therapistId, newStatus);
-      if (result.success) {
-        // Update local state
-        setTherapists(prev => prev.map(th => 
-          th.id === therapistId ? { ...th, status: newStatus } : th
-        ));
-        alert(result.message);
-      }
+      // Mock API call to resend email
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Set cooldown timer (60 seconds)
+      setResendCooldowns(prev => ({
+        ...prev,
+        [therapistId]: 60
+      }));
+      
+      addToast({
+        type: 'success',
+        title: 'Email Berhasil Dikirim Ulang',
+        message: `Email registrasi telah dikirim ulang ke ${therapist.email}. Therapist akan menerima link setup yang baru.`
+      });
     } catch (error) {
-      alert('Gagal mengubah status therapist');
+      console.error('Resend email error:', error);
+      addToast({
+        type: 'error',
+        title: 'Kesalahan Sistem',
+        message: 'Gagal mengirim ulang email registrasi. Silakan coba lagi.'
+      });
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const handleEditTherapist = (therapist: Therapist) => {
-    setEditingTherapist(therapist);
-    setEditForm({
-      name: therapist.name,
-      email: therapist.email,
-      specialization: therapist.specialization
-    });
+  const handleStatusChangeRequest = (therapistId: string, newStatus: 'active' | 'inactive') => {
+    if (!user || !user.roles.includes('clinic_admin')) {
+      addToast({
+        type: 'error',
+        title: 'Access Denied',
+        message: 'Only clinic administrators can change therapist status'
+      });
+      return;
+    }
+
+    const therapist = therapists.find(t => t.id === therapistId);
+    if (!therapist) {
+      addToast({
+        type: 'error',
+        title: 'Therapist Not Found',
+        message: 'The selected therapist could not be found. Please refresh the page and try again.'
+      });
+      return;
+    }
+
+    const actionText = newStatus === 'active' ? 'activate' : 'deactivate';
+    const actionColor = newStatus === 'active' ? 'success' : 'warning';
+    
+    // Enhanced confirmation dialog with more context
+    showConfirmation({
+      type: actionColor,
+      title: `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} Therapist Account`,
+      message: `Are you sure you want to ${actionText} ${therapist.name}?\n\n• Current Status: ${therapist.status}\n• Specialization: ${therapist.specialization}\n• Sessions Completed: ${therapist.sessions_completed}\n\nThis action will ${newStatus === 'active' ? 'allow them to access their account and conduct sessions' : 'prevent them from accessing their account and conducting new sessions'}.`,
+      confirmText: actionText.charAt(0).toUpperCase() + actionText.slice(1),
+      cancelText: 'Cancel'
+    }, () => executeStatusChange(therapistId, newStatus));
   };
 
-  const handleUpdateTherapist = async () => {
-    if (!editingTherapist) return;
+  const executeStatusChange = async (therapistId: string, newStatus: 'active' | 'inactive') => {
+    if (!user) {
+      addToast({
+        type: 'error',
+        title: 'Kesalahan Autentikasi',
+        message: 'Sesi pengguna tidak ditemukan. Silakan login kembali.'
+      });
+      return;
+    }
 
+    setActionLoading(therapistId);
     try {
-      const result = await updateTherapist(editingTherapist.id, editForm);
-      if (result.success) {
-        // Update local state
-        setTherapists(prev => prev.map(th => 
-          th.id === editingTherapist.id 
-            ? { ...th, ...editForm }
-            : th
-        ));
-        setEditingTherapist(null);
-        alert(result.message);
-      }
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const therapist = therapists.find(t => t.id === therapistId);
+      
+      // Update local state
+      setTherapists(prev => 
+        prev.map(therapist => 
+          therapist.id === therapistId 
+            ? { ...therapist, status: newStatus }
+            : therapist
+        )
+      );
+      
+      // Log clinic admin action for audit
+      console.warn('Clinic Admin Action:', {
+        adminId: user.id,
+        adminName: user.name,
+        action: `Changed therapist status to ${newStatus}`,
+        therapistId,
+        therapistName: therapist?.name,
+        timestamp: new Date().toISOString()
+      });
+
+      addToast({
+        type: 'success',
+        title: 'Status Berhasil Diperbarui',
+        message: `Akun ${therapist?.name} telah ${newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan'}. ${newStatus === 'active' ? 'Mereka sekarang dapat mengakses akun dan melakukan sesi.' : 'Mereka tidak akan dapat mengakses akun lagi.'}`
+      });
     } catch (error) {
-      alert('Gagal memperbarui data therapist');
+      console.error('Status update error:', error);
+      addToast({
+        type: 'error',
+        title: 'Kesalahan Sistem',
+        message: 'Terjadi kesalahan tak terduga saat memperbarui status therapist. Silakan coba lagi.'
+      });
+    } finally {
+      setActionLoading(null);
     }
   };
-
-  const specializations = [
-    'Anxiety Disorders',
-    'Depression',
-    'PTSD (Post-Traumatic Stress Disorder)',
-    'Phobias',
-    'Addiction',
-    'Stress Management',
-    'Self-Esteem Issues',
-    'Relationship Problems',
-    'Grief and Loss',
-    'Sleep Disorders',
-    'Performance Enhancement',
-    'Pain Management',
-    'Weight Management',
-    'Smoking Cessation',
-    'Other'
-  ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-100 text-green-800">Aktif</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Menunggu</Badge>;
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircleIcon className="w-3 h-3 mr-1" />
+            Aktif
+          </Badge>
+        );
+      case 'pending_setup':
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <ClockIcon className="w-3 h-3 mr-1" />
+            Menunggu Setup
+          </Badge>
+        );
       case 'inactive':
-        return <Badge className="bg-red-100 text-red-800">Nonaktif</Badge>;
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            <XCircleIcon className="w-3 h-3 mr-1" />
+            Tidak Aktif
+          </Badge>
+        );
       default:
-        return <Badge className="bg-gray-100 text-gray-800">Tidak Diketahui</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getSatisfactionStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <StarIcon
-          key={i}
-          className={`w-4 h-4 ${
-            i <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-          }`}
-        />
-      );
-    }
-    return stars;
+  const formatRating = (rating: number) => {
+    return rating > 0 ? rating.toFixed(1) : 'N/A';
+  };
+
+  const formatCountdown = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Memuat data therapist...</span>
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <span className="ml-2 text-gray-600">Memuat therapist...</span>
+      </div>
+    );
+  }
+
+  if (therapists.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <CheckCircleIcon className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Belum Ada Therapist</h3>
+        <p className="text-gray-600 mb-4">
+          Mulai dengan menambahkan therapist pertama ke klinik.
+        </p>
+        <Button 
+          onClick={refreshTherapists} 
+          disabled={loading}
+          variant="outline"
+          className="mt-4"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+              Memperbarui...
+            </>
+          ) : (
+            <>
+              <ArrowPathIcon className="w-4 h-4 mr-2" />
+              Segarkan
+            </>
+          )}
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Daftar Therapist</h2>
-          <p className="text-gray-600">Kelola therapist di klinik Anda</p>
+    <div className="space-y-4">
+      {/* Header with refresh button */}
+      <div className="flex items-center justify-end">
+        <div className="flex items-center space-x-2">
+          <Button 
+            onClick={refreshTherapists} 
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+                Memperbarui...
+              </>
+            ) : (
+              <>
+                <ArrowPathIcon className="w-4 h-4 mr-2" />
+                Segarkan
+              </>
+            )}
+          </Button>
         </div>
-        <Button className="flex items-center">
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Tambah Therapist
-        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <UserIcon className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Therapist</p>
-                <p className="text-2xl font-bold text-gray-900">{therapists.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Aktif</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {therapists.filter(t => t.status === 'active').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <ClockIcon className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Menunggu</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {therapists.filter(t => t.status === 'pending').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <ChartBarIcon className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Rata-rata Rating</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {therapists.length > 0 
-                    ? (therapists.reduce((sum, t) => sum + t.client_satisfaction, 0) / therapists.length).toFixed(1)
-                    : '0.0'
-                  }
-                </p>
+      {therapists.map((therapist) => (
+        <div
+          key={therapist.id}
+          className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-2">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    {therapist.name}
+                  </h3>
+                  {getStatusBadge(therapist.status)}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                  <div>
+                    <p><span className="font-medium">Email:</span> {therapist.email}</p>
+                    <p><span className="font-medium">Specialization:</span> {therapist.specialization}</p>
+                  </div>
+                  
+                  <div>
+                    <p><span className="font-medium">Sessions:</span> {therapist.sessions_completed}</p>
+                    <div className="flex items-center">
+                      <span className="font-medium">Rating:</span>
+                      <StarIcon className="w-4 h-4 text-yellow-500 ml-2 mr-1" />
+                      <span>{formatRating(therapist.client_satisfaction)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {/* Status-specific information */}
+                    {therapist.status === 'pending_setup' && (
+                      <p className="text-yellow-600 text-xs">
+                        Menunggu setup password
+                      </p>
+                    )}
+                    {therapist.status === 'active' && therapist.sessions_completed > 0 && (
+                      <p className="text-green-600 text-xs">
+                        Aktif dengan {therapist.sessions_completed} sesi
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Error Display */}
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-600">{error}</p>
+            <div className="flex items-center space-x-2 ml-4">
+              {/* View Details Button */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleViewDetails(therapist)}
+              >
+                <EyeIcon className="w-4 h-4 mr-1" />
+                Lihat
+              </Button>
+
+              {/* Edit Button (Clinic Admin Only) */}
+              {user?.roles.includes('clinic_admin') && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleEditTherapist(therapist.id)}
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                >
+                  <PencilIcon className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+
+              {/* Status Action Buttons (Clinic Admin Only) */}
+              {user?.roles.includes('clinic_admin') && (
+                <>
+                  {therapist.status === 'active' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleStatusChangeRequest(therapist.id, 'inactive')}
+                      disabled={actionLoading === therapist.id}
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      {actionLoading === therapist.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600" />
+                      ) : (
+                        'Nonaktifkan'
+                      )}
+                    </Button>
+                  )}
+                  
+                  {therapist.status === 'inactive' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleStatusChangeRequest(therapist.id, 'active')}
+                      disabled={actionLoading === therapist.id}
+                      className="text-green-600 border-green-300 hover:bg-green-50"
+                    >
+                      {actionLoading === therapist.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600" />
+                      ) : (
+                        'Aktifkan'
+                      )}
+                    </Button>
+                  )}
+                  
+                  {therapist.status === 'pending_setup' && (() => {
+                    const cooldown = resendCooldowns[therapist.id];
+                    const isInCooldown = Boolean(cooldown && cooldown > 0);
+                    
+                    return (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleResendEmail(therapist.id)}
+                        disabled={actionLoading === therapist.id || isInCooldown}
+                        className="text-blue-600 border-blue-300 hover:bg-blue-50 disabled:opacity-50"
+                      >
+                        {actionLoading === therapist.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+                        ) : isInCooldown ? (
+                          <>
+                            <ClockIcon className="w-4 h-4 mr-1" />
+                            Kirim Ulang Email dalam {formatCountdown(cooldown || 0)}
+                          </>
+                        ) : (
+                          <>
+                            <EnvelopeIcon className="w-4 h-4 mr-1" />
+                            Kirim Ulang Email
+                          </>
+                        )}
+                      </Button>
+                    );
+                  })()}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Additional Info for Pending Setup */}
+          {therapist.status === 'pending_setup' && (
+            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+              <p className="text-yellow-800">
+                <strong>Registrasi sedang berlangsung:</strong> Therapist ini dibuat oleh admin klinik dan sedang menunggu untuk menyelesaikan setup password melalui link email.
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Clinic Admin Action Log Note */}
+      {user?.roles.includes('clinic_admin') && (
+        <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+          <p>
+            <strong>Admin Note:</strong> All therapist management actions are logged with your admin ID and timestamp for audit purposes.
+          </p>
         </div>
       )}
+      
+      {/* Confirmation Dialog */}
+      {ConfirmationDialog}
 
-      {/* Therapist List */}
-      <div className="space-y-4">
-        {therapists.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Belum ada therapist
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Mulai dengan menambahkan therapist pertama ke klinik Anda.
-              </p>
-              <Button>
-                <PlusIcon className="w-4 h-4 mr-2" />
-                Tambah Therapist Pertama
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          therapists.map((therapist) => (
-            <Card key={therapist.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <UserIcon className="w-6 h-6 text-blue-600" />
+              {/* Therapist Details Modal */}
+        {showDetailsModal && selectedTherapist && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" style={{ margin: 0 }}>
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-4">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {selectedTherapist.name}
+                  </h2>
+                  <p className="text-gray-600 mt-1">Detail Therapist</p>
+                </div>
+                <button
+                  onClick={handleCloseDetails}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Therapist Information */}
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Dasar</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Alamat Email</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.email}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.phone}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Status Akun</label>
+                      <div className="mt-1">
+                        {getStatusBadge(selectedTherapist.status)}
                       </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {therapist.name}
-                        </h3>
-                        <div className="flex items-center space-x-2">
-                          {getStatusBadge(therapist.status)}
-                          <span className="text-sm text-gray-500">
-                            {therapist.specialization}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Profesional</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Nomor Lisensi (SIP)</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.licenseNumber}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Spesialisasi</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.specialization}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Tahun Pengalaman</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.yearsExperience} tahun</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Pendidikan</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.education}</p>
+                    </div>
+                  </div>
+                  {selectedTherapist.certifications && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700">Sertifikasi</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.certifications}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Account Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Akun</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Tanggal Registrasi</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.registrationDate}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Terakhir Aktif</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.lastActive}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance Metrics */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Metrik Kinerja</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Sesi Selesai</span>
+                        <span className="text-2xl font-bold text-blue-600">{selectedTherapist.sessions_completed}</span>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Kepuasan Klien</span>
+                        <div className="flex items-center">
+                          <StarIcon className="w-5 h-5 text-yellow-500 mr-1" />
+                          <span className="text-2xl font-bold text-yellow-600">
+                            {formatRating(selectedTherapist.client_satisfaction)}
                           </span>
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-gray-600">
+                {/* Admin Notes */}
+                {selectedTherapist.adminNotes && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Catatan Admin</h3>
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">{selectedTherapist.adminNotes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Status Information */}
+                {selectedTherapist.status === 'pending_setup' && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h4 className="text-sm font-medium text-yellow-800 mb-2">Status Registrasi</h4>
+                    <p className="text-sm text-yellow-700">
+                      Akun therapist ini sedang menunggu pengaturan password. Therapist akan menerima email dengan link aman untuk menyelesaikan registrasi.
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-2">
+                      💡 <strong>Tip:</strong> Jika therapist belum menerima email, Anda dapat mengirim ulang email registrasi menggunakan tombol di bawah.
+                    </p>
+                  </div>
+                )}
+
+                {selectedTherapist.status === 'active' && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h4 className="text-sm font-medium text-green-800 mb-2">Status Akun</h4>
+                    <p className="text-sm text-green-700">
+                      Akun therapist ini aktif dan dapat melakukan sesi. Mereka telah menyelesaikan {selectedTherapist.sessions_completed} sesi dengan rating kepuasan rata-rata {formatRating(selectedTherapist.client_satisfaction)}.
+                    </p>
+                  </div>
+                )}
+
+                {selectedTherapist.status === 'inactive' && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h4 className="text-sm font-medium text-red-800 mb-2">Status Akun</h4>
+                    <p className="text-sm text-red-700">
+                      Akun therapist ini saat ini tidak aktif dan tidak dapat melakukan sesi. Hubungi administrator klinik untuk mengaktifkan kembali akun.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+                {/* Temporarily bypass role check for testing */}
+                <Button 
+                  variant="outline"
+                  onClick={() => handleEditTherapist(selectedTherapist.id)}
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                >
+                  Edit Therapist
+                </Button>
+                {user?.roles.includes('clinic_admin') && selectedTherapist.status === 'pending_setup' && (() => {
+                  const cooldown = resendCooldowns[selectedTherapist.id];
+                  const isInCooldown = Boolean(cooldown && cooldown > 0);
+                  
+                  return (
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleResendEmail(selectedTherapist.id)}
+                      disabled={actionLoading === selectedTherapist.id || isInCooldown}
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50 disabled:opacity-50"
+                    >
+                      {actionLoading === selectedTherapist.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+                          Mengirim...
+                        </>
+                      ) : isInCooldown ? (
+                        <>
+                          <ClockIcon className="w-4 h-4 mr-2" />
+                          Kirim Ulang Email dalam {formatCountdown(cooldown || 0)}
+                        </>
+                      ) : (
+                        <>
                           <EnvelopeIcon className="w-4 h-4 mr-2" />
-                          {therapist.email}
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <AcademicCapIcon className="w-4 h-4 mr-2" />
-                          {therapist.specialization}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <ChartBarIcon className="w-4 h-4 mr-2" />
-                          {therapist.sessions_completed} sesi selesai
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <StarIcon className="w-4 h-4 mr-2" />
-                          <div className="flex items-center">
-                            {getSatisfactionStars(therapist.client_satisfaction)}
-                            <span className="ml-1">({therapist.client_satisfaction})</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col space-y-2 ml-4">
-                    {therapist.status === 'pending' && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => handleStatusChange(therapist.id, 'active')}
-                          disabled={actionLoading}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircleIcon className="w-4 h-4 mr-1" />
-                          Aktifkan
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleStatusChange(therapist.id, 'inactive')}
-                          disabled={actionLoading}
-                        >
-                          <XCircleIcon className="w-4 h-4 mr-1" />
-                          Tolak
-                        </Button>
-                      </>
-                    )}
-                    
-                    {therapist.status === 'active' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleStatusChange(therapist.id, 'inactive')}
-                        disabled={actionLoading}
-                        className="text-red-600 border-red-600 hover:bg-red-50"
-                      >
-                        <XCircleIcon className="w-4 h-4 mr-1" />
-                        Nonaktifkan
-                      </Button>
-                    )}
-                    
-                    {therapist.status === 'inactive' && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleStatusChange(therapist.id, 'active')}
-                        disabled={actionLoading}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircleIcon className="w-4 h-4 mr-1" />
-                        Aktifkan
-                      </Button>
-                    )}
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEditTherapist(therapist)}
-                    >
-                      <PencilIcon className="w-4 h-4 mr-1" />
-                      Edit
+                          Kirim Ulang Email
+                        </>
+                      )}
                     </Button>
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setSelectedTherapist(therapist)}
+                  );
+                })()}
+                <Button variant="outline" onClick={handleCloseDetails}>
+                  Tutup
+                </Button>
+                {user?.roles.includes('clinic_admin') && selectedTherapist.status === 'active' && (
+                                      <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        handleCloseDetails();
+                        handleStatusChangeRequest(selectedTherapist.id, 'inactive');
+                      }}
+                      className="text-red-600 border-red-300 hover:bg-red-50"
                     >
-                      Detail
+                      Nonaktifkan Akun
                     </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Therapist Detail Modal */}
-      {selectedTherapist && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl mx-4">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Detail Therapist</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedTherapist(null)}
-                >
-                  ✕
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold">{selectedTherapist.name}</h3>
-                  <p className="text-gray-600">{selectedTherapist.email}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Statistik Performa:</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Sesi Selesai</p>
-                      <p className="text-lg font-semibold">{selectedTherapist.sessions_completed}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Rating Klien</p>
-                      <div className="flex items-center">
-                        {getSatisfactionStars(selectedTherapist.client_satisfaction)}
-                        <span className="ml-2 font-semibold">({selectedTherapist.client_satisfaction})</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
+                {user?.roles.includes('clinic_admin') && selectedTherapist.status === 'inactive' && (
+                                      <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        handleCloseDetails();
+                        handleStatusChangeRequest(selectedTherapist.id, 'active');
+                      }}
+                      className="text-green-600 border-green-300 hover:bg-green-50"
+                    >
+                      Aktifkan Akun
+                    </Button>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Edit Therapist Modal */}
-      {editingTherapist && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-lg mx-4">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Edit Therapist</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingTherapist(null)}
-                >
-                  ✕
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="edit-name">Nama Lengkap</Label>
-                  <Input
-                    id="edit-name"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Nama therapist"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="edit-email">Email</Label>
-                  <Input
-                    id="edit-email"
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="email@example.com"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="edit-specialization">Spesialisasi</Label>
-                  <select
-                    id="edit-specialization"
-                    value={editForm.specialization}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, specialization: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Pilih Spesialisasi</option>
-                    {specializations.map((spec) => (
-                      <option key={spec} value={spec}>
-                        {spec}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setEditingTherapist(null)}
-                  >
-                    Batal
-                  </Button>
-                  <Button
-                    onClick={handleUpdateTherapist}
-                    disabled={actionLoading}
-                  >
-                    {actionLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
     </div>

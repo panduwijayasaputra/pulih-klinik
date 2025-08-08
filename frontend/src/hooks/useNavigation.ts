@@ -45,8 +45,8 @@ export const useNavigation = () => {
   const navigationItems = useMemo(() => {
     if (!user?.roles) return [];
     
-    // Use portal-based dashboard navigation for all portal routes
-    return getDashboardNavigationForRoles(user.roles);
+    // Use full navigation items for portal routes
+    return getNavigationItemsForUser(user.roles);
   }, [user?.roles]);
 
   // Get filtered navigation items for active role (if multi-role user wants to focus)

@@ -28,153 +28,14 @@ export const dashboardNavigationItems: NavigationItem[] = [
     description: 'Halaman utama dashboard',
     requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
   },
-  
-  // Clinic Management Section
-  {
-    id: 'clinic-management',
-    label: 'Manajemen Klinik',
-    href: '/portal/clinic',
-    icon: BuildingOfficeIcon,
-    description: 'Kelola profil dan pengaturan klinik',
-    requiredRoles: ['clinic_admin'],
-    children: [
-      {
-        id: 'clinic-overview',
-        label: 'Overview Klinik',
-        href: '/portal/clinic',
-        icon: HomeIcon,
-        description: 'Ringkasan status klinik',
-        requiredRoles: ['clinic_admin'],
-      },
-      {
-        id: 'clinic-profile',
-        label: 'Profil Klinik',
-        href: '/portal/clinic#profile',
-        icon: BuildingOfficeIcon,
-        description: 'Edit informasi dasar klinik',
-        requiredRoles: ['clinic_admin'],
-      },
-      {
-        id: 'clinic-branding',
-        label: 'Branding',
-        href: '/portal/clinic#branding',
-        icon: PaintBrushIcon,
-        description: 'Kustomisasi logo dan warna',
-        requiredRoles: ['clinic_admin'],
-      },
-      {
-        id: 'clinic-settings',
-        label: 'Pengaturan',
-        href: '/portal/clinic#settings',
-        icon: Cog6ToothIcon,
-        description: 'Zona waktu dan notifikasi',
-        requiredRoles: ['clinic_admin'],
-      },
-      {
-        id: 'clinic-documents',
-        label: 'Dokumen',
-        href: '/portal/clinic#documents',
-        icon: DocumentArrowUpIcon,
-        description: 'Upload dokumen legal',
-        requiredRoles: ['clinic_admin'],
-      },
-
-    ]
-  },
-
-  // Therapist Management Section
+  // Therapist Management (for clinic admins)
   {
     id: 'therapist-management',
     label: 'Manajemen Therapist',
     href: '/portal/therapists',
     icon: UserGroupIcon,
-    description: 'Kelola tim therapist klinik',
+    description: 'Kelola dan pantau therapist klinik',
     requiredRoles: ['clinic_admin'],
-    children: [
-      {
-        id: 'therapist-list',
-        label: 'Daftar Therapist',
-        href: '/portal/therapists',
-        icon: UsersIcon,
-        description: 'Lihat dan kelola therapist',
-        requiredRoles: ['clinic_admin'],
-      },
-      {
-        id: 'therapist-new',
-        label: 'Tambah Therapist',
-        href: '/portal/therapists/new',
-        icon: UserIcon,
-        description: 'Daftarkan therapist baru',
-        requiredRoles: ['clinic_admin'],
-      },
-
-      {
-        id: 'therapist-assignments',
-        label: 'Penugasan',
-        href: '/portal/therapists/assignments',
-        icon: CalendarIcon,
-        description: 'Atur penugasan therapist ke klien',
-        requiredRoles: ['clinic_admin'],
-      },
-    ]
-  },
-
-  // Client Management - Now Implemented!
-  {
-    id: 'client-management',
-    label: 'Manajemen Klien',
-    href: '/portal/clients',
-    icon: UserIcon,
-    description: 'Kelola data dan sesi klien',
-    requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
-    children: [
-      {
-        id: 'client-list',
-        label: 'Daftar Klien',
-        href: '/portal/clients',
-        icon: UsersIcon,
-        description: 'Lihat dan kelola klien',
-        requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
-      },
-      {
-        id: 'client-assignment',
-        label: 'Penugasan Terapis',
-        href: '/portal/clients?tab=assignment',
-        icon: CalendarIcon,
-        description: 'Kelola penugasan klien ke terapis',
-        requiredRoles: ['administrator', 'clinic_admin'],
-      },
-      {
-        id: 'usage-metrics',
-        label: 'Metrik Penggunaan',
-        href: '/portal/clients?tab=metrics',
-        icon: ChartBarIcon,
-        description: 'Pantau penggunaan dan analitik',
-        requiredRoles: ['administrator', 'clinic_admin'],
-      },
-    ]
-  },
-
-  // Assessment System (to be implemented)
-  {
-    id: 'assessment-system',
-    label: 'Sistem Assessment',
-    href: '/assessments',
-    icon: ClipboardDocumentListIcon,
-    description: 'Kelola assessment dan skrip hipnoterapi',
-    requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
-    isDisabled: true, // Will be enabled when 5.0-FE-Assessment-System is implemented
-  },
-
-  // Reports & Analytics
-  {
-    id: 'reports-analytics',
-    label: 'Laporan & Analytics',
-    href: '/reports',
-    icon: ChartBarIcon,
-    description: 'Laporan kinerja dan usage analytics',
-    requiredRoles: ['administrator', 'clinic_admin'],
-    isDisabled: true, // Will be implemented later
   },
 ];
 
@@ -229,6 +90,7 @@ export const dashboardBreadcrumbMapping: Record<string, { label: string; parent?
   // Therapist routes
   '/portal/therapists': { label: 'Manajemen Therapist', parent: '/portal' },
   '/portal/therapists/new': { label: 'Tambah Therapist', parent: '/portal/therapists' },
+  '/portal/therapists/edit/[id]': { label: 'Edit Therapist', parent: '/portal/therapists' },
 
   '/portal/therapists/assignments': { label: 'Penugasan Therapist', parent: '/portal/therapists' },
   

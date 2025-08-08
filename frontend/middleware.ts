@@ -6,10 +6,10 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const { token } = req.nextauth;
 
-    // Protect dashboard routes
+    // Protect dashboard and portal routes
     if (pathname.startsWith('/dashboard') || pathname.startsWith('/asesmen') || 
         pathname.startsWith('/klien') || pathname.startsWith('/sesi') || 
-        pathname.startsWith('/skrip')) {
+        pathname.startsWith('/skrip') || pathname.startsWith('/portal')) {
       
       if (!token) {
         return NextResponse.redirect(new URL('/masuk', req.url));

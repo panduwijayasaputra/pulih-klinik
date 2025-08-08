@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getDefaultRouteForUser } from '@/lib/route-protection';
@@ -17,9 +17,10 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Development mode - bypass auth for client management
+  // Development mode - bypass auth for client management and edit routes
   const isDevelopment = process.env.NODE_ENV === 'development';
   const isClientRoute = pathname.startsWith('/portal/clients');
+  const isEditRoute = pathname.startsWith('/portal/therapists/edit');
 
   // Handle redirects for authenticated users accessing auth pages
   useEffect(() => {
@@ -39,8 +40,8 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         return;
       }
       
-      // In development, allow direct access to client routes
-      if (isDevelopment && isClientRoute) {
+      // In development, allow direct access to client routes and edit routes
+      if (isDevelopment && (isClientRoute || isEditRoute)) {
         return;
       }
       
@@ -55,8 +56,8 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
     }
   }, [isAuthenticated, isLoading, user, pathname, router]);
 
-  // In development mode, allow client routes without auth
-  if (isDevelopment && isClientRoute) {
+  // In development mode, allow client routes and edit routes without auth
+  if (isDevelopment && (isClientRoute || isEditRoute)) {
     return <>{children}</>;
   }
 

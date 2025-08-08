@@ -1,6 +1,7 @@
 import './globals.css';
 import { Poppins } from 'next/font/google';
 import type { Metadata } from 'next';
+import { ToastProvider } from '@/components/ui/toast';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -55,9 +56,11 @@ export default function RootLayout({
   return (
     <html lang='id' className={poppins.variable}>
       <body className='min-h-screen bg-background font-sans antialiased'>
-        <div className='relative flex min-h-screen flex-col'>
-          <div className='flex-1'>{children}</div>
-        </div>
+        <ToastProvider>
+          <div className='relative flex min-h-screen flex-col'>
+            <div className='flex-1'>{children}</div>
+          </div>
+        </ToastProvider>
       </body>
     </html>
   );

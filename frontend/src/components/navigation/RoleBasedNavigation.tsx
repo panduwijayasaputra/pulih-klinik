@@ -1,10 +1,7 @@
 'use client';
-
-import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigation } from '@/hooks/useNavigation';
-// import { NavigationItem } from '@/types/navigation';
 
 interface RoleBasedNavigationProps {
   className?: string;

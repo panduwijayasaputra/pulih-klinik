@@ -1,6 +1,4 @@
 'use client';
-
-import React from 'react';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
 import { RoleSelector } from '@/components/navigation/RoleSelector';
