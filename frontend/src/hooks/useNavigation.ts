@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './useAuth';
 import { useNavigationStore } from '@/store/navigation';

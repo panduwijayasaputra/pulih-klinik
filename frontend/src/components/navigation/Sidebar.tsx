@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
         `}
       >
         {/* Header */}
-        <div className="px-6 py-3 border-b border-border">
+        <div className="px-6 h-12 flex items-center border-b border-border">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-foreground">
               TERA
