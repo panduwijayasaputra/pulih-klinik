@@ -14,7 +14,7 @@ export { Separator } from "./separator"
 // Feedback Components
 export { Alert, AlertTitle, AlertDescription } from "./alert"
 export { Progress } from "./progress"
-export { ProgressRing } from "./progress-ring"
+
 export { Badge, badgeVariants } from "./badge"
 
 // Navigation Components

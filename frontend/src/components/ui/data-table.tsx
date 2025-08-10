@@ -51,6 +51,11 @@ export interface DataTableProps<T> {
     onClick: () => void;
     loading?: boolean;
   };
+  createAction?: {
+    label: string;
+    icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    onClick: () => void;
+  };
 }
 
 export function DataTable<T extends { id: string }>({
@@ -66,6 +71,7 @@ export function DataTable<T extends { id: string }>({
   searchKeys = [],
   filters = [],
   refreshAction,
+  createAction,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
 
@@ -89,26 +95,38 @@ export function DataTable<T extends { id: string }>({
             <CardTitle>{title}</CardTitle>
             {description && <CardDescription>{description}</CardDescription>}
           </div>
-          {refreshAction && (
-            <Button
-              onClick={refreshAction.onClick}
-              disabled={refreshAction.loading}
-              variant="outline"
-              size="sm"
-            >
-              {refreshAction.loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
-                  Memperbarui...
-                </>
-              ) : (
-                <>
-                  <ArrowPathIcon className="w-4 h-4 mr-2" />
-                  {refreshAction.label}
-                </>
-              )}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {refreshAction && (
+              <Button
+                onClick={refreshAction.onClick}
+                disabled={refreshAction.loading}
+                variant="outline"
+                size="sm"
+              >
+                {refreshAction.loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+                    Memperbarui...
+                  </>
+                ) : (
+                  <>
+                    <ArrowPathIcon className="w-4 h-4 mr-2" />
+                    {refreshAction.label}
+                  </>
+                )}
+              </Button>
+            )}
+            {createAction && (
+              <Button
+                onClick={createAction.onClick}
+                variant="default"
+                size="sm"
+              >
+                {createAction.icon && <createAction.icon className="w-4 h-4 mr-2" />}
+                {createAction.label}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -168,7 +186,10 @@ export function DataTable<T extends { id: string }>({
               {loading ? (
                 <tr>
                   <td className="p-6 text-center text-gray-500" colSpan={columns.length + (actions.length > 0 ? 1 : 0)}>
-                    {loadingMessage}
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                      <span>{loadingMessage}</span>
+                    </div>
                   </td>
                 </tr>
               ) : filteredData.length === 0 ? (

@@ -41,12 +41,10 @@ const TherapistRegistrationSchema = z.object({
 
   // Enums (required)
   licenseType: z.nativeEnum(TherapistLicenseTypeEnum, {
-    required_error: 'Tipe lisensi wajib dipilih',
-    invalid_type_error: 'Tipe lisensi tidak valid'
+    errorMap: () => ({ message: 'Tipe lisensi wajib dipilih' })
   }),
   employmentType: z.nativeEnum(EmploymentTypeEnum, {
-    required_error: 'Tipe pekerjaan wajib dipilih',
-    invalid_type_error: 'Tipe pekerjaan tidak valid'
+    errorMap: () => ({ message: 'Tipe pekerjaan wajib dipilih' })
   }),
 
   // Clinic admin notes (optional)
@@ -207,7 +205,7 @@ export const TherapistForm: React.FC<TherapistFormProps> = ({
   }, [watchedEmail, errors.email, validateEmailAvailability, mode]);
 
   const handleFormSubmit = (data: TherapistRegistrationForm) => {
-    if (!user || !user.roles.includes('clinic_admin')) {
+    if (!user || !user.roles.includes(UserRoleEnum.ClinicAdmin)) {
       addToast({
         type: 'error',
         title: 'Access Denied',

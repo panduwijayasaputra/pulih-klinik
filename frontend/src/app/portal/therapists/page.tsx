@@ -4,25 +4,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { TherapistList } from '@/components/therapists/TherapistList';
-import { PlusIcon, UserIcon } from '@heroicons/react/24/outline';
+import { UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRoleEnum } from '@/types/enums';
 
 function TherapistsPageContent() {
-  const headerActions = (
-    <Link href="/portal/therapists/new">
-      <Button className="flex items-center">
-        <PlusIcon className="w-4 h-4 mr-2" />
-        Add New Therapist
-      </Button>
-    </Link>
-  );
-
   return (
     <PortalPageWrapper
       title="Therapist Management"
       description="Manage and monitor therapists in your clinic"
-      actions={headerActions}
     >
       <TherapistList />
     </PortalPageWrapper>

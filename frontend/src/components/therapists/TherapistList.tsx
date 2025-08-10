@@ -18,7 +18,9 @@ import {
   StarIcon,
   XCircleIcon,
   XMarkIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
+import { TherapistFormModal } from '@/components/therapists/TherapistFormModal';
 
 interface Therapist {
   id: string;
@@ -46,6 +48,9 @@ export const TherapistList: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [resendCooldowns, setResendCooldowns] = useState<Record<string, number>>({});
   const [selectedStatus, setSelectedStatus] = useState<'all' | Therapist['status']>('all');
+  const [showTherapistFormModal, setShowTherapistFormModal] = useState(false);
+  const [therapistFormMode, setTherapistFormMode] = useState<'create' | 'edit'>('create');
+  const [therapistFormDefaultValues, setTherapistFormDefaultValues] = useState<Partial<any>>({});
   const { user, hasRole } = useAuth();
   const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
   const { addToast } = useToast();
@@ -198,6 +203,79 @@ export const TherapistList: React.FC = () => {
     router.push(`/portal/therapists/edit/${therapistId}`);
   };
 
+  // Therapist form modal handlers
+  const handleCreateTherapist = () => {
+    setTherapistFormMode('create');
+    setTherapistFormDefaultValues({});
+    setShowTherapistFormModal(true);
+  };
+
+  const handleEditTherapistModal = (therapist: Therapist) => {
+    setTherapistFormMode('edit');
+    setTherapistFormDefaultValues({
+      name: therapist.name,
+      email: therapist.email,
+      phone: therapist.phone,
+      licenseNumber: therapist.licenseNumber,
+      specialization: therapist.specialization,
+      yearsExperience: therapist.yearsExperience,
+      education: therapist.education,
+      certifications: therapist.certifications,
+      adminNotes: therapist.adminNotes,
+    });
+    setShowTherapistFormModal(true);
+  };
+
+  const handleTherapistFormSuccess = async (data: any) => {
+    try {
+      if (therapistFormMode === 'create') {
+        // Add new therapist to the list
+        const newTherapist: Therapist = {
+          id: `th-${Date.now()}`,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          specialization: data.specialization,
+          licenseNumber: data.licenseNumber,
+          yearsExperience: data.yearsExperience,
+          education: data.education,
+          certifications: data.certifications,
+          adminNotes: data.adminNotes,
+          status: 'pending_setup',
+          sessions_completed: 0,
+          client_satisfaction: 0,
+          registrationDate: new Date().toISOString().split('T')[0] || new Date().toISOString().slice(0, 10),
+        };
+        setTherapists(prev => [...prev, newTherapist]);
+        addToast({
+          type: 'success',
+          title: 'Therapist Berhasil Ditambahkan',
+          message: `Therapist ${data.name} telah berhasil ditambahkan ke sistem.`,
+        });
+      } else {
+        // Update existing therapist
+        if (selectedTherapist) {
+          setTherapists(prev => prev.map(t => 
+            t.id === selectedTherapist.id 
+              ? { ...t, ...data }
+              : t
+          ));
+          addToast({
+            type: 'success',
+            title: 'Therapist Berhasil Diperbarui',
+            message: `Data therapist ${data.name} telah berhasil diperbarui.`,
+          });
+        }
+      }
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Gagal',
+        message: error instanceof Error ? error.message : 'Terjadi kesalahan saat menyimpan data therapist.',
+      });
+    }
+  };
+
   const handleResendEmail = async (therapistId: string) => {
     const therapist = therapists.find(t => t.id === therapistId);
     if (!therapist) {
@@ -294,7 +372,6 @@ export const TherapistList: React.FC = () => {
             ? { ...therapist, status: newStatus }
             : therapist
         );
-        console.log('Status update:', { therapistId, newStatus, updated });
         return updated;
       });
 
@@ -316,7 +393,6 @@ export const TherapistList: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    console.log('getStatusBadge called with status:', status);
     switch (status) {
       case TherapistStatusEnum.Active:
         return (
@@ -340,7 +416,6 @@ export const TherapistList: React.FC = () => {
           </Badge>
         );
       default:
-        console.log('Default case for status:', status);
         return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -437,7 +512,7 @@ export const TherapistList: React.FC = () => {
       icon: PencilIcon,
       variant: 'outline',
       show: () => hasRole(UserRoleEnum.ClinicAdmin),
-      onClick: (therapist) => handleEditTherapist(therapist.id),
+      onClick: (therapist) => handleEditTherapistModal(therapist),
     },
     {
       key: 'activate',
@@ -521,6 +596,11 @@ export const TherapistList: React.FC = () => {
           onClick: refreshTherapists,
           loading: loading,
         }}
+        createAction={{
+          label: 'Tambah Therapist',
+          icon: PlusIcon,
+          onClick: handleCreateTherapist,
+        }}
       />
 
       {/* Confirmation Dialog */}
@@ -532,11 +612,19 @@ export const TherapistList: React.FC = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-4">
             <div className="p-6">
               {/* Modal Header */}
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedTherapist.name}
-                </h2>
-                <p className="text-gray-600 mt-1">Detail Therapist</p>
+              <div className="mb-6 flex items-start justify-between">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {selectedTherapist.name}
+                  </h2>
+                  <p className="text-gray-600 mt-1">Detail Therapist</p>
+                </div>
+                <button
+                  onClick={handleCloseDetails}
+                  className="ml-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <XMarkIcon className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
 
               {/* Therapist Information */}
@@ -641,31 +729,7 @@ export const TherapistList: React.FC = () => {
                 )}
               </div>
 
-              {/* Debug Info - Remove after testing */}
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <strong>Debug Info:</strong><br />
-                User: {user?.name || 'Not logged in'}<br />
-                User Email: {user?.email || 'None'}<br />
-                User Roles: {user?.roles?.join(', ') || 'None'}<br />
-                Has ClinicAdmin Role: {hasRole(UserRoleEnum.ClinicAdmin) ? 'Yes' : 'No'}<br />
-                UserRoleEnum.ClinicAdmin: {UserRoleEnum.ClinicAdmin}<br />
-                Is Authenticated: {user ? 'Yes' : 'No'}<br />
-                Selected Therapist Status: {selectedTherapist.status}<br />
-                All Therapists Statuses: {therapists.map(t => `${t.name}: ${t.status}`).join(', ')}<br />
-                <button 
-                  onClick={() => {
-                    console.log('Manual test - current therapists:', therapists);
-                    setTherapists(prev => prev.map(t => 
-                      t.id === selectedTherapist.id 
-                        ? { ...t, status: t.status === 'active' ? 'inactive' : 'active' }
-                        : t
-                    ));
-                  }}
-                  className="mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded"
-                >
-                  Test Status Toggle
-                </button>
-              </div>
+
 
               {/* Modal Footer */}
               <div className="flex justify-end items-center mt-6 pt-6 border-t border-gray-200">
@@ -673,8 +737,8 @@ export const TherapistList: React.FC = () => {
                 {/* Right side - Action buttons */}
                 <div className="flex space-x-3">
 
-                  {/* Clinic Admin Actions - Temporarily allowing all users for testing */}
-                  {(hasRole(UserRoleEnum.ClinicAdmin) || true) && (
+                  {/* Clinic Admin Actions */}
+                  {hasRole(UserRoleEnum.ClinicAdmin) && (
                     <>
                       {/* Edit Button */}
                       <button
@@ -778,6 +842,17 @@ export const TherapistList: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Therapist Form Modal */}
+      <TherapistFormModal
+        open={showTherapistFormModal}
+        onOpenChange={setShowTherapistFormModal}
+        mode={therapistFormMode}
+        {...(therapistFormMode === 'edit' && selectedTherapist?.id ? { therapistId: selectedTherapist.id } : {})}
+        defaultValues={therapistFormDefaultValues}
+        onSubmitSuccess={handleTherapistFormSuccess}
+        onCancel={() => setShowTherapistFormModal(false)}
+      />
     </>
   );
 };

@@ -32,6 +32,9 @@ export const useClient = () => {
     setLoading(true);
     setError(null);
     try {
+      // Mock API delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       // For now, return mock data since we don't have a real API
       // In the future, this would call ClientAPI.getClients()
       const mockClients: Client[] = [

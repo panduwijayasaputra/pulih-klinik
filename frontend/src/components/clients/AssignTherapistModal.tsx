@@ -54,7 +54,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header Section */}
-        <div className="sticky top-0 bg-white z-10 pb-6 border-b border-gray-200">
+        <div className="pb-6 border-b border-gray-200">
           <div className="flex flex-col">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Assign Therapist
@@ -135,7 +135,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
         </div>
 
         {/* Footer Section */}
-        <div className="sticky bottom-0 bg-white z-10 pt-6 border-t border-gray-200">
+        <div className="pt-6 border-t border-gray-200">
           <DialogFooter>
             <Button
               variant="outline"
