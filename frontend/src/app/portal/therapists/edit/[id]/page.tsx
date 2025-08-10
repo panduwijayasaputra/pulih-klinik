@@ -29,7 +29,8 @@ export default function EditTherapistPage() {
   }
 
   // Access control
-  const isAuthorized = !!(user && user.roles.includes(UserRoleEnum.ClinicAdmin));
+  const { hasRole } = useAuth();
+  const isAuthorized = hasRole(UserRoleEnum.ClinicAdmin);
   
   if (!isAuthorized) {
     return (

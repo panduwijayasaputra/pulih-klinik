@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
-import { TherapistList } from '@/components/dashboard/TherapistList';
+import { TherapistList } from '@/components/therapists/TherapistList';
 import { PlusIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRoleEnum } from '@/types/enums';

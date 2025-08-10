@@ -1,23 +1,18 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import React, { useState, useCallback } from 'react';
 
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DataTable, TableColumn, TableAction } from '@/components/ui/data-table';
 
 import { Client } from '@/types/client';
 import { ClientStatusEnum } from '@/types/enums';
 import { useClient } from '@/hooks/useClient';
-import { 
+import {
+  ArchiveBoxIcon,
   EyeIcon,
   PencilIcon,
   UserPlusIcon,
-  ArchiveBoxIcon,
-  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 export interface ClientListProps {
@@ -56,150 +51,144 @@ export const ClientList: React.FC<ClientListProps> = ({
   onAssign,
   onArchive,
 }) => {
-  const { clients: storeClients } = useClient();
-  const [search, setSearch] = useState('');
+  const { clients: storeClients, loadClients, loading } = useClient();
   const [status, setStatus] = useState<'all' | Client['status']>('all');
 
-  // Temporary mock if no clients passed
-  const mockClients: Client[] = useMemo(() => (
-    [
-      {
-        id: 'c-001',
-        name: 'Andi Wijaya',
-        age: 29,
-        gender: 'male' as Client['gender'],
-        phone: '+62-812-1111-2222',
-        email: 'andi@example.com',
-        occupation: 'Karyawan',
-        education: 'Bachelor',
-        address: 'Jl. Sudirman No. 1, Jakarta',
-        status: 'active',
-        joinDate: '2024-01-20',
-        totalSessions: 3,
-        primaryIssue: 'Kecemasan',
-        progress: 40,
-      },
-      {
-        id: 'c-002',
-        name: 'Siti Rahma',
-        age: 34,
-        gender: 'female' as Client['gender'],
-        phone: '+62-812-3333-4444',
-        email: 'siti@example.com',
-        occupation: 'Wiraswasta',
-        education: 'Master',
-        address: 'Jl. Asia Afrika No. 7, Bandung',
-        status: 'pending',
-        joinDate: '2024-02-02',
-        totalSessions: 0,
-        primaryIssue: 'Depresi',
-        progress: 0,
-      },
-    ]
-  ), []);
+  // Refresh function
+  const refreshClients = useCallback(async () => {
+    try {
+      await loadClients();
+    } catch (error) {
+      console.error('Failed to refresh clients:', error);
+    }
+  }, [loadClients]);
 
-  // Prefer store clients if available; fallback to prop; then to mock
-  const clients = (storeClients && storeClients.length > 0) ? storeClients : (clientsProp ?? mockClients);
+  // Load clients on component mount if store is empty
+  React.useEffect(() => {
+    if (!storeClients || storeClients.length === 0) {
+      loadClients().catch(console.error);
+    }
+  }, [storeClients, loadClients]);
 
-  const filtered = clients.filter((c) => {
-    const matchesSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.toLowerCase().includes(search.toLowerCase());
+  // Prefer store clients if available; fallback to prop
+  const clients = (storeClients && storeClients.length > 0) ? storeClients : (clientsProp ?? []);
 
-    const matchesStatus = status === 'all' ? true : c.status === status;
-    return matchesSearch && matchesStatus;
+  // Filter clients by status
+  const filteredClients = clients.filter((c) => {
+    return status === 'all' ? true : c.status === status;
   });
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Daftar Klien</CardTitle>
-        <CardDescription>Kelola klien, lihat detail, dan atur penugasan therapist</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col md:flex-row gap-3 md:items-center">
-          <div className="relative md:flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Cari nama, email, atau telepon..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Select value={status} onValueChange={(v) => setStatus(v as any)}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Semua Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                {Object.values(ClientStatusEnum).map((s) => (
-                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  // Define table columns
+  const columns: TableColumn<Client>[] = [
+    {
+      key: 'client',
+      header: 'Klien',
+      render: (client) => (
+        <div>
+          <div className="font-medium text-gray-900">{client.name}</div>
+          <div className="text-xs text-gray-500">{client.primaryIssue}</div>
         </div>
+      ),
+    },
+    {
+      key: 'contact',
+      header: 'Kontak',
+      render: (client) => (
+        <div>
+          <div>{client.phone}</div>
+          <div className="text-xs text-gray-500">{client.email}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (client) => getStatusBadge(client.status),
+    },
+    {
+      key: 'joinDate',
+      header: 'Bergabung',
+      render: (client) => (
+        <span className="text-gray-600">
+          {new Date(client.joinDate).toLocaleDateString('id-ID')}
+        </span>
+      ),
+    },
+    {
+      key: 'sessions',
+      header: 'Sesi',
+      render: (client) => (
+        <span className="text-gray-600">{client.totalSessions}</span>
+      ),
+    },
+  ];
 
-        <div className="overflow-x-auto border rounded-lg">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="text-left p-3 font-medium">Klien</th>
-                <th className="text-left p-3 font-medium">Kontak</th>
-                <th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Bergabung</th>
-                <th className="text-left p-3 font-medium">Sesi</th>
-                <th className="text-left p-3 font-medium">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td className="p-6 text-center text-gray-500" colSpan={6}>
-                    Tidak ada klien yang cocok
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((c) => (
-                  <tr key={c.id} className="border-t hover:bg-gray-50">
-                    <td className="p-3">
-                      <div className="font-medium text-gray-900">{c.name}</div>
-                      <div className="text-xs text-gray-500">{c.primaryIssue}</div>
-                    </td>
-                    <td className="p-3">
-                      <div>{c.phone}</div>
-                      <div className="text-xs text-gray-500">{c.email}</div>
-                    </td>
-                    <td className="p-3">{getStatusBadge(c.status)}</td>
-                    <td className="p-3 text-gray-600">{new Date(c.joinDate).toLocaleDateString('id-ID')}</td>
-                    <td className="p-3 text-gray-600">{c.totalSessions}</td>
-                    <td className="p-3">
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => onView ? onView(c.id) : null}>
-                          <EyeIcon className="w-4 h-4 mr-1" /> Lihat
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => onEdit ? onEdit(c.id) : null}>
-                          <PencilIcon className="w-4 h-4 mr-1" /> Ubah
-                        </Button>
-                        <Button size="sm" onClick={() => onAssign ? onAssign(c.id) : null}>
-                          <UserPlusIcon className="w-4 h-4 mr-1" /> Assign
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => onArchive ? onArchive(c.id) : null}>
-                          <ArchiveBoxIcon className="w-4 h-4 mr-1" /> Arsipkan
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+  // Define table actions
+  const actions: TableAction<Client>[] = [
+    {
+      key: 'view',
+      label: 'Lihat',
+      icon: EyeIcon,
+      variant: 'outline',
+      onClick: (client) => onView?.(client.id),
+    },
+    {
+      key: 'edit',
+      label: 'Edit',
+      icon: PencilIcon,
+      variant: 'outline',
+      onClick: (client) => onEdit?.(client.id),
+    },
+    {
+      key: 'assign',
+      label: 'Therapist',
+      icon: UserPlusIcon,
+      variant: 'default',
+      onClick: (client) => onAssign?.(client.id),
+    },
+    {
+      key: 'archive',
+      label: 'Arsipkan',
+      icon: ArchiveBoxIcon,
+      variant: 'destructive',
+      onClick: (client) => onArchive?.(client.id),
+    },
+  ];
+
+  // Define status filter
+  const statusFilter = {
+    key: 'status',
+    label: 'Semua Status',
+    options: [
+      { value: 'all', label: 'Semua Status' },
+      ...Object.values(ClientStatusEnum).map((s) => ({
+        value: s,
+        label: STATUS_LABEL[s] || s,
+      })),
+    ],
+    value: status,
+    onChange: (value: string) => setStatus(value as 'all' | Client['status']),
+  };
+
+  return (
+    <DataTable
+      title="Daftar Klien"
+      description="Kelola klien, lihat detail, dan atur penugasan therapist"
+      data={filteredClients}
+      columns={columns}
+      actions={actions}
+      loading={loading}
+      emptyMessage="Tidak ada klien yang ditemukan"
+      loadingMessage="Memuat data klien..."
+      searchPlaceholder="Cari nama, email, atau telepon..."
+      searchKeys={['name', 'email', 'phone']}
+      filters={[statusFilter]}
+      refreshAction={{
+        label: 'Segarkan',
+        onClick: refreshClients,
+        loading: loading,
+      }}
+    />
   );
 };
 

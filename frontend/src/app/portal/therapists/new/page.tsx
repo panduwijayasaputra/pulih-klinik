@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 export default function NewTherapistPage() {
   const router = useRouter();
   // Clinic admin access control
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, hasRole } = useAuth();
 
   // Access control check
   if (isLoading) {
@@ -26,7 +26,7 @@ export default function NewTherapistPage() {
     );
   }
 
-  if (!user || !user.roles.includes(UserRoleEnum.ClinicAdmin)) {
+  if (!hasRole(UserRoleEnum.ClinicAdmin)) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">

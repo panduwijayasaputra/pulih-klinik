@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import type { Client, ClientFormData, SessionSummary } from '@/types/client';
+import { ClientEducationEnum, ClientGenderEnum, ClientStatusEnum } from '@/types/enums';
 import { useClientStore } from '@/store/client';
 import { ClientAPI } from '@/lib/api/client';
 
@@ -26,6 +27,56 @@ export const useClient = () => {
   const getClientById = useCallback((id: string): Client | undefined => {
     return clients.find((c) => c.id === id);
   }, [clients]);
+
+  const loadClients = useCallback(async (): Promise<Client[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // For now, return mock data since we don't have a real API
+      // In the future, this would call ClientAPI.getClients()
+      const mockClients: Client[] = [
+        {
+          id: 'c-001',
+          name: 'Andi Wijaya',
+          age: 29,
+          gender: ClientGenderEnum.Male,
+          phone: '+62-812-1111-2222',
+          email: 'andi@example.com',
+          occupation: 'Karyawan',
+          education: ClientEducationEnum.Bachelor,
+          address: 'Jl. Sudirman No. 1, Jakarta',
+          status: ClientStatusEnum.Active,
+          joinDate: '2024-01-20',
+          totalSessions: 3,
+          primaryIssue: 'Kecemasan',
+          progress: 40,
+        },
+        {
+          id: 'c-002',
+          name: 'Siti Rahma',
+          age: 34,
+          gender: ClientGenderEnum.Female,
+          phone: '+62-812-3333-4444',
+          email: 'siti@example.com',
+          occupation: 'Wiraswasta',
+          education: ClientEducationEnum.Master,
+          address: 'Jl. Asia Afrika No. 7, Bandung',
+          status: ClientStatusEnum.Pending,
+          joinDate: '2024-02-02',
+          totalSessions: 0,
+          primaryIssue: 'Depresi',
+          progress: 0,
+        },
+      ];
+      setClients(mockClients);
+      return mockClients;
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Gagal memuat data klien');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading, setError, setClients]);
 
   const loadSessions = useCallback(async (
     clientId: string,
@@ -55,8 +106,8 @@ export const useClient = () => {
       const client: Client = {
         ...data,
         id: `CLT${Date.now()}`,
-        status: 'pending' as Client['status'],
-        joinDate: new Date().toISOString().split('T')[0],
+        status: ClientStatusEnum.Pending,
+        joinDate: new Date().toISOString().split('T')[0] || new Date().toISOString().slice(0, 10),
         totalSessions: 0,
         progress: 0,
       };
@@ -96,7 +147,7 @@ export const useClient = () => {
     const optimisticClient = {
       ...client,
       assignedTherapist: therapistId,
-      status: 'active' as Client['status'],
+      status: ClientStatusEnum.Active,
     };
     updateClient(clientId, optimisticClient);
 
@@ -126,7 +177,7 @@ export const useClient = () => {
     const optimisticClient = {
       ...client,
       assignedTherapist: undefined,
-      status: 'pending' as Client['status'],
+      status: ClientStatusEnum.Pending,
     };
     updateClient(clientId, optimisticClient);
 
@@ -161,6 +212,7 @@ export const useClient = () => {
     // actions
     setClients,
     setSelectedClientId,
+    loadClients,
     loadSessions,
     createClient,
     updateClient: updateClientData,
