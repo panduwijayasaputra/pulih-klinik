@@ -6,6 +6,7 @@ import type { Client, ClientFormData, SessionSummary } from '@/types/client';
 import { ClientEducationEnum, ClientGenderEnum, ClientStatusEnum } from '@/types/enums';
 import { useClientStore } from '@/store/client';
 import { ClientAPI } from '@/lib/api/client';
+import { mockClients } from '@/lib/api/mockData';
 
 export const useClient = () => {
   const {
@@ -28,49 +29,20 @@ export const useClient = () => {
     return clients.find((c) => c.id === id);
   }, [clients]);
 
-  const loadClients = useCallback(async (): Promise<Client[]> => {
+  const loadClients = useCallback(async (forceRefresh = false): Promise<Client[]> => {
+    // Skip loading if clients are already loaded and not forcing refresh
+    if (clients.length > 0 && !forceRefresh) {
+      return clients;
+    }
+    
     setLoading(true);
     setError(null);
     try {
       // Mock API delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // For now, return mock data since we don't have a real API
+      // Use comprehensive mock data from mockData.ts
       // In the future, this would call ClientAPI.getClients()
-      const mockClients: Client[] = [
-        {
-          id: 'c-001',
-          name: 'Andi Wijaya',
-          age: 29,
-          gender: ClientGenderEnum.Male,
-          phone: '+62-812-1111-2222',
-          email: 'andi@example.com',
-          occupation: 'Karyawan',
-          education: ClientEducationEnum.Bachelor,
-          address: 'Jl. Sudirman No. 1, Jakarta',
-          status: ClientStatusEnum.Active,
-          joinDate: '2024-01-20',
-          totalSessions: 3,
-          primaryIssue: 'Kecemasan',
-          progress: 40,
-        },
-        {
-          id: 'c-002',
-          name: 'Siti Rahma',
-          age: 34,
-          gender: ClientGenderEnum.Female,
-          phone: '+62-812-3333-4444',
-          email: 'siti@example.com',
-          occupation: 'Wiraswasta',
-          education: ClientEducationEnum.Master,
-          address: 'Jl. Asia Afrika No. 7, Bandung',
-          status: ClientStatusEnum.Pending,
-          joinDate: '2024-02-02',
-          totalSessions: 0,
-          primaryIssue: 'Depresi',
-          progress: 0,
-        },
-      ];
       setClients(mockClients);
       return mockClients;
     } catch (error) {
@@ -79,7 +51,7 @@ export const useClient = () => {
     } finally {
       setLoading(false);
     }
-  }, [setLoading, setError, setClients]);
+  }, [clients.length, setLoading, setError, setClients]);
 
   const loadSessions = useCallback(async (
     clientId: string,

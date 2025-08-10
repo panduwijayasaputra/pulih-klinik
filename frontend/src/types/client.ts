@@ -1,32 +1,57 @@
-import { ClientEducationEnum, ClientGenderEnum, ClientReligionEnum, ClientStatusEnum } from './enums';
+import { ClientEducationEnum, ClientGenderEnum, ClientReligionEnum, ClientStatusEnum, ClientMaritalStatusEnum, ClientRelationshipWithSpouseEnum, ClientGuardianRelationshipEnum, ClientGuardianMaritalStatusEnum } from './enums';
 
 type EnumValue<T> = T[keyof T];
 
 export interface Client {
   id: string;
-  name: string;
-  age: number;
+  fullName: string;
   gender: EnumValue<typeof ClientGenderEnum>;
-  phone: string;
-  email: string;
+  birthPlace: string;
+  birthDate: string;
+  religion: EnumValue<typeof ClientReligionEnum>;
   occupation: string;
   education: EnumValue<typeof ClientEducationEnum>;
+  educationMajor?: string;
   address: string;
+  phone: string;
+  email: string;
+  hobbies?: string;
+  maritalStatus: EnumValue<typeof ClientMaritalStatusEnum>;
+  spouseName?: string;
+  relationshipWithSpouse?: EnumValue<typeof ClientRelationshipWithSpouseEnum>;
+  emergencyContact?: string;
+  firstVisit: boolean;
+  previousVisitDetails?: string;
   assignedTherapist?: string | undefined;
   status: EnumValue<typeof ClientStatusEnum>;
   joinDate: string;
   totalSessions: number;
   lastSession?: string | undefined;
-  primaryIssue: string;
   progress: number;
   notes?: string | undefined;
-  religion?: EnumValue<typeof ClientReligionEnum> | undefined;
   province?: string | undefined;
-  emergencyContact?: {
+  // Legacy fields for backward compatibility
+  name?: string;
+  age?: number;
+  primaryIssue?: string;
+  emergencyContactDetails?: {
     name: string;
     phone: string;
     relationship: string;
   } | undefined;
+  // Minor-specific fields
+  isMinor?: boolean;
+  school?: string;
+  grade?: string;
+  // Guardian information
+  guardianFullName?: string;
+  guardianRelationship?: EnumValue<typeof ClientGuardianRelationshipEnum>;
+  guardianPhone?: string;
+  guardianAddress?: string;
+  guardianOccupation?: string;
+  guardianMaritalStatus?: EnumValue<typeof ClientGuardianMaritalStatusEnum>;
+  guardianLegalCustody?: boolean;
+  guardianCustodyDocsAttached?: boolean;
 }
 
 export interface ClientFilters {
@@ -42,19 +67,42 @@ export interface ClientFilters {
 }
 
 export interface ClientFormData {
-  name: string;
-  age: number;
+  fullName: string;
   gender: Client['gender'];
-  phone: string;
-  email: string;
+  birthPlace: string;
+  birthDate: string;
+  religion: Client['religion'];
   occupation: string;
   education: Client['education'];
+  educationMajor?: string;
   address: string;
-  primaryIssue: string;
-  religion?: Client['religion'];
+  phone: string;
+  email: string;
+  hobbies?: string;
+  maritalStatus: Client['maritalStatus'];
+  spouseName?: string;
+  relationshipWithSpouse?: Client['relationshipWithSpouse'];
+  emergencyContact?: string;
+  firstVisit: boolean;
+  previousVisitDetails?: string;
   province?: Client['province'];
-  emergencyContact?: Client['emergencyContact'];
   notes?: string;
+  // Legacy fields for backward compatibility
+  name?: string;
+  emergencyContactDetails?: Client['emergencyContactDetails'];
+  // Minor-specific fields
+  isMinor?: boolean;
+  school?: string;
+  grade?: string;
+  // Guardian information
+  guardianFullName?: string;
+  guardianRelationship?: Client['guardianRelationship'];
+  guardianPhone?: string;
+  guardianAddress?: string;
+  guardianOccupation?: string;
+  guardianMaritalStatus?: Client['guardianMaritalStatus'];
+  guardianLegalCustody?: boolean;
+  guardianCustodyDocsAttached?: boolean;
 }
 
 export interface UsageMetrics {

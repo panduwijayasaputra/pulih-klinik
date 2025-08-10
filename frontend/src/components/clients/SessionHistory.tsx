@@ -42,19 +42,19 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
 
-  const loadSessions = useCallback(() => {
+  const loadSessions = useCallback((targetPage: number = page) => {
     let mounted = true;
     setLoading(true);
     setError(null);
 
-    ClientAPI.getClientSessions(clientId, page, pageSize)
+    ClientAPI.getClientSessions(clientId, targetPage, pageSize)
       .then((res) => {
         if (!mounted) return;
         if (res.success && res.data) {
           setSessions(res.data.items);
           setTotal(res.data.total);
           // also cache in store for other consumers
-          loadSessionsFromStore(clientId, page, pageSize).catch(() => {});
+          loadSessionsFromStore(clientId, targetPage, pageSize).catch(() => {});
         } else {
           const msg = res.message || 'Gagal memuat riwayat sesi.';
           setError(msg);
@@ -71,7 +71,11 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
     return () => {
       mounted = false;
     };
-  }, [addToast, clientId, page, pageSize]);
+  }, [addToast, clientId, pageSize, loadSessionsFromStore]);
+
+  const handleRetry = useCallback(() => {
+    loadSessions(page);
+  }, [loadSessions, page]);
 
   useEffect(() => {
     // prefer cached sessions if present (first page only)
@@ -83,9 +87,10 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
       return () => {};
     }
 
+    // Always load sessions when page, clientId, or pageSize changes
     const cleanup = loadSessions();
     return cleanup;
-  }, [loadSessions]);
+  }, [page, clientId, pageSize, loadSessions, sessionsByClientId]);
 
   const groupedByDate = useMemo(() => {
     const groups: Record<string, SessionSummary[]> = {};
@@ -137,7 +142,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
         ) : error ? (
           <div className="flex items-center justify-between text-sm">
             <span className="text-destructive">{error}</span>
-            <Button size="sm" variant="outline" onClick={loadSessions}>Coba lagi</Button>
+            <Button size="sm" variant="outline" onClick={handleRetry}>Coba lagi</Button>
           </div>
         ) : sessions.length === 0 ? (
           <div className="text-sm text-muted-foreground">Belum ada riwayat sesi untuk klien ini.</div>
@@ -192,7 +197,11 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => {
+                    const newPage = Math.max(1, page - 1);
+                    setPage(newPage);
+                    loadSessions(newPage);
+                  }}
                   disabled={page <= 1}
                 >
                   Sebelumnya
@@ -200,7 +209,11 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => {
+                    const newPage = Math.min(totalPages, page + 1);
+                    setPage(newPage);
+                    loadSessions(newPage);
+                  }}
                   disabled={page >= totalPages}
                 >
                   Berikutnya

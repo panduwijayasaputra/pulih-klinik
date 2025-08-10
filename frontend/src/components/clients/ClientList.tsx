@@ -8,7 +8,7 @@ import { ClientFormModal } from '@/components/clients/ClientFormModal';
 import { SessionHistory } from '@/components/clients/SessionHistory';
 
 import { Client } from '@/types/client';
-import { ClientStatusEnum } from '@/types/enums';
+import { ClientStatusEnum, ClientEducationLabels, ClientReligionLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientGuardianRelationshipLabels, ClientGuardianMaritalStatusLabels } from '@/types/enums';
 import { useClient } from '@/hooks/useClient';
 import { useToast } from '@/components/ui/toast';
 import {
@@ -73,16 +73,18 @@ export const ClientList: React.FC<ClientListProps> = ({
   // Refresh function
   const refreshClients = useCallback(async () => {
     try {
-      await loadClients();
+      await loadClients(true); // Force refresh
     } catch (error) {
       console.error('Failed to refresh clients:', error);
     }
   }, [loadClients]);
 
-  // Load clients on component mount
+  // Load clients on component mount only if not already loaded
   React.useEffect(() => {
-    loadClients().catch(console.error);
-  }, [loadClients]);
+    if (storeClients.length === 0) {
+      loadClients().catch(console.error);
+    }
+  }, []); // Run only once on mount
 
   // Modal handlers
   const handleCloseDetails = () => {
@@ -102,19 +104,41 @@ export const ClientList: React.FC<ClientListProps> = ({
   const handleEditClientModal = (client: Client) => {
     setClientFormMode('edit');
     setClientFormDefaultValues({
-      name: client.name,
-      age: client.age,
+      fullName: client.fullName || client.name,
       gender: client.gender,
-      phone: client.phone,
-      email: client.email,
+      birthPlace: client.birthPlace,
+      birthDate: client.birthDate || '',
+      religion: client.religion,
       occupation: client.occupation,
       education: client.education,
+      educationMajor: client.educationMajor,
       address: client.address,
-      primaryIssue: client.primaryIssue,
-      religion: client.religion,
-      province: client.province,
+      phone: client.phone,
+      email: client.email,
+      hobbies: client.hobbies,
+      maritalStatus: client.maritalStatus,
+      spouseName: client.spouseName,
+      relationshipWithSpouse: client.relationshipWithSpouse,
       emergencyContact: client.emergencyContact,
+      firstVisit: client.firstVisit,
+      previousVisitDetails: client.previousVisitDetails,
+      province: client.province,
       notes: client.notes,
+      // Minor-specific fields
+      isMinor: client.isMinor,
+      school: client.school,
+      grade: client.grade,
+      guardianFullName: client.guardianFullName,
+      guardianRelationship: client.guardianRelationship,
+      guardianPhone: client.guardianPhone,
+      guardianAddress: client.guardianAddress,
+      guardianOccupation: client.guardianOccupation,
+      guardianMaritalStatus: client.guardianMaritalStatus,
+      guardianLegalCustody: client.guardianLegalCustody,
+      guardianCustodyDocsAttached: client.guardianCustodyDocsAttached,
+      // Legacy fields for backward compatibility
+      name: client.name,
+      emergencyContactDetails: client.emergencyContactDetails,
     });
     setShowClientFormModal(true);
   };
@@ -126,7 +150,7 @@ export const ClientList: React.FC<ClientListProps> = ({
         addToast({
           type: 'success',
           title: 'Klien Berhasil Ditambahkan',
-          message: `Klien ${data.name} telah berhasil ditambahkan ke sistem.`,
+          message: `Klien ${data.fullName} telah berhasil ditambahkan ke sistem.`,
         });
       } else {
         if (selectedClient) {
@@ -134,7 +158,7 @@ export const ClientList: React.FC<ClientListProps> = ({
           addToast({
             type: 'success',
             title: 'Klien Berhasil Diperbarui',
-            message: `Data klien ${data.name} telah berhasil diperbarui.`,
+            message: `Data klien ${data.fullName} telah berhasil diperbarui.`,
           });
         }
       }
@@ -162,8 +186,7 @@ export const ClientList: React.FC<ClientListProps> = ({
       header: 'Klien',
       render: (client) => (
         <div>
-          <div className="font-medium text-gray-900">{client.name}</div>
-          <div className="text-xs text-gray-500">{client.primaryIssue}</div>
+          <div className="font-medium text-gray-900">{client.fullName || client.name}</div>
         </div>
       ),
     },
@@ -282,13 +305,13 @@ export const ClientList: React.FC<ClientListProps> = ({
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto mx-4">
             <div className="p-6">
               {/* Modal Header */}
-              <div className="mb-6 flex items-start justify-between">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {selectedClient.name}
-                  </h2>
-                  <p className="text-gray-600 mt-1">Detail Klien</p>
-                </div>
+                              <div className="mb-6 flex items-start justify-between">
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {selectedClient.fullName || selectedClient.name}
+                    </h2>
+                    <p className="text-gray-600 mt-1">Detail Klien</p>
+                  </div>
                 <button
                   onClick={handleCloseDetails}
                   className="ml-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
@@ -307,16 +330,28 @@ export const ClientList: React.FC<ClientListProps> = ({
                       <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
                       <p className="mt-1 text-sm text-gray-900 flex items-center">
                         <UserIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {selectedClient.name}
+                        {selectedClient.fullName || selectedClient.name}
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Usia</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedClient.age} tahun</p>
+                      <label className="block text-sm font-medium text-gray-700">Tempat Lahir</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedClient.birthPlace}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedClient.birthDate ? new Date(selectedClient.birthDate).toLocaleDateString('id-ID') : '-'}
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Jenis Kelamin</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedClient.gender}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Status Pernikahan</label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {ClientMaritalStatusLabels[selectedClient.maritalStatus as keyof typeof ClientMaritalStatusLabels] || selectedClient.maritalStatus}
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Status Akun</label>
@@ -326,6 +361,87 @@ export const ClientList: React.FC<ClientListProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Minor-specific Information */}
+                {selectedClient.isMinor && (
+                  <>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Sekolah</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedClient.school && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Nama Sekolah</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedClient.school}</p>
+                          </div>
+                        )}
+                        {selectedClient.grade && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Kelas</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedClient.grade}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Wali</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedClient.guardianFullName && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Nama Lengkap Wali</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedClient.guardianFullName}</p>
+                          </div>
+                        )}
+                        {selectedClient.guardianRelationship && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Hubungan dengan Klien</label>
+                            <p className="mt-1 text-sm text-gray-900">
+                              {ClientGuardianRelationshipLabels[selectedClient.guardianRelationship as keyof typeof ClientGuardianRelationshipLabels] || selectedClient.guardianRelationship}
+                            </p>
+                          </div>
+                        )}
+                        {selectedClient.guardianPhone && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Nomor Telepon Wali</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedClient.guardianPhone}</p>
+                          </div>
+                        )}
+                        {selectedClient.guardianOccupation && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Pekerjaan Wali</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedClient.guardianOccupation}</p>
+                          </div>
+                        )}
+                        {selectedClient.guardianMaritalStatus && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Status Pernikahan Wali</label>
+                            <p className="mt-1 text-sm text-gray-900">
+                              {ClientGuardianMaritalStatusLabels[selectedClient.guardianMaritalStatus as keyof typeof ClientGuardianMaritalStatusLabels] || selectedClient.guardianMaritalStatus}
+                            </p>
+                          </div>
+                        )}
+                        {selectedClient.guardianAddress && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Alamat Wali</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedClient.guardianAddress}</p>
+                          </div>
+                        )}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Hak Asuh Hukum</label>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {selectedClient.guardianLegalCustody ? 'Ya' : 'Tidak'}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Dokumen Hak Asuh</label>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {selectedClient.guardianCustodyDocsAttached ? 'Terlampir' : 'Belum terlampir'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Contact Information */}
                 <div>
@@ -370,13 +486,22 @@ export const ClientList: React.FC<ClientListProps> = ({
                       <label className="block text-sm font-medium text-gray-700">Pendidikan</label>
                       <p className="mt-1 text-sm text-gray-900 flex items-center">
                         <AcademicCapIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {selectedClient.education}
+                        {ClientEducationLabels[selectedClient.education as keyof typeof ClientEducationLabels] || selectedClient.education}
+                        {selectedClient.educationMajor && (
+                          <span className="text-gray-600 ml-1">- {selectedClient.educationMajor}</span>
+                        )}
                       </p>
                     </div>
-                    {selectedClient.religion && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Agama</label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {ClientReligionLabels[selectedClient.religion as keyof typeof ClientReligionLabels] || selectedClient.religion}
+                      </p>
+                    </div>
+                    {selectedClient.hobbies && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Agama</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedClient.religion}</p>
+                        <label className="block text-sm font-medium text-gray-700">Hobi</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedClient.hobbies}</p>
                       </div>
                     )}
                     {selectedClient.province && (
@@ -388,17 +513,52 @@ export const ClientList: React.FC<ClientListProps> = ({
                   </div>
                 </div>
 
+                {/* Marital Information */}
+                {selectedClient.maritalStatus === 'Married' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Pernikahan</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedClient.spouseName && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Nama Pasangan</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedClient.spouseName}</p>
+                        </div>
+                      )}
+                      {selectedClient.relationshipWithSpouse && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Hubungan dengan Pasangan</label>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {ClientRelationshipWithSpouseLabels[selectedClient.relationshipWithSpouse as keyof typeof ClientRelationshipWithSpouseLabels] || selectedClient.relationshipWithSpouse}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Visit Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Kunjungan</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Kunjungan Pertama</label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedClient.firstVisit ? 'Ya' : 'Tidak'}
+                      </p>
+                    </div>
+                    {!selectedClient.firstVisit && selectedClient.previousVisitDetails && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Detail Kunjungan Sebelumnya</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedClient.previousVisitDetails}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Therapy Information */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Terapi</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Masalah Utama</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <HeartIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {selectedClient.primaryIssue}
-                      </p>
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Progress</label>
                       <div className="mt-1 flex items-center">
@@ -448,24 +608,31 @@ export const ClientList: React.FC<ClientListProps> = ({
                 </div>
 
                 {/* Emergency Contact */}
-                {selectedClient.emergencyContact && (
+                {(selectedClient.emergencyContact || selectedClient.emergencyContactDetails) && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Kontak Darurat</h3>
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {selectedClient.emergencyContact ? (
                         <div>
-                          <label className="block text-xs font-medium text-red-700">Nama</label>
-                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContact.name}</p>
+                          <label className="block text-xs font-medium text-red-700">Kontak Darurat</label>
+                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContact}</p>
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-red-700">Telepon</label>
-                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContact.phone}</p>
+                      ) : selectedClient.emergencyContactDetails ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-red-700">Nama</label>
+                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.name}</p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-red-700">Telepon</label>
+                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.phone}</p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-red-700">Hubungan</label>
+                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.relationship}</p>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-red-700">Hubungan</label>
-                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContact.relationship}</p>
-                        </div>
-                      </div>
+                      ) : null}
                     </div>
                   </div>
                 )}

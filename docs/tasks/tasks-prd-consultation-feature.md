@@ -1,0 +1,182 @@
+# Task List: Consultation Feature Implementation
+
+Based on PRD: `docs/prd/prd-consultation-feature.md`
+
+## Relevant Files
+
+- `frontend/src/types/clientStatus.ts` - Type definitions for client status and status transitions
+- `frontend/src/types/consultation.ts` - Type definitions for consultation data and forms
+- `frontend/src/schemas/clientStatusSchema.ts` - Zod schemas for client status validation
+- `frontend/src/schemas/consultationSchema.ts` - Zod schemas for consultation form validation
+- `frontend/src/store/clientStatus.ts` - Zustand store for client status management
+- `frontend/src/store/consultation.ts` - Zustand store for consultation data management
+- `frontend/src/hooks/useClientStatus.ts` - Custom hook for client status operations
+- `frontend/src/hooks/useConsultation.ts` - Custom hook for consultation operations
+- `frontend/src/hooks/useTherapistClients.ts` - Custom hook for therapist-specific client management
+- `frontend/src/lib/api/consultation.ts` - API functions for consultation endpoints
+- `frontend/src/components/clients/ClientStatusBadge.tsx` - Component for displaying client status badges
+- `frontend/src/components/clients/ReassignClientModal.tsx` - Modal for reassigning clients between therapists
+- `frontend/src/components/consultation/ConsultationForm.tsx` - Base consultation form component
+- `frontend/src/components/consultation/ConsultationFormModal.tsx` - Modal wrapper for consultation forms
+- `frontend/src/components/consultation/TherapistDashboard.tsx` - Dashboard for therapists to view their clients
+- `frontend/src/components/consultation/ClientTherapyPage.tsx` - Main therapy page with tabs
+- `frontend/src/components/consultation/index.ts` - Export file for consultation components
+- `frontend/src/app/portal/therapist/clients/page.tsx` - Therapist clients list page
+- `frontend/src/app/portal/therapist/clients/[id]/therapy/page.tsx` - Individual client therapy page
+- `frontend/src/types/client.ts` - Update existing client interface with status field
+- `frontend/src/types/enums.ts` - Add client status enum
+- `frontend/src/components/clients/ClientList.tsx` - Update to include status badges and reassignment
+- `frontend/src/components/clients/AssignTherapistModal.tsx` - Update to handle status transitions
+- `frontend/src/lib/api/mockData.ts` - Add mock consultation data and status transitions
+
+### Notes
+
+- Unit tests should typically be placed alongside the code files they are testing (e.g., `ConsultationForm.tsx` and `ConsultationForm.test.tsx` in the same directory).
+- Use `npx jest [optional/path/to/test/file]` to run tests. Running without a path executes all tests found by the Jest configuration.
+
+## Tasks
+
+- [ ] 1.0 Implement Client Status Management System
+  - [ ] 1.1 Create Client Status Types and Enums
+    - Create `frontend/src/types/clientStatus.ts` with ClientStatusEnum and StatusTransition interface
+    - Update `frontend/src/types/enums.ts` to include ClientStatusEnum
+    - Update `frontend/src/types/client.ts` to add status field to Client interface
+    - Define StatusTransition interface with id, clientId, fromStatus, toStatus, timestamp, userId, reason fields
+  - [ ] 1.2 Create Client Status Zod Schemas
+    - Create `frontend/src/schemas/clientStatusSchema.ts` with status validation schemas
+    - Define clientStatusSchema for status validation
+    - Define statusTransitionSchema for transition tracking
+    - Create validation functions for status transitions
+  - [ ] 1.3 Create Client Status Store
+    - Create `frontend/src/store/clientStatus.ts` Zustand store
+    - Implement status transitions with audit trail
+    - Add functions for getting status history
+    - Include validation for allowed status transitions
+  - [ ] 1.4 Create Client Status Hook
+    - Create `frontend/src/hooks/useClientStatus.ts` custom hook
+    - Implement status transition functions
+    - Add status validation logic
+    - Include status history retrieval
+  - [ ] 1.5 Create Client Status Badge Component
+    - Create `frontend/src/components/clients/ClientStatusBadge.tsx`
+    - Implement color-coded status badges (gray, blue, orange, green, purple)
+    - Add status labels in Bahasa Indonesia
+    - Include status tooltips for better UX
+  - [ ] 1.6 Update Existing Client Components
+    - Update `frontend/src/components/clients/ClientList.tsx` to include status badges
+    - Update `frontend/src/lib/api/mockData.ts` to include status data for mock clients
+    - Add status field to existing client mock data
+    - Update client list to display status information
+
+- [ ] 2.0 Create Therapist Dashboard and Client List
+  - [ ] 2.1 Create Therapist Clients Hook
+    - Create `frontend/src/hooks/useTherapistClients.ts` custom hook
+    - Implement filtering by therapist ID
+    - Add search functionality by client name
+    - Include status-based filtering
+    - Add client count by status
+  - [ ] 2.2 Create Therapist Dashboard Component
+    - Create `frontend/src/components/consultation/TherapistDashboard.tsx`
+    - Implement client list with search and filters
+    - Add status overview cards showing counts
+    - Include quick action buttons for each client
+    - Use existing DataTable component for consistency
+  - [ ] 2.3 Create Therapist Clients Page
+    - Create `frontend/src/app/portal/therapist/clients/page.tsx`
+    - Implement therapist-specific client list page
+    - Add role-based access control for therapists only
+    - Use PortalPageWrapper for consistent layout
+    - Include search, filtering, and status overview
+  - [ ] 2.4 Update Navigation for Therapists
+    - Update `frontend/src/components/navigation/RoleBasedNavigation.tsx` to include therapist routes
+    - Add "My Clients" navigation item for therapists
+    - Ensure proper role-based menu visibility
+    - Update navigation configuration for therapist role
+
+- [ ] 3.0 Build Consultation Form System
+  - [ ] 3.1 Create Consultation Types and Schemas
+    - Create `frontend/src/types/consultation.ts` with consultation interfaces
+    - Define Consultation interface with form-specific fields
+    - Create separate interfaces for General, DrugAddiction, and Minor consultation types
+    - Create `frontend/src/schemas/consultationSchema.ts` with Zod validation
+    - Implement validation schemas for each consultation form type
+  - [ ] 3.2 Create Consultation Store
+    - Create `frontend/src/store/consultation.ts` Zustand store
+    - Implement consultation CRUD operations
+    - Add consultation data persistence
+    - Include consultation history tracking
+  - [ ] 3.3 Create Consultation Hook
+    - Create `frontend/src/hooks/useConsultation.ts` custom hook
+    - Implement consultation form operations
+    - Add form validation integration
+    - Include consultation data management
+  - [ ] 3.4 Create Base Consultation Form Component
+    - Create `frontend/src/components/consultation/ConsultationForm.tsx`
+    - Implement form structure with React Hook Form and Zod
+    - Add form type selection (general, drug addiction, minor)
+    - Include conditional field rendering based on form type
+    - Implement form validation and error handling
+  - [ ] 3.5 Create Consultation Form Modal
+    - Create `frontend/src/components/consultation/ConsultationFormModal.tsx`
+    - Implement modal wrapper using existing FormModal component
+    - Add consultation form integration
+    - Include save and edit functionality
+    - Prevent editing after therapy status
+  - [ ] 3.6 Create Consultation API Functions
+    - Create `frontend/src/lib/api/consultation.ts`
+    - Implement consultation CRUD API functions
+    - Add mock consultation data for development
+    - Include consultation data validation
+
+- [ ] 4.0 Develop Client Therapy Page with Tabs
+  - [ ] 4.1 Create Client Therapy Page Component
+    - Create `frontend/src/components/consultation/ClientTherapyPage.tsx`
+    - Implement three-tab layout using existing Tabs component
+    - Add role-based access control for therapists only
+    - Include client information display in first tab
+    - Add consultation information in second tab
+    - Include mock session list in third tab
+  - [ ] 4.2 Create Individual Client Therapy Page
+    - Create `frontend/src/app/portal/therapist/clients/[id]/therapy/page.tsx`
+    - Implement dynamic route for individual client therapy
+    - Add client data fetching and loading states
+    - Include error handling for invalid client IDs
+    - Use PortalPageWrapper for consistent layout
+  - [ ] 4.3 Implement Tab Content Components
+    - Create ClientInformationTab component for first tab
+    - Create ConsultationInformationTab component for second tab
+    - Create TherapySessionsTab component for third tab
+    - Implement proper data display and editing capabilities
+    - Add status transition action buttons
+  - [ ] 4.4 Add Status Transition Actions
+    - Implement "Start Consultation" action for assigned clients
+    - Add "Start Therapy" action for consultation clients
+    - Include "Mark Complete" action for therapy clients
+    - Add confirmation dialogs for status transitions
+    - Implement proper action button visibility based on status
+
+- [ ] 5.0 Implement Client Reassignment Functionality
+  - [ ] 5.1 Create Reassignment Modal Component
+    - Create `frontend/src/components/clients/ReassignClientModal.tsx`
+    - Implement therapist selection dropdown
+    - Add reason field for reassignment tracking
+    - Include validation for reassignment conditions
+    - Use existing FormModal component for consistency
+  - [ ] 5.2 Update Assign Therapist Modal
+    - Update `frontend/src/components/clients/AssignTherapistModal.tsx`
+    - Add status transition handling during assignment
+    - Include reassignment functionality for assigned clients
+    - Add status validation for reassignment
+    - Implement proper error handling
+  - [ ] 5.3 Implement Reassignment Logic
+    - Add reassignment functions to client status store
+    - Implement status transition from consultation to assigned
+    - Include reassignment audit trail
+    - Add validation for reassignment permissions
+    - Implement therapist notification preparation
+  - [ ] 5.4 Update Client List for Reassignment
+    - Update `frontend/src/components/clients/ClientList.tsx`
+    - Add reassignment action for appropriate clients
+    - Include reassignment button visibility logic
+    - Add reassignment confirmation handling
+    - Update client list to reflect reassignment changes

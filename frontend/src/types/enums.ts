@@ -17,10 +17,14 @@ export enum AuthSubscriptionTierEnum {
 
 // Client
 export enum ClientGenderEnum {
-  Male = 'male',
-  Female = 'female',
-  Other = 'other',
+  Male = 'Male',
+  Female = 'Female',
 }
+
+export const ClientGenderLabels: Record<ClientGenderEnum, string> = {
+  [ClientGenderEnum.Male]: 'Laki-laki',
+  [ClientGenderEnum.Female]: 'Perempuan',
+};
 
 export enum ClientEducationEnum {
   Elementary = 'Elementary',
@@ -31,6 +35,17 @@ export enum ClientEducationEnum {
   Master = 'Master',
   Doctorate = 'Doctorate',
 }
+
+// Education labels for UI display
+export const ClientEducationLabels: Record<ClientEducationEnum, string> = {
+  [ClientEducationEnum.Elementary]: 'SD',
+  [ClientEducationEnum.Middle]: 'SMP',
+  [ClientEducationEnum.HighSchool]: 'SMA/SMK',
+  [ClientEducationEnum.Associate]: 'D3',
+  [ClientEducationEnum.Bachelor]: 'S1',
+  [ClientEducationEnum.Master]: 'S2',
+  [ClientEducationEnum.Doctorate]: 'S3',
+};
 
 export enum ClientStatusEnum {
   Active = 'active',
@@ -48,6 +63,69 @@ export enum ClientReligionEnum {
   Konghucu = 'Konghucu',
   Other = 'Other',
 }
+
+export const ClientReligionLabels: Record<ClientReligionEnum, string> = {
+  [ClientReligionEnum.Islam]: 'Islam',
+  [ClientReligionEnum.Christianity]: 'Kristen',
+  [ClientReligionEnum.Catholicism]: 'Katolik',
+  [ClientReligionEnum.Hinduism]: 'Hindu',
+  [ClientReligionEnum.Buddhism]: 'Buddha',
+  [ClientReligionEnum.Konghucu]: 'Konghucu',
+  [ClientReligionEnum.Other]: 'Lainnya',
+};
+
+export enum ClientMaritalStatusEnum {
+  Single = 'Single',
+  Married = 'Married',
+  Widowed = 'Widowed',
+}
+
+export const ClientMaritalStatusLabels: Record<ClientMaritalStatusEnum, string> = {
+  [ClientMaritalStatusEnum.Single]: 'Belum Menikah',
+  [ClientMaritalStatusEnum.Married]: 'Menikah',
+  [ClientMaritalStatusEnum.Widowed]: 'Janda/Duda',
+};
+
+export enum ClientRelationshipWithSpouseEnum {
+  Good = 'Good',
+  Average = 'Average',
+  Bad = 'Bad',
+}
+
+export const ClientRelationshipWithSpouseLabels: Record<ClientRelationshipWithSpouseEnum, string> = {
+  [ClientRelationshipWithSpouseEnum.Good]: 'Baik',
+  [ClientRelationshipWithSpouseEnum.Average]: 'Sedang',
+  [ClientRelationshipWithSpouseEnum.Bad]: 'Buruk',
+};
+
+// Guardian-related enums
+export enum ClientGuardianRelationshipEnum {
+  Father = 'Father',
+  Mother = 'Mother',
+  LegalGuardian = 'Legal guardian',
+  Other = 'Other',
+}
+
+export const ClientGuardianRelationshipLabels: Record<ClientGuardianRelationshipEnum, string> = {
+  [ClientGuardianRelationshipEnum.Father]: 'Ayah',
+  [ClientGuardianRelationshipEnum.Mother]: 'Ibu',
+  [ClientGuardianRelationshipEnum.LegalGuardian]: 'Wali Hukum',
+  [ClientGuardianRelationshipEnum.Other]: 'Lainnya',
+};
+
+export enum ClientGuardianMaritalStatusEnum {
+  Married = 'Married',
+  Divorced = 'Divorced',
+  Widowed = 'Widowed',
+  Other = 'Other',
+}
+
+export const ClientGuardianMaritalStatusLabels: Record<ClientGuardianMaritalStatusEnum, string> = {
+  [ClientGuardianMaritalStatusEnum.Married]: 'Menikah',
+  [ClientGuardianMaritalStatusEnum.Divorced]: 'Cerai',
+  [ClientGuardianMaritalStatusEnum.Widowed]: 'Janda/Duda',
+  [ClientGuardianMaritalStatusEnum.Other]: 'Lainnya',
+};
 
 // Clinic
 export enum ClinicDocumentTypeEnum {

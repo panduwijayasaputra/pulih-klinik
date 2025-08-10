@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Common enums based on existing Client types
-export const genderEnum = z.enum(['male', 'female', 'other']);
+export const genderEnum = z.enum(['Male', 'Female']);
 export const educationEnum = z.enum([
   'Elementary',
   'Middle',
@@ -17,9 +17,16 @@ export const religionEnum = z.enum([
   'Catholicism',
   'Hinduism',
   'Buddhism',
+  'Konghucu',
   'Other',
 ]);
+export const maritalStatusEnum = z.enum(['Single', 'Married', 'Widowed']);
+export const relationshipWithSpouseEnum = z.enum(['Good', 'Average', 'Bad']);
 export const clientStatusEnum = z.enum(['active', 'inactive', 'completed', 'pending']);
+
+// Minor-specific enums
+export const guardianRelationshipEnum = z.enum(['Father', 'Mother', 'Legal guardian', 'Other']);
+export const guardianMaritalStatusEnum = z.enum(['Married', 'Divorced', 'Widowed', 'Other']);
 
 // Reusable patterns
 const phoneIdPattern = /^(\+62|0)[0-9]{9,13}$/; // e.g., +62812..., 0812...
@@ -35,21 +42,42 @@ export const emergencyContactSchema = z.object({
 
 // Base schema for client form
 export const clientBaseSchema = z.object({
-  name: z.string().min(2, 'Nama minimal 2 karakter'),
-  age: z.number().int('Umur harus bilangan bulat').min(0, 'Umur tidak boleh negatif').max(120, 'Umur maksimal 120'),
+  fullName: z.string().min(2, 'Nama lengkap minimal 2 karakter'),
   gender: genderEnum,
+  birthPlace: z.string().min(1, 'Tempat lahir harus diisi'),
+  birthDate: z.string().min(1, 'Tanggal lahir harus diisi'),
+  religion: religionEnum,
+  occupation: z.string().min(2, 'Pekerjaan minimal 2 karakter'),
+  education: educationEnum,
+  educationMajor: z.string().optional(),
+  address: z.string().min(5, 'Alamat minimal 5 karakter'),
   phone: z
     .string()
     .regex(phoneIdPattern, 'Format nomor telepon tidak valid (gunakan +62 atau 0)'),
   email: z.string().email('Email tidak valid').optional().or(z.literal('')).transform(v => (v === '' ? undefined : v)),
-  occupation: z.string().min(2, 'Pekerjaan minimal 2 karakter').optional(),
-  education: educationEnum,
-  address: z.string().min(5, 'Alamat minimal 5 karakter'),
-  primaryIssue: z.string().min(2, 'Masalah utama minimal 2 karakter'),
-  religion: religionEnum.optional(),
+  hobbies: z.string().optional(),
+  maritalStatus: maritalStatusEnum,
+  spouseName: z.string().optional(),
+  relationshipWithSpouse: relationshipWithSpouseEnum.optional(),
+  emergencyContact: z.string().optional(),
+  firstVisit: z.boolean(),
+  previousVisitDetails: z.string().optional(),
   province: z.string().optional(),
-  emergencyContact: emergencyContactSchema.optional(),
+  emergencyContactDetails: emergencyContactSchema.optional(),
   notes: z.string().max(1000, 'Catatan maksimal 1000 karakter').optional(),
+  // Minor-specific fields
+  isMinor: z.boolean().default(false),
+  school: z.string().optional(),
+  grade: z.string().optional(),
+  // Guardian information
+  guardianFullName: z.string().optional(),
+  guardianRelationship: guardianRelationshipEnum.optional(),
+  guardianPhone: z.string().optional(),
+  guardianAddress: z.string().optional(),
+  guardianOccupation: z.string().optional(),
+  guardianMaritalStatus: guardianMaritalStatusEnum.optional(),
+  guardianLegalCustody: z.boolean().optional(),
+  guardianCustodyDocsAttached: z.boolean().optional(),
 });
 
 export const createClientSchema = clientBaseSchema.extend({

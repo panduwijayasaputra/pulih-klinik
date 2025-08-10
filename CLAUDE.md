@@ -6,50 +6,142 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The Smart Therapy project is an Indonesian Hypnotherapy AI System designed to transform manual 2-hour session planning into 15-minute AI-assisted workflows for licensed Indonesian hypnotherapists. The system provides assessment analysis, culturally-appropriate technique recommendations, and automated script generation.
 
-## Project Structure
-
-This is a documentation-driven project in early development phase with:
-
-- `docs/` - Comprehensive project documentation including PRD and implementation tasks
-- `templates/` - Development workflow templates
-- `.cursor/rules/` - Development guidelines and constraints
-
-The actual application code (frontend/ and backend/ directories) has not been implemented yet.
-
 ## Architecture Overview
 
-**Tech Stack (Planned):**
-- Frontend: Next.js 14 + TypeScript + Tailwind CSS + shadcn/ui + Zod + Zustand + React Query
-- Backend: NestJS + TypeScript + MikroORM + Zod + PostgreSQL
-- Database: PostgreSQL + Redis (caching)
-- AI: OpenAI API + Custom TypeScript algorithms + Rule-based systems
+**Tech Stack:**
+- **Frontend**: Next.js 15 + TypeScript + Tailwind CSS + shadcn/ui + Zod + Zustand + React Hook Form
+- **Backend**: NestJS + TypeScript + MikroORM + PostgreSQL (planned)
+- **Database**: PostgreSQL + Redis (caching, planned)
+- **AI**: OpenAI API + Custom TypeScript algorithms (planned)
 
-**Core Components:**
-1. **Authentication System** - Therapist registration with license verification
-2. **Client Management** - Comprehensive client profile system with unique codes
-3. **Assessment System** - Three assessment types (General, Addiction, Minor) with 100+ fields
-4. **AI Recommendation Engine** - Cultural adaptation with technique scoring (0-100)
-5. **Script Generation** - 7-phase hypnotherapy scripts with PDF export
-6. **Session Management** - Progress tracking and analytics
+**Current Status**: Frontend application is actively developed with authentication, client management, therapist management, and clinic management features. Backend development is planned.
 
-## Development Guidelines
+## Development Commands
 
-### Project Boundary Security
-**CRITICAL:** Only work within `/Users/panduwijaya/Development/smart-therapy` directory. Never modify files outside this boundary.
+### Workspace Commands (from root)
+```bash
+# Development
+pnpm dev                    # Start frontend development server
+pnpm dev:frontend           # Start frontend only
+pnpm dev:backend           # Start backend only (when implemented)
+pnpm dev:all               # Start both frontend and backend
 
-### Frontend Development (when frontend/ exists)
-- Use React functional components with TypeScript
-- Implement validation with Zod schemas and `z.infer<>`
-- Style with Tailwind CSS and shadcn/ui components
-- Use React Query for data fetching
-- Follow Indonesian cultural considerations in UI/UX
+# Building
+pnpm build                 # Build both frontend and backend
+pnpm build:frontend        # Build frontend only
+pnpm build:backend         # Build backend only (when implemented)
 
-### Backend Development (when backend/ exists)
-- Use NestJS modular architecture
-- Validate all inputs with Zod schemas and ZodValidationPipe
-- Use MikroORM for database operations
-- Implement JWT-based authentication
-- Follow Indonesian data protection requirements
+# Production
+pnpm start                 # Start production servers
+pnpm start:frontend        # Start frontend production server
+pnpm start:backend         # Start backend production server (when implemented)
+
+# Quality Assurance
+pnpm lint                  # Run linting on all workspaces
+pnpm lint:fix              # Fix linting issues on all workspaces
+pnpm format                # Format code on all workspaces
+pnpm format:check          # Check formatting on all workspaces
+pnpm type-check            # Run TypeScript checks on all workspaces
+pnpm test                  # Run tests on all workspaces
+pnpm test:watch            # Run tests in watch mode
+
+# Maintenance
+pnpm clean                 # Clean all node_modules and build artifacts
+pnpm clean:cache           # Clean build caches
+pnpm setup                 # Install all dependencies
+pnpm reset                 # Clean and reinstall everything
+pnpm pre-commit            # Run pre-commit checks (lint:fix, format, type-check)
+```
+
+### Frontend Specific Commands (from frontend/ directory)
+```bash
+# Development
+npm run dev                # Start development server
+npm run dev:turbo          # Start development server with turbo
+npm run dev:debug          # Start development server with debugging
+
+# Building & Production
+npm run build              # Build for production
+npm run build:analyze      # Build with bundle analyzer
+npm run start              # Start production server
+npm run export             # Export static site
+
+# Code Quality
+npm run lint               # Run ESLint
+npm run lint:fix           # Fix ESLint issues
+npm run lint:strict        # Run ESLint with max warnings 0
+npm run format             # Format code with Prettier
+npm run format:check       # Check code formatting
+npm run type-check         # Run TypeScript checks
+npm run type-check:watch   # Run TypeScript checks in watch mode
+
+# Maintenance
+npm run clean              # Clean build artifacts
+npm run clean:cache        # Clean Next.js cache
+npm run pre-commit         # Run pre-commit checks
+```
+
+## Project Structure
+
+```
+smart-therapy/
+├── frontend/                    # Next.js 15 application (active development)
+│   ├── src/
+│   │   ├── app/                # Next.js App Router pages
+│   │   │   ├── (auth)/         # Authentication pages
+│   │   │   └── portal/         # Main application portal
+│   │   ├── components/         # React components
+│   │   │   ├── ui/             # Shared UI components (shadcn/ui)
+│   │   │   ├── auth/           # Authentication components
+│   │   │   ├── clients/        # Client management components
+│   │   │   ├── clinic/         # Clinic management components
+│   │   │   ├── therapists/     # Therapist management components
+│   │   │   ├── layout/         # Layout components
+│   │   │   ├── navigation/     # Navigation components
+│   │   │   ├── payment/        # Payment components
+│   │   │   └── portal/         # Dashboard components
+│   │   ├── hooks/              # Custom React hooks
+│   │   ├── lib/                # Utility functions and configurations
+│   │   ├── store/              # Zustand state management
+│   │   ├── types/              # TypeScript type definitions
+│   │   └── schemas/            # Zod validation schemas
+│   ├── SHARED_COMPONENTS_RULES.md  # Component usage guidelines
+│   ├── COLORS.md               # Design system colors
+│   └── QUICK_REFERENCE.md      # Development quick reference
+├── backend/                    # NestJS API server (planned)
+├── docs/                       # Project documentation
+└── templates/                  # Development templates
+```
+
+## Core Architectural Patterns
+
+### 1. Component Architecture
+- **Page Wrappers**: Use `PortalPageWrapper` for consistent portal pages, `PageWrapper` for base layouts
+- **Shared Components**: DataTable for lists, FormModal for forms, consistent UI components from shadcn/ui
+- **Feature Organization**: Components grouped by feature (auth, clients, therapists, clinic)
+
+### 2. State Management
+- **Zustand**: Global state management with persistence
+- **React Hook Form**: Form state management with Zod validation
+- **Custom Hooks**: Feature-specific hooks for data fetching and business logic
+
+### 3. Data Validation
+- **Zod Schemas**: All forms and API data validated with Zod
+- **Type Safety**: TypeScript strict mode with `z.infer<>` for type inference
+
+### 4. Styling
+- **Tailwind CSS**: Utility-first CSS framework
+- **shadcn/ui**: Pre-built component library
+- **Component Variants**: Using `class-variance-authority` for component variants
+
+## Key Development Guidelines
+
+### Frontend Development
+- Use React functional components with TypeScript strict mode
+- Follow the shared component rules defined in `frontend/SHARED_COMPONENTS_RULES.md`
+- Implement proper error handling with toast notifications
+- Use Zustand for global state, React state for local component state
+- Follow Indonesian cultural considerations in UI/UX (formal language, cultural sensitivity)
 
 ### Cultural Requirements
 - All content must be in formal Indonesian language
@@ -57,58 +149,65 @@ The actual application code (frontend/ and backend/ directories) has not been im
 - Implement cultural adaptation in AI recommendations
 - Respect Indonesian professional standards and ethics
 
-## Common Development Tasks
+### Code Organization
+- Use absolute imports with `@/` prefix
+- Follow strict import order: React → Third-party → Internal → Types → Icons
+- Implement proper TypeScript typing for all functions and components
+- Use Zod schemas for all form validation and API data validation
 
-Since this is a pre-development phase project, initial tasks will involve:
+### Authentication & Authorization
+- Role-based access control (Administrator, ClinicAdmin, Therapist)
+- JWT-based authentication with Zustand persistence
+- Route protection with role guards
+- User context managed through auth store
 
-1. **Project Setup**
-   ```bash
-   # When ready to initialize
-   mkdir frontend backend
-   cd frontend && npm create next-app@latest . --typescript --tailwind --app
-   cd ../backend && npm init -y && npm install @nestjs/core @nestjs/common
-   ```
-
-2. **Database Setup**
-   - PostgreSQL with UUID primary keys
-   - Core tables: users, clients, assessments, ai_assessments, session_scripts, hypnotherapy_techniques
-   - Use MikroORM migrations for schema management
-
-3. **Key Implementation Order**
-   - Authentication system first (foundation for all features)
-   - Client management (data foundation)
-   - Assessment system (three types in parallel)
-   - AI recommendation engine (rule-based + OpenAI)
-   - Script generation (7-phase system)
-
-## AI Algorithm Implementation
-
-The core recommendation system uses TypeScript-based scoring:
-- Issue compatibility (0-40 points)
-- Cultural appropriateness (0-25 points)  
-- Client factors (0-20 points)
-- Session context (0-15 points)
-
-Key cultural considerations:
-- Religious adaptations (Islam, Christianity, Hinduism, Buddhism, Catholicism)
-- Age-appropriate language formality
-- Gender considerations for technique selection
-- Regional Indonesian cultural factors
+### Data Management Patterns
+- API client functions in `lib/api/` with proper error handling
+- Custom hooks for feature-specific data operations
+- Zustand stores with persistence for global state
+- TypeScript interfaces for all data structures
 
 ## Important Files to Reference
 
-- `docs/hypnotherapy-project-context.md` - Complete technical specification and data models
-- `docs/prd/prd-indonesian-hypnotherapy-ai-system.md` - Product requirements and user stories
-- `.cursor/rules/` - Development constraints and coding standards
+- `frontend/SHARED_COMPONENTS_RULES.md` - Comprehensive component usage guidelines
+- `frontend/COLORS.md` - Design system color palette
+- `frontend/QUICK_REFERENCE.md` - Development quick reference
+- `docs/prd/prd-indonesian-hypnotherapy-ai-system.md` - Product requirements
+- `src/lib/navigation-config.ts` - Navigation and role-based routing configuration
+- `src/types/` - TypeScript type definitions for all entities
+
+## Testing Strategy
+When implementing tests:
+- Write unit tests for utility functions and custom hooks
+- Write integration tests for complex components
+- Test error scenarios and edge cases
+- Mock external dependencies and API calls
 
 ## Security & Privacy
-
 - End-to-end encryption for all client data
-- JWT-based authentication with secure tokens
-- Compliance with Indonesian data protection laws
 - GDPR-level privacy controls
-- Role-based access controls for therapists only
+- Compliance with Indonesian data protection laws
+- Role-based access controls with proper route protection
+- Secure API endpoints with rate limiting (when backend is implemented)
 
-## Current Status
+## Performance Considerations
+- Use React.memo for expensive components
+- Implement proper loading states for all async operations
+- Use pagination for large datasets (DataTable component)
+- Optimize bundle size with dynamic imports where appropriate
 
-This project is in the planning phase with comprehensive documentation completed. The actual application implementation (frontend/backend directories) needs to be initiated following the detailed specifications in the docs/ folder.
+## Common Development Patterns
+
+### List Page Pattern
+Use `PortalPageWrapper` + `DataTable` combination for consistent list interfaces with search, filtering, and actions.
+
+### Form Modal Pattern  
+Use `FormModal` wrapper with React Hook Form and Zod validation for all forms.
+
+### API Integration Pattern
+Create dedicated API client functions with proper error handling and TypeScript typing.
+
+### State Management Pattern
+Use Zustand stores with persistence and custom hooks for feature-specific data operations.
+
+The project is currently in active frontend development phase with comprehensive authentication, user management, and portal features implemented. Backend development and AI features are planned for future phases.

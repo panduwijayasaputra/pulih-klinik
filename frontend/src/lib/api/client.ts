@@ -1,5 +1,6 @@
 import { Therapist } from '@/types/therapist';
 import { SessionSummary } from '@/types/client';
+import { getClientSessions } from './mockData';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -22,8 +23,9 @@ const therapistCapacity: Record<string, Pick<Therapist, 'id' | 'currentLoad' | '
 const clientAssignments: Record<string, string | undefined> = {
   'CLT001': 'therapist-001',
   'CLT002': 'therapist-002',
-  'CLT003': 'therapist-001',
-  // CLT004 unassigned
+  'CLT003': 'therapist-003',
+  'CLT004': 'therapist-001',
+  'CLT005': 'therapist-002',
 };
 
 export const ClientAPI = {
@@ -94,73 +96,7 @@ export const ClientAPI = {
   ): Promise<ApiResponse<{ items: SessionSummary[]; page: number; pageSize: number; total: number }>> {
     await delay(400);
 
-    // Mock sessions per client
-    const mockByClient: Record<string, SessionSummary[]> = {
-      CLT001: [
-        {
-          id: 'sess-001',
-          clientId: 'CLT001',
-          therapistId: 'therapist-001',
-          therapistName: 'Dr. Ahmad Pratama, M.Psi',
-          date: '2024-01-05T09:00:00Z',
-          phase: 'intake',
-          status: 'completed',
-          durationMinutes: 60,
-          notes: 'Anamnesis awal dan penetapan tujuan.',
-          assessment: { tool: 'GAD-7', preScore: 14, scoreUnit: 'points' },
-        },
-        {
-          id: 'sess-002',
-          clientId: 'CLT001',
-          therapistId: 'therapist-001',
-          therapistName: 'Dr. Ahmad Pratama, M.Psi',
-          date: '2024-01-12T09:00:00Z',
-          phase: 'induction',
-          status: 'completed',
-          durationMinutes: 60,
-          notes: 'Induksi ringan, latihan relaksasi.',
-        },
-        {
-          id: 'sess-003',
-          clientId: 'CLT001',
-          therapistId: 'therapist-001',
-          therapistName: 'Dr. Ahmad Pratama, M.Psi',
-          date: '2024-01-19T09:00:00Z',
-          phase: 'therapy',
-          status: 'completed',
-          durationMinutes: 75,
-          notes: 'Intervensi kognitif, reframing.',
-        },
-        {
-          id: 'sess-004',
-          clientId: 'CLT001',
-          therapistId: 'therapist-001',
-          therapistName: 'Dr. Ahmad Pratama, M.Psi',
-          date: '2024-01-26T09:00:00Z',
-          phase: 'post',
-          status: 'completed',
-          durationMinutes: 60,
-          notes: 'Evaluasi, rencana tindak lanjut.',
-          assessment: { tool: 'GAD-7', postScore: 8, scoreUnit: 'points' },
-        },
-      ],
-      CLT002: [
-        {
-          id: 'sess-101',
-          clientId: 'CLT002',
-          therapistId: 'therapist-002',
-          therapistName: 'Dr. Sari Wulandari, M.Psi',
-          date: '2024-01-10T10:00:00Z',
-          phase: 'intake',
-          status: 'completed',
-          durationMinutes: 60,
-          notes: 'Screening awal dan penilaian gejala.',
-          assessment: { tool: 'PHQ-9', preScore: 12, scoreUnit: 'points' },
-        },
-      ],
-    };
-
-    const all = mockByClient[clientId] ?? [];
+    const all = getClientSessions(clientId);
 
     // Sort by date desc
     const sorted = [...all].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
