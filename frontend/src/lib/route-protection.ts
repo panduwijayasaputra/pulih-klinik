@@ -77,10 +77,20 @@ export const hasRequiredRole = (user: User | null, requiredRoles: UserRole[]): b
   if (!user || !user.roles) return false;
   if (requiredRoles.length === 0) return true; // No roles required
 
+  // Normalize legacy roles in case persisted data uses old strings
+  const legacyToEnumMap: Record<string, UserRole> = {
+    administrator: UserRoleEnum.Administrator,
+    clinic_admin: UserRoleEnum.ClinicAdmin,
+    therapist: UserRoleEnum.Therapist,
+  } as const as Record<string, UserRole>;
+
+  const normalizedUserRoles: UserRole[] = user.roles.map((role) => {
+    const key = String(role).toLowerCase();
+    return legacyToEnumMap[key] ?? (role as UserRole);
+  });
+
   // Check if user has any of the required roles
-  return requiredRoles.some(requiredRole => 
-    user.roles.includes(requiredRole)
-  );
+  return requiredRoles.some((requiredRole) => normalizedUserRoles.includes(requiredRole));
 };
 
 // Check if user can access a specific route

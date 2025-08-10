@@ -4,9 +4,9 @@
 
 // Auth / Roles / Subscription
 export enum UserRoleEnum {
-  Administrator = 'administrator',
-  ClinicAdmin = 'clinic_admin',
-  Therapist = 'therapist',
+  Administrator = 'Administrator',
+  ClinicAdmin = 'ClinicAdmin',
+  Therapist = 'Therapist',
 }
 
 export enum AuthSubscriptionTierEnum {

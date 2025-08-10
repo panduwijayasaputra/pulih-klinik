@@ -1,18 +1,15 @@
 import {
   BuildingOfficeIcon,
-  ChartBarIcon,
-  DocumentTextIcon,
   HomeIcon,
   ShieldCheckIcon,
   UserGroupIcon,
   UserIcon,
   PaintBrushIcon,
   DocumentArrowUpIcon,
-  ClipboardDocumentListIcon,
-  CalendarIcon,
 } from '@heroicons/react/24/outline';
-import { DashboardConfig, NavigationItem } from '@/types/navigation';
+import { DashboardConfig, NavigationItem, RoleDisplayInfo } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
+import { UserRoleEnum } from '@/types/enums';
 
 // Main Dashboard Navigation Items with hierarchical structure
 export const dashboardNavigationItems: NavigationItem[] = [
@@ -23,9 +20,9 @@ export const dashboardNavigationItems: NavigationItem[] = [
     href: '/portal',
     icon: HomeIcon,
     description: 'Halaman utama dashboard',
-    requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
+    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
   },
-  
+
   // Clinic Management (for clinic admins)
   {
     id: 'clinic-management',
@@ -33,7 +30,7 @@ export const dashboardNavigationItems: NavigationItem[] = [
     href: '/portal/clinic',
     icon: BuildingOfficeIcon,
     description: 'Kelola profil dan pengaturan klinik',
-    requiredRoles: ['clinic_admin'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
     children: [
       {
         id: 'clinic-profile',
@@ -41,7 +38,7 @@ export const dashboardNavigationItems: NavigationItem[] = [
         href: '/portal/clinic',
         icon: BuildingOfficeIcon,
         description: 'Edit informasi dasar klinik',
-        requiredRoles: ['clinic_admin'],
+        requiredRoles: [UserRoleEnum.ClinicAdmin],
       },
       {
         id: 'clinic-documents',
@@ -49,7 +46,7 @@ export const dashboardNavigationItems: NavigationItem[] = [
         href: '/portal/clinic/documents',
         icon: DocumentArrowUpIcon,
         description: 'Kelola dokumen dan sertifikat',
-        requiredRoles: ['clinic_admin'],
+        requiredRoles: [UserRoleEnum.ClinicAdmin],
       },
       {
         id: 'clinic-branding',
@@ -57,11 +54,11 @@ export const dashboardNavigationItems: NavigationItem[] = [
         href: '/portal/clinic/branding',
         icon: PaintBrushIcon,
         description: 'Atur warna dan tampilan klinik',
-        requiredRoles: ['clinic_admin'],
+        requiredRoles: [UserRoleEnum.ClinicAdmin],
       },
     ],
   },
-  
+
   // Therapist Management (for clinic admins)
   {
     id: 'therapist-management',
@@ -69,7 +66,7 @@ export const dashboardNavigationItems: NavigationItem[] = [
     href: '/portal/therapists',
     icon: UserGroupIcon,
     description: 'Kelola dan pantau therapist klinik',
-    requiredRoles: ['clinic_admin'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
 
   // Client Management (now enabled)
@@ -79,7 +76,7 @@ export const dashboardNavigationItems: NavigationItem[] = [
     href: '/portal/clients',
     icon: UserIcon,
     description: 'Kelola data dan histori klien',
-    requiredRoles: ['clinic_admin', 'therapist'],
+    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
   },
 ];
 
@@ -91,7 +88,7 @@ export const commonNavigationItems: NavigationItem[] = [
     href: '/portal/profile',
     icon: UserIcon,
     description: 'Pengaturan akun pribadi',
-    requiredRoles: ['administrator', 'clinic_admin', 'therapist'],
+    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
   },
 ];
 
@@ -102,7 +99,7 @@ export const getNavigationItemsForUser = (userRoles: UserRole[]): NavigationItem
   }).map(item => {
     // Filter children based on roles too
     if (item.children) {
-      const filteredChildren = item.children.filter(child => 
+      const filteredChildren = item.children.filter(child =>
         child.requiredRoles.some(requiredRole => userRoles.includes(requiredRole))
       );
       return {
@@ -111,7 +108,7 @@ export const getNavigationItemsForUser = (userRoles: UserRole[]): NavigationItem
       };
     }
     return item;
-  }).concat(commonNavigationItems.filter(item => 
+  }).concat(commonNavigationItems.filter(item =>
     item.requiredRoles.some(requiredRole => userRoles.includes(requiredRole))
   ));
 };
@@ -124,7 +121,7 @@ export const quickAccessItems = [
     href: '/portal/clinic',
     icon: BuildingOfficeIcon,
     description: 'Perbarui informasi klinik',
-    requiredRoles: ['clinic_admin'] as UserRole[],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
   {
     id: 'clinic-documents-quick',
@@ -132,7 +129,7 @@ export const quickAccessItems = [
     href: '/portal/clinic/documents',
     icon: DocumentArrowUpIcon,
     description: 'Upload dan kelola dokumen klinik',
-    requiredRoles: ['clinic_admin'] as UserRole[],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
   {
     id: 'therapist-list-quick',
@@ -140,25 +137,25 @@ export const quickAccessItems = [
     href: '/portal/therapists',
     icon: UserGroupIcon,
     description: 'Lihat dan kelola therapist',
-    requiredRoles: ['clinic_admin'] as UserRole[],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
 ];
 
 // Breadcrumb mapping for dashboard routes
 export const dashboardBreadcrumbMapping: Record<string, { label: string; parent?: string }> = {
   '/portal': { label: 'Dashboard' },
-  
+
   // Clinic routes
   '/portal/clinic': { label: 'Manajemen Klinik', parent: '/portal' },
   '/portal/clinic/documents': { label: 'Dokumen Klinik', parent: '/portal/clinic' },
   '/portal/clinic/branding': { label: 'Branding & Tampilan', parent: '/portal/clinic' },
-  
+
   // Therapist routes
   '/portal/therapists': { label: 'Manajemen Therapist', parent: '/portal' },
   '/portal/therapists/new': { label: 'Tambah Therapist', parent: '/portal/therapists' },
   '/portal/therapists/edit/[id]': { label: 'Edit Therapist', parent: '/portal/therapists' },
   '/portal/therapists/assignments': { label: 'Penugasan Therapist', parent: '/portal/therapists' },
-  
+
   // Future routes (placeholder)
   '/portal/clients': { label: 'Manajemen Klien', parent: '/portal' },
   '/portal/assessments': { label: 'Sistem Assessment', parent: '/portal' },
@@ -167,8 +164,8 @@ export const dashboardBreadcrumbMapping: Record<string, { label: string; parent?
 
 // Dashboard configurations for each role
 export const dashboardConfigs: Record<UserRole, DashboardConfig> = {
-  administrator: {
-    role: 'administrator',
+  [UserRoleEnum.Administrator]: {
+    role: UserRoleEnum.Administrator,
     defaultRoute: '/portal',
     allowedRoutes: [
       '/portal',
@@ -178,8 +175,8 @@ export const dashboardConfigs: Record<UserRole, DashboardConfig> = {
     ],
     menuItems: [], // Will be populated by getNavigationItemsForUser
   },
-  clinic_admin: {
-    role: 'clinic_admin',
+  [UserRoleEnum.ClinicAdmin]: {
+    role: UserRoleEnum.ClinicAdmin,
     defaultRoute: '/portal',
     allowedRoutes: [
       '/portal',
@@ -189,8 +186,8 @@ export const dashboardConfigs: Record<UserRole, DashboardConfig> = {
     ],
     menuItems: [], // Will be populated by getNavigationItemsForUser
   },
-  therapist: {
-    role: 'therapist',
+  [UserRoleEnum.Therapist]: {
+    role: UserRoleEnum.Therapist,
     defaultRoute: '/portal',
     allowedRoutes: [
       '/portal',
@@ -211,22 +208,22 @@ export const getPrimaryDashboardConfig = (userRoles: UserRole[]): DashboardConfi
 };
 
 // Role display information
-export const roleDisplayInfo = {
-  administrator: {
+export const roleDisplayInfo: Record<UserRole, RoleDisplayInfo> = {
+  [UserRoleEnum.Administrator]: {
     label: 'Administrator Sistem',
     description: 'Akses penuh ke semua fitur sistem',
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     icon: ShieldCheckIcon,
   },
-  clinic_admin: {
+  [UserRoleEnum.ClinicAdmin]: {
     label: 'Administrator Klinik',
     description: 'Mengelola klinik dan therapist',
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     icon: BuildingOfficeIcon,
   },
-  therapist: {
+  [UserRoleEnum.Therapist]: {
     label: 'Therapist',
     description: 'Menangani klien dan sesi hipnoterapi',
     color: 'text-green-600',

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import { UserIcon } from '@heroicons/react/24/outline';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './useAuth';
 import { useNavigationStore } from '@/store/navigation';
@@ -8,8 +9,9 @@ import {
   roleDisplayInfo,
   dashboardBreadcrumbMapping 
 } from '@/lib/navigation-config';
-import { BreadcrumbItem, NavigationItem } from '@/types/navigation';
+import { BreadcrumbItem, NavigationItem, RoleDisplayInfo } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
+import { UserRoleEnum } from '@/types/enums';
 
 export const useNavigation = () => {
   const { user } = useAuth();
@@ -29,22 +31,49 @@ export const useNavigation = () => {
     resetNavigation,
   } = useNavigationStore();
 
+  // Normalize legacy roles to enum values for compatibility
+  const effectiveUserRoles = useMemo<UserRole[]>(() => {
+    const roles = user?.roles ?? [];
+
+    const legacyToEnumMap: Record<string, UserRole> = {
+      administrator: UserRoleEnum.Administrator,
+      clinic_admin: UserRoleEnum.ClinicAdmin,
+      therapist: UserRoleEnum.Therapist,
+    } as const as Record<string, UserRole>;
+
+    const normalized = roles.map((role) => {
+      const key = String(role).toLowerCase();
+      return legacyToEnumMap[key] ?? (role as UserRole);
+    });
+
+    // Deduplicate while preserving order
+    const seen = new Set<string>();
+    const unique = normalized.filter((r) => {
+      const k = String(r);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
+    return unique;
+  }, [user?.roles]);
+
   // Update available roles when user changes
   useEffect(() => {
-    if (user?.roles) {
-      setAvailableRoles(user.roles);
+    if (effectiveUserRoles.length > 0) {
+      setAvailableRoles(effectiveUserRoles);
     } else {
       resetNavigation();
     }
-  }, [user, setAvailableRoles, resetNavigation]);
+  }, [effectiveUserRoles, setAvailableRoles, resetNavigation]);
 
   // Get navigation items for current user
   const navigationItems = useMemo(() => {
-    if (!user?.roles) return [];
-    
+    if (effectiveUserRoles.length === 0) return [];
+
     // Use full navigation items for portal routes
-    return getNavigationItemsForUser(user.roles);
-  }, [user?.roles]);
+    return getNavigationItemsForUser(effectiveUserRoles);
+  }, [effectiveUserRoles]);
 
   // Get filtered navigation items for active role (if multi-role user wants to focus)
   const filteredNavigationItems = useMemo(() => {
@@ -57,9 +86,9 @@ export const useNavigation = () => {
 
   // Get primary dashboard configuration
   const primaryDashboard = useMemo(() => {
-    if (!user?.roles) return null;
-    return getPrimaryDashboardConfig(user.roles);
-  }, [user?.roles]);
+    if (effectiveUserRoles.length === 0) return null;
+    return getPrimaryDashboardConfig(effectiveUserRoles);
+  }, [effectiveUserRoles]);
 
   // Check if current path matches navigation item
   const isActiveItem = useCallback((item: NavigationItem): boolean => {
@@ -90,8 +119,33 @@ export const useNavigation = () => {
   }, [setActiveRole]);
 
   // Role display helpers
-  const getRoleDisplayInfo = useCallback((role: UserRole) => {
-    return roleDisplayInfo[role];
+  const getRoleDisplayInfo = useCallback((role: UserRole): RoleDisplayInfo => {
+    // Primary lookup
+    const direct = roleDisplayInfo[role as UserRole];
+    if (direct) return direct;
+
+    // Normalize legacy persisted roles (pre-enum migration)
+    const legacyToEnumMap: Record<string, UserRole> = {
+      administrator: UserRoleEnum.Administrator,
+      clinic_admin: UserRoleEnum.ClinicAdmin,
+      therapist: UserRoleEnum.Therapist,
+    } as const as Record<string, UserRole>;
+
+    const asString = String(role).toLowerCase();
+    const normalized = legacyToEnumMap[asString];
+    if (normalized) {
+      const normalizedInfo = roleDisplayInfo[normalized];
+      if (normalizedInfo) return normalizedInfo;
+    }
+
+    // Safe fallback to prevent runtime crashes
+    return {
+      label: String(role),
+      description: 'Peran pengguna',
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      icon: UserIcon,
+    };
   }, []);
 
   const getRoleOptions = useMemo(() => {

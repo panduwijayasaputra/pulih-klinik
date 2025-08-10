@@ -1,3 +1,4 @@
+import type React from 'react';
 import { UserRole } from './auth';
 
 // Navigation item interface
@@ -12,6 +13,15 @@ export interface NavigationItem {
   badge?: string | number;
   isActive?: boolean;
   isDisabled?: boolean;
+}
+
+// Role display info (used for showing role badges, selectors, etc.)
+export interface RoleDisplayInfo {
+  label: string;
+  description: string;
+  color: string; // Tailwind text color class
+  bgColor: string; // Tailwind background color class
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
 // Route protection configuration

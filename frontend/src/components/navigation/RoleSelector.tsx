@@ -64,8 +64,10 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
         size="sm"
         disabled={isSwitching}
       >
-        <div className="flex items-center space-x-2 min-w-0 flex-1">
-          <currentRoleInfo.icon className="h-4 w-4 flex-shrink-0" />
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
+          {currentRoleInfo?.icon ? (
+            <currentRoleInfo.icon className="h-4 w-4 flex-shrink-0" />
+          ) : null}
           <span className="text-xs truncate">
             {currentRoleInfo.label}
           </span>
@@ -93,7 +95,9 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
                       : 'hover:bg-muted'
                   } ${isSwitching ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <roleInfo.icon className="h-4 w-4 flex-shrink-0" />
+                  {roleInfo?.icon ? (
+                    <roleInfo.icon className="h-4 w-4 flex-shrink-0" />
+                  ) : null}
                   <span className="text-xs font-medium truncate">
                     {roleInfo.label}
                   </span>

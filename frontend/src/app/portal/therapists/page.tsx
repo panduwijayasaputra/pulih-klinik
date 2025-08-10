@@ -31,7 +31,7 @@ function TherapistsPageContent() {
 
 export default function TherapistsPage() {
   // Clinic admin access control
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, hasRole } = useAuth();
 
   // Access control check
   if (isLoading) {
@@ -43,7 +43,7 @@ export default function TherapistsPage() {
     );
   }
 
-  if (!user || !user.roles.includes(UserRoleEnum.ClinicAdmin)) {
+  if (!user || !hasRole(UserRoleEnum.ClinicAdmin)) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 import { Client } from '@/types/client';
 import { ClientStatusEnum } from '@/types/enums';
+import { useClient } from '@/hooks/useClient';
 import { 
   EyeIcon,
   PencilIcon,
@@ -55,6 +56,7 @@ export const ClientList: React.FC<ClientListProps> = ({
   onAssign,
   onArchive,
 }) => {
+  const { clients: storeClients } = useClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'all' | Client['status']>('all');
 
@@ -96,7 +98,8 @@ export const ClientList: React.FC<ClientListProps> = ({
     ]
   ), []);
 
-  const clients = clientsProp ?? mockClients;
+  // Prefer store clients if available; fallback to prop; then to mock
+  const clients = (storeClients && storeClients.length > 0) ? storeClients : (clientsProp ?? mockClients);
 
   const filtered = clients.filter((c) => {
     const matchesSearch =

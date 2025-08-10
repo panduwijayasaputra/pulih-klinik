@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,6 @@ import { ClientForm } from '@/components/clients/ClientForm';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function ClientsPage() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   return (

@@ -77,3 +77,34 @@ export interface UsageMetrics {
     scriptUsage: number[];
   };
 }
+
+// Session & Assessment summary types for SessionHistory views
+
+export type SessionPhase =
+  | 'intake'
+  | 'induction'
+  | 'therapy'
+  | 'post';
+
+export type SessionStatus = 'scheduled' | 'completed' | 'cancelled';
+
+export interface AssessmentSummary {
+  tool: string; // e.g., GAD-7, PHQ-9
+  preScore?: number;
+  postScore?: number;
+  scoreUnit?: string; // e.g., 'points'
+  notes?: string;
+}
+
+export interface SessionSummary {
+  id: string;
+  clientId: string;
+  therapistId: string;
+  therapistName?: string;
+  date: string; // ISO date string
+  phase: SessionPhase;
+  status: SessionStatus;
+  durationMinutes?: number;
+  notes?: string;
+  assessment?: AssessmentSummary;
+}

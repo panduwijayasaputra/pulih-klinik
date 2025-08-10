@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Client, ClientFilters, ClientFormData, UsageMetrics } from '@/types/client';
+import { ClientAPI } from '@/lib/api/client';
 
 // Mock client data
 const mockClients: Client[] = [
@@ -177,30 +178,28 @@ export function useClients() {
   };
 
   const assignTherapist = async (clientId: string, therapistId: string): Promise<void> => {
-    await updateClient(clientId, { 
-      assignedTherapist: therapistId,
-      status: 'active'
-    });
+    const res = await ClientAPI.assignClientToTherapist(clientId, therapistId);
+    if (!res.success) {
+      throw new Error(res.message || 'Gagal menugaskan therapist');
+    }
+    await updateClient(clientId, { assignedTherapist: therapistId, status: 'active' as Client['status'] });
   };
 
   const unassignTherapist = async (clientId: string): Promise<void> => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      const res = await ClientAPI.unassignClient(clientId);
+      if (!res.success) {
+        throw new Error(res.message || 'Gagal menghapus penugasan');
+      }
       setClients(prev => prev.map(client => 
         client.id === clientId ? { 
           ...client, 
           assignedTherapist: undefined,
-          status: 'pending'
+          status: 'pending' as Client['status']
         } : client
       ));
-    } catch (err) {
-      setError('Failed to unassign therapist');
-      throw err;
     } finally {
       setLoading(false);
     }

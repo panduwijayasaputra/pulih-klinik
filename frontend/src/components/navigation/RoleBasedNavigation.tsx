@@ -12,7 +12,7 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({
   className = '',
   onItemClick 
 }) => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const {
     navigationItems,
     filteredNavigationItems,
@@ -20,8 +20,20 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({
     isActiveItem,
   } = useNavigation();
 
+  if (isLoading) {
+    return (
+      <nav className={`space-y-2 ${className}`}>
+        <div className="text-xs text-muted-foreground px-3 py-2">Memuat menu...</div>
+      </nav>
+    );
+  }
+
   if (!user?.roles) {
-    return null;
+    return (
+      <nav className={`space-y-2 ${className}`}>
+        <div className="text-xs text-muted-foreground px-3 py-2">Tidak ada menu.</div>
+      </nav>
+    );
   }
 
   // Use filtered items if a specific role is active, otherwise use all navigation items
@@ -33,8 +45,15 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({
     }
   };
 
+  const hasItems = displayItems.length > 0;
+
   return (
     <nav className={`space-y-2 ${className}`}>
+      {!hasItems && (
+        <div className="text-xs text-muted-foreground px-3 py-2">
+          Tidak ada menu yang tersedia untuk peran ini.
+        </div>
+      )}
       {displayItems.map((item) => {
         const Icon = item.icon;
         const isActive = isActiveItem(item);

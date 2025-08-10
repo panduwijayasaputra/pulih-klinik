@@ -46,23 +46,23 @@ export const mockUsers: Record<string, User & { password: string }> = {
     id: 'admin-001',
     email: 'admin@terapintar.com',
     password: 'admin123',
-    roles: ['administrator'],
+    roles: [UserRoleEnum.Administrator],
     name: 'System Administrator'
   },
   'admin@kliniksehat.com': {
     id: 'clinic-001',
     email: 'admin@kliniksehat.com',
     password: 'clinic123',
-    roles: ['clinic_admin'],
+    roles: [UserRoleEnum.ClinicAdmin],
     name: 'Dr. Sari Wulandari',
     clinicId: 'clinic-001',
-    subscriptionTier: 'beta'
+    subscriptionTier: AuthSubscriptionTierEnum.Beta
   },
   'therapist@kliniksehat.com': {
     id: 'therapist-001',
     email: 'therapist@kliniksehat.com',
     password: 'therapist123',
-    roles: ['therapist'],
+    roles: [UserRoleEnum.Therapist],
     name: 'Ahmad Pratama',
     clinicId: 'clinic-001'
   },
@@ -70,9 +70,9 @@ export const mockUsers: Record<string, User & { password: string }> = {
     id: 'multi-001',
     email: 'dr.ahmad@kliniksehat.com',
     password: 'multi123',
-    roles: ['clinic_admin', 'therapist'],
+    roles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
     name: 'Dr. Ahmad Pratama',
     clinicId: 'clinic-001',
-    subscriptionTier: 'beta'
+    subscriptionTier: AuthSubscriptionTierEnum.Beta
   }
 };
