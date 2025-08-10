@@ -48,11 +48,20 @@ export const ClientEducationLabels: Record<ClientEducationEnum, string> = {
 };
 
 export enum ClientStatusEnum {
-  Active = 'active',
-  Inactive = 'inactive',
-  Completed = 'completed',
-  Pending = 'pending',
+  New = 'new',
+  Assigned = 'assigned', 
+  Consultation = 'consultation',
+  Therapy = 'therapy',
+  Done = 'done',
 }
+
+export const ClientStatusLabels: Record<ClientStatusEnum, string> = {
+  [ClientStatusEnum.New]: 'Baru',
+  [ClientStatusEnum.Assigned]: 'Telah Ditugaskan',
+  [ClientStatusEnum.Consultation]: 'Konsultasi',
+  [ClientStatusEnum.Therapy]: 'Terapi',
+  [ClientStatusEnum.Done]: 'Selesai',
+};
 
 export enum ClientReligionEnum {
   Islam = 'Islam',

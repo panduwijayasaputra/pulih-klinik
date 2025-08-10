@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { DataTable, TableColumn, TableAction } from '@/components/ui/data-table';
 import { ClientFormModal } from '@/components/clients/ClientFormModal';
 import { SessionHistory } from '@/components/clients/SessionHistory';
+import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
 
 import { Client } from '@/types/client';
-import { ClientStatusEnum, ClientEducationLabels, ClientReligionLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientGuardianRelationshipLabels, ClientGuardianMaritalStatusLabels } from '@/types/enums';
+import { ClientStatusEnum, ClientStatusLabels, ClientEducationLabels, ClientReligionLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientGuardianRelationshipLabels, ClientGuardianMaritalStatusLabels } from '@/types/enums';
 import { useClient } from '@/hooks/useClient';
 import { useToast } from '@/components/ui/toast';
 import {
@@ -35,25 +36,8 @@ export interface ClientListProps {
   onArchive?: (clientId: string) => void;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  [ClientStatusEnum.Active]: 'Aktif',
-  [ClientStatusEnum.Inactive]: 'Tidak Aktif',
-  [ClientStatusEnum.Completed]: 'Selesai',
-  [ClientStatusEnum.Pending]: 'Menunggu',
-};
-
 const getStatusBadge = (status: Client['status']) => {
-  switch (status) {
-    case ClientStatusEnum.Active:
-      return <Badge variant="success">{STATUS_LABEL[status]}</Badge>;
-    case ClientStatusEnum.Completed:
-      return <Badge variant="outline">{STATUS_LABEL[status]}</Badge>;
-    case ClientStatusEnum.Pending:
-      return <Badge variant="warning">{STATUS_LABEL[status]}</Badge>;
-    case ClientStatusEnum.Inactive:
-    default:
-      return <Badge variant="destructive">{STATUS_LABEL[status] ?? status}</Badge>;
-  }
+  return <ClientStatusBadge status={status as ClientStatusEnum} />;
 };
 
 export const ClientList: React.FC<ClientListProps> = ({
@@ -266,7 +250,7 @@ export const ClientList: React.FC<ClientListProps> = ({
       { value: 'all', label: 'Semua Status' },
       ...Object.values(ClientStatusEnum).map((s) => ({
         value: s,
-        label: STATUS_LABEL[s] || s,
+        label: ClientStatusLabels[s] || s,
       })),
     ],
     value: status,

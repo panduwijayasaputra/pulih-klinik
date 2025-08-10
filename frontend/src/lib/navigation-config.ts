@@ -69,14 +69,24 @@ export const dashboardNavigationItems: NavigationItem[] = [
     requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
 
-  // Client Management (now enabled)
+  // Client Management (for clinic admins)
   {
     id: 'client-management',
     label: 'Manajemen Klien',
     href: '/portal/clients',
     icon: UserIcon,
     description: 'Kelola data dan histori klien',
-    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
+  },
+
+  // My Clients (for therapists)
+  {
+    id: 'my-clients',
+    label: 'Klien Saya',
+    href: '/portal/therapist/clients',
+    icon: UserIcon,
+    description: 'Kelola klien yang ditugaskan kepada Anda',
+    requiredRoles: [UserRoleEnum.Therapist],
   },
 ];
 
@@ -139,6 +149,14 @@ export const quickAccessItems = [
     description: 'Lihat dan kelola therapist',
     requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
+  {
+    id: 'my-clients-quick',
+    label: 'Klien Saya',
+    href: '/portal/therapist/clients',
+    icon: UserIcon,
+    description: 'Lihat dan kelola klien yang ditugaskan',
+    requiredRoles: [UserRoleEnum.Therapist],
+  },
 ];
 
 // Breadcrumb mapping for dashboard routes
@@ -156,8 +174,15 @@ export const dashboardBreadcrumbMapping: Record<string, { label: string; parent?
   '/portal/therapists/edit/[id]': { label: 'Edit Therapist', parent: '/portal/therapists' },
   '/portal/therapists/assignments': { label: 'Penugasan Therapist', parent: '/portal/therapists' },
 
-  // Future routes (placeholder)
+  // Client routes
   '/portal/clients': { label: 'Manajemen Klien', parent: '/portal' },
+  
+  // Therapist routes
+  '/portal/therapist/clients': { label: 'Klien Saya', parent: '/portal' },
+  '/portal/therapist/clients/[id]': { label: 'Detail Klien', parent: '/portal/therapist/clients' },
+  '/portal/therapist/consultation/[id]': { label: 'Konsultasi', parent: '/portal/therapist/clients' },
+
+  // Future routes (placeholder)
   '/portal/assessments': { label: 'Sistem Assessment', parent: '/portal' },
   '/portal/reports': { label: 'Laporan & Analytics', parent: '/portal' },
 };
@@ -192,6 +217,7 @@ export const dashboardConfigs: Record<UserRole, DashboardConfig> = {
     allowedRoutes: [
       '/portal',
       '/portal/profile',
+      '/portal/therapist/*',
     ],
     menuItems: [], // Will be populated by getNavigationItemsForUser
   },

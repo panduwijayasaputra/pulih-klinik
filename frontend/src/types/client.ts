@@ -1,6 +1,10 @@
 import { ClientEducationEnum, ClientGenderEnum, ClientReligionEnum, ClientStatusEnum, ClientMaritalStatusEnum, ClientRelationshipWithSpouseEnum, ClientGuardianRelationshipEnum, ClientGuardianMaritalStatusEnum } from './enums';
+import type { StatusTransition } from './clientStatus';
 
 type EnumValue<T> = T[keyof T];
+
+// Re-export StatusTransition for convenience
+export type { StatusTransition };
 
 export interface Client {
   id: string;

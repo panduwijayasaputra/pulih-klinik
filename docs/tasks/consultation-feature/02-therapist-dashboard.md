@@ -7,20 +7,20 @@
 ## Overview
 Create a dedicated dashboard for therapists to view and manage their assigned clients with search, filtering, and quick actions.
 
-## Files to Create/Modify
-- `frontend/src/hooks/useTherapistClients.ts` - Custom hook for therapist-specific client management
-- `frontend/src/components/consultation/TherapistDashboard.tsx` - Dashboard component for therapists
-- `frontend/src/app/portal/therapist/clients/page.tsx` - Therapist clients list page
-- `frontend/src/components/navigation/RoleBasedNavigation.tsx` - Update navigation for therapists
+## Relevant Files
+- `frontend/src/hooks/useTherapistClients.ts` - **Created** - Custom hook with therapist-specific client filtering, search, status filtering, and statistics
+- `frontend/src/components/consultation/TherapistDashboard.tsx` - **Created** - Comprehensive dashboard component with status cards, search/filters, and DataTable integration
+- `frontend/src/app/portal/therapist/clients/page.tsx` - **Created** - Next.js page with role-based access control and proper routing
+- `frontend/src/lib/navigation-config.ts` - **Modified** - Added "Klien Saya" navigation item for therapists, updated breadcrumb mapping, allowed routes, and quick access items
 
 ## Tasks
 
 ### 2.1 Create Therapist Clients Hook
-- [ ] Create `frontend/src/hooks/useTherapistClients.ts` custom hook
-- [ ] Implement filtering by therapist ID
-- [ ] Add search functionality by client name
-- [ ] Include status-based filtering
-- [ ] Add client count by status
+- [x] Create `frontend/src/hooks/useTherapistClients.ts` custom hook
+- [x] Implement filtering by therapist ID
+- [x] Add search functionality by client name
+- [x] Include status-based filtering
+- [x] Add client count by status
 
 **Steps:**
 1. Create custom hook that filters clients by assigned therapist
@@ -30,11 +30,11 @@ Create a dedicated dashboard for therapists to view and manage their assigned cl
 5. Include loading and error states
 
 ### 2.2 Create Therapist Dashboard Component
-- [ ] Create `frontend/src/components/consultation/TherapistDashboard.tsx`
-- [ ] Implement client list with search and filters
-- [ ] Add status overview cards showing counts
-- [ ] Include quick action buttons for each client
-- [ ] Use existing DataTable component for consistency
+- [x] Create `frontend/src/components/consultation/TherapistDashboard.tsx`
+- [x] Implement client list with search and filters
+- [x] Add status overview cards showing counts
+- [x] Include quick action buttons for each client
+- [x] Use existing DataTable component for consistency
 
 **Steps:**
 1. Create dashboard component using PortalPageWrapper
@@ -44,11 +44,11 @@ Create a dedicated dashboard for therapists to view and manage their assigned cl
 5. Include search and filter functionality
 
 ### 2.3 Create Therapist Clients Page
-- [ ] Create `frontend/src/app/portal/therapist/clients/page.tsx`
-- [ ] Implement therapist-specific client list page
-- [ ] Add role-based access control for therapists only
-- [ ] Use PortalPageWrapper for consistent layout
-- [ ] Include search, filtering, and status overview
+- [x] Create `frontend/src/app/portal/therapist/clients/page.tsx`
+- [x] Implement therapist-specific client list page
+- [x] Add role-based access control for therapists only
+- [x] Use PortalPageWrapper for consistent layout
+- [x] Include search, filtering, and status overview
 
 **Steps:**
 1. Create Next.js page component for therapist clients
@@ -58,10 +58,10 @@ Create a dedicated dashboard for therapists to view and manage their assigned cl
 5. Include breadcrumb navigation
 
 ### 2.4 Update Navigation for Therapists
-- [ ] Update `frontend/src/components/navigation/RoleBasedNavigation.tsx` to include therapist routes
-- [ ] Add "My Clients" navigation item for therapists
-- [ ] Ensure proper role-based menu visibility
-- [ ] Update navigation configuration for therapist role
+- [x] Update `frontend/src/components/navigation/RoleBasedNavigation.tsx` to include therapist routes
+- [x] Add "My Clients" navigation item for therapists
+- [x] Ensure proper role-based menu visibility
+- [x] Update navigation configuration for therapist role
 
 **Steps:**
 1. Add therapist-specific navigation items
