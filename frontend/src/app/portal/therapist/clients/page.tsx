@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { TherapistDashboard } from '@/components/consultation/TherapistDashboard';
+import { TherapistDashboard } from '@/components/portal/TherapistDashboard';
 import { UserRoleEnum } from '@/types/enums';
 import { useToast } from '@/components/ui/toast';
 

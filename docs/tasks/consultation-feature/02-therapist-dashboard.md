@@ -1,6 +1,6 @@
 # Task: Therapist Dashboard and Client List
 
-**Parent Task**: 2.0 Create Therapist Dashboard and Client List  
+**Parent Task**: 2.0 Create Therapist Dashboard and Client List - ✅ **COMPLETED**  
 **Dependencies**: 01-client-status-management.md  
 **Estimated Time**: 1-2 days
 
@@ -9,7 +9,7 @@ Create a dedicated dashboard for therapists to view and manage their assigned cl
 
 ## Relevant Files
 - `frontend/src/hooks/useTherapistClients.ts` - **Created** - Custom hook with therapist-specific client filtering, search, status filtering, and statistics
-- `frontend/src/components/consultation/TherapistDashboard.tsx` - **Created** - Comprehensive dashboard component with status cards, search/filters, and DataTable integration
+- `frontend/src/components/portal/TherapistDashboard.tsx` - **Modified** - Replaced placeholder with comprehensive dashboard component with status cards, search/filters, and DataTable integration
 - `frontend/src/app/portal/therapist/clients/page.tsx` - **Created** - Next.js page with role-based access control and proper routing
 - `frontend/src/lib/navigation-config.ts` - **Modified** - Added "Klien Saya" navigation item for therapists, updated breadcrumb mapping, allowed routes, and quick access items
 
