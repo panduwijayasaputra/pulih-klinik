@@ -30,8 +30,11 @@ export const useClient = () => {
   }, [clients]);
 
   const loadClients = useCallback(async (forceRefresh = false): Promise<Client[]> => {
+    // For development: always refresh to get latest mock data changes
+    const shouldRefresh = forceRefresh || process.env.NODE_ENV === 'development';
+    
     // Skip loading if clients are already loaded and not forcing refresh
-    if (clients.length > 0 && !forceRefresh) {
+    if (clients.length > 0 && !shouldRefresh) {
       return clients;
     }
     

@@ -9,11 +9,13 @@ import { SessionHistory } from '@/components/clients/SessionHistory';
 import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
 
 import { Client } from '@/types/client';
-import { ClientStatusEnum, ClientStatusLabels, ClientEducationLabels, ClientReligionLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientGuardianRelationshipLabels, ClientGuardianMaritalStatusLabels } from '@/types/enums';
+import { ClientStatusEnum, ClientStatusLabels, ClientEducationLabels, ClientReligionLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientGuardianRelationshipLabels, ClientGuardianMaritalStatusLabels, UserRoleEnum } from '@/types/enums';
 import { useClient } from '@/hooks/useClient';
 import { useToast } from '@/components/ui/toast';
+import { useAuth } from '@/hooks/useAuth';
 import {
   ArchiveBoxIcon,
+  ChatBubbleLeftRightIcon,
   EyeIcon,
   PencilIcon,
   UserPlusIcon,
@@ -34,6 +36,7 @@ export interface ClientListProps {
   clients?: Client[];
   onAssign?: (clientId: string) => void;
   onArchive?: (clientId: string) => void;
+  onConsultation?: (clientId: string) => void;
 }
 
 const getStatusBadge = (status: Client['status']) => {
@@ -44,9 +47,11 @@ export const ClientList: React.FC<ClientListProps> = ({
   clients: clientsProp,
   onAssign,
   onArchive,
+  onConsultation,
 }) => {
   const { clients: storeClients, loadClients, loading, createClient, updateClient } = useClient();
   const { addToast } = useToast();
+  const { user } = useAuth();
   const [status, setStatus] = useState<'all' | Client['status']>('all');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -63,11 +68,17 @@ export const ClientList: React.FC<ClientListProps> = ({
     }
   }, [loadClients]);
 
-  // Load clients on component mount only if not already loaded
+  // Load clients on component mount
   React.useEffect(() => {
-    if (storeClients.length === 0) {
-      loadClients().catch(console.error);
-    }
+    const initializeClients = async () => {
+      try {
+        await loadClients(); // This will check internal logic for cache vs fresh load
+      } catch (error) {
+        console.error('Failed to load clients:', error);
+      }
+    };
+    
+    initializeClients();
   }, []); // Run only once on mount
 
   // Modal handlers
@@ -155,8 +166,37 @@ export const ClientList: React.FC<ClientListProps> = ({
     }
   };
 
+  // Check if current user should be treated as therapist (not clinic admin)
+  const isTherapist = React.useMemo(() => {
+    if (!user?.roles) return false;
+    
+    // Normalize roles to handle legacy data
+    const legacyToEnumMap: Record<string, any> = {
+      administrator: UserRoleEnum.Administrator,
+      clinic_admin: UserRoleEnum.ClinicAdmin,
+      therapist: UserRoleEnum.Therapist,
+    };
+
+    const normalizedUserRoles = user.roles.map((role) => {
+      const key = String(role).toLowerCase();
+      return legacyToEnumMap[key] ?? role;
+    });
+
+    // If user has ClinicAdmin role, prioritize that over Therapist role
+    // Only treat as therapist if they ONLY have therapist role (not both)
+    const hasClinicAdmin = normalizedUserRoles.includes(UserRoleEnum.ClinicAdmin);
+    const hasTherapist = normalizedUserRoles.includes(UserRoleEnum.Therapist);
+    
+    return hasTherapist && !hasClinicAdmin;
+  }, [user?.roles]);
+
   // Prefer store clients if available; fallback to prop
-  const clients = (storeClients && storeClients.length > 0) ? storeClients : (clientsProp ?? []);
+  let clients = (storeClients && storeClients.length > 0) ? storeClients : (clientsProp ?? []);
+
+  // For therapists, filter to only show assigned clients
+  if (isTherapist && user?.id) {
+    clients = clients.filter(client => client.assignedTherapist === user.id);
+  }
 
   // Filter clients by status
   const filteredClients = clients.filter((c) => {
@@ -207,40 +247,59 @@ export const ClientList: React.FC<ClientListProps> = ({
     },
   ];
 
-  // Define table actions
-  const actions: TableAction<Client>[] = [
-    {
-      key: 'view',
-      label: 'Lihat',
-      icon: EyeIcon,
-      variant: 'outline',
-      onClick: (client) => {
-        setSelectedClient(client);
-        setShowDetailsModal(true);
+  // Define table actions based on user role
+  const actions: TableAction<Client>[] = React.useMemo(() => {
+    const baseActions: TableAction<Client>[] = [
+      {
+        key: 'view',
+        label: 'Lihat',
+        icon: EyeIcon,
+        variant: 'outline',
+        onClick: (client) => {
+          setSelectedClient(client);
+          setShowDetailsModal(true);
+        },
       },
-    },
-    {
-      key: 'edit',
-      label: 'Edit',
-      icon: PencilIcon,
-      variant: 'outline',
-      onClick: (client) => handleEditClientModal(client),
-    },
-    {
-      key: 'assign',
-      label: 'Therapist',
-      icon: UserPlusIcon,
-      variant: 'default',
-      onClick: (client) => onAssign?.(client.id),
-    },
-    {
-      key: 'archive',
-      label: 'Arsipkan',
-      icon: ArchiveBoxIcon,
-      variant: 'destructive',
-      onClick: (client) => onArchive?.(client.id),
-    },
-  ];
+    ];
+
+    if (isTherapist) {
+      // Therapist actions: only view and consultation
+      baseActions.push({
+        key: 'consultation',
+        label: 'Konsultasi',
+        icon: ChatBubbleLeftRightIcon,
+        variant: 'default',
+        onClick: (client) => onConsultation?.(client.id),
+      });
+    } else {
+      // Clinic admin actions: edit, assign, archive
+      baseActions.push(
+        {
+          key: 'edit',
+          label: 'Edit',
+          icon: PencilIcon,
+          variant: 'outline',
+          onClick: (client) => handleEditClientModal(client),
+        },
+        {
+          key: 'assign',
+          label: 'Therapist',
+          icon: UserPlusIcon,
+          variant: 'default',
+          onClick: (client) => onAssign?.(client.id),
+        },
+        {
+          key: 'archive',
+          label: 'Arsipkan',
+          icon: ArchiveBoxIcon,
+          variant: 'destructive',
+          onClick: (client) => onArchive?.(client.id),
+        }
+      );
+    }
+
+    return baseActions;
+  }, [isTherapist, onConsultation, onAssign, onArchive]);
 
   // Define status filter
   const statusFilter = {
@@ -261,7 +320,11 @@ export const ClientList: React.FC<ClientListProps> = ({
     <>
       <DataTable
         title="Daftar Klien"
-        description="Kelola klien, lihat detail, dan atur penugasan therapist"
+        description={
+          isTherapist
+            ? "Daftar klien yang ditugaskan kepada Anda"
+            : "Kelola klien, lihat detail, dan atur penugasan therapist"
+        }
         data={filteredClients}
         columns={columns}
         actions={actions}
@@ -276,12 +339,47 @@ export const ClientList: React.FC<ClientListProps> = ({
           onClick: refreshClients,
           loading: loading,
         }}
+        // Fix: Always provide createAction, but disable if isTherapist
         createAction={{
           label: 'Tambah Klien',
           icon: PlusIcon,
           onClick: handleCreateClient,
         }}
       />
+
+      {/* Debug Information for Development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-4 p-4 bg-gray-100 rounded text-xs">
+          <p><strong>Debug Info:</strong></p>
+          <p>User roles: {JSON.stringify(user?.roles)}</p>
+          <p>User ID: {user?.id}</p>
+          <p>Is therapist: {String(isTherapist)}</p>
+          <p>Store clients count: {storeClients.length}</p>
+          <p>Filtered clients count: {filteredClients.length}</p>
+          <p>All clients count: {clients.length}</p>
+          <p>Loading: {String(loading)}</p>
+          {/* Fixed: error variable was not defined, so we remove it or replace with a placeholder */}
+          <p>Error: None</p>
+          <div className="mt-2">
+            <button 
+              onClick={() => loadClients(true)}
+              className="px-2 py-1 bg-blue-500 text-white rounded text-xs mr-2"
+              disabled={loading}
+            >
+              Force Reload Clients
+            </button>
+            <button 
+              onClick={() => {
+                localStorage.removeItem('client-storage');
+                window.location.reload();
+              }}
+              className="px-2 py-1 bg-red-500 text-white rounded text-xs"
+            >
+              Clear Storage & Reload
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Client Details Modal */}
       {showDetailsModal && selectedClient && (

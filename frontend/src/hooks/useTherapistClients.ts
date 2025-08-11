@@ -53,7 +53,7 @@ export const useTherapistClients = (
     getClientById: getClientByIdFromStore,
   } = useClient();
 
-  // Check if current user is a therapist
+  // Check if current user should be treated as therapist (not clinic admin)
   const isTherapist = useMemo(() => {
     if (!user?.roles) return false;
     
@@ -69,7 +69,12 @@ export const useTherapistClients = (
       return legacyToEnumMap[key] ?? (role as UserRole);
     });
 
-    return normalizedUserRoles.includes(UserRoleEnum.Therapist);
+    // If user has ClinicAdmin role, prioritize that over Therapist role
+    // Only treat as therapist if they ONLY have therapist role (not both)
+    const hasClinicAdmin = normalizedUserRoles.includes(UserRoleEnum.ClinicAdmin);
+    const hasTherapist = normalizedUserRoles.includes(UserRoleEnum.Therapist);
+    
+    return hasTherapist && !hasClinicAdmin;
   }, [user?.roles]);
 
   const therapistId = useMemo(() => {

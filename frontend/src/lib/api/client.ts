@@ -15,9 +15,11 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // In-memory mock state for client assignments and therapist capacity
 // NOTE: This is a frontend-only mock to support UI flows until a backend exists
 const therapistCapacity: Record<string, Pick<Therapist, 'id' | 'currentLoad' | 'maxClients'>> = {
-  'therapist-001': { id: 'therapist-001', currentLoad: 15, maxClients: 20 },
-  'therapist-002': { id: 'therapist-002', currentLoad: 12, maxClients: 15 },
-  'therapist-003': { id: 'therapist-003', currentLoad: 8, maxClients: 10 },
+  'therapist-001': { id: 'therapist-001', currentLoad: 18, maxClients: 20 }, // 6 clients: CLT001, CLT004, CLT008, CLT009, CLT010, CLT011
+  'therapist-002': { id: 'therapist-002', currentLoad: 12, maxClients: 15 }, // 1 client: CLT002, CLT012
+  'therapist-003': { id: 'therapist-003', currentLoad: 9, maxClients: 10 }, // 1 client: CLT003
+  'therapist-004': { id: 'therapist-004', currentLoad: 5, maxClients: 12 }, // Available capacity
+  'therapist-005': { id: 'therapist-005', currentLoad: 7, maxClients: 15 }, // 1 client: CLT007
 };
 
 const clientAssignments: Record<string, string | undefined> = {
@@ -25,7 +27,14 @@ const clientAssignments: Record<string, string | undefined> = {
   'CLT002': 'therapist-002',
   'CLT003': 'therapist-003',
   'CLT004': 'therapist-001',
-  'CLT005': 'therapist-002',
+  'CLT005': undefined, // Unassigned - available for clinic admin to assign
+  'CLT006': undefined, // Unassigned - available for clinic admin to assign
+  'CLT007': 'therapist-005',
+  'CLT008': 'therapist-001', // Maya Sari Indah
+  'CLT009': 'therapist-001', // Rudi Hartono
+  'CLT010': 'therapist-001', // Siti Nurhaliza (minor)
+  'CLT011': 'therapist-001', // Dimas Anggara
+  'CLT012': 'therapist-002', // Rizki Pratama (minor)
 };
 
 export const ClientAPI = {

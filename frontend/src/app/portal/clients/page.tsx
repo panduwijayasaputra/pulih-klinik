@@ -34,6 +34,18 @@ export default function ClientsPage() {
     });
   };
 
+  const handleConsultation = (clientId: string) => {
+    // TODO: Navigate to consultation interface when implemented
+    addToast({
+      type: 'info',
+      title: 'Fitur Konsultasi',
+      message: 'Fitur konsultasi akan segera tersedia',
+    });
+    
+    // For now, we could navigate to a consultation route (to be implemented)
+    // router.push(`/portal/therapist/consultation/${clientId}`);
+  };
+
   const handleAssignSuccess = () => {
     setAssignModalOpen(false);
     setSelectedClientId(null);
@@ -53,6 +65,7 @@ export default function ClientsPage() {
         <ClientList
           onAssign={handleAssign}
           onArchive={handleArchive}
+          onConsultation={handleConsultation}
         />
 
         {selectedClientId && (
