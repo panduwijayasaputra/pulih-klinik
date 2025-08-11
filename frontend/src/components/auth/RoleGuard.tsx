@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types/auth';
+import { UserRoleEnum } from '@/types/enums';
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -19,10 +20,25 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
+  // Normalize roles to handle legacy data
+  const normalizeUserRoles = (userRoles: UserRole[]): UserRole[] => {
+    const legacyToEnumMap: Record<string, UserRole> = {
+      administrator: UserRoleEnum.Administrator,
+      clinic_admin: UserRoleEnum.ClinicAdmin,
+      therapist: UserRoleEnum.Therapist,
+    } as const as Record<string, UserRole>;
+
+    return userRoles.map((role) => {
+      const key = String(role).toLowerCase();
+      return legacyToEnumMap[key] ?? (role as UserRole);
+    });
+  };
+
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      // Check if user has any of the allowed roles
-      const hasRequiredRole = user.roles?.some(role => allowedRoles.includes(role));
+      // Normalize user roles and check if user has any of the allowed roles
+      const normalizedUserRoles = user.roles ? normalizeUserRoles(user.roles) : [];
+      const hasRequiredRole = normalizedUserRoles.some(role => allowedRoles.includes(role));
       
       if (!hasRequiredRole) {
         // Redirect to dashboard if user doesn't have required role
@@ -54,7 +70,9 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
     );
   }
 
-  const hasRequiredRole = user.roles?.some(role => allowedRoles.includes(role));
+  // Normalize user roles and check permissions
+  const normalizedUserRoles = user.roles ? normalizeUserRoles(user.roles) : [];
+  const hasRequiredRole = normalizedUserRoles.some(role => allowedRoles.includes(role));
   
   if (!hasRequiredRole) {
     return fallback || (

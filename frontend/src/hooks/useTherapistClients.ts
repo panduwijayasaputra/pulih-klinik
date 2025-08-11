@@ -5,6 +5,7 @@ import { useClient } from './useClient';
 import { useAuthStore } from '@/store/auth';
 import { ClientStatusEnum, UserRoleEnum } from '@/types/enums';
 import type { Client } from '@/types/client';
+import type { UserRole } from '@/types/auth';
 
 export interface TherapistClientStats {
   total: number;
@@ -54,7 +55,21 @@ export const useTherapistClients = (
 
   // Check if current user is a therapist
   const isTherapist = useMemo(() => {
-    return user?.roles.includes(UserRoleEnum.Therapist) ?? false;
+    if (!user?.roles) return false;
+    
+    // Normalize roles to handle legacy data
+    const legacyToEnumMap: Record<string, UserRole> = {
+      administrator: UserRoleEnum.Administrator,
+      clinic_admin: UserRoleEnum.ClinicAdmin,
+      therapist: UserRoleEnum.Therapist,
+    } as const as Record<string, UserRole>;
+
+    const normalizedUserRoles = user.roles.map((role) => {
+      const key = String(role).toLowerCase();
+      return legacyToEnumMap[key] ?? (role as UserRole);
+    });
+
+    return normalizedUserRoles.includes(UserRoleEnum.Therapist);
   }, [user?.roles]);
 
   const therapistId = useMemo(() => {

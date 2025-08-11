@@ -10,6 +10,7 @@ import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
 import { useTherapistClients } from '@/hooks/useTherapistClients';
 import { ClientStatusEnum, ClientStatusLabels } from '@/types/enums';
 import type { Client } from '@/types/client';
+import { useAuth } from '@/hooks/useAuth';
 import {
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
@@ -31,6 +32,7 @@ export const TherapistDashboard: React.FC<TherapistDashboardProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ClientStatusEnum | 'all'>('all');
+  const { user } = useAuth();
 
   const {
     filteredClients,
@@ -39,6 +41,7 @@ export const TherapistDashboard: React.FC<TherapistDashboardProps> = ({
     error,
     loadClients,
     isTherapist,
+    therapistId,
   } = useTherapistClients(searchTerm, statusFilter);
 
   // Load clients on component mount
@@ -73,6 +76,15 @@ export const TherapistDashboard: React.FC<TherapistDashboardProps> = ({
         <Card>
           <CardContent className="p-6 text-center">
             <p className="text-gray-600">Halaman ini hanya dapat diakses oleh therapist.</p>
+            {/* Debug information */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 p-4 bg-gray-100 rounded text-left text-xs">
+                <p><strong>Debug Info:</strong></p>
+                <p>User roles: {JSON.stringify(user?.roles)}</p>
+                <p>Is therapist: {String(isTherapist)}</p>
+                <p>Therapist ID: {therapistId}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </PortalPageWrapper>
