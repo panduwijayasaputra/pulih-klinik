@@ -61,6 +61,23 @@ export const routeConfigs: RouteConfig[] = [
     redirectTo: '/portal'
   },
 
+  // Portal routes - Therapist specific
+  { 
+    path: '/portal/therapist/clients', 
+    requiredRoles: [UserRoleEnum.Therapist, UserRoleEnum.ClinicAdmin],
+    redirectTo: '/portal'
+  },
+  { 
+    path: '/portal/therapist/clients/[id]', 
+    requiredRoles: [UserRoleEnum.Therapist, UserRoleEnum.ClinicAdmin],
+    redirectTo: '/portal'
+  },
+  { 
+    path: '/portal/therapist/consultation/[id]', 
+    requiredRoles: [UserRoleEnum.Therapist, UserRoleEnum.ClinicAdmin],
+    redirectTo: '/portal'
+  },
+
   // Portal routes - All authenticated users
   { 
     path: '/portal', 

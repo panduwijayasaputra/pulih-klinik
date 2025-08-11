@@ -5,8 +5,10 @@ import React, { useState } from 'react';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { ClientList } from '@/components/clients/ClientList';
 import { AssignTherapistModal } from '@/components/clients/AssignTherapistModal';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useToast } from '@/components/ui/toast';
 import { useClient } from '@/hooks/useClient';
+import { UserRoleEnum } from '@/types/enums';
 
 export default function ClientsPage() {
   const { addToast } = useToast();
@@ -43,39 +45,41 @@ export default function ClientsPage() {
   };
 
   return (
-    <PortalPageWrapper
-      title="Manajemen Klien"
-      description="Kelola data klien, penugasan therapist, dan riwayat sesi"
-    >
-      <ClientList
-        onAssign={handleAssign}
-        onArchive={handleArchive}
-      />
-
-      {selectedClientId && (
-        <AssignTherapistModal
-          open={assignModalOpen}
-          onOpenChange={(open) => {
-            setAssignModalOpen(open);
-            if (!open) setSelectedClientId(null);
-          }}
-          clientId={selectedClientId}
-          onAssigned={async (therapistId) => {
-            if (!selectedClientId) return;
-            try {
-              await assignTherapist(selectedClientId, therapistId);
-              handleAssignSuccess();
-            } catch (error) {
-              addToast({
-                type: 'error',
-                title: 'Gagal',
-                message: error instanceof Error ? error.message : 'Gagal menugaskan therapist',
-              });
-            }
-          }}
+    <RoleGuard allowedRoles={[UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]}>
+      <PortalPageWrapper
+        title="Manajemen Klien"
+        description="Kelola data klien, penugasan therapist, dan riwayat sesi"
+      >
+        <ClientList
+          onAssign={handleAssign}
+          onArchive={handleArchive}
         />
-      )}
-    </PortalPageWrapper>
+
+        {selectedClientId && (
+          <AssignTherapistModal
+            open={assignModalOpen}
+            onOpenChange={(open) => {
+              setAssignModalOpen(open);
+              if (!open) setSelectedClientId(null);
+            }}
+            clientId={selectedClientId}
+            onAssigned={async (therapistId) => {
+              if (!selectedClientId) return;
+              try {
+                await assignTherapist(selectedClientId, therapistId);
+                handleAssignSuccess();
+              } catch (error) {
+                addToast({
+                  type: 'error',
+                  title: 'Gagal',
+                  message: error instanceof Error ? error.message : 'Gagal menugaskan therapist',
+                });
+              }
+            }}
+          />
+        )}
+      </PortalPageWrapper>
+    </RoleGuard>
   );
 }
 
