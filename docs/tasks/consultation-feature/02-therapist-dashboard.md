@@ -30,7 +30,7 @@ Create a dedicated dashboard for therapists to view and manage their assigned cl
 5. Include loading and error states
 
 ### 2.2 Create Therapist Dashboard Component
-- [x] Create `frontend/src/components/consultation/TherapistDashboard.tsx`
+- [x] Create `frontend/src/components/portal/TherapistDashboard.tsx`
 - [x] Implement client list with search and filters
 - [x] Add status overview cards showing counts
 - [x] Include quick action buttons for each client
@@ -71,13 +71,13 @@ Create a dedicated dashboard for therapists to view and manage their assigned cl
 5. Test navigation visibility for different roles
 
 ## Acceptance Criteria
-- [ ] Therapists can see only their assigned clients
-- [ ] Search functionality works by client name
-- [ ] Status-based filtering works correctly
-- [ ] Status overview cards show accurate counts
-- [ ] Quick action buttons are available for each client
-- [ ] Navigation includes "My Clients" for therapists
-- [ ] Role-based access control prevents unauthorized access
+- [x] Therapists can see only their assigned clients
+- [x] Search functionality works by client name
+- [x] Status-based filtering works correctly
+- [x] Status overview cards show accurate counts
+- [x] Quick action buttons are available for each client
+- [x] Navigation includes "My Clients" for therapists
+- [x] Role-based access control prevents unauthorized access
 
 ## Notes
 - Use existing DataTable component for consistency

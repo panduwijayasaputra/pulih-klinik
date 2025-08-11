@@ -93,12 +93,12 @@ Implement the core client status management system with proper status transition
 4. Update client details modal to show status
 
 ## Acceptance Criteria
-- [ ] All client statuses are properly defined and validated
-- [ ] Status transitions are tracked with audit trail
-- [ ] Status badges display correctly with proper colors
-- [ ] Mock data includes status information
-- [ ] Client list shows status information
-- [ ] Status transitions are validated properly
+- [x] All client statuses are properly defined and validated
+- [x] Status transitions are tracked with audit trail
+- [x] Status badges display correctly with proper colors
+- [x] Mock data includes status information
+- [x] Client list shows status information
+- [x] Status transitions are validated properly
 
 ## Notes
 - Status transitions should be validated to prevent invalid state changes

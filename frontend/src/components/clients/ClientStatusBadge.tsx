@@ -2,7 +2,6 @@ import * as React from 'react';
 import { type VariantProps, cva } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { ClientStatusEnum, ClientStatusLabels } from '@/types/enums';
 
 const clientStatusBadgeVariants = cva(

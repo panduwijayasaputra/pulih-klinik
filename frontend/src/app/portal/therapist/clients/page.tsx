@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { TherapistDashboard } from '@/components/portal/TherapistDashboard';
@@ -9,11 +8,10 @@ import { UserRoleEnum } from '@/types/enums';
 import { useToast } from '@/components/ui/toast';
 
 export default function TherapistClientsPage() {
-  const router = useRouter();
   const { addToast } = useToast();
 
   // Handle view client details
-  const handleViewClient = (clientId: string) => {
+  const handleViewClient = (_clientId: string) => {
     // TODO: Navigate to client details page when implemented
     addToast({
       type: 'info',
@@ -26,7 +24,7 @@ export default function TherapistClientsPage() {
   };
 
   // Handle start/continue consultation
-  const handleStartConsultation = (clientId: string) => {
+  const handleStartConsultation = (_clientId: string) => {
     // TODO: Navigate to consultation interface when implemented
     addToast({
       type: 'info',

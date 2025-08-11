@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
-import { DataTable, TableColumn, TableAction } from '@/components/ui/data-table';
+import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,13 +11,13 @@ import { useTherapistClients } from '@/hooks/useTherapistClients';
 import { ClientStatusEnum, ClientStatusLabels } from '@/types/enums';
 import type { Client } from '@/types/client';
 import {
-  EyeIcon,
   ChatBubbleLeftRightIcon,
-  UserGroupIcon,
   CheckCircleIcon,
   ClockIcon,
-  PlayIcon,
+  EyeIcon,
   MagnifyingGlassIcon,
+  PlayIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 interface TherapistDashboardProps {

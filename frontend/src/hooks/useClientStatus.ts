@@ -132,7 +132,7 @@ export const useClientStatus = (): UseClientStatusReturn => {
 
   // Get available status transitions for a client
   const getAvailableTransitions = useCallback(
-    (clientId: string) => {
+    async (clientId: string) => {
       const currentStatus = getCurrentClientStatus(clientId);
       
       if (!currentStatus) {
@@ -140,8 +140,8 @@ export const useClientStatus = (): UseClientStatusReturn => {
         return [ClientStatusEnum.New];
       }
 
-      // Import ValidStatusTransitions from clientStatus types
-      const { ValidStatusTransitions } = require('@/types/clientStatus');
+      // Dynamic import for ValidStatusTransitions
+      const { ValidStatusTransitions } = await import('@/types/clientStatus');
       return ValidStatusTransitions[currentStatus] || [];
     },
     [getCurrentClientStatus]
