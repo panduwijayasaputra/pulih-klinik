@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 // New interface for therapist account creation (NO password fields)
 interface TherapistAccountCreationData {

@@ -4,19 +4,19 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import {
-  getClinicProfile,
-  updateClinicProfile,
-  getClinicDocuments,
-  uploadClinicDocument,
+  ClinicApiError,
   deleteClinicDocument,
   downloadClinicDocument,
-  ClinicApiError,
+  getClinicDocuments,
+  getClinicProfile,
+  updateClinicProfile,
+  uploadClinicDocument,
 } from '@/lib/api/clinic';
 
 import {
+  ClinicDocument,
   ClinicProfile,
   ClinicProfileFormData,
-  ClinicDocument,
 } from '@/types/clinic';
 
 interface ClinicStoreState {

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ClientAPI } from '@/lib/api/client';
 import { useClient } from '@/hooks/useClient';
 import { SessionSummary } from '@/types/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
 
 interface SessionHistoryProps {
@@ -53,8 +53,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
         if (res.success && res.data) {
           setSessions(res.data.items);
           setTotal(res.data.total);
-          // also cache in store for other consumers
-          loadSessionsFromStore(clientId, targetPage, pageSize).catch(() => {});
+          // Skip store caching to prevent refetch loop
         } else {
           const msg = res.message || 'Gagal memuat riwayat sesi.';
           setError(msg);
@@ -71,7 +70,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
     return () => {
       mounted = false;
     };
-  }, [addToast, clientId, pageSize, loadSessionsFromStore]);
+  }, [addToast, clientId, pageSize, page]);
 
   const handleRetry = useCallback(() => {
     loadSessions(page);
@@ -84,13 +83,13 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ clientId, pageSi
       setSessions(cached.slice(0, pageSize));
       setTotal(cached.length);
       setLoading(false);
-      return () => {};
+      return;
     }
 
     // Always load sessions when page, clientId, or pageSize changes
     const cleanup = loadSessions();
     return cleanup;
-  }, [page, clientId, pageSize, loadSessions, sessionsByClientId]);
+  }, [page, clientId, pageSize]); // Removed loadSessions and sessionsByClientId from dependencies
 
   const groupedByDate = useMemo(() => {
     const groups: Record<string, SessionSummary[]> = {};

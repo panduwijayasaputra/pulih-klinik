@@ -7,13 +7,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { 
   BuildingOfficeIcon,
-  UserIcon,
-  CurrencyDollarIcon,
+  CheckCircleIcon,
   ClockIcon,
-  UsersIcon,
+  CurrencyDollarIcon,
   DocumentTextIcon,
   PencilIcon,
-  CheckCircleIcon
+  UserIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 
 interface RegistrationSummaryProps {

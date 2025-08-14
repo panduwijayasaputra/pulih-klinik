@@ -1,42 +1,42 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { DataTable, TableColumn, TableAction } from '@/components/ui/data-table';
+import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { ClientFormModal } from '@/components/clients/ClientFormModal';
 import { SessionHistory } from '@/components/clients/SessionHistory';
 import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
 
 import { Client } from '@/types/client';
-import { ClientStatusEnum, ClientStatusLabels, ClientEducationLabels, ClientReligionLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientGuardianRelationshipLabels, ClientGuardianMaritalStatusLabels, UserRoleEnum } from '@/types/enums';
+import { ClientEducationLabels, ClientGuardianMaritalStatusLabels, ClientGuardianRelationshipLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientReligionLabels, ClientStatusEnum, ClientStatusLabels, UserRoleEnum } from '@/types/enums';
 import { useClient } from '@/hooks/useClient';
 import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  ArchiveBoxIcon,
-  ChatBubbleLeftRightIcon,
-  EyeIcon,
-  PencilIcon,
-  UserPlusIcon,
-  XMarkIcon,
-  UserIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  MapPinIcon,
-  BriefcaseIcon,
   AcademicCapIcon,
-  HeartIcon,
+  ArrowPathIcon,
+  BriefcaseIcon,
   CalendarIcon,
   ChartBarIcon,
+  ChatBubbleLeftRightIcon,
+  EnvelopeIcon,
+  EyeIcon,
+  HeartIcon,
+  MapPinIcon,
+  PencilIcon,
+  PhoneIcon,
   PlusIcon,
+  UserIcon,
+  UserPlusIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 export interface ClientListProps {
   clients?: Client[];
   onAssign?: (clientId: string) => void;
-  onArchive?: (clientId: string) => void;
   onConsultation?: (clientId: string) => void;
+  onStartOver?: (clientId: string) => void;
 }
 
 const getStatusBadge = (status: Client['status']) => {
@@ -46,8 +46,8 @@ const getStatusBadge = (status: Client['status']) => {
 export const ClientList: React.FC<ClientListProps> = ({
   clients: clientsProp,
   onAssign,
-  onArchive,
   onConsultation,
+  onStartOver,
 }) => {
   const { clients: storeClients, loadClients, loading, createClient, updateClient } = useClient();
   const { addToast } = useToast();
@@ -252,7 +252,7 @@ export const ClientList: React.FC<ClientListProps> = ({
     const baseActions: TableAction<Client>[] = [
       {
         key: 'view',
-        label: 'Lihat',
+        label: 'Detail',
         icon: EyeIcon,
         variant: 'outline',
         onClick: (client) => {
@@ -272,7 +272,7 @@ export const ClientList: React.FC<ClientListProps> = ({
         onClick: (client) => onConsultation?.(client.id),
       });
     } else {
-      // Clinic admin actions: edit, assign, archive
+      // Clinic admin actions: edit and conditional assignment/start over
       baseActions.push(
         {
           key: 'edit',
@@ -282,24 +282,34 @@ export const ClientList: React.FC<ClientListProps> = ({
           onClick: (client) => handleEditClientModal(client),
         },
         {
-          key: 'assign',
-          label: 'Therapist',
+          key: 'assign-therapist',
+          label: 'Tugaskan Therapist',
           icon: UserPlusIcon,
           variant: 'default',
+          show: (client) => client.status === ClientStatusEnum.New && !client.assignedTherapist,
           onClick: (client) => onAssign?.(client.id),
         },
         {
-          key: 'archive',
-          label: 'Arsipkan',
-          icon: ArchiveBoxIcon,
-          variant: 'destructive',
-          onClick: (client) => onArchive?.(client.id),
+          key: 're-assign-therapist',
+          label: 'Ganti Therapist',
+          icon: UserPlusIcon,
+          variant: 'outline',
+          show: (client) => client.assignedTherapist && client.status !== ClientStatusEnum.Done,
+          onClick: (client) => onAssign?.(client.id),
+        },
+        {
+          key: 'start-over',
+          label: 'Mulai Ulang',
+          icon: ArrowPathIcon,
+          variant: 'secondary',
+          show: (client) => client.status === ClientStatusEnum.Done,
+          onClick: (client) => onStartOver?.(client.id),
         }
       );
     }
 
     return baseActions;
-  }, [isTherapist, onConsultation, onAssign, onArchive]);
+  }, [isTherapist, onConsultation, onAssign, onStartOver]);
 
   // Define status filter
   const statusFilter = {
@@ -346,40 +356,6 @@ export const ClientList: React.FC<ClientListProps> = ({
           onClick: handleCreateClient,
         }}
       />
-
-      {/* Debug Information for Development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-4 p-4 bg-gray-100 rounded text-xs">
-          <p><strong>Debug Info:</strong></p>
-          <p>User roles: {JSON.stringify(user?.roles)}</p>
-          <p>User ID: {user?.id}</p>
-          <p>Is therapist: {String(isTherapist)}</p>
-          <p>Store clients count: {storeClients.length}</p>
-          <p>Filtered clients count: {filteredClients.length}</p>
-          <p>All clients count: {clients.length}</p>
-          <p>Loading: {String(loading)}</p>
-          {/* Fixed: error variable was not defined, so we remove it or replace with a placeholder */}
-          <p>Error: None</p>
-          <div className="mt-2">
-            <button 
-              onClick={() => loadClients(true)}
-              className="px-2 py-1 bg-blue-500 text-white rounded text-xs mr-2"
-              disabled={loading}
-            >
-              Force Reload Clients
-            </button>
-            <button 
-              onClick={() => {
-                localStorage.removeItem('client-storage');
-                window.location.reload();
-              }}
-              className="px-2 py-1 bg-red-500 text-white rounded text-xs"
-            >
-              Clear Storage & Reload
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Client Details Modal */}
       {showDetailsModal && selectedClient && (
@@ -736,33 +712,83 @@ export const ClientList: React.FC<ClientListProps> = ({
               </div>
 
               {/* Modal Footer */}
-              <div className="flex justify-end items-center mt-6 pt-6 border-t border-gray-200">
+              <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
                 <div className="flex space-x-3">
-                  <button
-                    onClick={() => handleEditClientModal(selectedClient)}
-                    className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-md hover:bg-blue-50 flex items-center"
-                  >
-                    <PencilIcon className="w-4 h-4 mr-2" />
-                    Edit Klien
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleCloseDetails();
-                      onAssign?.(selectedClient.id);
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-green-600 bg-white border border-green-300 rounded-md hover:bg-green-50 flex items-center"
-                  >
-                    <UserPlusIcon className="w-4 h-4 mr-2" />
-                    Assign Therapist
-                  </button>
-                  <button
-                    onClick={handleCloseDetails}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
-                  >
-                    <XMarkIcon className="w-4 h-4 mr-2" />
-                    Tutup
-                  </button>
+                  {/* Edit Client - show for all except therapists */}
+                  {!isTherapist && (
+                    <button
+                      onClick={() => handleEditClientModal(selectedClient)}
+                      className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-md hover:bg-blue-50 flex items-center"
+                    >
+                      <PencilIcon className="w-4 h-4 mr-2" />
+                      Edit Klien
+                    </button>
+                  )}
+
+                  {/* Assign Therapist - only for New clients without therapist */}
+                  {!isTherapist && selectedClient.status === ClientStatusEnum.New && !selectedClient.assignedTherapist && (
+                    <button
+                      onClick={() => {
+                        handleCloseDetails();
+                        onAssign?.(selectedClient.id);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-green-600 bg-white border border-green-300 rounded-md hover:bg-green-50 flex items-center"
+                    >
+                      <UserPlusIcon className="w-4 h-4 mr-2" />
+                      Tugaskan Therapist
+                    </button>
+                  )}
+
+                  {/* Re-assign Therapist - only for clients with therapist but not Done */}
+                  {!isTherapist && selectedClient.assignedTherapist && selectedClient.status !== ClientStatusEnum.Done && (
+                    <button
+                      onClick={() => {
+                        handleCloseDetails();
+                        onAssign?.(selectedClient.id);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-orange-600 bg-white border border-orange-300 rounded-md hover:bg-orange-50 flex items-center"
+                    >
+                      <UserPlusIcon className="w-4 h-4 mr-2" />
+                      Ganti Therapist
+                    </button>
+                  )}
+
+                  {/* Start Over - only for Done clients */}
+                  {!isTherapist && selectedClient.status === ClientStatusEnum.Done && (
+                    <button
+                      onClick={() => {
+                        handleCloseDetails();
+                        onStartOver?.(selectedClient.id);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-purple-600 bg-white border border-purple-300 rounded-md hover:bg-purple-50 flex items-center"
+                    >
+                      <ArrowPathIcon className="w-4 h-4 mr-2" />
+                      Mulai Ulang
+                    </button>
+                  )}
+
+                  {/* Consultation - for therapists */}
+                  {isTherapist && (
+                    <button
+                      onClick={() => {
+                        handleCloseDetails();
+                        onConsultation?.(selectedClient.id);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 flex items-center"
+                    >
+                      <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
+                      Konsultasi
+                    </button>
+                  )}
                 </div>
+                
+                <button
+                  onClick={handleCloseDetails}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
+                >
+                  <XMarkIcon className="w-4 h-4 mr-2" />
+                  Tutup
+                </button>
               </div>
             </div>
           </div>

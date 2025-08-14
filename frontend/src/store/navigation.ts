@@ -34,11 +34,15 @@ export const useNavigationStore = create<NavigationStore>()(
 
       setAvailableRoles: (roles: UserRole[]) => {
         const { activeRole } = get();
+        
+        // Only update activeRole if it's currently null or invalid
+        // Don't override manually selected roles
         let newActiveRole = activeRole;
         
-        // Validate and reset active role if it's no longer valid
+        // Only reset active role if it's invalid, but don't auto-set to first role
+        // Let the useNavigation hook handle auto-setting based on path
         if (activeRole && !roles.includes(activeRole)) {
-          newActiveRole = roles.length > 0 ? roles[0] : null;
+          newActiveRole = null;
         }
         
         set({ 

@@ -14,19 +14,19 @@ import { FormModal } from '@/components/ui/form-modal';
 import { ClientCreateData, createClientSchema } from '@/schemas/clientSchema';
 import { 
   ClientEducationEnum, 
+  ClientEducationLabels, 
   ClientGenderEnum, 
-  ClientReligionEnum, 
-  ClientMaritalStatusEnum, 
-  ClientRelationshipWithSpouseEnum,
-  ClientGuardianRelationshipEnum,
+  ClientGenderLabels, 
   ClientGuardianMaritalStatusEnum,
-  ClientGenderLabels,
-  ClientMaritalStatusLabels,
-  ClientRelationshipWithSpouseLabels,
-  ClientReligionLabels,
-  ClientEducationLabels,
+  ClientGuardianMaritalStatusLabels,
+  ClientGuardianRelationshipEnum,
   ClientGuardianRelationshipLabels,
-  ClientGuardianMaritalStatusLabels
+  ClientMaritalStatusEnum,
+  ClientMaritalStatusLabels,
+  ClientRelationshipWithSpouseEnum,
+  ClientRelationshipWithSpouseLabels,
+  ClientReligionEnum,
+  ClientReligionLabels
 } from '@/types/enums';
 
 export interface ClientFormModalProps {

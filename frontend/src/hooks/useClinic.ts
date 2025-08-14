@@ -1,22 +1,22 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { 
+  ClinicBranding, 
+  ClinicDocument, 
   ClinicProfile, 
   ClinicProfileFormData, 
-  ClinicBranding, 
-  ClinicSettings, 
-  ClinicDocument 
+  ClinicSettings 
 } from '@/types/clinic';
 import {
-  getClinicProfile,
-  updateClinicProfile,
-  uploadClinicLogo,
-  updateClinicBranding,
-  updateClinicSettings,
-  getClinicDocuments,
-  uploadClinicDocument,
+  ClinicApiError,
   deleteClinicDocument,
   downloadClinicDocument,
-  ClinicApiError
+  getClinicDocuments,
+  getClinicProfile,
+  updateClinicBranding,
+  updateClinicProfile,
+  updateClinicSettings,
+  uploadClinicDocument,
+  uploadClinicLogo
 } from '@/lib/api/clinic';
 
 // Mock data for development/fallback

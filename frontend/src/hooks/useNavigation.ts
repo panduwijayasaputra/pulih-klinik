@@ -4,14 +4,28 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from './useAuth';
 import { useNavigationStore } from '@/store/navigation';
 import { 
-  getNavigationItemsForUser, 
-  getPrimaryDashboardConfig,
-  roleDisplayInfo,
-  dashboardBreadcrumbMapping 
+  portalBreadcrumbMapping, 
+  getNavigationItemsForUser,
+  getPrimaryPortalConfig,
+  roleDisplayInfo 
 } from '@/lib/navigation-config';
 import { BreadcrumbItem, NavigationItem, RoleDisplayInfo } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
+
+// Helper function to get role-based path
+const getRoleBasedPath = (role: UserRole): string => {
+  switch (role) {
+    case UserRoleEnum.Administrator:
+      return '/portal/admin';
+    case UserRoleEnum.ClinicAdmin:
+      return '/portal/clinic';
+    case UserRoleEnum.Therapist:
+      return '/portal/therapist';
+    default:
+      return '/portal';
+  }
+};
 
 export const useNavigation = () => {
   const { user } = useAuth();
@@ -67,6 +81,40 @@ export const useNavigation = () => {
     }
   }, [effectiveUserRoles, setAvailableRoles, resetNavigation]);
 
+  // Auto-set active role based on current pathname (only when no role is set)
+  useEffect(() => {
+    if (effectiveUserRoles.length === 0) return;
+    
+    // Determine role based on current path
+    let roleFromPath: UserRole | null = null;
+    
+    if (pathname.startsWith('/portal/admin')) {
+      roleFromPath = UserRoleEnum.Administrator;
+    } else if (pathname.startsWith('/portal/clinic')) {
+      roleFromPath = UserRoleEnum.ClinicAdmin;
+    } else if (pathname.startsWith('/portal/therapist')) {
+      roleFromPath = UserRoleEnum.Therapist;
+    }
+    
+    // Only auto-set role if:
+    // 1. No active role is currently set, OR
+    // 2. Current role doesn't have permission for the current path
+    if (roleFromPath && effectiveUserRoles.includes(roleFromPath)) {
+      // If there's no active role, set it
+      if (!activeRole) {
+        setActiveRole(roleFromPath);
+      }
+      // If current active role doesn't match the required role for this path, change it
+      else if (activeRole !== roleFromPath) {
+        setActiveRole(roleFromPath);
+      }
+    }
+    // If no specific role path and no active role, set to primary role
+    else if (!activeRole && effectiveUserRoles.length > 0) {
+      setActiveRole(effectiveUserRoles[0]);
+    }
+  }, [pathname, effectiveUserRoles, activeRole, setActiveRole]);
+
   // Get navigation items for current user
   const navigationItems = useMemo(() => {
     if (effectiveUserRoles.length === 0) return [];
@@ -84,10 +132,10 @@ export const useNavigation = () => {
     );
   }, [navigationItems, activeRole]);
 
-  // Get primary dashboard configuration
-  const primaryDashboard = useMemo(() => {
+  // Get primary portal configuration
+  const primaryPortal = useMemo(() => {
     if (effectiveUserRoles.length === 0) return null;
-    return getPrimaryDashboardConfig(effectiveUserRoles);
+    return getPrimaryPortalConfig(effectiveUserRoles);
   }, [effectiveUserRoles]);
 
   // Check if current path matches navigation item
@@ -164,7 +212,7 @@ export const useNavigation = () => {
     const breadcrumbs: BreadcrumbItem[] = [
       {
         id: 'home',
-        label: 'Dashboard',
+        label: 'Portal',
         href: '/portal',
       }
     ];
@@ -174,8 +222,8 @@ export const useNavigation = () => {
       return breadcrumbs;
     }
 
-    // Use the dashboard breadcrumb mapping for portal routes
-    const mapping = dashboardBreadcrumbMapping[pathname];
+    // Use the portal breadcrumb mapping for portal routes
+    const mapping = portalBreadcrumbMapping[pathname];
     if (mapping) {
       // Build breadcrumb chain
       const chain: BreadcrumbItem[] = [];
@@ -183,7 +231,7 @@ export const useNavigation = () => {
       let counter = 0;
       
       while (currentPath && counter < 10) { // Prevent infinite loops
-        const pathMapping = dashboardBreadcrumbMapping[currentPath];
+        const pathMapping = portalBreadcrumbMapping[currentPath];
         if (pathMapping) {
           chain.unshift({
             id: `breadcrumb-${counter}`,
@@ -255,7 +303,7 @@ export const useNavigation = () => {
     navigationItems,
     filteredNavigationItems,
     activeNavigationItem,
-    primaryDashboard,
+    primaryPortal,
     
     // Actions
     setActiveRole,

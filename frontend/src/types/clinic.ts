@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum, ClinicSubscriptionTierEnum, ClinicLanguageEnum } from './enums';
+import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum, ClinicLanguageEnum, ClinicSubscriptionTierEnum } from './enums';
 
 type EnumValue<T> = T[keyof T];
 

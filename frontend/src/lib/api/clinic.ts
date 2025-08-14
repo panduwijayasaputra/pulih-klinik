@@ -1,8 +1,8 @@
 import { 
-  ClinicProfile, 
-  ClinicProfileFormData, 
-  ClinicDocument,
-  ClinicBranding,
+  ClinicBranding, 
+  ClinicDocument, 
+  ClinicProfile,
+  ClinicProfileFormData,
   ClinicSettings 
 } from '@/types/clinic';
 

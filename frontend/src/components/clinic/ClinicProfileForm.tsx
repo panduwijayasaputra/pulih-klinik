@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
   ClinicProfileFormData, 
-  clinicProfileFormSchema,
-  type ClinicProfileFormValidation 
+  type ClinicProfileFormValidation,
+  clinicProfileFormSchema 
 } from '@/types/clinic';
 import { useClinic } from '@/hooks/useClinic';
 import { Button } from '@/components/ui/button';
@@ -127,7 +127,7 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
             <p className="text-gray-600">Memuat data klinik...</p>
           </div>
         </CardContent>

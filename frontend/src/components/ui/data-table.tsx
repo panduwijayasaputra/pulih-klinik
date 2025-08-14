@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MagnifyingGlassIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export interface TableColumn<T> {
   key: string;
@@ -187,7 +187,7 @@ export function DataTable<T extends { id: string }>({
                 <tr>
                   <td className="p-6 text-center text-gray-500" colSpan={columns.length + (actions.length > 0 ? 1 : 0)}>
                     <div className="flex items-center justify-center space-x-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600" />
                       <span>{loadingMessage}</span>
                     </div>
                   </td>

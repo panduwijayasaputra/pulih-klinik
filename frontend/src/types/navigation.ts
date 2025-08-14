@@ -58,8 +58,8 @@ export interface RoleSwitchOption {
   isActive: boolean;
 }
 
-// Dashboard config for each role
-export interface DashboardConfig {
+// Portal config for each role
+export interface PortalConfig {
   role: UserRole;
   defaultRoute: string;
   allowedRoutes: string[];

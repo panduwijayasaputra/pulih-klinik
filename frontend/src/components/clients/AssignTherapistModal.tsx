@@ -8,29 +8,49 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { useTherapists } from '@/hooks/useTherapists';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 
 interface AssignTherapistModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
-  onAssigned: (therapistId: string) => Promise<void> | void;
+  currentTherapistId?: string;
+  onAssigned: (therapistId: string, reason?: string) => Promise<void> | void;
 }
 
 export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
   open,
   onOpenChange,
   clientId,
+  currentTherapistId,
   onAssigned,
 }) => {
   const { therapists, isLoading, fetchTherapists } = useTherapists();
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
+  const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const currentTherapist = useMemo(() => {
+    return currentTherapistId ? therapists.find(t => t.id === currentTherapistId) : null;
+  }, [currentTherapistId, therapists]);
+
+  const isReassign = !!currentTherapistId;
 
   const isAtCapacity = (therapistId: string): boolean => {
     const t = therapists.find((x) => x.id === therapistId);
     if (!t) return false;
     return t.currentLoad >= t.maxClients;
   };
+
+  const isSameTherapist = (therapistId: string): boolean => {
+    return isReassign && therapistId === currentTherapistId;
+  };
+
+  // Filter available therapists - exclude current therapist for reassignment
+  const availableTherapists = useMemo(() => {
+    if (!isReassign) return therapists;
+    return therapists.filter(t => t.id !== currentTherapistId);
+  }, [therapists, isReassign, currentTherapistId]);
 
   const selectedInfo = useMemo(() => {
     const t = therapists.find((x) => x.id === selectedTherapist);
@@ -41,10 +61,13 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
 
   const handleConfirm = async (): Promise<void> => {
     if (!selectedTherapist) return;
+    if (isReassign && !reason.trim()) return;
     setIsSubmitting(true);
     try {
-      await onAssigned(selectedTherapist);
+      await onAssigned(selectedTherapist, isReassign ? reason.trim() : undefined);
       onOpenChange(false);
+      setSelectedTherapist('');
+      setReason('');
     } finally {
       setIsSubmitting(false);
     }
@@ -57,16 +80,37 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
         <div className="pb-6 border-b border-gray-200">
           <div className="flex flex-col">
             <DialogTitle className="text-xl font-semibold text-gray-900">
-              Assign Therapist
+              {isReassign ? 'Ganti Therapist' : 'Tugaskan Therapist'}
             </DialogTitle>
             <p className="text-sm text-gray-600 mt-1">
-              Pilih therapist yang akan menangani klien ini
+              {isReassign ? 'Pilih therapist baru untuk menggantikan therapist saat ini' : 'Pilih therapist yang akan menangani klien ini'}
             </p>
           </div>
         </div>
 
         {/* Content Section */}
         <div className="py-6 space-y-6">
+          {/* Current Therapist Section (for re-assign) */}
+          {isReassign && currentTherapist && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-medium text-yellow-800">Therapist Saat Ini</span>
+              </div>
+              <p className="text-sm text-yellow-700">
+                <strong>{currentTherapist.name}</strong>
+              </p>
+              <p className="text-xs text-yellow-600 mt-1">
+                {availableTherapists.length > 0 
+                  ? 'Therapist ini akan digantikan dengan pilihan baru Anda' 
+                  : 'Tidak ada therapist lain yang tersedia untuk penggantian'
+                }
+              </p>
+            </div>
+          )}
+
           {/* Selection Section */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-gray-700">Pilih Therapist</label>
@@ -77,12 +121,12 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="max-h-60 w-full">
-                {therapists.length === 0 ? (
+                {availableTherapists.length === 0 ? (
                   <div className="p-4 text-center text-gray-500 text-sm">
-                    Tidak ada therapist yang ditemukan
+                    {isReassign ? 'Tidak ada therapist lain yang tersedia untuk penggantian' : 'Tidak ada therapist yang ditemukan'}
                   </div>
                 ) : (
-                  therapists.map((t) => {
+                  availableTherapists.map((t) => {
                     const loadPct = Math.round((t.currentLoad / t.maxClients) * 100);
                     const disabled = t.currentLoad >= t.maxClients;
 
@@ -101,6 +145,30 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Reason Field (for reassignment only) */}
+          {isReassign && (
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700">
+                Alasan Penggantian <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Jelaskan alasan mengapa therapist perlu diganti (contoh: permintaan klien, konflik jadwal, keahlian khusus diperlukan, dll.)"
+                className="min-h-[100px] border-gray-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                maxLength={500}
+              />
+              <div className="flex justify-between items-center">
+                <p className="text-xs text-gray-500">
+                  Alasan ini akan dicatat untuk dokumentasi internal
+                </p>
+                <span className="text-xs text-gray-400">
+                  {reason.length}/500
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Selected Therapist Info */}
           {selectedInfo && (
@@ -147,16 +215,16 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
             </Button>
             <Button
               onClick={handleConfirm}
-              disabled={!selectedTherapist || isAtCapacity(selectedTherapist) || isSubmitting}
+              disabled={!selectedTherapist || isAtCapacity(selectedTherapist) || isSameTherapist(selectedTherapist) || (isReassign && !reason.trim()) || isSubmitting}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
             >
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                  Menyimpan...
+                  {isReassign ? 'Mengganti...' : 'Menugaskan...'}
                 </div>
               ) : (
-                'Konfirmasi'
+                isReassign ? 'Ganti Therapist' : 'Tugaskan Therapist'
               )}
             </Button>
           </DialogFooter>

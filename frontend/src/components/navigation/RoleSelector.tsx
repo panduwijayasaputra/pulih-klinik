@@ -1,12 +1,28 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigation } from '@/hooks/useNavigation';
 import { UserRole } from '@/types/auth';
+import { UserRoleEnum } from '@/types/enums';
+
+// Helper function to get role-based path
+const getRoleBasedPath = (role: UserRole): string => {
+  switch (role) {
+    case UserRoleEnum.Administrator:
+      return '/portal/admin';
+    case UserRoleEnum.ClinicAdmin:
+      return '/portal/clinic';
+    case UserRoleEnum.Therapist:
+      return '/portal/therapist';
+    default:
+      return '/portal';
+  }
+};
 
 interface RoleSelectorProps {
   className?: string;
@@ -17,6 +33,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
   className = '',
   onRoleChange 
 }) => {
+  const router = useRouter();
   const { user } = useAuth();
   const {
     activeRole,
@@ -36,15 +53,20 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
     setShowRoleSelector(false);
     
     try {
-      switchToRole(role as UserRole);
-      onRoleChange?.(role as UserRole);
+      const selectedRole = role as UserRole;
+      switchToRole(selectedRole);
+      onRoleChange?.(selectedRole);
+      
+      // Navigate to role-specific page instead of generic portal
+      const roleBasedPath = getRoleBasedPath(selectedRole);
+      router.push(roleBasedPath);
       
       // Small delay to prevent glitches
       await new Promise(resolve => setTimeout(resolve, 100));
     } finally {
       setIsSwitching(false);
     }
-  }, [isSwitching, switchToRole, onRoleChange]);
+  }, [isSwitching, switchToRole, onRoleChange, router]);
 
   // Early return after all hooks are called
   if (!user?.roles || !isMultiRole) {

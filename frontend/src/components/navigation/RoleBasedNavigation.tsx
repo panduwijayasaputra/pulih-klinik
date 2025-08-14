@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigation } from '@/hooks/useNavigation';
+import { UserRole } from '@/types/auth';
 
 interface RoleBasedNavigationProps {
   className?: string;
@@ -36,8 +37,13 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({
     );
   }
 
-  // Use filtered items if a specific role is active, otherwise use all navigation items
-  const displayItems = activeRole ? filteredNavigationItems : navigationItems;
+  // Determine which role to show navigation for
+  const currentRole = activeRole || user.roles[0] as UserRole;
+  
+  // Filter navigation items to show only items for the current role
+  const displayItems = navigationItems.filter(item => 
+    currentRole && item.requiredRoles.includes(currentRole)
+  );
 
   const handleItemClick = () => {
     if (onItemClick) {

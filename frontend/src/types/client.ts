@@ -1,4 +1,4 @@
-import { ClientEducationEnum, ClientGenderEnum, ClientReligionEnum, ClientStatusEnum, ClientMaritalStatusEnum, ClientRelationshipWithSpouseEnum, ClientGuardianRelationshipEnum, ClientGuardianMaritalStatusEnum } from './enums';
+import { ClientEducationEnum, ClientGenderEnum, ClientGuardianMaritalStatusEnum, ClientGuardianRelationshipEnum, ClientMaritalStatusEnum, ClientRelationshipWithSpouseEnum, ClientReligionEnum, ClientStatusEnum } from './enums';
 import type { StatusTransition } from './clientStatus';
 
 type EnumValue<T> = T[keyof T];

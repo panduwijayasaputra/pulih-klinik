@@ -1,92 +1,98 @@
 import {
   BuildingOfficeIcon,
+  CalendarIcon,
+  CogIcon,
+  DocumentArrowUpIcon,
   HomeIcon,
+  PaintBrushIcon,
   ShieldCheckIcon,
   UserGroupIcon,
   UserIcon,
-  PaintBrushIcon,
-  DocumentArrowUpIcon,
 } from '@heroicons/react/24/outline';
-import { DashboardConfig, NavigationItem, RoleDisplayInfo } from '@/types/navigation';
+import { PortalConfig, NavigationItem, RoleDisplayInfo } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
 
-// Main Dashboard Navigation Items with hierarchical structure
-export const dashboardNavigationItems: NavigationItem[] = [
-  // Dashboard Home
+// Main Portal Navigation Items with hierarchical structure
+export const portalNavigationItems: NavigationItem[] = [
+  // Portal Home - Role-specific portals
   {
-    id: 'dashboard-home',
-    label: 'Dashboard',
-    href: '/portal',
+    id: 'portal-clinic',
+    label: 'Portal',
+    href: '/portal/clinic',
     icon: HomeIcon,
-    description: 'Halaman utama dashboard',
-    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
+    description: 'Portal klinik',
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
+  },
+  {
+    id: 'portal-therapist',
+    label: 'Portal',
+    href: '/portal/therapist',
+    icon: HomeIcon,
+    description: 'Portal therapist',
+    requiredRoles: [UserRoleEnum.Therapist],
+  },
+  {
+    id: 'portal-admin',
+    label: 'Portal',
+    href: '/portal/admin',
+    icon: HomeIcon,
+    description: 'Portal administrator',
+    requiredRoles: [UserRoleEnum.Administrator],
   },
 
-  // Clinic Management (for clinic admins)
+  // Clinic Admin Routes
   {
     id: 'clinic-management',
     label: 'Manajemen Klinik',
-    href: '/portal/clinic',
+    href: '/portal/clinic/manage',
     icon: BuildingOfficeIcon,
     description: 'Kelola profil dan pengaturan klinik',
     requiredRoles: [UserRoleEnum.ClinicAdmin],
-    children: [
-      {
-        id: 'clinic-profile',
-        label: 'Profil Klinik',
-        href: '/portal/clinic',
-        icon: BuildingOfficeIcon,
-        description: 'Edit informasi dasar klinik',
-        requiredRoles: [UserRoleEnum.ClinicAdmin],
-      },
-      {
-        id: 'clinic-documents',
-        label: 'Dokumen Klinik',
-        href: '/portal/clinic/documents',
-        icon: DocumentArrowUpIcon,
-        description: 'Kelola dokumen dan sertifikat',
-        requiredRoles: [UserRoleEnum.ClinicAdmin],
-      },
-      {
-        id: 'clinic-branding',
-        label: 'Branding & Tampilan',
-        href: '/portal/clinic/branding',
-        icon: PaintBrushIcon,
-        description: 'Atur warna dan tampilan klinik',
-        requiredRoles: [UserRoleEnum.ClinicAdmin],
-      },
-    ],
   },
-
-  // Therapist Management (for clinic admins)
   {
-    id: 'therapist-management',
+    id: 'clinic-therapist-management',
     label: 'Manajemen Therapist',
-    href: '/portal/therapists',
+    href: '/portal/clinic/therapists',
     icon: UserGroupIcon,
     description: 'Kelola dan pantau therapist klinik',
     requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
-
-  // Client Management (for clinic admins)
   {
-    id: 'client-management',
+    id: 'clinic-client-management',
     label: 'Manajemen Klien',
-    href: '/portal/clients',
+    href: '/portal/clinic/clients',
     icon: UserIcon,
     description: 'Kelola data dan histori klien',
     requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
 
-  // My Clients (for therapists)
+  // Therapist Routes
   {
-    id: 'my-clients',
+    id: 'therapist-clients',
     label: 'Klien Saya',
     href: '/portal/therapist/clients',
     icon: UserIcon,
     description: 'Kelola klien yang ditugaskan kepada Anda',
     requiredRoles: [UserRoleEnum.Therapist],
+  },
+  {
+    id: 'therapist-sessions',
+    label: 'Sesi Terapi',
+    href: '/portal/therapist/sessions',
+    icon: CalendarIcon,
+    description: 'Kelola sesi terapi dan jadwal',
+    requiredRoles: [UserRoleEnum.Therapist],
+  },
+
+  // Admin Routes
+  {
+    id: 'admin-clinic-management',
+    label: 'Manajemen Klinik',
+    href: '/portal/admin/clinics',
+    icon: BuildingOfficeIcon,
+    description: 'Kelola semua klinik dalam sistem',
+    requiredRoles: [UserRoleEnum.Administrator],
   },
 ];
 
@@ -100,11 +106,19 @@ export const commonNavigationItems: NavigationItem[] = [
     description: 'Pengaturan akun pribadi',
     requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
   },
+  {
+    id: 'settings',
+    label: 'Pengaturan',
+    href: '/portal/settings',
+    icon: CogIcon,
+    description: 'Pengaturan sistem',
+    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
+  },
 ];
 
 // Get navigation items filtered by user roles
 export const getNavigationItemsForUser = (userRoles: UserRole[]): NavigationItem[] => {
-  return dashboardNavigationItems.filter(item => {
+  return portalNavigationItems.filter(item => {
     return item.requiredRoles.some(requiredRole => userRoles.includes(requiredRole));
   }).map(item => {
     // Filter children based on roles too
@@ -126,27 +140,27 @@ export const getNavigationItemsForUser = (userRoles: UserRole[]): NavigationItem
 // Quick access items for dashboard overview
 export const quickAccessItems = [
   {
-    id: 'clinic-profile-quick',
-    label: 'Edit Profil Klinik',
-    href: '/portal/clinic',
+    id: 'clinic-management-quick',
+    label: 'Manajemen Klinik',
+    href: '/portal/clinic/manage',
     icon: BuildingOfficeIcon,
-    description: 'Perbarui informasi klinik',
-    requiredRoles: [UserRoleEnum.ClinicAdmin],
-  },
-  {
-    id: 'clinic-documents-quick',
-    label: 'Kelola Dokumen',
-    href: '/portal/clinic/documents',
-    icon: DocumentArrowUpIcon,
-    description: 'Upload dan kelola dokumen klinik',
+    description: 'Kelola profil dan pengaturan klinik',
     requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
   {
     id: 'therapist-list-quick',
     label: 'Kelola Therapist',
-    href: '/portal/therapists',
+    href: '/portal/clinic/therapists',
     icon: UserGroupIcon,
     description: 'Lihat dan kelola therapist',
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
+  },
+  {
+    id: 'clinic-clients-quick',
+    label: 'Manajemen Klien',
+    href: '/portal/clinic/clients',
+    icon: UserIcon,
+    description: 'Kelola data dan histori klien klinik',
     requiredRoles: [UserRoleEnum.ClinicAdmin],
   },
   {
@@ -157,80 +171,101 @@ export const quickAccessItems = [
     description: 'Lihat dan kelola klien yang ditugaskan',
     requiredRoles: [UserRoleEnum.Therapist],
   },
+  {
+    id: 'therapist-sessions-quick',
+    label: 'Sesi Terapi',
+    href: '/portal/therapist/sessions',
+    icon: CalendarIcon,
+    description: 'Kelola sesi terapi dan jadwal',
+    requiredRoles: [UserRoleEnum.Therapist],
+  },
+  {
+    id: 'admin-clinics-quick',
+    label: 'Manajemen Klinik',
+    href: '/portal/admin/clinics',
+    icon: BuildingOfficeIcon,
+    description: 'Kelola semua klinik dalam sistem',
+    requiredRoles: [UserRoleEnum.Administrator],
+  },
 ];
 
-// Breadcrumb mapping for dashboard routes
-export const dashboardBreadcrumbMapping: Record<string, { label: string; parent?: string }> = {
-  '/portal': { label: 'Dashboard' },
+// Breadcrumb mapping for portal routes
+export const portalBreadcrumbMapping: Record<string, { label: string; parent?: string }> = {
+  '/portal': { label: 'Portal' },
 
-  // Clinic routes
-  '/portal/clinic': { label: 'Manajemen Klinik', parent: '/portal' },
-  '/portal/clinic/documents': { label: 'Dokumen Klinik', parent: '/portal/clinic' },
-  '/portal/clinic/branding': { label: 'Branding & Tampilan', parent: '/portal/clinic' },
+  // Role-specific portals (show as Dashboard)
+  '/portal/admin': { label: 'Dashboard', parent: '/portal' },
+  '/portal/clinic': { label: 'Dashboard', parent: '/portal' },
+  '/portal/therapist': { label: 'Dashboard', parent: '/portal' },
 
-  // Therapist routes
-  '/portal/therapists': { label: 'Manajemen Therapist', parent: '/portal' },
-  '/portal/therapists/new': { label: 'Tambah Therapist', parent: '/portal/therapists' },
-  '/portal/therapists/edit/[id]': { label: 'Edit Therapist', parent: '/portal/therapists' },
-  '/portal/therapists/assignments': { label: 'Penugasan Therapist', parent: '/portal/therapists' },
+  // Clinic Admin routes
+  '/portal/clinic/manage': { label: 'Manajemen Klinik', parent: '/portal' },
+  '/portal/clinic/therapists': { label: 'Manajemen Therapist', parent: '/portal' },
+  '/portal/clinic/therapists/new': { label: 'Tambah Therapist', parent: '/portal/clinic/therapists' },
+  '/portal/clinic/therapists/edit/[id]': { label: 'Edit Therapist', parent: '/portal/clinic/therapists' },
+  '/portal/clinic/clients': { label: 'Manajemen Klien', parent: '/portal' },
+  '/portal/clinic/clients/[code]': { label: 'Detail Klien', parent: '/portal/clinic/clients' },
 
-  // Client routes
-  '/portal/clients': { label: 'Manajemen Klien', parent: '/portal' },
-  
   // Therapist routes
   '/portal/therapist/clients': { label: 'Klien Saya', parent: '/portal' },
   '/portal/therapist/clients/[id]': { label: 'Detail Klien', parent: '/portal/therapist/clients' },
-  '/portal/therapist/consultation/[id]': { label: 'Konsultasi', parent: '/portal/therapist/clients' },
+  '/portal/therapist/sessions': { label: 'Sesi Terapi', parent: '/portal' },
+  '/portal/therapist/sessions/[id]': { label: 'Detail Sesi', parent: '/portal/therapist/sessions' },
 
-  // Future routes (placeholder)
-  '/portal/assessments': { label: 'Sistem Assessment', parent: '/portal' },
-  '/portal/reports': { label: 'Laporan & Analytics', parent: '/portal' },
+  // System Admin routes
+  '/portal/admin/clinics': { label: 'Manajemen Klinik', parent: '/portal' },
+  '/portal/admin/clinics/[id]': { label: 'Detail Klinik', parent: '/portal/admin/clinics' },
+
+  // Common routes
+  '/portal/profile': { label: 'Profil Saya', parent: '/portal' },
+  '/portal/settings': { label: 'Pengaturan', parent: '/portal' },
 };
 
-// Dashboard configurations for each role
-export const dashboardConfigs: Record<UserRole, DashboardConfig> = {
+// Portal configurations for each role
+export const portalConfigs: Record<UserRole, PortalConfig> = {
   [UserRoleEnum.Administrator]: {
     role: UserRoleEnum.Administrator,
-    defaultRoute: '/portal',
+    defaultRoute: '/portal/admin',
     allowedRoutes: [
       '/portal',
+      '/portal/admin/*',
       '/portal/profile',
-      '/portal/clinic/*',
-      '/portal/therapists/*',
+      '/portal/settings',
     ],
     menuItems: [], // Will be populated by getNavigationItemsForUser
   },
   [UserRoleEnum.ClinicAdmin]: {
     role: UserRoleEnum.ClinicAdmin,
-    defaultRoute: '/portal',
+    defaultRoute: '/portal/clinic',
     allowedRoutes: [
       '/portal',
-      '/portal/profile',
       '/portal/clinic/*',
-      '/portal/therapists/*',
+      '/portal/profile',
+      '/portal/settings',
     ],
     menuItems: [], // Will be populated by getNavigationItemsForUser
   },
   [UserRoleEnum.Therapist]: {
     role: UserRoleEnum.Therapist,
-    defaultRoute: '/portal',
+    defaultRoute: '/portal/therapist',
     allowedRoutes: [
       '/portal',
-      '/portal/profile',
       '/portal/therapist/*',
+      '/portal/profile',
+      '/portal/settings',
     ],
     menuItems: [], // Will be populated by getNavigationItemsForUser
   },
 };
 
-// Get primary dashboard config for user's primary role
-export const getPrimaryDashboardConfig = (userRoles: UserRole[]): DashboardConfig | null => {
+// Get primary portal config for user's primary role
+export const getPrimaryPortalConfig = (userRoles: UserRole[]): PortalConfig | null => {
   if (!userRoles || userRoles.length === 0) return null;
 
   const primaryRole = userRoles[0];
   if (!primaryRole) return null;
 
-  return dashboardConfigs[primaryRole] || null;
+  return portalConfigs[primaryRole] || null;
 };
 
 // Role display information

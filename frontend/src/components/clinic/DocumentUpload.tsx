@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
   ClinicDocument, 
-  documentUploadSchema,
-  type DocumentUploadFormData 
+  type DocumentUploadFormData,
+  documentUploadSchema 
 } from '@/types/clinic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,11 +17,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { 
-  DocumentArrowUpIcon,
-  XMarkIcon,
   CheckCircleIcon,
+  DocumentArrowUpIcon,
+  DocumentIcon,
   ExclamationTriangleIcon,
-  DocumentIcon
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { ClinicDocumentTypeEnum } from '@/types/enums';
 

@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
-  CheckIcon, 
-  ExclamationTriangleIcon,
-  ArrowPathIcon 
+  ArrowPathIcon, 
+  CheckIcon,
+  ExclamationTriangleIcon 
 } from '@heroicons/react/24/outline';
 
 interface EmailVerificationProps {

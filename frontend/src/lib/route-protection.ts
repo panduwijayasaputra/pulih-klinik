@@ -13,69 +13,56 @@ export const routeConfigs: RouteConfig[] = [
 
   // Portal routes - Clinic Admin only
   { 
-    path: '/portal/clinic/settings', 
+    path: '/portal/clinic/manage', 
     requiredRoles: [UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
+    redirectTo: '/portal/clinic'
   },
   { 
-    path: '/portal/therapists', 
+    path: '/portal/clinic/therapists', 
     requiredRoles: [UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
+    redirectTo: '/portal/clinic'
   },
   { 
-    path: '/portal/therapists/new', 
+    path: '/portal/clinic/therapists/new', 
     requiredRoles: [UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
+    redirectTo: '/portal/clinic/therapists'
   },
   { 
-    path: '/portal/therapists/edit/[id]', 
-    allowPublic: true, // Temporarily allow public access for testing
-    requiredRoles: [],
-    redirectTo: '/portal'
-  },
-  { 
-    path: '/portal/clinic/billing', 
+    path: '/portal/clinic/therapists/edit/[id]', 
     requiredRoles: [UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
-  },
-
-  // Portal routes - Clinic Admin or Therapist
-  { 
-    path: '/portal/clients', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
-    redirectTo: '/portal'
+    redirectTo: '/portal/clinic/therapists'
   },
   { 
-    path: '/portal/clients/[code]', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
-    redirectTo: '/portal'
+    path: '/portal/clinic/clients', 
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
+    redirectTo: '/portal/clinic'
   },
   { 
-    path: '/portal/scripts', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
-    redirectTo: '/portal'
-  },
-  { 
-    path: '/portal/sessions', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
-    redirectTo: '/portal'
+    path: '/portal/clinic/clients/[code]', 
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
+    redirectTo: '/portal/clinic/clients'
   },
 
   // Portal routes - Therapist specific
   { 
     path: '/portal/therapist/clients', 
-    requiredRoles: [UserRoleEnum.Therapist, UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
+    requiredRoles: [UserRoleEnum.Therapist],
+    redirectTo: '/portal/therapist'
   },
   { 
     path: '/portal/therapist/clients/[id]', 
-    requiredRoles: [UserRoleEnum.Therapist, UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
+    requiredRoles: [UserRoleEnum.Therapist],
+    redirectTo: '/portal/therapist/clients'
   },
   { 
-    path: '/portal/therapist/consultation/[id]', 
-    requiredRoles: [UserRoleEnum.Therapist, UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
+    path: '/portal/therapist/sessions', 
+    requiredRoles: [UserRoleEnum.Therapist],
+    redirectTo: '/portal/therapist'
+  },
+  { 
+    path: '/portal/therapist/sessions/[id]', 
+    requiredRoles: [UserRoleEnum.Therapist],
+    redirectTo: '/portal/therapist/sessions'
   },
 
   // Portal routes - All authenticated users
@@ -86,6 +73,46 @@ export const routeConfigs: RouteConfig[] = [
   { 
     path: '/portal/profile', 
     requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
+  },
+  { 
+    path: '/portal/settings', 
+    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
+  },
+
+  // Role-specific dashboard routes
+  { 
+    path: '/portal/admin', 
+    requiredRoles: [UserRoleEnum.Administrator],
+    redirectTo: '/portal'
+  },
+  { 
+    path: '/portal/clinic', 
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
+    redirectTo: '/portal'
+  },
+  { 
+    path: '/portal/therapist', 
+    requiredRoles: [UserRoleEnum.Therapist],
+    redirectTo: '/portal'
+  },
+
+  // Admin routes
+  { 
+    path: '/portal/admin/clinics', 
+    requiredRoles: [UserRoleEnum.Administrator],
+    redirectTo: '/portal/admin'
+  },
+  { 
+    path: '/portal/admin/clinics/[id]', 
+    requiredRoles: [UserRoleEnum.Administrator],
+    redirectTo: '/portal/admin/clinics'
+  },
+
+  // Legacy clinic profile route (keep for backward compatibility)
+  { 
+    path: '/portal/clinic/profile', 
+    requiredRoles: [UserRoleEnum.ClinicAdmin],
+    redirectTo: '/portal/clinic'
   },
 ];
 

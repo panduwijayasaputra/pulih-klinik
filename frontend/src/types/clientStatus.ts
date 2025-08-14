@@ -29,11 +29,11 @@ export const ClientStatusColors: Record<ClientStatusEnum, string> = {
 
 // Define valid status transitions
 export const ValidStatusTransitions: Record<ClientStatusEnum, ClientStatusEnum[]> = {
-  [ClientStatusEnum.New]: [ClientStatusEnum.Assigned],
-  [ClientStatusEnum.Assigned]: [ClientStatusEnum.Consultation, ClientStatusEnum.New], 
-  [ClientStatusEnum.Consultation]: [ClientStatusEnum.Therapy, ClientStatusEnum.Assigned],
-  [ClientStatusEnum.Therapy]: [ClientStatusEnum.Done, ClientStatusEnum.Consultation],
-  [ClientStatusEnum.Done]: [], // Final state - no transitions allowed
+  [ClientStatusEnum.New]: [ClientStatusEnum.Consultation], // New client -> Assign therapist (goes to consultation)
+  [ClientStatusEnum.Assigned]: [ClientStatusEnum.Consultation, ClientStatusEnum.New], // Legacy support
+  [ClientStatusEnum.Consultation]: [ClientStatusEnum.Therapy, ClientStatusEnum.New], // Consultation -> Therapy or back to new
+  [ClientStatusEnum.Therapy]: [ClientStatusEnum.Done, ClientStatusEnum.Consultation], // Therapy -> Finish or back to consultation
+  [ClientStatusEnum.Done]: [ClientStatusEnum.Consultation], // Start over -> Assign new therapist (goes to consultation)
 };
 
 // Status Transition interface for audit trail

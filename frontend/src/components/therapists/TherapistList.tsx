@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { DataTable, TableColumn, TableAction } from '@/components/ui/data-table';
+import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { useAuth } from '@/hooks/useAuth';
 import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
@@ -15,10 +15,10 @@ import {
   EnvelopeIcon,
   EyeIcon,
   PencilIcon,
+  PlusIcon,
   StarIcon,
   XCircleIcon,
   XMarkIcon,
-  PlusIcon,
 } from '@heroicons/react/24/outline';
 import { TherapistFormModal } from '@/components/therapists/TherapistFormModal';
 
@@ -200,7 +200,7 @@ export const TherapistList: React.FC = () => {
 
   const handleEditTherapist = (therapistId: string) => {
     handleCloseDetails();
-    router.push(`/portal/therapists/edit/${therapistId}`);
+    router.push(`/portal/therapists/edit/${therapistId}` as any);
   };
 
   // Therapist form modal handlers
@@ -501,7 +501,7 @@ export const TherapistList: React.FC = () => {
   const actions: TableAction<Therapist>[] = [
     {
       key: 'view',
-      label: 'Lihat',
+      label: 'Detail',
       icon: EyeIcon,
       variant: 'outline',
       onClick: (therapist) => handleViewDetails(therapist),
@@ -512,7 +512,7 @@ export const TherapistList: React.FC = () => {
       icon: PencilIcon,
       variant: 'outline',
       show: () => hasRole(UserRoleEnum.ClinicAdmin),
-      onClick: (therapist) => handleEditTherapistModal(therapist),
+      onClick: (therapist) => handleEditTherapist(therapist.id),
     },
     {
       key: 'activate',
