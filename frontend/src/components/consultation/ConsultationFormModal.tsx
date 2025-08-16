@@ -10,8 +10,8 @@ import { useToast } from '@/components/ui/toast';
 import { 
   Consultation, 
   ConsultationFormTypeEnum, 
-  ConsultationStatusEnum,
   ConsultationFormTypeLabels,
+  ConsultationStatusEnum,
 } from '@/types/consultation';
 import { ConsultationFormData } from '@/schemas/consultationSchema';
 

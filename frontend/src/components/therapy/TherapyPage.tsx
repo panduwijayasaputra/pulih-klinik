@@ -311,6 +311,7 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
                 isLoading={isLoading}
                 mode={clientConsultation ? 'edit' : 'create'}
                 allowTypeChange={!clientConsultation}
+                client={client}
               />
             </CardContent>
           </Card>
