@@ -571,6 +571,614 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           </div>
         </div>
 
+        {/* Drug Dependency Specific Section */}
+        {formType === ConsultationFormTypeEnum.DrugAddiction && (
+          <div className="border-b border-gray-200 pb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Riwayat Penggunaan Zat</h3>
+            <p className="text-sm text-gray-600 mb-4">Informasi detail mengenai penggunaan zat dan riwayat ketergantungan</p>
+            
+            <div className="space-y-6">
+              {/* Substance History */}
+              <div>
+                <Label htmlFor="primarySubstance">Zat Utama yang Digunakan *</Label>
+                <Input 
+                  id="primarySubstance"
+                  {...register('primarySubstance')}
+                  placeholder="Contoh: Alkohol, Ganja, Kokain, dll."
+                  className="mt-1"
+                />
+                {errors.primarySubstance && (
+                  <p className="mt-1 text-sm text-red-600">{errors.primarySubstance.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="additionalSubstances">Zat Lain yang Pernah Digunakan</Label>
+                <Textarea 
+                  id="additionalSubstances"
+                  placeholder="Sebutkan zat lain yang pernah digunakan (pisahkan dengan koma)"
+                  rows={2}
+                  className="mt-1"
+                  onChange={(e) => {
+                    const substances = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                    setValue('additionalSubstances', substances, { shouldDirty: true, shouldValidate: true });
+                  }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <Label htmlFor="ageOfFirstUse">Usia Pertama Kali Menggunakan</Label>
+                  <Input 
+                    id="ageOfFirstUse"
+                    type="number"
+                    min="1"
+                    max="100"
+                    {...register('ageOfFirstUse', { valueAsNumber: true })}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="frequencyOfUse">Frekuensi Penggunaan</Label>
+                  <Input 
+                    id="frequencyOfUse"
+                    {...register('frequencyOfUse')}
+                    placeholder="Contoh: Setiap hari, 2-3x seminggu"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="quantityPerUse">Jumlah per Penggunaan</Label>
+                  <Input 
+                    id="quantityPerUse"
+                    {...register('quantityPerUse')}
+                    placeholder="Contoh: 1 botol, 2 gram"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="lastUseDate">Tanggal Terakhir Menggunakan</Label>
+                  <Input 
+                    id="lastUseDate"
+                    type="date"
+                    {...register('lastUseDate')}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="attemptsToQuit">Jumlah Percobaan Berhenti</Label>
+                  <Input 
+                    id="attemptsToQuit"
+                    type="number"
+                    min="0"
+                    {...register('attemptsToQuit', { valueAsNumber: true })}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="withdrawalSymptoms">Gejala Withdrawal yang Dialami</Label>
+                <Textarea 
+                  id="withdrawalSymptoms"
+                  placeholder="Contoh: Gemetar, berkeringat, mual, gelisah, dll. (pisahkan dengan koma)"
+                  rows={3}
+                  className="mt-1"
+                  onChange={(e) => {
+                    const symptoms = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                    setValue('withdrawalSymptoms', symptoms, { shouldDirty: true, shouldValidate: true });
+                  }}
+                />
+              </div>
+
+              <div>
+                <Label>Tingkat Toleransi</Label>
+                <p className="text-sm text-gray-600 mb-2">Seberapa banyak zat yang dibutuhkan untuk merasakan efek yang sama</p>
+                <Select 
+                  value={watch('toleranceLevel')?.toString() || ''}
+                  onValueChange={(val) => setValue('toleranceLevel', parseInt(val) as 1|2|3|4|5, { shouldDirty: true, shouldValidate: true })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih tingkat toleransi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Sangat rendah</SelectItem>
+                    <SelectItem value="2">Rendah</SelectItem>
+                    <SelectItem value="3">Sedang</SelectItem>
+                    <SelectItem value="4">Tinggi</SelectItem>
+                    <SelectItem value="5">Sangat tinggi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="triggerSituations">Situasi Pemicu Penggunaan</Label>
+                <Textarea 
+                  id="triggerSituations"
+                  placeholder="Contoh: Stress kerja, masalah keluarga, tekanan teman, dll. (pisahkan dengan koma)"
+                  rows={3}
+                  className="mt-1"
+                  onChange={(e) => {
+                    const triggers = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                    setValue('triggerSituations', triggers, { shouldDirty: true, shouldValidate: true });
+                  }}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="impactOnDailyLife">Dampak pada Kehidupan Sehari-hari</Label>
+                <Textarea 
+                  id="impactOnDailyLife"
+                  {...register('impactOnDailyLife')}
+                  placeholder="Jelaskan bagaimana penggunaan zat mempengaruhi pekerjaan, keluarga, kesehatan, keuangan, dll."
+                  rows={4}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="financialImpact">Dampak Finansial *</Label>
+                <Textarea 
+                  id="financialImpact"
+                  {...register('financialImpact')}
+                  placeholder="Jelaskan dampak finansial dari penggunaan zat (biaya, hutang, kehilangan pekerjaan, dll.)"
+                  rows={3}
+                  className="mt-1"
+                />
+                {errors.financialImpact && (
+                  <p className="mt-1 text-sm text-red-600">{errors.financialImpact.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label>Pernah Mengikuti Program Rehabilitasi?</Label>
+                  <div className="flex items-center space-x-4 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="previousTreatmentPrograms-yes"
+                        checked={watch('previousTreatmentPrograms') === true}
+                        onCheckedChange={(checked) => setValue('previousTreatmentPrograms', checked === true, { shouldDirty: true, shouldValidate: true })}
+                      />
+                      <Label htmlFor="previousTreatmentPrograms-yes">Ya</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="previousTreatmentPrograms-no"
+                        checked={watch('previousTreatmentPrograms') === false}
+                        onCheckedChange={(checked) => setValue('previousTreatmentPrograms', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                      />
+                      <Label htmlFor="previousTreatmentPrograms-no">Tidak</Label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Ada Masalah Hukum Terkait?</Label>
+                  <div className="flex items-center space-x-4 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="legalIssuesRelated-yes"
+                        checked={watch('legalIssuesRelated') === true}
+                        onCheckedChange={(checked) => setValue('legalIssuesRelated', checked === true, { shouldDirty: true, shouldValidate: true })}
+                      />
+                      <Label htmlFor="legalIssuesRelated-yes">Ya</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="legalIssuesRelated-no"
+                        checked={watch('legalIssuesRelated') === false}
+                        onCheckedChange={(checked) => setValue('legalIssuesRelated', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                      />
+                      <Label htmlFor="legalIssuesRelated-no">Tidak</Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {watch('previousTreatmentPrograms') && (
+                <div>
+                  <Label htmlFor="previousTreatmentDetails">Detail Program Rehabilitasi Sebelumnya</Label>
+                  <Textarea 
+                    id="previousTreatmentDetails"
+                    {...register('previousTreatmentDetails')}
+                    placeholder="Jelaskan kapan, dimana, berapa lama, dan hasil dari program rehabilitasi sebelumnya..."
+                    rows={3}
+                    className="mt-1"
+                  />
+                </div>
+              )}
+
+              {watch('legalIssuesRelated') && (
+                <div>
+                  <Label htmlFor="legalIssuesDetails">Detail Masalah Hukum</Label>
+                  <Textarea 
+                    id="legalIssuesDetails"
+                    {...register('legalIssuesDetails')}
+                    placeholder="Jelaskan masalah hukum yang dialami terkait penggunaan zat..."
+                    rows={3}
+                    className="mt-1"
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="currentSobrietyPeriod">Periode Bebas Zat Saat Ini</Label>
+                <Input 
+                  id="currentSobrietyPeriod"
+                  {...register('currentSobrietyPeriod')}
+                  placeholder="Contoh: 3 hari, 2 minggu, 1 bulan"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Minor Client Specific Section */}
+        {formType === ConsultationFormTypeEnum.Minor && (
+          <div className="border-b border-gray-200 pb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Informasi Khusus Anak</h3>
+            <p className="text-sm text-gray-600 mb-4">Informasi tambahan untuk konsultasi anak di bawah umur</p>
+            
+            <div className="space-y-6">
+              {/* Guardian Information */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-4">Informasi Wali/Orang Tua</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label>Wali yang Hadir Saat Konsultasi?</Label>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="guardianPresent-yes"
+                          checked={watch('guardianPresent') === true}
+                          onCheckedChange={(checked) => setValue('guardianPresent', checked === true, { shouldDirty: true, shouldValidate: true })}
+                        />
+                        <Label htmlFor="guardianPresent-yes">Ya</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="guardianPresent-no"
+                          checked={watch('guardianPresent') === false}
+                          onCheckedChange={(checked) => setValue('guardianPresent', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                        />
+                        <Label htmlFor="guardianPresent-no">Tidak</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="guardianRelationship">Hubungan dengan Anak</Label>
+                    <Select 
+                      value={watch('guardianRelationship') || ''}
+                      onValueChange={(val) => setValue('guardianRelationship', val, { shouldDirty: true, shouldValidate: true })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih hubungan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Father">Ayah</SelectItem>
+                        <SelectItem value="Mother">Ibu</SelectItem>
+                        <SelectItem value="Legal guardian">Wali resmi</SelectItem>
+                        <SelectItem value="Other">Lainnya</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <Label htmlFor="guardianConcerns">Kekhawatiran Wali/Orang Tua</Label>
+                  <Textarea 
+                    id="guardianConcerns"
+                    {...register('guardianConcerns')}
+                    placeholder="Jelaskan kekhawatiran utama orang tua/wali terhadap anak..."
+                    rows={3}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* School Information */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-4">Informasi Sekolah</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="currentGradeLevel">Tingkat Kelas Saat Ini</Label>
+                    <Input 
+                      id="currentGradeLevel"
+                      {...register('currentGradeLevel')}
+                      placeholder="Contoh: Kelas 3 SD, Kelas 1 SMP"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Prestasi Akademik</Label>
+                    <Select 
+                      value={watch('academicPerformance')?.toString() || ''}
+                      onValueChange={(val) => setValue('academicPerformance', parseInt(val) as 1|2|3|4|5, { shouldDirty: true, shouldValidate: true })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih prestasi" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">Sangat baik</SelectItem>
+                        <SelectItem value="4">Baik</SelectItem>
+                        <SelectItem value="3">Cukup</SelectItem>
+                        <SelectItem value="2">Kurang</SelectItem>
+                        <SelectItem value="1">Sangat kurang</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                  <div>
+                    <Label>Ada Masalah Perilaku di Sekolah?</Label>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="schoolBehaviorIssues-yes"
+                          checked={watch('schoolBehaviorIssues') === true}
+                          onCheckedChange={(checked) => setValue('schoolBehaviorIssues', checked === true, { shouldDirty: true, shouldValidate: true })}
+                        />
+                        <Label htmlFor="schoolBehaviorIssues-yes">Ya</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="schoolBehaviorIssues-no"
+                          checked={watch('schoolBehaviorIssues') === false}
+                          onCheckedChange={(checked) => setValue('schoolBehaviorIssues', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                        />
+                        <Label htmlFor="schoolBehaviorIssues-no">Tidak</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Ada Riwayat Bullying?</Label>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="bullyingHistory-yes"
+                          checked={watch('bullyingHistory') === true}
+                          onCheckedChange={(checked) => setValue('bullyingHistory', checked === true, { shouldDirty: true, shouldValidate: true })}
+                        />
+                        <Label htmlFor="bullyingHistory-yes">Ya</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="bullyingHistory-no"
+                          checked={watch('bullyingHistory') === false}
+                          onCheckedChange={(checked) => setValue('bullyingHistory', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                        />
+                        <Label htmlFor="bullyingHistory-no">Tidak</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {watch('schoolBehaviorIssues') && (
+                  <div className="mt-4">
+                    <Label htmlFor="schoolBehaviorDetails">Detail Masalah Perilaku di Sekolah</Label>
+                    <Textarea 
+                      id="schoolBehaviorDetails"
+                      {...register('schoolBehaviorDetails')}
+                      placeholder="Jelaskan masalah perilaku yang dilaporkan dari sekolah..."
+                      rows={3}
+                      className="mt-1"
+                    />
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <Label htmlFor="teacherConcerns">Kekhawatiran Guru</Label>
+                  <Textarea 
+                    id="teacherConcerns"
+                    {...register('teacherConcerns')}
+                    placeholder="Masukan dari guru atau pihak sekolah tentang anak..."
+                    rows={3}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Family and Social */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-4">Keluarga dan Sosial</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="familyStructure">Struktur Keluarga</Label>
+                    <Input 
+                      id="familyStructure"
+                      {...register('familyStructure')}
+                      placeholder="Contoh: Keluarga inti lengkap, orang tua bercerai, tinggal dengan nenek"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="siblingRelationships">Hubungan dengan Saudara</Label>
+                    <Textarea 
+                      id="siblingRelationships"
+                      {...register('siblingRelationships')}
+                      placeholder="Jelaskan hubungan anak dengan saudara kandung/tiri..."
+                      rows={2}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="peerRelationships">Hubungan dengan Teman Sebaya</Label>
+                    <Textarea 
+                      id="peerRelationships"
+                      {...register('peerRelationships')}
+                      placeholder="Bagaimana anak berinteraksi dengan teman-temannya..."
+                      rows={2}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label>Ada Konflik Keluarga?</Label>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="familyConflicts-yes"
+                            checked={watch('familyConflicts') === true}
+                            onCheckedChange={(checked) => setValue('familyConflicts', checked === true, { shouldDirty: true, shouldValidate: true })}
+                          />
+                          <Label htmlFor="familyConflicts-yes">Ya</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="familyConflicts-no"
+                            checked={watch('familyConflicts') === false}
+                            onCheckedChange={(checked) => setValue('familyConflicts', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                          />
+                          <Label htmlFor="familyConflicts-no">Tidak</Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Ada Kesulitan Sosial?</Label>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="socialDifficulties-yes"
+                            checked={watch('socialDifficulties') === true}
+                            onCheckedChange={(checked) => setValue('socialDifficulties', checked === true, { shouldDirty: true, shouldValidate: true })}
+                          />
+                          <Label htmlFor="socialDifficulties-yes">Ya</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="socialDifficulties-no"
+                            checked={watch('socialDifficulties') === false}
+                            onCheckedChange={(checked) => setValue('socialDifficulties', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                          />
+                          <Label htmlFor="socialDifficulties-no">Tidak</Label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {watch('socialDifficulties') && (
+                    <div>
+                      <Label htmlFor="socialDifficultiesDetails">Detail Kesulitan Sosial</Label>
+                      <Textarea 
+                        id="socialDifficultiesDetails"
+                        {...register('socialDifficultiesDetails')}
+                        placeholder="Jelaskan kesulitan sosial yang dialami anak..."
+                        rows={3}
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Developmental Assessment */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-4">Perkembangan dan Perilaku</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="developmentalMilestones">Milestone Perkembangan</Label>
+                    <Textarea 
+                      id="developmentalMilestones"
+                      {...register('developmentalMilestones')}
+                      placeholder="Informasi tentang perkembangan motorik, bahasa, kognitif anak..."
+                      rows={3}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label>Ada Masalah Perhatian/Konsentrasi?</Label>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="attentionConcerns-yes"
+                            checked={watch('attentionConcerns') === true}
+                            onCheckedChange={(checked) => setValue('attentionConcerns', checked === true, { shouldDirty: true, shouldValidate: true })}
+                          />
+                          <Label htmlFor="attentionConcerns-yes">Ya</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="attentionConcerns-no"
+                            checked={watch('attentionConcerns') === false}
+                            onCheckedChange={(checked) => setValue('attentionConcerns', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                          />
+                          <Label htmlFor="attentionConcerns-no">Tidak</Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Ada Masalah Perilaku?</Label>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="behavioralConcerns-yes"
+                            checked={watch('behavioralConcerns') === true}
+                            onCheckedChange={(checked) => setValue('behavioralConcerns', checked === true, { shouldDirty: true, shouldValidate: true })}
+                          />
+                          <Label htmlFor="behavioralConcerns-yes">Ya</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="behavioralConcerns-no"
+                            checked={watch('behavioralConcerns') === false}
+                            onCheckedChange={(checked) => setValue('behavioralConcerns', checked !== true, { shouldDirty: true, shouldValidate: true })}
+                          />
+                          <Label htmlFor="behavioralConcerns-no">Tidak</Label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {watch('attentionConcerns') && (
+                    <div>
+                      <Label htmlFor="attentionDetails">Detail Masalah Perhatian/Konsentrasi</Label>
+                      <Textarea 
+                        id="attentionDetails"
+                        {...register('attentionDetails')}
+                        placeholder="Jelaskan masalah perhatian atau konsentrasi yang dialami..."
+                        rows={3}
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+
+                  {watch('behavioralConcerns') && (
+                    <div>
+                      <Label htmlFor="behavioralDetails">Detail Masalah Perilaku</Label>
+                      <Textarea 
+                        id="behavioralDetails"
+                        {...register('behavioralDetails')}
+                        placeholder="Jelaskan masalah perilaku yang dialami anak..."
+                        rows={3}
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 5. Goals and Treatment Section */}
         <div className="border-b border-gray-200 pb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Tujuan dan Harapan</h3>
