@@ -3,13 +3,14 @@ import {
   CalendarIcon,
   CogIcon,
   DocumentArrowUpIcon,
+  HeartIcon,
   HomeIcon,
   PaintBrushIcon,
   ShieldCheckIcon,
   UserGroupIcon,
   UserIcon,
 } from '@heroicons/react/24/outline';
-import { PortalConfig, NavigationItem, RoleDisplayInfo } from '@/types/navigation';
+import { NavigationItem, PortalConfig, RoleDisplayInfo } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
 
@@ -209,8 +210,10 @@ export const portalBreadcrumbMapping: Record<string, { label: string; parent?: s
   // Therapist routes
   '/portal/therapist/clients': { label: 'Klien Saya', parent: '/portal' },
   '/portal/therapist/clients/[id]': { label: 'Detail Klien', parent: '/portal/therapist/clients' },
+  '/portal/therapist/therapy/[clientId]': { label: 'Sesi Terapi', parent: '/portal/therapist/clients' },
   '/portal/therapist/sessions': { label: 'Sesi Terapi', parent: '/portal' },
   '/portal/therapist/sessions/[id]': { label: 'Detail Sesi', parent: '/portal/therapist/sessions' },
+  '/portal/therapist/session/[sessionId]': { label: 'Detail Sesi', parent: '/portal/therapist/sessions' },
 
   // System Admin routes
   '/portal/admin/clinics': { label: 'Manajemen Klinik', parent: '/portal' },
@@ -251,6 +254,8 @@ export const portalConfigs: Record<UserRole, PortalConfig> = {
     allowedRoutes: [
       '/portal',
       '/portal/therapist/*',
+      '/portal/therapist/therapy/*',
+      '/portal/therapist/session/*',
       '/portal/profile',
       '/portal/settings',
     ],

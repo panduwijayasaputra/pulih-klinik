@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
@@ -16,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export default function TherapistClientsPage() {
+  const router = useRouter();
   const { addToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ClientStatusEnum | 'all'>('all');
@@ -122,6 +124,11 @@ export default function TherapistClientsPage() {
     // router.push(`/portal/therapist/consultation/${clientId}`);
   };
 
+  // Handle start therapy
+  const handleStartTherapy = (clientId: string) => {
+    router.push(`/portal/therapist/therapy/${clientId}`);
+  };
+
   // Refresh clients
   const handleRefresh = async () => {
     await loadClients(true);
@@ -140,6 +147,7 @@ export default function TherapistClientsPage() {
           onRefresh={handleRefresh}
           onViewClient={handleViewClient}
           onStartConsultation={handleStartConsultation}
+          onStartTherapy={handleStartTherapy}
         />
       </PortalPageWrapper>
   );

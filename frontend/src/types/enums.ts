@@ -224,4 +224,86 @@ export enum PaymentMethodEnum {
   Ewallet = 'ewallet',
 }
 
+// Therapy
+export enum TherapyStatusEnum {
+  NotStarted = 'not_started',
+  InProgress = 'in_progress',
+  Completed = 'completed',
+  OnHold = 'on_hold',
+  Cancelled = 'cancelled',
+}
+
+export enum TherapyTypeEnum {
+  Individual = 'individual',
+  Group = 'group',
+  Family = 'family',
+  Couple = 'couple',
+}
+
+export enum TherapyPriorityEnum {
+  Low = 'low',
+  Medium = 'medium',
+  High = 'high',
+  Urgent = 'urgent',
+}
+
+export enum MentalHealthIssueEnum {
+  Anxiety = 'anxiety',
+  Depression = 'depression',
+  Stress = 'stress',
+  Trauma = 'trauma',
+  Phobia = 'phobia',
+  SleepDisorder = 'sleep_disorder',
+  AddictionRecovery = 'addiction_recovery',
+  SelfConfidence = 'self_confidence',
+  Relationship = 'relationship',
+  Career = 'career',
+  Other = 'other',
+}
+
+// Session
+export enum SessionStatusEnum {
+  Scheduled = 'scheduled',
+  InProgress = 'in_progress',
+  Completed = 'completed',
+  Cancelled = 'cancelled',
+  NoShow = 'no_show',
+  Rescheduled = 'rescheduled',
+}
+
+export enum SessionTypeEnum {
+  Initial = 'initial',
+  Regular = 'regular',
+  Follow = 'follow_up',
+  Emergency = 'emergency',
+  Group = 'group',
+  Assessment = 'assessment',
+}
+
+export enum SessionPhaseEnum {
+  PreSession = 'pre_session',
+  Intake = 'intake',
+  Assessment = 'assessment',
+  Induction = 'induction',
+  Therapy = 'therapy',
+  PostTherapy = 'post_therapy',
+  Closure = 'closure',
+  PostSession = 'post_session',
+}
+
+export enum HypnosisDepthEnum {
+  Light = 'light',
+  Medium = 'medium',
+  Deep = 'deep',
+  Somnambulistic = 'somnambulistic',
+}
+
+export enum SessionOutcomeEnum {
+  Excellent = 'excellent',
+  Good = 'good',
+  Satisfactory = 'satisfactory',
+  NeedsImprovement = 'needs_improvement',
+  Unsuccessful = 'unsuccessful',
+}
+
 
