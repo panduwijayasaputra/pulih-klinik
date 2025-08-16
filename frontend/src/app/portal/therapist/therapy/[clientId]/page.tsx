@@ -88,7 +88,6 @@ export default function TherapyRoute({ params }: TherapyRouteProps) {
     >
       <TherapyPage 
         client={client}
-        onNavigateBack={() => router.push('/portal/therapist/clients')}
       />
     </PortalPageWrapper>
   );
