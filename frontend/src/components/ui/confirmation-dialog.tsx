@@ -1,178 +1,219 @@
-'use client';
-
-import { useState } from 'react';
+import React from 'react';
+import { AlertTriangle, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 export interface ConfirmationDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
-  type?: 'info' | 'warning' | 'success' | 'error';
+  description?: string;
   confirmText?: string;
   cancelText?: string;
-  loading?: boolean;
+  variant?: 'danger' | 'warning' | 'info';
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
+  className?: string;
+  confirmButtonProps?: React.ComponentProps<typeof Button>;
+  cancelButtonProps?: React.ComponentProps<typeof Button>;
 }
+
+const variantConfig = {
+  danger: {
+    icon: Trash2,
+    confirmButtonVariant: 'destructive' as const,
+    iconClassName: 'text-red-600',
+    bgClassName: 'bg-red-50',
+  },
+  warning: {
+    icon: AlertTriangle,
+    confirmButtonVariant: 'outline' as const,
+    iconClassName: 'text-yellow-600',
+    bgClassName: 'bg-yellow-50',
+  },
+  info: {
+    icon: AlertTriangle,
+    confirmButtonVariant: 'outline' as const,
+    iconClassName: 'text-blue-600',
+    bgClassName: 'bg-blue-50',
+  },
+};
 
 export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   isOpen,
   onClose,
   onConfirm,
   title,
-  message,
-  type = 'info',
+  description,
   confirmText = 'Konfirmasi',
   cancelText = 'Batal',
-  loading = false
+  variant = 'danger',
+  icon,
+  children,
+  className,
+  confirmButtonProps,
+  cancelButtonProps,
 }) => {
-  if (!isOpen) return null;
+  const config = variantConfig[variant];
+  const DefaultIcon = config.icon;
 
-  const getIcon = () => {
-    switch (type) {
-      case 'success':
-        return <CheckCircleIcon className="w-8 h-8 text-green-600" />;
-      case 'warning':
-        return <ExclamationTriangleIcon className="w-8 h-8 text-yellow-600" />;
-      case 'error':
-        return <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />;
-      default:
-        return <InformationCircleIcon className="w-8 h-8 text-blue-600" />;
-    }
+  const handleConfirm = () => {
+    onConfirm();
+    onClose();
   };
-
-  const getColors = () => {
-    switch (type) {
-      case 'success':
-        return {
-          bg: 'bg-green-50',
-          border: 'border-green-200',
-          button: 'bg-green-600 hover:bg-green-700'
-        };
-      case 'warning':
-        return {
-          bg: 'bg-yellow-50',
-          border: 'border-yellow-200',
-          button: 'bg-yellow-600 hover:bg-yellow-700'
-        };
-      case 'error':
-        return {
-          bg: 'bg-red-50',
-          border: 'border-red-200',
-          button: 'bg-red-600 hover:bg-red-700'
-        };
-      default:
-        return {
-          bg: 'bg-blue-50',
-          border: 'border-blue-200',
-          button: 'bg-blue-600 hover:bg-blue-700'
-        };
-    }
-  };
-
-  const colors = getColors();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50" style={{ margin: 0, top: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Card className={`max-w-md w-full ${colors.bg} ${colors.border}`} style={{ margin: 0, transform: 'translateY(0)' }}>
-        <CardHeader className="relative pb-4" style={{ margin: 0 }}>
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            disabled={loading}
-          >
-            <XMarkIcon className="w-5 h-5" />
-          </button>
-          <div className="flex items-center space-x-3">
-            <div className="flex-shrink-0">
-              {getIcon()}
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className={cn('sm:max-w-md', className)}>
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className={cn('p-2 rounded-full', config.bgClassName)}>
+              {icon || <DefaultIcon className={cn('h-5 w-5', config.iconClassName)} />}
             </div>
-            <CardTitle className="text-lg font-semibold text-gray-900">
-              {title}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="pb-4" style={{ margin: 0 }}>
-          <p className="text-gray-700 mb-4">{message}</p>
-          <div className="flex space-x-3">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-              className="flex-1"
-            >
-              {cancelText}
-            </Button>
-            <Button
-              onClick={onConfirm}
-              disabled={loading}
-              className={`flex-1 ${colors.button} text-white`}
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Memproses...
-                </>
-              ) : (
-                confirmText
+            <div className="flex-1">
+              <DialogTitle className="text-lg font-semibold">
+                {title}
+              </DialogTitle>
+              {description && (
+                <DialogDescription className="mt-1 text-gray-600">
+                  {description}
+                </DialogDescription>
               )}
-            </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </DialogHeader>
+
+        {children && (
+          <div className="py-4">
+            {children}
+          </div>
+        )}
+
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            {...cancelButtonProps}
+          >
+            {cancelText}
+          </Button>
+          <Button
+            variant={config.confirmButtonVariant}
+            onClick={handleConfirm}
+            {...confirmButtonProps}
+          >
+            {confirmText}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-// Hook for using confirmation dialogs
+// Session-specific confirmation dialogs
+export const DeleteSessionDialog: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  sessionTitle: string;
+  sessionId: string;
+}> = ({ isOpen, onClose, onConfirm, sessionTitle, sessionId }) => (
+  <ConfirmationDialog
+    isOpen={isOpen}
+    onClose={onClose}
+    onConfirm={onConfirm}
+    title="Hapus Sesi"
+    description={`Apakah Anda yakin ingin menghapus sesi "${sessionTitle}"? Tindakan ini tidak dapat dibatalkan.`}
+    confirmText="Hapus Sesi"
+    variant="danger"
+  >
+    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+      <p className="text-sm text-red-700">
+        <strong>Peringatan:</strong> Menghapus sesi akan menghilangkan semua data terkait termasuk:
+      </p>
+      <ul className="mt-2 text-sm text-red-600 list-disc list-inside space-y-1">
+        <li>Catatan sesi</li>
+        <li>Progress tracking</li>
+        <li>Feedback klien</li>
+        <li>Homework assignments</li>
+      </ul>
+    </div>
+  </ConfirmationDialog>
+);
+
+export const CancelSessionDialog: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  sessionTitle: string;
+  sessionId: string;
+}> = ({ isOpen, onClose, onConfirm, sessionTitle, sessionId }) => (
+  <ConfirmationDialog
+    isOpen={isOpen}
+    onClose={onClose}
+    onConfirm={onConfirm}
+    title="Batalkan Sesi"
+    description={`Apakah Anda yakin ingin membatalkan sesi "${sessionTitle}"?`}
+    confirmText="Batalkan Sesi"
+    variant="warning"
+  >
+    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+      <p className="text-sm text-yellow-700">
+        <strong>Informasi:</strong> Sesi yang dibatalkan dapat dijadwalkan ulang di kemudian hari.
+      </p>
+    </div>
+  </ConfirmationDialog>
+);
+
+export const UnsavedChangesDialog: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = ({ isOpen, onClose, onConfirm, onCancel }) => (
+  <ConfirmationDialog
+    isOpen={isOpen}
+    onClose={onClose}
+    onConfirm={onConfirm}
+    title="Perubahan Belum Disimpan"
+    description="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?"
+    confirmText="Tinggalkan Halaman"
+    cancelText="Tetap di Sini"
+    variant="warning"
+  >
+    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+      <p className="text-sm text-yellow-700">
+        Perubahan yang belum disimpan akan hilang jika Anda meninggalkan halaman ini.
+      </p>
+    </div>
+  </ConfirmationDialog>
+);
+
+// Hook for confirmation dialog
 export const useConfirmationDialog = () => {
-  const [dialog, setDialog] = useState<{
-    isOpen: boolean;
-    props: Omit<ConfirmationDialogProps, 'isOpen' | 'onClose' | 'onConfirm'>;
-    onConfirm: () => void;
-  } | null>(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [config, setConfig] = React.useState<Omit<ConfirmationDialogProps, 'isOpen' | 'onClose'>>({
+    title: '',
+    onConfirm: () => {},
+  });
 
-  const showConfirmation = (
-    props: Omit<ConfirmationDialogProps, 'isOpen' | 'onClose' | 'onConfirm'>,
-    onConfirm: () => void
-  ) => {
-    setDialog({
-      isOpen: true,
-      props,
-      onConfirm
-    });
-  };
+  const openDialog = React.useCallback((dialogConfig: Omit<ConfirmationDialogProps, 'isOpen' | 'onClose'>) => {
+    setConfig(dialogConfig);
+    setIsOpen(true);
+  }, []);
 
-  const closeDialog = () => {
-    setDialog(null);
-  };
-
-  const handleConfirm = () => {
-    if (dialog) {
-      dialog.onConfirm();
-      closeDialog(); // Close the dialog after confirmation
-    }
-  };
-
-  const ConfirmationDialogComponent = dialog ? (
-    <ConfirmationDialog
-      {...dialog.props}
-      isOpen={dialog.isOpen}
-      onClose={closeDialog}
-      onConfirm={handleConfirm}
-    />
-  ) : null;
+  const closeDialog = React.useCallback(() => {
+    setIsOpen(false);
+  }, []);
 
   return {
-    showConfirmation,
+    isOpen,
+    config,
+    openDialog,
     closeDialog,
-    ConfirmationDialog: ConfirmationDialogComponent
   };
 };
+
+export default ConfirmationDialog;
