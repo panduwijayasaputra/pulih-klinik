@@ -1,19 +1,20 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { UseFormReturn, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/toast';
 import { 
-  consultationSchema,
-  generalConsultationSchema,
-  drugAddictionConsultationSchema,
-  minorConsultationSchema,
-  updateConsultationSchema,
-  consultationStepSchemas,
   ConsultationFormData,
-  GeneralConsultationFormData,
   DrugAddictionConsultationFormData,
+  GeneralConsultationFormData,
   MinorConsultationFormData,
-  UpdateConsultationFormData
+  UpdateConsultationFormData,
+  consultationSchema,
+  consultationStepSchemas,
+  drugAddictionConsultationSchema,
+  generalConsultationSchema,
+  minorConsultationSchema,
+  updateConsultationSchema
 } from '@/schemas/consultationSchema';
 import { useConsultation as useConsultationStore } from '@/store/consultation';
 import { 
@@ -23,6 +24,13 @@ import {
   CreateConsultationData,
   UpdateConsultationData
 } from '@/types/consultation';
+import { ConsultationSummaryData } from '@/types/therapy';
+import { ConsultationAPI } from '@/lib/api/consultation';
+import { 
+  validateConsultationSummaryData, 
+  safeParseConsultationSummary,
+  ValidationError 
+} from '@/schemas/therapySchema';
 
 // Generic hook for consultation forms
 export function useConsultationForm<T extends ConsultationFormTypeEnum>(
@@ -97,6 +105,14 @@ export function useConsultationForm<T extends ConsultationFormTypeEnum>(
     },
     mode: 'onChange',
   });
+
+  // Reset form when consultation data changes
+  useEffect(() => {
+    if (consultation) {
+      // Reset form with consultation data
+      form.reset(consultation);
+    }
+  }, [consultation, form]);
 
   // Handle form submission
   const handleSubmit = useCallback(async (data: ConsultationFormData) => {
@@ -390,6 +406,295 @@ export function useConsultationManager(
     formLoading: formHook.isLoading,
     dataLoading: dataHook.isLoading,
     isLoading: formHook.isLoading || dataHook.isLoading,
+  };
+}
+
+// React Query based hooks for consultation data fetching
+export function useConsultationQuery(consultationId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['consultation', consultationId],
+    queryFn: async () => {
+      const response = await ConsultationAPI.getConsultation(consultationId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch consultation');
+      }
+      return response.data!;
+    },
+    enabled: options?.enabled !== false && !!consultationId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error) => {
+      // Don't retry if consultation not found
+      if (error?.message?.includes('not found')) return false;
+      return failureCount < 2;
+    },
+  });
+}
+
+export function useConsultationSummaryQuery(consultationId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['consultation-summary', consultationId],
+    queryFn: async (): Promise<ConsultationSummaryData> => {
+      const response = await ConsultationAPI.getConsultationSummary(consultationId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch consultation summary');
+      }
+      
+      // Validate the received data
+      const validationResult = validateConsultationSummaryData(response.data);
+      if (!validationResult.success) {
+        console.warn('Invalid consultation summary data received:', validationResult.errors);
+        
+        // Use safe parsing with fallback data
+        const { data: safeData, error } = safeParseConsultationSummary(response.data);
+        if (error) {
+          console.error('Critical data validation error:', error);
+          // Still return the safe fallback data rather than throwing
+          return safeData as ConsultationSummaryData;
+        }
+        return safeData as ConsultationSummaryData;
+      }
+      
+      return validationResult.data!;
+    },
+    enabled: options?.enabled !== false && !!consultationId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: (failureCount, error) => {
+      // Don't retry if consultation not found
+      if (error?.message?.includes('not found')) return false;
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
+  });
+}
+
+export function useConsultationsQuery(filters?: {
+  clientId?: string;
+  therapistId?: string;
+  status?: ConsultationStatusEnum;
+}) {
+  return useQuery({
+    queryKey: ['consultations', filters],
+    queryFn: async () => {
+      const response = await ConsultationAPI.getConsultations(
+        filters?.clientId,
+        filters?.therapistId,
+        filters?.status
+      );
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch consultations');
+      }
+      return response.data!;
+    },
+    staleTime: 1 * 60 * 1000, // 1 minute
+    retry: 2,
+  });
+}
+
+// Consultation mutations with React Query
+export function useCreateConsultationMutation() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (data: CreateConsultationData) => {
+      const response = await ConsultationAPI.createConsultation(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create consultation');
+      }
+      return response.data!;
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      queryClient.invalidateQueries({ queryKey: ['consultation', data.id] });
+      
+      addToast({
+        type: 'success',
+        title: 'Berhasil',
+        message: 'Konsultasi berhasil dibuat'
+      });
+    },
+    onError: (error) => {
+      addToast({
+        type: 'error',
+        title: 'Gagal',
+        message: error.message || 'Gagal membuat konsultasi'
+      });
+    },
+  });
+}
+
+export function useUpdateConsultationMutation() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateConsultationData }) => {
+      const response = await ConsultationAPI.updateConsultation(id, data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update consultation');
+      }
+      return response.data!;
+    },
+    onSuccess: (data) => {
+      // Update specific consultation in cache
+      queryClient.setQueryData(['consultation', data.id], data);
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      queryClient.invalidateQueries({ queryKey: ['consultation-summary', data.id] });
+      
+      addToast({
+        type: 'success',
+        title: 'Berhasil',
+        message: 'Konsultasi berhasil diperbarui'
+      });
+    },
+    onError: (error) => {
+      addToast({
+        type: 'error',
+        title: 'Gagal',
+        message: error.message || 'Gagal memperbarui konsultasi'
+      });
+    },
+  });
+}
+
+export function useDeleteConsultationMutation() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (consultationId: string) => {
+      const response = await ConsultationAPI.deleteConsultation(consultationId);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete consultation');
+      }
+      return consultationId;
+    },
+    onSuccess: (deletedId) => {
+      // Remove from cache
+      queryClient.removeQueries({ queryKey: ['consultation', deletedId] });
+      queryClient.removeQueries({ queryKey: ['consultation-summary', deletedId] });
+      // Invalidate list queries
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      
+      addToast({
+        type: 'success',
+        title: 'Berhasil',
+        message: 'Konsultasi berhasil dihapus'
+      });
+    },
+    onError: (error) => {
+      addToast({
+        type: 'error',
+        title: 'Gagal',
+        message: error.message || 'Gagal menghapus konsultasi'
+      });
+    },
+  });
+}
+
+// Comprehensive hook that combines consultation data with AI predictions
+export function useConsultationSummary(consultationId: string, options?: { enabled?: boolean }) {
+  const {
+    data: summaryData,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  } = useConsultationSummaryQuery(consultationId, options);
+
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+
+  // Validate data when it changes
+  useEffect(() => {
+    if (summaryData) {
+      const validationResult = validateConsultationSummaryData(summaryData);
+      if (!validationResult.success) {
+        setValidationErrors(validationResult.errors || []);
+      } else {
+        setValidationErrors([]);
+      }
+    }
+  }, [summaryData]);
+
+  const retryFetch = useCallback(() => {
+    setValidationErrors([]); // Clear validation errors on retry
+    refetch();
+  }, [refetch]);
+
+  const hasValidationIssues = validationErrors.length > 0;
+  const isDataComplete = !!(summaryData?.consultation && summaryData?.client && summaryData?.therapist);
+
+  return {
+    // Data
+    summaryData,
+    consultation: summaryData?.consultation,
+    aiPredictions: summaryData?.aiPredictions,
+    client: summaryData?.client,
+    therapist: summaryData?.therapist,
+    
+    // State
+    isLoading: isLoading || isRefetching,
+    error: error as Error | null,
+    hasData: !!summaryData,
+    isDataComplete,
+    
+    // Validation
+    validationErrors,
+    hasValidationIssues,
+    isDataValid: !!summaryData && !hasValidationIssues && isDataComplete,
+    
+    // Actions
+    retry: retryFetch,
+    refetch,
+    clearValidationErrors: () => setValidationErrors([]),
+  };
+}
+
+// Hook specifically for therapy page consultation display
+export function useTherapyPageConsultation(clientId: string, options?: { enabled?: boolean }) {
+  const consultationsQuery = useConsultationsQuery({ 
+    clientId,
+  });
+
+  const latestConsultation = useMemo(() => {
+    if (!consultationsQuery.data?.items?.length) return null;
+    
+    // Get the most recent completed consultation
+    const completedConsultations = consultationsQuery.data.items
+      .filter(c => c.status === ConsultationStatusEnum.Completed)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    
+    return completedConsultations[0] || null;
+  }, [consultationsQuery.data]);
+
+  const summaryQuery = useConsultationSummaryQuery(
+    latestConsultation?.id || '',
+    { 
+      enabled: options?.enabled !== false && !!latestConsultation?.id 
+    }
+  );
+
+  return {
+    // Data
+    consultation: latestConsultation,
+    summaryData: summaryQuery.data,
+    allConsultations: consultationsQuery.data?.items || [],
+    
+    // State
+    isLoading: consultationsQuery.isLoading || summaryQuery.isLoading,
+    error: consultationsQuery.error || summaryQuery.error,
+    hasConsultation: !!latestConsultation,
+    hasSummary: !!summaryQuery.data,
+    
+    // Actions
+    refetch: () => {
+      consultationsQuery.refetch();
+      if (latestConsultation?.id) {
+        summaryQuery.refetch();
+      }
+    },
   };
 }
 

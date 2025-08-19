@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { TherapyPage } from '@/components/therapy/TherapyPage';
 import { useToast } from '@/components/ui/toast';
 import { useClient } from '@/hooks/useClient';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigationStore } from '@/store/navigation';
 
 interface TherapyRouteProps {
   params: Promise<{
@@ -19,10 +20,11 @@ export default function TherapyRoute({ params }: TherapyRouteProps) {
   const { addToast } = useToast();
   const { clients } = useClient();
   const { user } = useAuth();
+  const { setBreadcrumbs } = useNavigationStore();
   const [clientId, setClientId] = React.useState<string>('');
 
   // Resolve params promise
-  React.useEffect(() => {
+  useEffect(() => {
     params.then(resolvedParams => {
       setClientId(resolvedParams.clientId);
     });
@@ -39,7 +41,37 @@ export default function TherapyRoute({ params }: TherapyRouteProps) {
     return client.assignedTherapist === user.id;
   }, [client, user?.id]);
 
-  React.useEffect(() => {
+  // Set custom breadcrumbs when client is loaded
+  useEffect(() => {
+    if (client) {
+      const customBreadcrumbs = [
+        {
+          id: 'portal',
+          label: 'Portal',
+          href: '/portal',
+        },
+        {
+          id: 'clients',
+          label: 'Klien Saya',
+          href: '/portal/therapist/clients',
+        },
+        {
+          id: 'therapy',
+          label: 'Terapi',
+          href: `/portal/therapist/therapy/${clientId}`,
+          isActive: true,
+        },
+      ];
+      setBreadcrumbs(customBreadcrumbs);
+    }
+
+    // Cleanup breadcrumbs when component unmounts
+    return () => {
+      setBreadcrumbs([]);
+    };
+  }, [client, clientId, setBreadcrumbs]);
+
+  useEffect(() => {
     if (!clientId) {
       return; // Don't show error immediately, wait for clientId to be resolved
     }
@@ -70,6 +102,8 @@ export default function TherapyRoute({ params }: TherapyRouteProps) {
       <PortalPageWrapper
         title="Memuat..."
         description="Memuat informasi klien"
+        backButtonLabel="Kembali ke Daftar Klien"
+        showBackButton={true}
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -85,8 +119,10 @@ export default function TherapyRoute({ params }: TherapyRouteProps) {
     <PortalPageWrapper
       title="Sesi Terapi"
       description={`Kelola sesi terapi untuk ${client.fullName || client.name}`}
+      backButtonLabel="Kembali ke Daftar Klien"
+      showBackButton={true}
     >
-      <TherapyPage 
+      <TherapyPage
         client={client}
       />
     </PortalPageWrapper>

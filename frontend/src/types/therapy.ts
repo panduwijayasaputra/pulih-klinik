@@ -170,3 +170,276 @@ export interface TherapyStatistics {
   byPriority: Record<TherapyPriorityEnum, number>;
   byIssue: Record<MentalHealthIssueEnum, number>;
 }
+
+// AI Mental Health Prediction interfaces
+export interface MentalHealthPrediction {
+  issue: MentalHealthIssueEnum;
+  confidence: number; // 0-100 percentage
+  severity: 'mild' | 'moderate' | 'severe';
+  description: string;
+  recommendedTreatment: string[];
+  estimatedSessionsNeeded: number;
+  urgencyLevel: TherapyPriorityEnum;
+}
+
+export interface ConsultationAIPredictions {
+  consultationId: string;
+  generatedAt: string; // ISO date string
+  primaryPrediction: MentalHealthPrediction;
+  secondaryPredictions: MentalHealthPrediction[];
+  overallRiskLevel: 'low' | 'medium' | 'high';
+  recommendedTherapyType: TherapyTypeEnum;
+  notes?: string;
+}
+
+// Consultation summary display interface
+export interface ConsultationSummaryData {
+  consultation: {
+    id: string;
+    sessionDate: string;
+    sessionDuration: number;
+    primaryConcern: string;
+    secondaryConcerns?: string[];
+    symptomSeverity: 1 | 2 | 3 | 4 | 5;
+    symptomDuration: string;
+    treatmentGoals: string[];
+    initialAssessment?: string;
+    consultationNotes?: string;
+  };
+  aiPredictions?: ConsultationAIPredictions;
+  client: {
+    id: string;
+    fullName: string;
+    age: number;
+  };
+  therapist: {
+    id: string;
+    fullName: string;
+  };
+}
+
+// Session management types
+export enum SessionStatusEnum {
+  New = 'new',
+  Scheduled = 'scheduled',
+  Started = 'started',
+  Completed = 'completed',
+  Cancelled = 'cancelled',
+  NoShow = 'no_show',
+}
+
+export const SessionStatusLabels: Record<SessionStatusEnum, string> = {
+  [SessionStatusEnum.New]: 'Baru',
+  [SessionStatusEnum.Scheduled]: 'Dijadwalkan',
+  [SessionStatusEnum.Started]: 'Sedang Berlangsung',
+  [SessionStatusEnum.Completed]: 'Selesai',
+  [SessionStatusEnum.Cancelled]: 'Dibatalkan',
+  [SessionStatusEnum.NoShow]: 'Tidak Hadir',
+};
+
+export enum SessionTypeEnum {
+  Initial = 'initial',
+  Regular = 'regular',
+  Progress = 'progress',
+  Final = 'final',
+  Emergency = 'emergency',
+}
+
+export const SessionTypeLabels: Record<SessionTypeEnum, string> = {
+  [SessionTypeEnum.Initial]: 'Sesi Awal',
+  [SessionTypeEnum.Regular]: 'Sesi Reguler',
+  [SessionTypeEnum.Progress]: 'Evaluasi Progress',
+  [SessionTypeEnum.Final]: 'Sesi Akhir',
+  [SessionTypeEnum.Emergency]: 'Sesi Darurat',
+};
+
+// Main session interface
+export interface Session {
+  id: string;
+  therapyId: string;
+  clientId: string;
+  therapistId: string;
+  sessionNumber: number;
+  title: string;
+  description?: string;
+  type: SessionTypeEnum;
+  status: SessionStatusEnum;
+  scheduledDate?: string; // ISO date string
+  startTime?: string; // ISO date string
+  endTime?: string; // ISO date string
+  duration?: number; // in minutes
+  notes?: string;
+  objectives: string[];
+  techniques: string[];
+  outcomes?: string[];
+  progressScore?: number; // 1-10 scale
+  clientFeedback?: string;
+  therapistNotes?: string;
+  nextSteps?: string[];
+  assignedHomework?: string[];
+  attachments?: SessionAttachment[];
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
+
+// Session attachment interface
+export interface SessionAttachment {
+  id: string;
+  sessionId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+  uploadedBy: string;
+  uploadedAt: string; // ISO date string
+}
+
+// Session form data interface
+export interface SessionFormData {
+  title: string;
+  description?: string;
+  type: SessionTypeEnum;
+  scheduledDate?: string;
+  duration?: number;
+  objectives: string[];
+  techniques: string[];
+  notes?: string;
+}
+
+// Session creation data interface
+export interface CreateSessionData extends SessionFormData {
+  therapyId: string;
+  clientId: string;
+  therapistId: string;
+}
+
+// Session update data interface
+export interface UpdateSessionData extends Partial<SessionFormData> {
+  id?: string;
+  status?: SessionStatusEnum;
+  startTime?: string;
+  endTime?: string;
+  progressScore?: number;
+  outcomes?: string[];
+  clientFeedback?: string;
+  therapistNotes?: string;
+  nextSteps?: string[];
+  assignedHomework?: string[];
+}
+
+// Session filters interface
+export interface SessionFilters {
+  search?: string;
+  status?: SessionStatusEnum;
+  type?: SessionTypeEnum;
+  therapyId?: string;
+  clientId?: string;
+  therapistId?: string;
+  dateRange?: {
+    from: string;
+    to: string;
+  };
+}
+
+// Session statistics interface
+export interface SessionStatistics {
+  totalSessions: number;
+  completedSessions: number;
+  scheduledSessions: number;
+  cancelledSessions: number;
+  averageSessionDuration: number;
+  averageProgressScore: number;
+  byStatus: Record<SessionStatusEnum, number>;
+  byType: Record<SessionTypeEnum, number>;
+  completionRate: number; // percentage
+}
+
+// Session list response interface
+export interface SessionListData {
+  items: Session[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+// Session response interfaces for API
+export interface SessionResponse {
+  success: boolean;
+  data?: Session;
+  message?: string;
+}
+
+export interface SessionListResponse {
+  success: boolean;
+  data?: SessionListData;
+  message?: string;
+}
+
+// Utility types for session operations
+export type SessionSortField = 'sessionNumber' | 'title' | 'scheduledDate' | 'status' | 'createdAt';
+export type SessionSortOrder = 'asc' | 'desc';
+
+export interface SessionSort {
+  field: SessionSortField;
+  order: SessionSortOrder;
+}
+
+// Consultation summary interface
+export interface ConsultationSummary {
+  id: string;
+  clientId: string;
+  therapyId: string;
+  consultationDate: string; // ISO date string
+  primaryConcern: string;
+  secondaryConcerns?: string[];
+  symptomSeverity: 1 | 2 | 3 | 4 | 5;
+  symptomDuration: string;
+  treatmentGoals: string[];
+  initialAssessment?: string;
+  consultationNotes?: string;
+  aiPredictions?: {
+    primaryIssue: MentalHealthIssueEnum;
+    confidence: number;
+    severity: 'mild' | 'moderate' | 'severe';
+    recommendedTreatment: string[];
+    estimatedSessionsNeeded: number;
+    urgencyLevel: TherapyPriorityEnum;
+  };
+}
+
+// Session validation types
+export interface SessionValidationError {
+  field: string;
+  message: string;
+}
+
+export interface SessionValidationResult {
+  isValid: boolean;
+  errors: SessionValidationError[];
+}
+
+// Session status transition validation
+export const VALID_STATUS_TRANSITIONS: Record<SessionStatusEnum, SessionStatusEnum[]> = {
+  [SessionStatusEnum.New]: [
+    SessionStatusEnum.Scheduled, 
+    SessionStatusEnum.Started, 
+    SessionStatusEnum.Cancelled
+  ],
+  [SessionStatusEnum.Scheduled]: [
+    SessionStatusEnum.Started, 
+    SessionStatusEnum.Completed, 
+    SessionStatusEnum.Cancelled, 
+    SessionStatusEnum.NoShow
+  ],
+  [SessionStatusEnum.Started]: [
+    SessionStatusEnum.Completed, 
+    SessionStatusEnum.Cancelled
+  ],
+  [SessionStatusEnum.Completed]: [], // Final state
+  [SessionStatusEnum.Cancelled]: [
+    SessionStatusEnum.Scheduled
+  ], // Can be rescheduled
+  [SessionStatusEnum.NoShow]: [
+    SessionStatusEnum.Scheduled
+  ], // Can be rescheduled
+};

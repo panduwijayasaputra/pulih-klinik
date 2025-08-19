@@ -210,7 +210,7 @@ export const portalBreadcrumbMapping: Record<string, { label: string; parent?: s
   // Therapist routes
   '/portal/therapist/clients': { label: 'Klien Saya', parent: '/portal' },
   '/portal/therapist/clients/[id]': { label: 'Detail Klien', parent: '/portal/therapist/clients' },
-  '/portal/therapist/therapy/[clientId]': { label: 'Sesi Terapi', parent: '/portal/therapist/clients' },
+  '/portal/therapist/therapy/[clientId]': { label: 'Terapi', parent: '/portal/therapist/clients' },
   '/portal/therapist/sessions': { label: 'Sesi Terapi', parent: '/portal' },
   '/portal/therapist/sessions/[id]': { label: 'Detail Sesi', parent: '/portal/therapist/sessions' },
   '/portal/therapist/session/[sessionId]': { label: 'Detail Sesi', parent: '/portal/therapist/sessions' },

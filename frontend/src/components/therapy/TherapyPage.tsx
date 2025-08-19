@@ -1,26 +1,38 @@
 'use client';
 
 import React, { useMemo, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { ConsultationForm } from '@/components/consultation/ConsultationForm';
+import { ConsultationSummary } from '@/components/therapy/ConsultationSummary';
 
 import { Client } from '@/types/client';
 import { Consultation, ConsultationFormTypeEnum } from '@/types/consultation';
+import { ClientGenderLabels } from '@/types/enums';
 import { useAuth } from '@/hooks/useAuth';
 import { useConsultation } from '@/store/consultation';
 import { useConsultationForm } from '@/hooks/useConsultation';
+import { ConsultationAPI } from '@/lib/api/consultation';
+import { ConsultationSummaryData } from '@/types/therapy';
 import { useToast } from '@/components/ui/toast';
+import { getClientSessions } from '@/lib/api/mockData';
 
-import { 
-  CalendarIcon, 
-  ChartBarIcon, 
+import {
+  CalendarIcon,
+  ChartBarIcon,
   ClockIcon,
   DocumentTextIcon,
-  UserIcon
+  UserIcon,
+  ChatBubbleLeftRightIcon,
+  HeartIcon,
+  CheckCircleIcon,
+  ClockIcon as ClockIconSolid,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 export interface TherapyPageProps {
@@ -30,15 +42,58 @@ export interface TherapyPageProps {
 export const TherapyPage: React.FC<TherapyPageProps> = ({
   client,
 }) => {
+  const router = useRouter();
   const { user } = useAuth();
   const { addToast } = useToast();
-  const { getConsultationsByClient } = useConsultation();
+  const { getConsultationsByClient, loadConsultations } = useConsultation();
+  const [activeTab, setActiveTab] = React.useState('summary');
+  const [consultationSummaryData, setConsultationSummaryData] = React.useState<ConsultationSummaryData | null>(null);
+  const [summaryLoading, setSummaryLoading] = React.useState(false);
+  const [summaryError, setSummaryError] = React.useState<string | null>(null);
 
   // Get the single consultation for this client (1 client = 1 consultation)
   const clientConsultation = useMemo(() => {
     const consultations = getConsultationsByClient(client.id);
     return consultations.length > 0 ? consultations[0] : null;
   }, [getConsultationsByClient, client.id]);
+
+  // Load consultation summary data
+  const loadConsultationSummary = useCallback(async (consultationId: string) => {
+    setSummaryLoading(true);
+    setSummaryError(null);
+    
+    try {
+      const response = await ConsultationAPI.getConsultationSummary(consultationId);
+      if (response.success && response.data) {
+        setConsultationSummaryData(response.data);
+      } else {
+        setSummaryError(response.message || 'Failed to load consultation summary');
+      }
+    } catch (error) {
+      setSummaryError(error instanceof Error ? error.message : 'Failed to load consultation summary');
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
+
+  // Load consultations when component mounts
+  useEffect(() => {
+    if (client.id) {
+      loadConsultations(client.id, true); // Force reload to ensure fresh data
+    }
+  }, [client.id, loadConsultations]);
+
+  // Load consultation summary when consultation data is available
+  useEffect(() => {
+    if (clientConsultation?.id) {
+      loadConsultationSummary(clientConsultation.id);
+    }
+  }, [clientConsultation?.id, loadConsultationSummary]);
+
+  // Get client sessions from mock data
+  const clientSessions = useMemo(() => {
+    return getClientSessions(client.id);
+  }, [client.id]);
 
   // Initialize consultation form
   const {
@@ -97,228 +152,544 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
     };
   }, [getConsultationsByClient, client.id, client.progress]);
 
+  // Helper function to calculate age from birthDate
+  const calculateAge = (birthDate: string): number => {
+    if (!birthDate) return 0;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   return (
-    <PageWrapper
-      showBackButton={true}
-      backButtonLabel="Kembali ke Daftar Klien"
-      title={`Terapi ${client.fullName || client.name}`}
-      subtitle={`Status: ${client.status}`}
-    >
-
-      {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Sesi</p>
-                <p className="text-2xl font-bold text-blue-600">{client.totalSessions}</p>
-              </div>
-              <CalendarIcon className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Progress</p>
-                <p className="text-2xl font-bold text-green-600">{client.progress}%</p>
-              </div>
-              <ChartBarIcon className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Konsultasi</p>
-                <p className="text-2xl font-bold text-purple-600">{therapyProgress.totalConsultations}</p>
-              </div>
-              <DocumentTextIcon className="w-8 h-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Bergabung</p>
-                <p className="text-sm font-medium text-gray-900">
-                  {new Date(client.joinDate).toLocaleDateString('id-ID')}
-                </p>
-              </div>
-              <ClockIcon className="w-8 h-8 text-gray-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="consultations">Konsultasi</TabsTrigger>
+    <>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" aria-label="Navigasi Tab Terapi">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+          <TabsTrigger 
+            value="summary" 
+            className="flex items-center gap-2"
+            role="tab"
+            aria-controls="summary-panel"
+            aria-selected="false"
+          >
+            <ChartBarIcon className="w-4 h-4" />
+            Ringkasan
+          </TabsTrigger>
+          <TabsTrigger 
+            value="ai-summary" 
+            className="flex items-center gap-2"
+            role="tab"
+            aria-controls="ai-summary-panel"
+            aria-selected="false"
+          >
+            <DocumentTextIcon className="w-4 h-4" />
+            AI Summary
+          </TabsTrigger>
+          <TabsTrigger 
+            value="consultation" 
+            className="flex items-center gap-2"
+            role="tab"
+            aria-controls="consultation-panel"
+            aria-selected="false"
+          >
+            <ChatBubbleLeftRightIcon className="w-4 h-4" />
+            Konsultasi
+          </TabsTrigger>
+          <TabsTrigger 
+            value="therapy" 
+            className="flex items-center gap-2"
+            role="tab"
+            aria-controls="therapy-panel"
+            aria-selected="false"
+          >
+            <HeartIcon className="w-4 h-4" />
+            Terapi
+          </TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Client Information */}
+        <TabsContent 
+          value="summary" 
+          className="mt-6" 
+          id="summary-panel"
+          role="tabpanel"
+          aria-labelledby="summary-tab"
+        >
+          <div className="space-y-6">
+            {/* Current Status */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <UserIcon className="w-5 h-5 mr-2" />
-                  Informasi Klien
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                  Status Terkini
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600">Email:</span>
-                    <p className="text-gray-900">{client.email}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Telepon:</span>
-                    <p className="text-gray-900">{client.phone}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Jenis Kelamin:</span>
-                    <p className="text-gray-900">{client.gender}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Umur:</span>
-                    <p className="text-gray-900">
-                      {client.birthDate ? 
-                        Math.floor((Date.now() - new Date(client.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) 
-                        : '-'} tahun
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Pekerjaan:</span>
-                    <p className="text-gray-900">{client.occupation}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Pendidikan:</span>
-                    <p className="text-gray-900">{client.education}</p>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                                     <div>
+                     <p className="text-sm text-gray-600">Status Klien</p>
+                     <Badge variant={client.status === 'therapy' ? 'default' : 'secondary'} className="mt-1">
+                       {client.status === 'therapy' ? 'Aktif' : 'Tidak Aktif'}
+                     </Badge>
+                   </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-600">Progress Terapi</p>
+                    <p className="text-2xl font-bold text-blue-600">{client.progress || 0}%</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Latest Consultation */}
+            {/* Client Summary */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <DocumentTextIcon className="w-5 h-5 mr-2" />
-                  Konsultasi
+                <CardTitle className="flex items-center gap-2">
+                  <UserIcon className="w-5 h-5 text-blue-600" />
+                  Ringkasan Klien
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{therapyProgress.totalConsultations}</div>
+                    <div className="text-sm text-gray-600">Total Konsultasi</div>
+                  </div>
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{therapyProgress.completedConsultations}</div>
+                    <div className="text-sm text-gray-600">Selesai</div>
+                  </div>
+                  <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                    <div className="text-2xl font-bold text-yellow-600">{therapyProgress.draftConsultations}</div>
+                    <div className="text-sm text-gray-600">Draft</div>
+                  </div>
+                  <div className="text-center p-3 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {client.birthDate ? calculateAge(client.birthDate) : '-'}
+                    </div>
+                    <div className="text-sm text-gray-600">Usia</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Therapy Progress Bar */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ChartBarIcon className="w-5 h-5 text-green-600" />
+                  Progress Terapi
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Progress Keseluruhan</span>
+                    <span className="text-sm font-medium text-gray-700">{client.progress || 0}%</span>
+                  </div>
+                  <Progress value={client.progress || 0} className="w-full" />
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-lg font-semibold text-blue-600">{therapyProgress.totalConsultations}</div>
+                      <div className="text-xs text-gray-500">Total Sesi</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-green-600">{therapyProgress.completedConsultations}</div>
+                      <div className="text-xs text-gray-500">Selesai</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-orange-600">
+                        {therapyProgress.totalConsultations > 0 
+                          ? Math.round((therapyProgress.completedConsultations / therapyProgress.totalConsultations) * 100)
+                          : 0
+                        }%
+                      </div>
+                      <div className="text-xs text-gray-500">Tingkat Penyelesaian</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Therapy Sessions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClockIcon className="w-5 h-5 text-purple-600" />
+                  Sesi Terapi
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {clientSessions.length > 0 ? (
+                    <div className="space-y-2">
+                      {clientSessions.slice(0, 5).map((session, index) => (
+                        <div 
+                          key={session.id} 
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                          onClick={() => router.push(`/portal/therapist/sessions/${session.id}`)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${
+                              session.status === 'completed' ? 'bg-green-500' : 
+                              session.status === 'scheduled' ? 'bg-blue-500' : 
+                              session.status === 'cancelled' ? 'bg-red-500' : 'bg-gray-500'
+                            }`} />
+                            <div>
+                              <p className="font-medium text-sm">Sesi {index + 1}</p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(session.date).toLocaleDateString('id-ID')} - {session.phase}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={
+                              session.status === 'completed' ? 'default' : 
+                              session.status === 'scheduled' ? 'secondary' : 
+                              session.status === 'cancelled' ? 'destructive' : 'outline'
+                            }>
+                              {session.status === 'completed' ? 'Selesai' : 
+                               session.status === 'scheduled' ? 'Dijadwalkan' : 
+                               session.status === 'cancelled' ? 'Dibatalkan' : 'Pending'}
+                            </Badge>
+                            <span className="text-xs text-gray-400">Klik untuk detail</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-gray-500">
+                      <ClockIcon className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>Belum ada sesi terapi</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Last Session */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DocumentTextIcon className="w-5 h-5 text-orange-600" />
+                  Sesi Terakhir
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {clientConsultation ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Tanggal:</span>
-                      <span className="text-sm text-gray-900">
-                        {new Date(clientConsultation.sessionDate).toLocaleDateString('id-ID')}
+                      <span className="text-sm font-medium text-gray-700">Tanggal Sesi</span>
+                      <span className="text-sm text-gray-600">
+                        {clientConsultation.sessionDate ? 
+                          new Date(clientConsultation.sessionDate).toLocaleDateString('id-ID') : 
+                          'Tanggal tidak tersedia'
+                        }
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Jenis:</span>
-                      <Badge variant="outline">{clientConsultation.formType}</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Status:</span>
-                      <Badge variant={clientConsultation.status === 'completed' ? 'default' : 'secondary'}>
-                        {clientConsultation.status}
+                      <span className="text-sm font-medium text-gray-700">Status</span>
+                      <Badge variant={
+                        clientConsultation.status === 'completed' ? 'default' : 
+                        clientConsultation.status === 'draft' ? 'secondary' : 'outline'
+                      }>
+                        {clientConsultation.status === 'completed' ? 'Selesai' : 
+                         clientConsultation.status === 'draft' ? 'Draft' : 'Pending'}
                       </Badge>
                     </div>
-                    {clientConsultation.primaryConcern && (
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Keluhan Utama:</span>
-                        <p className="text-sm text-gray-900 mt-1 line-clamp-2">
-                          {clientConsultation.primaryConcern}
-                        </p>
-                      </div>
-                    )}
+                                         {clientConsultation.consultationNotes && (
+                       <div>
+                         <span className="text-sm font-medium text-gray-700">Catatan</span>
+                         <p className="text-sm text-gray-600 mt-1 line-clamp-3">{clientConsultation.consultationNotes}</p>
+                       </div>
+                     )}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <DocumentTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">Belum ada konsultasi untuk klien ini</p>
+                  <div className="text-center py-6 text-gray-500">
+                    <DocumentTextIcon className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>Belum ada sesi konsultasi</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
-
-          {/* Progress Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <ChartBarIcon className="w-5 h-5 mr-2" />
-                Progress Terapi
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-gray-600">Progress Keseluruhan</span>
-                  <span className="font-medium text-gray-900">{client.progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                    style={{ width: `${client.progress}%` }}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-lg font-bold text-blue-600">{therapyProgress.totalConsultations}</p>
-                    <p className="text-xs text-gray-600">Total Konsultasi</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-green-600">{therapyProgress.completedConsultations}</p>
-                    <p className="text-xs text-gray-600">Selesai</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-yellow-600">{therapyProgress.draftConsultations}</p>
-                    <p className="text-xs text-gray-600">Draft</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
-        {/* Consultations Tab */}
-        <TabsContent value="consultations" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Form Konsultasi</h3>
+        <TabsContent 
+          value="ai-summary" 
+          className="mt-6" 
+          id="ai-summary-panel"
+          role="tabpanel"
+          aria-labelledby="ai-summary-tab"
+        >
+          <ConsultationSummary
+            data={consultationSummaryData}
+            isLoading={summaryLoading}
+            error={summaryError}
+            onRetry={() => clientConsultation?.id && loadConsultationSummary(clientConsultation.id)}
+          />
+        </TabsContent>
+
+        <TabsContent 
+          value="consultation" 
+          className="mt-6" 
+          id="consultation-panel"
+          role="tabpanel"
+          aria-labelledby="consultation-tab"
+        >
+          <div className="space-y-6">
+            {/* Consultation Form */}
+            <ConsultationForm
+              form={form as any}
+              onSubmit={handleFormSubmit}
+              onSave={handleFormSave}
+              isSubmitting={isSubmitting}
+              isLoading={isLoading}
+              mode={clientConsultation ? 'edit' : 'create'}
+              allowTypeChange={!clientConsultation}
+              client={client}
+            />
           </div>
-
-          <Card>
-            <CardContent className="p-6">
-              <ConsultationForm
-                form={form}
-                onSubmit={handleFormSubmit}
-                onSave={handleFormSave}
-                isSubmitting={isSubmitting}
-                isLoading={isLoading}
-                mode={clientConsultation ? 'edit' : 'create'}
-                allowTypeChange={!clientConsultation}
-                client={client}
-              />
-            </CardContent>
-          </Card>
         </TabsContent>
 
+        <TabsContent 
+          value="therapy" 
+          className="mt-6" 
+          id="therapy-panel"
+          role="tabpanel"
+          aria-labelledby="therapy-tab"
+        >
+          {clientConsultation && clientConsultation.status === 'completed' ? (
+            <div className="space-y-6">
+              {/* Session Management */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarIcon className="w-5 h-5 text-blue-600" />
+                    Manajemen Sesi Terapi
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-blue-50 p-4 rounded-lg text-center">
+                        <div className="text-2xl font-bold text-blue-600">{clientSessions.length}</div>
+                        <div className="text-sm text-gray-600">Total Sesi</div>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {clientSessions.filter(s => s.status === 'completed').length}
+                        </div>
+                        <div className="text-sm text-gray-600">Selesai</div>
+                      </div>
+                      <div className="bg-orange-50 p-4 rounded-lg text-center">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {clientSessions.filter(s => s.status === 'scheduled').length}
+                        </div>
+                        <div className="text-sm text-gray-600">Terjadwal</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                      <button 
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base"
+                        onClick={() => {
+                          addToast({
+                            type: 'info',
+                            title: 'Fitur Belum Tersedia',
+                            message: 'Fitur jadwal sesi baru akan segera tersedia',
+                          });
+                        }}
+                      >
+                        Jadwalkan Sesi Baru
+                      </button>
+                      <button 
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base"
+                        onClick={() => {
+                          addToast({
+                            type: 'info',
+                            title: 'Fitur Belum Tersedia',
+                            message: 'Fitur riwayat sesi akan segera tersedia',
+                          });
+                        }}
+                      >
+                        Lihat Riwayat Lengkap
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Sessions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClockIconSolid className="w-5 h-5 text-purple-600" />
+                    Sesi Terakhir
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {clientSessions.length > 0 ? (
+                    <div className="space-y-3">
+                      {clientSessions.slice(0, 3).map((session, index) => (
+                        <div 
+                          key={session.id}
+                          className="p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                          onClick={() => router.push(`/portal/therapist/sessions/${session.id}`)}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium text-sm sm:text-base">Sesi {index + 1}</span>
+                                <Badge variant={
+                                  session.status === 'completed' ? 'default' : 
+                                  session.status === 'scheduled' ? 'secondary' : 'outline'
+                                } className="text-xs">
+                                  {session.status === 'completed' ? 'Selesai' : 
+                                   session.status === 'scheduled' ? 'Dijadwalkan' : 'Lainnya'}
+                                </Badge>
+                              </div>
+                              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                {new Date(session.date).toLocaleDateString('id-ID')} • 
+                                Fase: {session.phase === 'intake' ? 'Penerimaan' :
+                                      session.phase === 'induction' ? 'Induksi' :
+                                      session.phase === 'therapy' ? 'Terapi' : 'Lainnya'}
+                              </p>
+                              {session.notes && (
+                                <p className="text-xs sm:text-sm text-gray-500 mt-2 line-clamp-2">
+                                  {session.notes}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right sm:text-center">
+                              <span className="text-xs text-gray-400">Klik untuk detail</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-gray-500">
+                      <ClockIconSolid className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>Belum ada sesi terapi</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Therapy Progress */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ChartBarIcon className="w-5 h-5 text-green-600" />
+                    Progress Terapi
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Progress Keseluruhan</span>
+                      <span className="text-sm font-medium text-gray-700">{client.progress || 0}%</span>
+                    </div>
+                    <Progress value={client.progress || 0} className="w-full" />
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                      <div>
+                        <div className="text-lg font-semibold text-blue-600">
+                          {clientSessions.length}
+                        </div>
+                        <div className="text-xs text-gray-500">Total Sesi</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-green-600">
+                          {clientSessions.filter(s => s.status === 'completed').length}
+                        </div>
+                        <div className="text-xs text-gray-500">Selesai</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-orange-600">
+                          {clientSessions.length > 0 ? 
+                            Math.round((clientSessions.filter(s => s.status === 'completed').length / clientSessions.length) * 100) : 0
+                          }%
+                        </div>
+                        <div className="text-xs text-gray-500">Tingkat Penyelesaian</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-purple-600">
+                          {clientSessions.reduce((total, session) => total + (session.durationMinutes || 0), 0)} min
+                        </div>
+                        <div className="text-xs text-gray-500">Total Durasi</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-orange-600" />
+                  Terapi Belum Dapat Dimulai
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <HeartIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium mb-2">Konsultasi Diperlukan</p>
+                  <p className="mb-6 text-gray-600 max-w-md mx-auto">
+                    {!clientConsultation 
+                      ? 'Untuk memulai sesi terapi, Anda perlu menyelesaikan konsultasi awal terlebih dahulu. Konsultasi akan membantu menentukan pendekatan terapi yang tepat untuk klien.'
+                      : 'Konsultasi masih dalam status draft. Silakan selesaikan konsultasi untuk membuka akses ke fitur terapi dan mulai penjadwalan sesi.'
+                    }
+                  </p>
+                  <button
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+                    onClick={() => {
+                      setActiveTab('consultation');
+                      addToast({
+                        type: 'info',
+                        title: 'Beralih ke Konsultasi',
+                        message: 'Silakan lengkapi form konsultasi terlebih dahulu',
+                      });
+                    }}
+                  >
+                    <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                    {!clientConsultation ? 'Mulai Konsultasi' : 'Lanjutkan Konsultasi'}
+                  </button>
+                  
+                  {/* Information about what consultation includes */}
+                  <div className="mt-8 text-left max-w-lg mx-auto">
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">Konsultasi akan mencakup:</h3>
+                    <ul className="text-sm text-gray-600 space-y-2">
+                      <li className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <span>Penilaian kondisi dan kebutuhan klien</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <span>Penetapan tujuan dan rencana terapi</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <span>Identifikasi metode dan teknik terapi yang sesuai</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                        <span>Persiapan untuk sesi terapi pertama</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
       </Tabs>
-    </PageWrapper>
+    </>
   );
 };
 

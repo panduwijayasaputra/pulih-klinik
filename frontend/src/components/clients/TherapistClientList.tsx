@@ -137,8 +137,8 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
       render: (client) => (
         <div className="flex items-center space-x-2">
           <div className="flex-1 bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full" 
+            <div
+              className="bg-blue-600 h-2 rounded-full"
               style={{ width: `${client.progress}%` }}
             />
           </div>
@@ -151,7 +151,7 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
       header: 'Sesi Terakhir',
       render: (client) => (
         <span className="text-gray-600">
-          {client.lastSession 
+          {client.lastSession
             ? new Date(client.lastSession).toLocaleDateString('id-ID')
             : 'Belum ada'
           }
@@ -173,28 +173,12 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
       },
     },
     {
-      key: 'startConsultation',
-      label: 'Mulai Konsultasi',
+      key: 'therapy',
+      label: 'Terapi',
       icon: PlayIcon,
       variant: 'default',
-      onClick: (client) => handleStartConsultation(client),
-      show: (client) => client.status === ClientStatusEnum.Assigned,
-    },
-    {
-      key: 'startTherapy',
-      label: 'Mulai Terapi',
-      icon: HeartIcon,
-      variant: 'default',
       onClick: (client) => onStartTherapy?.(client.id),
-      show: (client) => client.status === ClientStatusEnum.Consultation,
-    },
-    {
-      key: 'continueTreatment',
-      label: 'Lanjut Terapi',
-      icon: HeartIcon,
-      variant: 'default',
-      onClick: (client) => onStartTherapy?.(client.id),
-      show: (client) => client.status === ClientStatusEnum.Therapy,
+      show: (client) => client.status !== ClientStatusEnum.Done,
     },
   ];
 
@@ -214,7 +198,7 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
   };
 
   // Generate description message
-  const description = totalClients 
+  const description = totalClients
     ? `Menampilkan ${filteredClients.length} dari ${totalClients} klien yang ditugaskan kepada Anda`
     : `Menampilkan ${filteredClients.length} klien yang ditugaskan kepada Anda`;
 
@@ -233,7 +217,7 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
         actions={actions}
         loading={loading}
         emptyMessage={
-          (totalClients || 0) === 0 
+          (totalClients || 0) === 0
             ? "Anda belum memiliki klien yang ditugaskan"
             : "Tidak ada klien yang sesuai dengan filter"
         }
@@ -243,7 +227,7 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
         filters={[statusFilter]}
         refreshAction={{
           label: 'Segarkan',
-          onClick: onRefresh || (() => {}),
+          onClick: onRefresh || (() => { }),
           loading: loading,
         }}
       />
@@ -513,8 +497,8 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
                       <div className="mt-1 flex items-center">
                         <ChartBarIcon className="w-4 h-4 mr-2 text-gray-400" />
                         <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
                             style={{ width: `${selectedClient.progress}%` }}
                           />
                         </div>
@@ -605,21 +589,9 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
               {/* Modal Footer - Action buttons based on client status */}
               <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
                 <div className="flex space-x-3">
-                  {/* Start Consultation - only for Assigned clients */}
-                  {selectedClient.status === ClientStatusEnum.Assigned && (
-                    <button
-                      onClick={() => {
-                        handleStartConsultation(selectedClient);
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 flex items-center"
-                    >
-                      <PlayIcon className="w-4 h-4 mr-2" />
-                      Mulai Konsultasi
-                    </button>
-                  )}
-                  
+
                   {/* Start Therapy - only for Consultation clients */}
-                  {selectedClient.status === ClientStatusEnum.Consultation && (
+                  {selectedClient.status !== ClientStatusEnum.Done && (
                     <button
                       onClick={() => {
                         handleCloseDetails();
@@ -627,27 +599,13 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
                       }}
                       className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-md hover:bg-green-700 flex items-center"
                     >
-                      <HeartIcon className="w-4 h-4 mr-2" />
+                      <PlayIcon className="w-4 h-4 mr-2" />
                       Mulai Terapi
                     </button>
                   )}
-                  
-                  {/* Continue Therapy - only for Therapy clients */}
-                  {selectedClient.status === ClientStatusEnum.Therapy && (
-                    <button
-                      onClick={() => {
-                        handleCloseDetails();
-                        onStartTherapy?.(selectedClient.id);
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-md hover:bg-green-700 flex items-center"
-                    >
-                      <HeartIcon className="w-4 h-4 mr-2" />
-                      Lanjut Terapi
-                    </button>
-                  )}
-                  
+
                 </div>
-                
+
                 <button
                   onClick={handleCloseDetails}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"

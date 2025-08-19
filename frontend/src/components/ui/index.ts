@@ -5,6 +5,7 @@ export { Input } from "./input"
 export { Label } from "./label"
 export { Textarea } from "./textarea"
 export { Checkbox } from "./checkbox"
+export { MultiSelect } from "./multi-select"
 export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem, SelectSeparator, SelectScrollUpButton, SelectScrollDownButton } from "./select"
 
 // Layout Components
@@ -25,4 +26,5 @@ export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 export { Dialog, DialogPortal, DialogOverlay, DialogClose, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./dialog"
 
 // Display Components
-export { Avatar, AvatarImage, AvatarFallback } from "./avatar" 
+export { Avatar, AvatarImage, AvatarFallback } from "./avatar"
+export { Skeleton } from "./skeleton" 

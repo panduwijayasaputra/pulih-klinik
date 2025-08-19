@@ -4,11 +4,11 @@ import { ConsultationAPI } from '@/lib/api/consultation';
 import { 
   Consultation, 
   ConsultationFormTypeEnum,
+  ConsultationListResponse,
+  ConsultationResponse,
   ConsultationStatusEnum,
   CreateConsultationData,
-  UpdateConsultationData,
-  ConsultationResponse,
-  ConsultationListResponse
+  UpdateConsultationData
 } from '@/types/consultation';
 
 interface ConsultationState {

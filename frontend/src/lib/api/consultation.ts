@@ -1,15 +1,18 @@
 import { 
   Consultation,
   ConsultationFormTypeEnum, 
+  ConsultationListResponse,
+  ConsultationResponse,
   ConsultationStatusEnum,
   CreateConsultationData,
-  UpdateConsultationData,
-  ConsultationResponse,
-  ConsultationListResponse,
-  GeneralConsultation,
   DrugAddictionConsultation,
-  MinorConsultation
+  GeneralConsultation,
+  MinorConsultation,
+  UpdateConsultationData
 } from '@/types/consultation';
+import { ConsultationSummaryData } from '@/types/therapy';
+import { getAIPredictionsForConsultation } from './mockAIPredictions';
+import { getClientById, getTherapistName } from './mockData';
 
 // Simulated latency helper
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -202,7 +205,72 @@ const createMockConsultations = (): Consultation[] => {
       attentionDetails: 'Sangat sulit mempertahankan perhatian pada tugas atau aktivitas, mudah teralihkan oleh stimulus eksternal',
       behavioralConcerns: true,
       behavioralDetails: 'Hiperaktif, impulsif, sulit menunggu giliran, sering menyela pembicaraan orang lain'
-    } as MinorConsultation
+    } as MinorConsultation,
+
+    // General consultation for CLT003 - Completed
+    {
+      id: 'consultation-004',
+      clientId: 'CLT003',
+      therapistId: 'multi-001',
+      formType: ConsultationFormTypeEnum.General,
+      status: ConsultationStatusEnum.Completed,
+      createdAt: new Date('2024-01-15T14:00:00Z').toISOString(),
+      updatedAt: new Date('2024-01-29T15:30:00Z').toISOString(),
+      sessionDate: new Date('2024-01-15T14:00:00Z').toISOString(),
+      sessionDuration: 90,
+      consultationNotes: 'Konsultasi komprehensif untuk mengatasi insomnia kronis dan stress kerja sebagai dokter spesialis jantung. Klien menunjukkan respons positif terhadap terapi hipnosis dan CBT-I.',
+      
+      // Client background
+      previousTherapyExperience: false,
+      currentMedications: true,
+      currentMedicationsDetails: 'Zolpidem 10mg PRN untuk insomnia (maksimal 2x seminggu), Melatonin 3mg setiap malam, Vitamin D3 1000IU',
+      
+      // Presenting concerns
+      primaryConcern: 'Mengalami insomnia kronis selama 2 tahun dengan pola tidur yang sangat buruk. Sulit tertidur, sering terbangun tengah malam, dan bangun terlalu dini. Kondisi ini mempengaruhi konsentrasi saat operasi dan mengancam keselamatan pasien.',
+      secondaryConcerns: [
+        'Kelelahan ekstrem di siang hari', 
+        'Mudah irritable dengan staf dan keluarga', 
+        'Penurunan performa kerja sebagai dokter', 
+        'Ketergantungan pada obat tidur',
+        'Kecemasan terkait keselamatan pasien'
+      ],
+      symptomSeverity: 5 as const,
+      symptomDuration: '2 tahun',
+      
+      // Treatment goals
+      treatmentGoals: [
+        'Mencapai pola tidur yang konsisten dan berkualitas (7-8 jam per malam)',
+        'Mengurangi ketergantungan pada obat tidur secara bertahap',
+        'Meningkatkan kualitas konsentrasi dan performa kerja',
+        'Mengembangkan teknik manajemen stress yang efektif',
+        'Memperbaiki hubungan dengan keluarga yang terganggu akibat irritability'
+      ],
+      clientExpectations: 'Berharap bisa tidur normal tanpa obat dan kembali menjalankan tugas sebagai dokter dengan optimal tanpa risiko keselamatan pasien',
+      
+      // Assessment results
+      initialAssessment: 'Diagnosis: Chronic Insomnia Disorder dengan secondary impact pada occupational functioning. Insomnia Severity Index: 18 (severe). Klien menunjukkan pola maladaptive sleep behaviors dan tingkat stress kerja yang tinggi sebagai dokter spesialis jantung. Tidak ada indikasi gangguan mood mayor, namun terdapat gejala anxiety terkait performa kerja.',
+      recommendedTreatmentPlan: 'Cognitive Behavioral Therapy for Insomnia (CBT-I) dikombinasikan dengan teknik hipnosis untuk relaksasi. Sleep hygiene education, stimulus control therapy, dan sleep restriction therapy. Koordinasi dengan dokter untuk tapering off medication secara bertahap. Stress management khusus untuk profesi medis.',
+      
+      // General consultation specific fields
+      currentLifeStressors: [
+        'Beban kerja sebagai dokter spesialis jantung dengan jadwal operasi yang padat',
+        'Tanggung jawab hidup-mati pasien yang sangat tinggi',
+        'Pressure dari rumah sakit untuk menangani kasus-kasus kompleks',
+        'Kurangnya waktu untuk keluarga dan self-care',
+        'Kompetisi dengan sesama dokter spesialis'
+      ],
+      supportSystem: 'Istri yang sangat supportive namun khawatir dengan kondisi suami. Keluarga besar cukup mendukung namun tidak sepenuhnya memahami tekanan profesi medis. Rekan kerja sesama dokter mengerti kondisi namun terbatas dalam memberikan dukungan emosional.',
+      workLifeBalance: 1 as const,
+      
+      familyMentalHealthHistory: false,
+      familyMentalHealthDetails: 'Tidak ada riwayat gangguan mental yang signifikan dalam keluarga',
+      previousMentalHealthDiagnosis: false,
+      
+      sleepPatterns: 'Waktu tidur tidak konsisten (antara 23:00-02:00), sulit tertidur (>60 menit), terbangun 3-4x per malam, bangun final jam 04:00-05:00, total waktu tidur 4-5 jam. Sering microsleep saat istirahat di rumah sakit. Kualitas tidur sangat buruk dengan banyak mimpi yang mengganggu terkait kasus pasien.',
+      exerciseFrequency: 'Sangat jarang, hanya 1x per bulan bermain golf. Dahulu rutin gym 3x seminggu sebelum jadwal kerja menjadi sangat padat.',
+      dietaryHabits: 'Pola makan tidak teratur, sering skip meal karena operasi, konsumsi kafein berlebihan (6-8 cangkir kopi/hari), makan malam terlalu larut. Sering makan fast food di rumah sakit.',
+      socialConnections: 'Sangat terbatas karena jadwal kerja. Jarang bertemu teman di luar pekerjaan. Hubungan dengan kolega baik namun sebatas profesional. Waktu dengan keluarga sangat minimal.'
+    } as GeneralConsultation
   ];
 };
 
@@ -564,6 +632,86 @@ export const ConsultationAPI = {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to reset mock data'
+      };
+    }
+  },
+
+  // Get consultation summary with AI predictions
+  async getConsultationSummary(consultationId: string): Promise<ConsultationResponse & { data?: ConsultationSummaryData }> {
+    await delay(250 + Math.random() * 200);
+
+    try {
+      const consultation = consultationStorage.get(consultationId);
+      
+      if (!consultation) {
+        return {
+          success: false,
+          message: 'Consultation not found'
+        };
+      }
+
+      // Get client data
+      const client = getClientById(consultation.clientId);
+      if (!client) {
+        return {
+          success: false,
+          message: 'Client data not found'
+        };
+      }
+
+      // Get therapist name
+      const therapistName = getTherapistName(consultation.therapistId);
+
+      // Get AI predictions
+      const aiPredictions = getAIPredictionsForConsultation(consultationId);
+
+      // Calculate age from birth date
+      const calculateAge = (birthDate: string): number => {
+        if (!birthDate) return 0;
+        const today = new Date();
+        const birth = new Date(birthDate);
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+          age--;
+        }
+        return age;
+      };
+
+      const summaryData: ConsultationSummaryData = {
+        consultation: {
+          id: consultation.id,
+          sessionDate: consultation.sessionDate,
+          sessionDuration: consultation.sessionDuration,
+          primaryConcern: consultation.primaryConcern,
+          secondaryConcerns: consultation.secondaryConcerns,
+          symptomSeverity: consultation.symptomSeverity,
+          symptomDuration: consultation.symptomDuration,
+          treatmentGoals: consultation.treatmentGoals,
+          initialAssessment: consultation.initialAssessment,
+          consultationNotes: consultation.consultationNotes,
+        },
+        aiPredictions,
+        client: {
+          id: client.id,
+          fullName: client.fullName || client.name,
+          age: calculateAge(client.birthDate || ''),
+        },
+        therapist: {
+          id: consultation.therapistId,
+          fullName: therapistName,
+        },
+      };
+
+      return {
+        success: true,
+        data: summaryData,
+        message: 'Consultation summary retrieved successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to get consultation summary'
       };
     }
   }

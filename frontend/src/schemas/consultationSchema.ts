@@ -1,15 +1,62 @@
 import { z } from 'zod';
 import { ConsultationFormTypeEnum, ConsultationStatusEnum } from '@/types/consultation';
 
+// Emotion scale schema
+const emotionScaleSchema = z.object({
+  happiness: z.number().min(0).max(10).default(0),
+  sadness: z.number().min(0).max(10).default(0),
+  anger: z.number().min(0).max(10).default(0),
+  fear: z.number().min(0).max(10).default(0),
+  anxiety: z.number().min(0).max(10).default(0),
+  worry: z.number().min(0).max(10).default(0),
+  stress: z.number().min(0).max(10).default(0),
+  depression: z.number().min(0).max(10).default(0),
+  frustration: z.number().min(0).max(10).default(0),
+  disappointment: z.number().min(0).max(10).default(0),
+  guilt: z.number().min(0).max(10).default(0),
+  shame: z.number().min(0).max(10).default(0),
+  envy: z.number().min(0).max(10).default(0),
+  jealousy: z.number().min(0).max(10).default(0),
+  hatred: z.number().min(0).max(10).default(0),
+  loneliness: z.number().min(0).max(10).default(0),
+  calmness: z.number().min(0).max(10).default(0),
+  confidence: z.number().min(0).max(10).default(0),
+  optimism: z.number().min(0).max(10).default(0),
+  despair: z.number().min(0).max(10).default(0),
+});
+
+// Substance history schema
+const substanceHistorySchema = z.object({
+  alcohol: z.boolean().default(false),
+  marijuana: z.boolean().default(false),
+  methamphetamine: z.boolean().default(false),
+  cocaine: z.boolean().default(false),
+  heroin: z.boolean().default(false),
+  ecstasy: z.boolean().default(false),
+  inhalants: z.boolean().default(false),
+  prescription_drugs: z.boolean().default(false),
+  other_substances: z.boolean().default(false),
+});
+
+// Consultation reasons schema for minors
+const consultationReasonsSchema = z.object({
+  learning_difficulties: z.boolean().default(false),
+  emotional_problems: z.boolean().default(false),
+  social_problems: z.boolean().default(false),
+  behavioral_problems: z.boolean().default(false),
+  trauma: z.boolean().default(false),
+  sleep_eating_disorders: z.boolean().default(false),
+});
+
 // Base consultation schema with common fields
 const baseConsultationSchema = z.object({
   clientId: z.string().min(1, 'Client ID wajib diisi'),
   therapistId: z.string().min(1, 'Therapist ID wajib diisi'),
-  formType: z.nativeEnum(ConsultationFormTypeEnum, {
-    invalid_type_error: 'Jenis konsultasi tidak valid',
-  }),
+  formTypes: z.array(z.nativeEnum(ConsultationFormTypeEnum, {
+    errorMap: () => ({ message: 'Jenis konsultasi tidak valid' }),
+  })).min(1, 'Minimal satu jenis konsultasi harus dipilih'),
   status: z.nativeEnum(ConsultationStatusEnum, {
-    invalid_type_error: 'Status konsultasi tidak valid',
+    errorMap: () => ({ message: 'Status konsultasi tidak valid' }),
   }).default(ConsultationStatusEnum.Draft),
   
   // Session information
@@ -21,13 +68,23 @@ const baseConsultationSchema = z.object({
   
   // Client background information
   previousTherapyExperience: z.boolean({
-    invalid_type_error: 'Pilih apakah klien pernah terapi sebelumnya',
+    errorMap: () => ({ message: 'Pilih apakah klien pernah terapi sebelumnya' }),
   }),
   previousTherapyDetails: z.string().optional(),
   currentMedications: z.boolean({
-    invalid_type_error: 'Pilih apakah klien sedang mengonsumsi obat',
+    errorMap: () => ({ message: 'Pilih apakah klien sedang mengonsumsi obat' }),
   }),
   currentMedicationsDetails: z.string().optional(),
+  
+  // Additional psychological history
+  previousPsychologicalDiagnosis: z.boolean(),
+  previousPsychologicalDiagnosisDetails: z.string().optional(),
+  significantPhysicalIllness: z.boolean(),
+  significantPhysicalIllnessDetails: z.string().optional(),
+  traumaticExperience: z.boolean(),
+  traumaticExperienceDetails: z.string().optional(),
+  familyPsychologicalHistory: z.boolean(),
+  familyPsychologicalHistoryDetails: z.string().optional(),
   
   // Presenting concerns
   primaryConcern: z.string().min(10, 'Keluhan utama minimal 10 karakter'),
@@ -37,6 +94,9 @@ const baseConsultationSchema = z.object({
     .max(5, 'Tingkat keparahan maksimal 5') as z.ZodType<1 | 2 | 3 | 4 | 5>,
   symptomDuration: z.string().min(1, 'Durasi gejala wajib diisi'),
   
+  // Emotion scale
+  emotionScale: emotionScaleSchema.optional(),
+  
   // Goals and expectations
   treatmentGoals: z.array(z.string().min(1, 'Tujuan terapi tidak boleh kosong'))
     .min(1, 'Minimal satu tujuan terapi wajib diisi'),
@@ -45,6 +105,14 @@ const baseConsultationSchema = z.object({
   // Assessment results
   initialAssessment: z.string().optional(),
   recommendedTreatmentPlan: z.string().optional(),
+  
+  // Consent and signature
+  consentAgreement: z.boolean().default(false),
+  clientSignatureName: z.string().optional(),
+  clientSignatureDate: z.string().optional(),
+  therapistName: z.string().optional(),
+  registrationDate: z.string().optional(),
+  initialRecommendation: z.array(z.string()).optional(),
 }).refine((data) => {
   // If previous therapy experience is true, details must be provided
   if (data.previousTherapyExperience && !data.previousTherapyDetails?.trim()) {
@@ -54,10 +122,26 @@ const baseConsultationSchema = z.object({
   if (data.currentMedications && !data.currentMedicationsDetails?.trim()) {
     return false;
   }
+  // If previous psychological diagnosis is true, details must be provided
+  if (data.previousPsychologicalDiagnosis && !data.previousPsychologicalDiagnosisDetails?.trim()) {
+    return false;
+  }
+  // If significant physical illness is true, details must be provided
+  if (data.significantPhysicalIllness && !data.significantPhysicalIllnessDetails?.trim()) {
+    return false;
+  }
+  // If traumatic experience is true, details must be provided
+  if (data.traumaticExperience && !data.traumaticExperienceDetails?.trim()) {
+    return false;
+  }
+  // If family psychological history is true, details must be provided
+  if (data.familyPsychologicalHistory && !data.familyPsychologicalHistoryDetails?.trim()) {
+    return false;
+  }
   return true;
 }, {
   message: 'Detail wajib diisi jika jawaban "Ya" dipilih',
-  path: ['previousTherapyDetails', 'currentMedicationsDetails'],
+  path: ['previousTherapyDetails', 'currentMedicationsDetails', 'previousPsychologicalDiagnosisDetails', 'significantPhysicalIllnessDetails', 'traumaticExperienceDetails', 'familyPsychologicalHistoryDetails'],
 });
 
 // General consultation schema
@@ -74,11 +158,11 @@ export const generalConsultationSchema = baseConsultationSchema.extend({
   
   // Mental health history
   familyMentalHealthHistory: z.boolean({
-    invalid_type_error: 'Pilih apakah ada riwayat gangguan mental dalam keluarga',
+    errorMap: () => ({ message: 'Pilih apakah ada riwayat gangguan mental dalam keluarga' }),
   }),
   familyMentalHealthDetails: z.string().optional(),
   previousMentalHealthDiagnosis: z.boolean({
-    invalid_type_error: 'Pilih apakah pernah didiagnosis gangguan mental',
+    errorMap: () => ({ message: 'Pilih apakah pernah didiagnosis gangguan mental' }),
   }),
   previousMentalHealthDiagnosisDetails: z.string().optional(),
   
@@ -107,6 +191,8 @@ export const drugAddictionConsultationSchema = baseConsultationSchema.extend({
   formType: z.literal(ConsultationFormTypeEnum.DrugAddiction),
   
   // Substance use history
+  substanceHistory: substanceHistorySchema.optional(),
+  otherSubstancesDetails: z.string().optional(),
   primarySubstance: z.string().min(2, 'Zat utama minimal 2 karakter'),
   additionalSubstances: z.array(z.string()).default([]),
   ageOfFirstUse: z.number()
@@ -129,7 +215,7 @@ export const drugAddictionConsultationSchema = baseConsultationSchema.extend({
   
   // Social and environmental factors
   socialCircleSubstanceUse: z.boolean({
-    invalid_type_error: 'Pilih apakah lingkungan sosial menggunakan zat',
+    errorMap: () => ({ message: 'Pilih apakah lingkungan sosial menggunakan zat' }),
   }),
   triggerSituations: z.array(z.string().min(1, 'Situasi pemicu tidak boleh kosong'))
     .min(0, 'Minimal satu situasi pemicu'),
@@ -138,17 +224,22 @@ export const drugAddictionConsultationSchema = baseConsultationSchema.extend({
   
   // Recovery history
   previousTreatmentPrograms: z.boolean({
-    invalid_type_error: 'Pilih apakah pernah mengikuti program pemulihan',
+    errorMap: () => ({ message: 'Pilih apakah pernah mengikuti program pemulihan' }),
   }),
   previousTreatmentDetails: z.string().optional(),
   currentSobrietyPeriod: z.string().optional(),
   
   // Legal and financial impact
   legalIssuesRelated: z.boolean({
-    invalid_type_error: 'Pilih apakah ada masalah hukum terkait',
+    errorMap: () => ({ message: 'Pilih apakah ada masalah hukum terkait' }),
   }),
   legalIssuesDetails: z.string().optional(),
   financialImpact: z.string().min(5, 'Dampak finansial minimal 5 karakter'),
+  
+  // Recovery goals and motivation
+  desireToQuit: z.string().optional(),
+  recoveryGoals: z.array(z.string()).optional(),
+  willingForFollowUp: z.boolean().optional(),
 }).refine((data) => {
   // If previous treatment programs is true, details must be provided
   if (data.previousTreatmentPrograms && !data.previousTreatmentDetails?.trim()) {
@@ -169,53 +260,51 @@ export const minorConsultationSchema = baseConsultationSchema.extend({
   formType: z.literal(ConsultationFormTypeEnum.Minor),
   
   // Guardian information
-  guardianPresent: z.boolean({
-    invalid_type_error: 'Pilih apakah wali hadir dalam sesi',
-  }),
-  guardianRelationship: z.string().min(3, 'Hubungan dengan wali minimal 3 karakter'),
-  guardianConcerns: z.string().min(10, 'Kekhawatiran wali minimal 10 karakter'),
+  guardianName: z.string().optional(),
+  guardianRelationship: z.string().optional(),
+  guardianPhone: z.string().optional(),
+  guardianOccupation: z.string().optional(),
+  parentalMaritalStatus: z.string().optional(),
+  legalCustody: z.boolean().optional(),
+  guardianAddress: z.string().optional(),
   
-  // School and academic information
-  currentGradeLevel: z.string().min(1, 'Tingkat kelas wajib diisi'),
+  // Guardian signature
+  guardianSignatureName: z.string().optional(),
+  guardianSignatureDate: z.string().optional(),
+  clientCanSign: z.boolean().optional(),
+  
+  // Consultation reasons for minors
+  consultationReasons: consultationReasonsSchema.optional(),
+  otherConsultationReason: z.string().optional(),
+  problemOnset: z.string().optional(),
+  previousPsychologicalHelp: z.boolean().optional(),
+  previousPsychologicalHelpDetails: z.string().optional(),
+  
+  // School information
+  currentGradeLevel: z.string().optional(),
   academicPerformance: z.number()
     .min(1, 'Performa akademik minimal 1')
     .max(5, 'Performa akademik maksimal 5') as z.ZodType<1 | 2 | 3 | 4 | 5>,
-  schoolBehaviorIssues: z.boolean({
-    invalid_type_error: 'Pilih apakah ada masalah perilaku di sekolah',
-  }),
+  schoolBehaviorIssues: z.boolean().optional(),
   schoolBehaviorDetails: z.string().optional(),
   teacherConcerns: z.string().optional(),
-  
-  // Family dynamics
-  familyStructure: z.string().min(5, 'Struktur keluarga minimal 5 karakter'),
-  siblingRelationships: z.string().min(5, 'Hubungan dengan saudara minimal 5 karakter'),
-  parentalConcerns: z.array(z.string().min(1, 'Kekhawatiran orangtua tidak boleh kosong'))
-    .min(1, 'Minimal satu kekhawatiran orangtua wajib diisi'),
-  familyConflicts: z.boolean({
-    invalid_type_error: 'Pilih apakah ada konflik dalam keluarga',
-  }),
-  familyConflictsDetails: z.string().optional(),
-  
-  // Social and peer relationships
-  peerRelationships: z.string().min(5, 'Hubungan dengan teman sebaya minimal 5 karakter'),
-  socialDifficulties: z.boolean({
-    invalid_type_error: 'Pilih apakah ada kesulitan sosial',
-  }),
-  socialDifficultiesDetails: z.string().optional(),
-  bullyingHistory: z.boolean({
-    invalid_type_error: 'Pilih apakah ada riwayat bullying',
-  }),
+  bullyingHistory: z.boolean().optional(),
   bullyingDetails: z.string().optional(),
   
-  // Developmental considerations
-  developmentalMilestones: z.string().min(10, 'Pencapaian perkembangan minimal 10 karakter'),
-  attentionConcerns: z.boolean({
-    invalid_type_error: 'Pilih apakah ada masalah perhatian',
-  }),
+  // Family and social
+  familyStructure: z.string().optional(),
+  siblingRelationships: z.string().optional(),
+  peerRelationships: z.string().optional(),
+  familyConflicts: z.boolean().optional(),
+  familyConflictsDetails: z.string().optional(),
+  socialDifficulties: z.boolean().optional(),
+  socialDifficultiesDetails: z.string().optional(),
+  
+  // Developmental assessment
+  developmentalMilestones: z.string().optional(),
+  attentionConcerns: z.boolean().optional(),
   attentionDetails: z.string().optional(),
-  behavioralConcerns: z.boolean({
-    invalid_type_error: 'Pilih apakah ada masalah perilaku',
-  }),
+  behavioralConcerns: z.boolean().optional(),
   behavioralDetails: z.string().optional(),
 }).refine((data) => {
   // If school behavior issues is true, details must be provided

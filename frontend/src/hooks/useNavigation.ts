@@ -4,9 +4,9 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from './useAuth';
 import { useNavigationStore } from '@/store/navigation';
 import { 
-  portalBreadcrumbMapping, 
-  getNavigationItemsForUser,
+  getNavigationItemsForUser, 
   getPrimaryPortalConfig,
+  portalBreadcrumbMapping,
   roleDisplayInfo 
 } from '@/lib/navigation-config';
 import { BreadcrumbItem, NavigationItem, RoleDisplayInfo } from '@/types/navigation';
