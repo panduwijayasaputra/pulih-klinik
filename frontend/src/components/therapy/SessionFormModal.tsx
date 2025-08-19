@@ -1,380 +1,490 @@
 'use client';
 
-import * as React from 'react';
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { FormModal } from '@/components/ui/form-modal';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SimpleMultiSelect } from '@/components/ui/simple-multi-select';
-import { useToast } from '@/components/ui/toast';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { X, Plus, Calendar, Clock, Target, BookOpen, Save, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { RESPONSIVE_MODAL, responsiveUtils } from '@/lib/responsive-utils';
+import { sessionValidationSchemas } from '@/lib/validation';
+
 import {
-  SessionTypeEnum,
-  SessionTypeLabels,
-  CreateSessionData,
-  UpdateSessionData,
   Session,
+  SessionStatusEnum,
+  SessionTypeEnum,
+  SessionStatusLabels,
+  SessionTypeLabels,
 } from '@/types/therapy';
-import { sessionFormDataSchema } from '@/schemas/therapySchema';
-import {
-  ClockIcon,
-  CalendarIcon,
-  DocumentTextIcon,
-  FlagIcon as TargetIcon,
-  WrenchScrewdriverIcon,
-} from '@heroicons/react/24/outline';
 
 interface SessionFormModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateSessionData) => Promise<void>;
-  session?: Session; // For editing existing session
-  clientId: string;
-  therapyId: string;
-  therapistId: string;
-  nextSessionNumber: number;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: SessionFormData) => Promise<void>;
+  session?: Session;
   isLoading?: boolean;
+  clientId?: string;
+  therapyId?: string;
 }
 
-type SessionFormData = {
+interface SessionFormData {
   title: string;
   description?: string;
   type: SessionTypeEnum;
   scheduledDate?: string;
   duration?: number;
   objectives: string[];
-  techniques: string[];
+  techniques?: string[];
   notes?: string;
-};
+}
 
-const defaultObjectives = [
-  'Mengurangi tingkat kecemasan klien',
-  'Mengajarkan teknik relaksasi',
-  'Membangun coping mechanism yang sehat',
-  'Meningkatkan self-awareness klien',
-  'Mengidentifikasi pola pikir negatif',
-  'Mengembangkan strategi problem-solving',
-  'Memperbaiki pola tidur',
-  'Mengatasi trauma masa lalu',
-  'Meningkatkan kepercayaan diri',
-  'Membangun hubungan interpersonal yang sehat',
-];
-
-const defaultTechniques = [
-  'Teknik pernapasan dalam',
-  'Progressive muscle relaxation',
-  'Cognitive restructuring',
-  'Mindfulness meditation',
-  'Grounding techniques',
-  'Exposure therapy',
-  'Behavioral activation',
-  'Hypnotherapy',
-  'EMDR (Eye Movement Desensitization)',
-  'Visualization techniques',
-  'Journaling',
-  'Role playing',
-  'Systematic desensitization',
-  'Acceptance and commitment therapy',
-  'Dialectical behavior therapy skills',
-];
+const sessionFormSchema = sessionValidationSchemas.createSession;
 
 export const SessionFormModal: React.FC<SessionFormModalProps> = ({
-  open,
-  onOpenChange,
+  isOpen,
+  onClose,
   onSubmit,
   session,
+  isLoading = false,
   clientId,
   therapyId,
-  therapistId,
-  nextSessionNumber,
-  isLoading = false,
 }) => {
-  const { addToast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [objectives, setObjectives] = useState<string[]>(session?.objectives || []);
+  const [newObjective, setNewObjective] = useState('');
+  const [techniques, setTechniques] = useState<string[]>(session?.techniques || []);
+  const [newTechnique, setNewTechnique] = useState('');
 
-  const isEditing = !!session;
-
-  const form = useForm<SessionFormData>({
-    resolver: zodResolver(sessionFormDataSchema),
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+    reset,
+    watch,
+  } = useForm<SessionFormData>({
+    resolver: zodResolver(sessionFormSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      type: SessionTypeEnum.Regular,
-      scheduledDate: '',
-      duration: 60,
-      objectives: [],
-      techniques: [],
-      notes: '',
+      title: session?.title || '',
+      description: session?.description || '',
+      type: session?.type || SessionTypeEnum.Regular,
+      scheduledDate: session?.scheduledDate ? new Date(session.scheduledDate).toISOString().slice(0, 16) : '',
+      duration: session?.duration || 60,
+      objectives: session?.objectives || [],
+      techniques: session?.techniques || [],
+      notes: session?.notes || '',
     },
   });
 
-  // Reset form when modal opens/closes or session changes
+  const watchedValues = watch();
+
+  // Reset form when session changes
   useEffect(() => {
-    if (open) {
-      if (session) {
-        // Edit mode - populate form with session data
-        form.reset({
-          title: session.title,
-          description: session.description || '',
-          type: session.type,
-          scheduledDate: session.scheduledDate 
-            ? new Date(session.scheduledDate).toISOString().slice(0, 16)
-            : '',
-          duration: session.duration || 60,
-          objectives: session.objectives || [],
-          techniques: session.techniques || [],
-          notes: session.notes || '',
-        });
-      } else {
-        // Create mode - generate default title based on session number
-        const defaultTitle = nextSessionNumber === 1 
-          ? 'Sesi Awal - Assessment dan Perencanaan Terapi'
-          : `Sesi ${nextSessionNumber} - Lanjutan Terapi`;
-          
-        form.reset({
-          title: defaultTitle,
-          description: '',
-          type: nextSessionNumber === 1 ? SessionTypeEnum.Initial : SessionTypeEnum.Regular,
-          scheduledDate: '',
-          duration: 60,
-          objectives: [],
-          techniques: [],
-          notes: '',
-        });
-      }
+    if (session) {
+      reset({
+        title: session.title,
+        description: session.description,
+        type: session.type,
+        scheduledDate: session.scheduledDate ? new Date(session.scheduledDate).toISOString().slice(0, 16) : '',
+        duration: session.duration,
+        objectives: session.objectives || [],
+        techniques: session.techniques || [],
+        notes: session.notes,
+      });
+      setObjectives(session.objectives || []);
+      setTechniques(session.techniques || []);
+    } else {
+      reset({
+        title: '',
+        description: '',
+        type: SessionTypeEnum.Regular,
+        scheduledDate: '',
+        duration: 60,
+        objectives: [],
+        techniques: [],
+        notes: '',
+      });
+      setObjectives([]);
+      setTechniques([]);
     }
-  }, [open, session, nextSessionNumber, form]);
+  }, [session, reset]);
 
-  const handleSubmit = async (data: SessionFormData) => {
-    setIsSubmitting(true);
-    
-    try {
-      // Convert form data to create/update data
-      const submitData: CreateSessionData = {
-        ...data,
-        clientId,
-        therapyId,
-        therapistId,
-        // Convert scheduled date to ISO string if provided
-        scheduledDate: data.scheduledDate 
-          ? new Date(data.scheduledDate).toISOString()
-          : undefined,
-      };
+  const handleFormSubmit = async (data: SessionFormData) => {
+    const formData = {
+      ...data,
+      objectives,
+      techniques,
+    };
+    await onSubmit(formData);
+  };
 
-      await onSubmit(submitData);
-      
-      addToast({
-        type: 'success',
-        title: 'Berhasil',
-        message: isEditing ? 'Sesi berhasil diperbarui' : 'Sesi berhasil dibuat'
-      });
-
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Form submission error:', error);
-      addToast({
-        type: 'error',
-        title: 'Gagal',
-        message: error instanceof Error ? error.message : 'Terjadi kesalahan saat menyimpan sesi'
-      });
-    } finally {
-      setIsSubmitting(false);
+  const addObjective = () => {
+    if (newObjective.trim() && objectives.length < 10) {
+      setObjectives([...objectives, newObjective.trim()]);
+      setNewObjective('');
     }
   };
 
-  const handleCancel = () => {
-    form.reset();
-    onOpenChange(false);
+  const removeObjective = (index: number) => {
+    setObjectives(objectives.filter((_, i) => i !== index));
   };
 
-  // Get current form values for multi-select components
-  const watchedObjectives = form.watch('objectives') || [];
-  const watchedTechniques = form.watch('techniques') || [];
+  const addTechnique = () => {
+    if (newTechnique.trim() && techniques.length < 15) {
+      setTechniques([...techniques, newTechnique.trim()]);
+      setNewTechnique('');
+    }
+  };
+
+  const removeTechnique = (index: number) => {
+    setTechniques(techniques.filter((_, i) => i !== index));
+  };
+
+  const handleClose = () => {
+    if (!isLoading) {
+      onClose();
+    }
+  };
 
   return (
-    <FormModal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEditing ? 'Edit Sesi Terapi' : 'Buat Sesi Terapi Baru'}
-      description={
-        isEditing 
-          ? 'Perbarui informasi sesi terapi'
-          : `Buat sesi terapi ke-${nextSessionNumber} untuk klien ini`
-      }
-      size="2xl"
-    >
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Basic Information */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700 border-b pb-2">
-            <DocumentTextIcon className="w-4 h-4" />
-            Informasi Dasar
-          </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className={cn(RESPONSIVE_MODAL['modal-lg'], 'max-h-[90vh] overflow-y-auto')}>
+        <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
+          <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+            <BookOpen className="w-5 h-5" />
+            {session ? 'Edit Sesi Terapi' : 'Buat Sesi Terapi Baru'}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-gray-600">
+            {session 
+              ? 'Perbarui informasi sesi terapi untuk klien ini.'
+              : 'Buat sesi terapi baru dengan informasi lengkap.'
+            }
+          </DialogDescription>
+        </DialogHeader>
 
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Judul Sesi *</Label>
-            <Input
-              id="title"
-              {...form.register('title')}
-              placeholder="Masukkan judul sesi..."
-              error={form.formState.errors.title?.message}
-            />
-          </div>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              Informasi Dasar
+            </h3>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Deskripsi</Label>
-            <Textarea
-              id="description"
-              {...form.register('description')}
-              placeholder="Deskripsi singkat tentang sesi ini..."
-              rows={3}
-              error={form.formState.errors.description?.message}
-            />
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-medium">
+                  Judul Sesi *
+                </Label>
+                <Controller
+                  name="title"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="title"
+                      placeholder="Masukkan judul sesi"
+                      className="min-h-[44px]"
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+                {errors.title && (
+                  <p className="text-xs text-red-600">{errors.title.message}</p>
+                )}
+              </div>
 
-          {/* Type and Duration */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="type" className="text-sm font-medium">
+                  Jenis Sesi *
+                </Label>
+                <Controller
+                  name="type"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange} disabled={isLoading}>
+                      <SelectTrigger className="min-h-[44px]">
+                        <SelectValue placeholder="Pilih jenis sesi" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(SessionTypeEnum).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {SessionTypeLabels[type]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.type && (
+                  <p className="text-xs text-red-600">{errors.type.message}</p>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="type">Tipe Sesi *</Label>
-              <Select
-                value={form.watch('type')}
-                onValueChange={(value: SessionTypeEnum) => form.setValue('type', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih tipe sesi" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(SessionTypeEnum).map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {SessionTypeLabels[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.type && (
-                <p className="text-sm text-red-600">{form.formState.errors.type.message}</p>
+              <Label htmlFor="description" className="text-sm font-medium">
+                Deskripsi
+              </Label>
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <Textarea
+                    {...field}
+                    id="description"
+                    placeholder="Deskripsi singkat tentang sesi ini"
+                    className="min-h-[80px] resize-none"
+                    disabled={isLoading}
+                  />
+                )}
+              />
+              {errors.description && (
+                <p className="text-xs text-red-600">{errors.description.message}</p>
               )}
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="duration" className="flex items-center gap-1">
-                <ClockIcon className="w-4 h-4" />
-                Durasi (menit)
-              </Label>
-              <Input
-                id="duration"
-                type="number"
-                {...form.register('duration', { valueAsNumber: true })}
-                placeholder="60"
-                min={15}
-                max={240}
-                error={form.formState.errors.duration?.message}
-              />
+          {/* Schedule Information */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Jadwal & Durasi
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="scheduledDate" className="text-sm font-medium">
+                  Tanggal & Waktu
+                </Label>
+                <Controller
+                  name="scheduledDate"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="scheduledDate"
+                      type="datetime-local"
+                      className="min-h-[44px]"
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+                {errors.scheduledDate && (
+                  <p className="text-xs text-red-600">{errors.scheduledDate.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="duration" className="text-sm font-medium">
+                  Durasi (menit)
+                </Label>
+                <Controller
+                  name="duration"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="duration"
+                      type="number"
+                      min="15"
+                      max="240"
+                      placeholder="60"
+                      className="min-h-[44px]"
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+                {errors.duration && (
+                  <p className="text-xs text-red-600">{errors.duration.message}</p>
+                )}
+              </div>
             </div>
-          </div>
-
-          {/* Scheduled Date */}
-          <div className="space-y-2">
-            <Label htmlFor="scheduledDate" className="flex items-center gap-1">
-              <CalendarIcon className="w-4 h-4" />
-              Tanggal & Waktu Dijadwalkan
-            </Label>
-            <Input
-              id="scheduledDate"
-              type="datetime-local"
-              {...form.register('scheduledDate')}
-              error={form.formState.errors.scheduledDate?.message}
-            />
-          </div>
-        </div>
-
-        {/* Session Content */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700 border-b pb-2">
-            <TargetIcon className="w-4 h-4" />
-            Konten Sesi
           </div>
 
           {/* Objectives */}
-          <div className="space-y-2">
-            <Label>Tujuan Sesi *</Label>
-            <p className="text-sm text-gray-600">
-              Pilih atau tambahkan tujuan yang ingin dicapai dalam sesi ini
-            </p>
-            <SimpleMultiSelect
-              options={defaultObjectives}
-              values={watchedObjectives}
-              onChange={(values) => form.setValue('objectives', values)}
-              placeholder="Pilih tujuan sesi..."
-              addNewLabel="Tambah tujuan baru"
-              maxSelections={10}
-            />
-            {form.formState.errors.objectives && (
-              <p className="text-sm text-red-600">{form.formState.errors.objectives.message}</p>
-            )}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              Tujuan Sesi *
+            </h3>
+
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  value={newObjective}
+                  onChange={(e) => setNewObjective(e.target.value)}
+                  placeholder="Tambahkan tujuan sesi"
+                  className="flex-1 min-h-[44px]"
+                  disabled={isLoading || objectives.length >= 10}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addObjective())}
+                />
+                <Button
+                  type="button"
+                  onClick={addObjective}
+                  disabled={!newObjective.trim() || objectives.length >= 10 || isLoading}
+                  className="min-h-[44px] min-w-[44px] p-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {objectives.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {objectives.map((objective, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="text-xs flex items-center gap-1"
+                    >
+                      {objective}
+                      <button
+                        type="button"
+                        onClick={() => removeObjective(index)}
+                        className="ml-1 hover:text-red-600"
+                        disabled={isLoading}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {objectives.length === 0 && (
+                <p className="text-xs text-gray-500">Belum ada tujuan yang ditambahkan</p>
+              )}
+
+              {objectives.length >= 10 && (
+                <p className="text-xs text-orange-600">Maksimal 10 tujuan sesi</p>
+              )}
+            </div>
           </div>
 
           {/* Techniques */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1">
-              <WrenchScrewdriverIcon className="w-4 h-4" />
-              Teknik yang Akan Digunakan
-            </Label>
-            <p className="text-sm text-gray-600">
-              Pilih teknik terapi yang akan diterapkan
-            </p>
-            <SimpleMultiSelect
-              options={defaultTechniques}
-              values={watchedTechniques}
-              onChange={(values) => form.setValue('techniques', values)}
-              placeholder="Pilih teknik terapi..."
-              addNewLabel="Tambah teknik baru"
-              maxSelections={15}
-            />
-            {form.formState.errors.techniques && (
-              <p className="text-sm text-red-600">{form.formState.errors.techniques.message}</p>
-            )}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Teknik Terapi
+            </h3>
+
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  value={newTechnique}
+                  onChange={(e) => setNewTechnique(e.target.value)}
+                  placeholder="Tambahkan teknik terapi"
+                  className="flex-1 min-h-[44px]"
+                  disabled={isLoading || techniques.length >= 15}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTechnique())}
+                />
+                <Button
+                  type="button"
+                  onClick={addTechnique}
+                  disabled={!newTechnique.trim() || techniques.length >= 15 || isLoading}
+                  className="min-h-[44px] min-w-[44px] p-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {techniques.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {techniques.map((technique, index) => (
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="text-xs flex items-center gap-1"
+                    >
+                      {technique}
+                      <button
+                        type="button"
+                        onClick={() => removeTechnique(index)}
+                        className="ml-1 hover:text-red-600"
+                        disabled={isLoading}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {techniques.length === 0 && (
+                <p className="text-xs text-gray-500">Belum ada teknik yang ditambahkan</p>
+              )}
+
+              {techniques.length >= 15 && (
+                <p className="text-xs text-orange-600">Maksimal 15 teknik terapi</p>
+              )}
+            </div>
           </div>
 
           {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Catatan Persiapan</Label>
-            <Textarea
-              id="notes"
-              {...form.register('notes')}
-              placeholder="Catatan persiapan sesi, hal yang perlu diperhatikan, atau materi yang dibutuhkan..."
-              rows={4}
-              error={form.formState.errors.notes?.message}
-            />
-          </div>
-        </div>
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Catatan Tambahan
+            </h3>
 
-        {/* Form Actions */}
-        <div className="flex justify-end gap-3 pt-6 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSubmitting || isLoading}
-          >
-            Batal
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting || isLoading}
-            className="min-w-[120px]"
-          >
-            {(isSubmitting || isLoading) ? 'Menyimpan...' : (isEditing ? 'Perbarui Sesi' : 'Buat Sesi')}
-          </Button>
-        </div>
-      </form>
-    </FormModal>
+            <div className="space-y-2">
+              <Controller
+                name="notes"
+                control={control}
+                render={({ field }) => (
+                  <Textarea
+                    {...field}
+                    placeholder="Catatan tambahan untuk sesi ini"
+                    className="min-h-[100px] resize-none"
+                    disabled={isLoading}
+                  />
+                )}
+              />
+              {errors.notes && (
+                <p className="text-xs text-red-600">{errors.notes.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <DialogFooter className="sticky bottom-0 bg-white pt-4 border-t">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isLoading}
+                className="flex-1 sm:flex-none min-h-[44px]"
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                disabled={!isValid || isLoading || objectives.length === 0}
+                className="flex-1 sm:flex-none min-h-[44px]"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {session ? 'Perbarui Sesi' : 'Buat Sesi'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

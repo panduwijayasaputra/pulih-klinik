@@ -21,6 +21,7 @@ import { ConsultationAPI } from '@/lib/api/consultation';
 import { ConsultationSummaryData } from '@/types/therapy';
 import { useToast } from '@/components/ui/toast';
 import { getClientSessions } from '@/lib/api/mockData';
+import { accessibilityUtils, ACCESSIBILITY_CONSTANTS } from '@/lib/accessibility-utils';
 
 import {
   CalendarIcon,
@@ -169,46 +170,58 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
     <>
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" aria-label="Navigasi Tab Terapi">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+        <TabsList 
+          className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-auto lg:flex lg:space-x-1"
+          role={ACCESSIBILITY_CONSTANTS.ROLES.TABLIST}
+          aria-label="Tab navigasi terapi"
+        >
           <TabsTrigger 
             value="summary" 
-            className="flex items-center gap-2"
-            role="tab"
+            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+            role={ACCESSIBILITY_CONSTANTS.ROLES.TAB}
             aria-controls="summary-panel"
-            aria-selected="false"
+            aria-selected={activeTab === 'summary'}
+            aria-label="Tab ringkasan terapi"
           >
-            <ChartBarIcon className="w-4 h-4" />
-            Ringkasan
+            <ChartBarIcon className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Ringkasan</span>
+            <span className="sm:hidden">Ringkasan</span>
           </TabsTrigger>
           <TabsTrigger 
             value="ai-summary" 
-            className="flex items-center gap-2"
-            role="tab"
+            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+            role={ACCESSIBILITY_CONSTANTS.ROLES.TAB}
             aria-controls="ai-summary-panel"
-            aria-selected="false"
+            aria-selected={activeTab === 'ai-summary'}
+            aria-label="Tab ringkasan AI"
           >
-            <DocumentTextIcon className="w-4 h-4" />
-            AI Summary
+            <DocumentTextIcon className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+            <span className="hidden sm:inline">AI Summary</span>
+            <span className="sm:hidden">AI</span>
           </TabsTrigger>
           <TabsTrigger 
             value="consultation" 
-            className="flex items-center gap-2"
-            role="tab"
+            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+            role={ACCESSIBILITY_CONSTANTS.ROLES.TAB}
             aria-controls="consultation-panel"
-            aria-selected="false"
+            aria-selected={activeTab === 'consultation'}
+            aria-label="Tab konsultasi"
           >
-            <ChatBubbleLeftRightIcon className="w-4 h-4" />
-            Konsultasi
+            <ChatBubbleLeftRightIcon className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Konsultasi</span>
+            <span className="sm:hidden">Konsultasi</span>
           </TabsTrigger>
           <TabsTrigger 
             value="therapy" 
-            className="flex items-center gap-2"
-            role="tab"
+            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+            role={ACCESSIBILITY_CONSTANTS.ROLES.TAB}
             aria-controls="therapy-panel"
-            aria-selected="false"
+            aria-selected={activeTab === 'therapy'}
+            aria-label="Tab terapi"
           >
-            <HeartIcon className="w-4 h-4" />
-            Terapi
+            <HeartIcon className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Terapi</span>
+            <span className="sm:hidden">Terapi</span>
           </TabsTrigger>
         </TabsList>
 
@@ -216,15 +229,16 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
           value="summary" 
           className="mt-6" 
           id="summary-panel"
-          role="tabpanel"
+          role={ACCESSIBILITY_CONSTANTS.ROLES.TABPANEL}
           aria-labelledby="summary-tab"
+          tabIndex={0}
         >
           <div className="space-y-6">
             {/* Current Status */}
-            <Card>
+            <Card role="region" aria-labelledby="status-title">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                <CardTitle id="status-title" className="flex items-center gap-2">
+                  <CheckCircleIcon className="w-5 h-5 text-green-600" aria-hidden="true" />
                   Status Terkini
                 </CardTitle>
               </CardHeader>
@@ -245,32 +259,32 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
             </Card>
 
             {/* Client Summary */}
-            <Card>
+            <Card role="region" aria-labelledby="client-summary-title">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserIcon className="w-5 h-5 text-blue-600" />
+                <CardTitle id="client-summary-title" className="flex items-center gap-2">
+                  <UserIcon className="w-5 h-5 text-blue-600" aria-hidden="true" />
                   Ringkasan Klien
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{therapyProgress.totalConsultations}</div>
-                    <div className="text-sm text-gray-600">Total Konsultasi</div>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-lg">
+                    <div className="text-xl sm:text-2xl font-bold text-blue-600">{therapyProgress.totalConsultations}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Total Konsultasi</div>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{therapyProgress.completedConsultations}</div>
-                    <div className="text-sm text-gray-600">Selesai</div>
+                  <div className="text-center p-3 sm:p-4 bg-green-50 rounded-lg">
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">{therapyProgress.completedConsultations}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Selesai</div>
                   </div>
-                  <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                    <div className="text-2xl font-bold text-yellow-600">{therapyProgress.draftConsultations}</div>
-                    <div className="text-sm text-gray-600">Draft</div>
+                  <div className="text-center p-3 sm:p-4 bg-yellow-50 rounded-lg">
+                    <div className="text-xl sm:text-2xl font-bold text-yellow-600">{therapyProgress.draftConsultations}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Draft</div>
                   </div>
-                  <div className="text-center p-3 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-center p-3 sm:p-4 bg-purple-50 rounded-lg">
+                    <div className="text-xl sm:text-2xl font-bold text-purple-600">
                       {client.birthDate ? calculateAge(client.birthDate) : '-'}
                     </div>
-                    <div className="text-sm text-gray-600">Usia</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Usia</div>
                   </div>
                 </div>
               </CardContent>
@@ -290,18 +304,25 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
                     <span className="text-sm font-medium text-gray-700">Progress Keseluruhan</span>
                     <span className="text-sm font-medium text-gray-700">{client.progress || 0}%</span>
                   </div>
-                  <Progress value={client.progress || 0} className="w-full" />
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <Progress 
+                    value={client.progress || 0} 
+                    className="w-full"
+                    aria-label={`Progress terapi ${client.progress || 0} persen`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={client.progress || 0}
+                  />
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                     <div>
-                      <div className="text-lg font-semibold text-blue-600">{therapyProgress.totalConsultations}</div>
+                      <div className="text-base sm:text-lg font-semibold text-blue-600">{therapyProgress.totalConsultations}</div>
                       <div className="text-xs text-gray-500">Total Sesi</div>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-green-600">{therapyProgress.completedConsultations}</div>
+                      <div className="text-base sm:text-lg font-semibold text-green-600">{therapyProgress.completedConsultations}</div>
                       <div className="text-xs text-gray-500">Selesai</div>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-orange-600">
+                      <div className="text-base sm:text-lg font-semibold text-orange-600">
                         {therapyProgress.totalConsultations > 0 
                           ? Math.round((therapyProgress.completedConsultations / therapyProgress.totalConsultations) * 100)
                           : 0
@@ -422,8 +443,9 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
           value="ai-summary" 
           className="mt-6" 
           id="ai-summary-panel"
-          role="tabpanel"
+          role={ACCESSIBILITY_CONSTANTS.ROLES.TABPANEL}
           aria-labelledby="ai-summary-tab"
+          tabIndex={0}
         >
           <ConsultationSummary
             data={consultationSummaryData}
@@ -437,8 +459,9 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
           value="consultation" 
           className="mt-6" 
           id="consultation-panel"
-          role="tabpanel"
+          role={ACCESSIBILITY_CONSTANTS.ROLES.TABPANEL}
           aria-labelledby="consultation-tab"
+          tabIndex={0}
         >
           <div className="space-y-6">
             {/* Consultation Form */}
@@ -459,8 +482,9 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
           value="therapy" 
           className="mt-6" 
           id="therapy-panel"
-          role="tabpanel"
+          role={ACCESSIBILITY_CONSTANTS.ROLES.TABPANEL}
           aria-labelledby="therapy-tab"
+          tabIndex={0}
         >
           {clientConsultation && clientConsultation.status === 'completed' ? (
             <div className="space-y-6">
@@ -474,22 +498,22 @@ export const TherapyPage: React.FC<TherapyPageProps> = ({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-blue-50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-blue-600">{clientSessions.length}</div>
-                        <div className="text-sm text-gray-600">Total Sesi</div>
+                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                      <div className="bg-blue-50 p-3 sm:p-4 rounded-lg text-center">
+                        <div className="text-xl sm:text-2xl font-bold text-blue-600">{clientSessions.length}</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Total Sesi</div>
                       </div>
-                      <div className="bg-green-50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-green-600">
+                      <div className="bg-green-50 p-3 sm:p-4 rounded-lg text-center">
+                        <div className="text-xl sm:text-2xl font-bold text-green-600">
                           {clientSessions.filter(s => s.status === 'completed').length}
                         </div>
-                        <div className="text-sm text-gray-600">Selesai</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Selesai</div>
                       </div>
-                      <div className="bg-orange-50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-orange-600">
+                      <div className="bg-orange-50 p-3 sm:p-4 rounded-lg text-center">
+                        <div className="text-xl sm:text-2xl font-bold text-orange-600">
                           {clientSessions.filter(s => s.status === 'scheduled').length}
                         </div>
-                        <div className="text-sm text-gray-600">Terjadwal</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Terjadwal</div>
                       </div>
                     </div>
                     

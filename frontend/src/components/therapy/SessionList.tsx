@@ -34,6 +34,7 @@ import {
   ChevronDownIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
+import { accessibilityUtils, ACCESSIBILITY_CONSTANTS } from '@/lib/accessibility-utils';
 
 interface SessionListProps {
   sessions?: Session[];
@@ -111,43 +112,65 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onSelect, onUpdate, 
     <Card 
       className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500"
       onClick={() => onSelect?.(session)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.(session);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Sesi ${session.sessionNumber}: ${session.title}`}
     >
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm font-medium text-gray-500">
+              <span className="text-xs sm:text-sm font-medium text-gray-500">
                 Sesi #{session.sessionNumber}
               </span>
-              <Badge className={typeColors[session.type]} variant="secondary">
-                {SessionTypeLabels[session.type]}
+              <Badge className={`${typeColors[session.type]} text-xs`} variant="secondary">
+                <span className="hidden sm:inline">{SessionTypeLabels[session.type]}</span>
+                <span className="sm:hidden">
+                  {session.type === 'initial' ? 'Awal' :
+                   session.type === 'regular' ? 'Reg' :
+                   session.type === 'progress' ? 'Prog' :
+                   session.type === 'final' ? 'Akhir' : 'Dar'}
+                </span>
               </Badge>
             </div>
-            <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2">
+            <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2">
               {session.title}
             </CardTitle>
             {session.description && (
-              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">
                 {session.description}
               </p>
             )}
           </div>
-          <Badge className={`ml-3 ${statusColors[session.status]}`}>
-            <StatusIcon className="w-3 h-3 mr-1" />
-            {SessionStatusLabels[session.status]}
+          <Badge className={`ml-3 ${statusColors[session.status]} text-xs`}>
+            <StatusIcon className="w-3 h-3 mr-1" aria-hidden="true" />
+            <span className="hidden sm:inline">{SessionStatusLabels[session.status]}</span>
+            <span className="sm:hidden">
+              {session.status === 'new' ? 'Baru' :
+               session.status === 'scheduled' ? 'Jadwal' :
+               session.status === 'started' ? 'Mulai' :
+               session.status === 'completed' ? 'Selesai' :
+               session.status === 'cancelled' ? 'Batal' : 'No Show'}
+            </span>
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-3">
           {/* Session info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
             <div className="flex items-center gap-2 text-gray-600">
-              <CalendarIcon className="w-4 h-4" />
+              <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
               <span>{formatDate(session.scheduledDate)}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-600">
-              <ClockIcon className="w-4 h-4" />
+              <ClockIcon className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
               <span>{formatDuration(session.duration)}</span>
             </div>
           </div>
@@ -159,12 +182,12 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onSelect, onUpdate, 
               <div className="flex flex-wrap gap-1">
                 {session.objectives.slice(0, 2).map((objective, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
-                    {objective.length > 30 ? `${objective.slice(0, 30)}...` : objective}
+                    {objective.length > 20 ? `${objective.slice(0, 20)}...` : objective}
                   </Badge>
                 ))}
                 {session.objectives.length > 2 && (
                   <Badge variant="outline" className="text-xs text-gray-500">
-                    +{session.objectives.length - 2} lainnya
+                    +{session.objectives.length - 2}
                   </Badge>
                 )}
               </div>
@@ -173,9 +196,9 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onSelect, onUpdate, 
 
           {/* Progress score */}
           {session.progressScore && (
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-xs sm:text-sm">
               <span className="text-gray-600">Skor Progress:</span>
-              <Badge variant="outline" className="font-medium">
+              <Badge variant="outline" className="font-medium text-xs">
                 {session.progressScore}/10
               </Badge>
             </div>
@@ -379,18 +402,19 @@ export const SessionList: React.FC<SessionListProps> = ({
       {/* Header and Controls */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Bars3BottomLeftIcon className="w-5 h-5" />
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Bars3BottomLeftIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             Daftar Sesi ({sessions.length})
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600">
             Kelola sesi terapi dan pantau progress klien
           </p>
         </div>
         {showCreateButton && onSessionCreate && (
-          <Button onClick={onSessionCreate} className="gap-2">
+          <Button onClick={onSessionCreate} className="gap-2 w-full sm:w-auto min-h-[44px]">
             <PlusIcon className="w-4 h-4" />
-            Buat Sesi Baru
+            <span className="hidden sm:inline">Buat Sesi Baru</span>
+            <span className="sm:hidden">Buat Sesi</span>
           </Button>
         )}
       </div>
@@ -398,15 +422,17 @@ export const SessionList: React.FC<SessionListProps> = ({
       {/* Filters and Search */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Search */}
             <div className="relative">
-              <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" aria-hidden="true" />
               <Input
                 placeholder="Cari sesi..."
                 value={filters.search || ''}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="pl-10"
+                className="pl-10 min-h-[44px]"
+                aria-label="Cari sesi terapi"
+                role="searchbox"
               />
             </div>
 
@@ -415,7 +441,7 @@ export const SessionList: React.FC<SessionListProps> = ({
               value={filters.status || ''}
               onValueChange={(value) => handleFilterChange('status', value || undefined)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="min-h-[44px]">
                 <SelectValue placeholder="Semua Status" />
               </SelectTrigger>
               <SelectContent>
@@ -433,7 +459,7 @@ export const SessionList: React.FC<SessionListProps> = ({
               value={filters.type || ''}
               onValueChange={(value) => handleFilterChange('type', value || undefined)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="min-h-[44px]">
                 <SelectValue placeholder="Semua Tipe" />
               </SelectTrigger>
               <SelectContent>
@@ -451,8 +477,10 @@ export const SessionList: React.FC<SessionListProps> = ({
               variant="outline"
               onClick={clearFilters}
               disabled={Object.keys(filters).length === 0}
+              className="min-h-[44px]"
             >
-              Reset Filter
+              <span className="hidden sm:inline">Reset Filter</span>
+              <span className="sm:hidden">Reset</span>
             </Button>
           </div>
         </CardContent>
@@ -460,7 +488,7 @@ export const SessionList: React.FC<SessionListProps> = ({
 
       {/* Sort Controls */}
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-sm text-gray-600 mr-2">Urutkan:</span>
+        <span className="text-xs sm:text-sm text-gray-600 mr-2">Urutkan:</span>
         {(['sessionNumber', 'title', 'scheduledDate', 'status'] as SessionSortField[]).map((field) => {
           const isActive = sort.field === field;
           const labels = {
@@ -477,14 +505,21 @@ export const SessionList: React.FC<SessionListProps> = ({
               variant={isActive ? 'default' : 'outline'}
               size="sm"
               onClick={() => handleSortChange(field)}
-              className="gap-1"
+              className="gap-1 min-h-[36px] text-xs sm:text-sm"
+              aria-label={`Urutkan berdasarkan ${labels[field]} ${isActive ? (sort.order === 'asc' ? 'naik' : 'turun') : ''}`}
+              aria-pressed={isActive}
             >
-              {labels[field]}
+              <span className="hidden sm:inline">{labels[field]}</span>
+              <span className="sm:hidden">
+                {field === 'sessionNumber' ? 'No' :
+                 field === 'scheduledDate' ? 'Tgl' :
+                 field === 'sessionNumber' ? 'No' : labels[field]}
+              </span>
               {isActive && (
                 sort.order === 'asc' ? (
-                  <ChevronUpIcon className="w-3 h-3" />
+                  <ChevronUpIcon className="w-3 h-3" aria-hidden="true" />
                 ) : (
-                  <ChevronDownIcon className="w-3 h-3" />
+                  <ChevronDownIcon className="w-3 h-3" aria-hidden="true" />
                 )
               )}
             </Button>
@@ -504,7 +539,7 @@ export const SessionList: React.FC<SessionListProps> = ({
         </Card>
       ) : (
         <>
-          <div className="text-sm text-gray-600">
+          <div className="text-xs sm:text-sm text-gray-600">
             Menampilkan {filteredAndSortedSessions.length} dari {sessions.length} sesi
           </div>
           <div className="grid gap-4">
