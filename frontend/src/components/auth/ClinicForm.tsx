@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ClinicDataFormData, clinicDataSchema, indonesianProvinces } from '@/types/registration';
+import { ClinicDataFormData, indonesianProvinces } from '@/types/registration';
+import { clinicDataSchema } from '@/schemas/registrationSchema';
 import { useRegistrationStore } from '@/store/registration';
 
 export const ClinicForm: React.FC = () => {
@@ -131,7 +132,7 @@ export const ClinicForm: React.FC = () => {
             <Input
               {...register('phone')}
               id="phone"
-              placeholder="Contoh: 021-1234567 atau +62-21-1234567"
+              placeholder="Contoh: 0812xxxxxxx, +62812xxxxxxx, atau 62812xxxxxxx"
               className={errors.phone ? 'border-red-500' : ''}
             />
             {errors.phone && (
@@ -233,7 +234,7 @@ export const ClinicForm: React.FC = () => {
             <Input
               {...register('adminWhatsapp')}
               id="adminWhatsapp"
-              placeholder="Contoh: +62-812-3456-7890"
+              placeholder="Contoh: 0812xxxxxxx, +62812xxxxxxx, atau 62812xxxxxxx"
               className={errors.adminWhatsapp ? 'border-red-500' : ''}
             />
             {errors.adminWhatsapp && (

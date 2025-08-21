@@ -3,11 +3,8 @@
 import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  ClinicProfileFormData, 
-  type ClinicProfileFormValidation,
-  clinicProfileFormSchema 
-} from '@/types/clinic';
+import { ClinicProfileFormData, type ClinicProfileFormValidation } from '@/types/clinic';
+import { clinicProfileFormSchema } from '@/schemas/clinicSchema';
 import { useClinic } from '@/hooks/useClinic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

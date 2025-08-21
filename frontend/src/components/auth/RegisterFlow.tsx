@@ -4,9 +4,9 @@ import { ClinicForm } from './ClinicForm';
 import { EmailVerification } from './EmailVerification';
 import { RegistrationSummary } from './RegistrationSummary';
 import { PaymentModal } from '../payment/PaymentModal';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { RegistrationStepEnum } from '@/types/enums';
 
 const stepTitles = {
   clinic: 'Informasi Klinik',
@@ -37,16 +37,11 @@ export const RegisterFlow: React.FC = () => {
   } = useRegistrationStore();
 
   const getStepNumber = () => {
-    const steps = ['clinic', 'verification', 'summary', 'payment', 'complete'];
+    const steps = [RegistrationStepEnum.Clinic, RegistrationStepEnum.Verification, RegistrationStepEnum.Summary, RegistrationStepEnum.Payment, RegistrationStepEnum.Complete];
     return steps.indexOf(currentStep) + 1;
   };
 
-  const getProgressPercentage = () => {
-    const steps = ['clinic', 'verification', 'summary', 'payment', 'complete'];
-    return (steps.indexOf(currentStep) / (steps.length - 1)) * 100;
-  };
-
-  const canGoBack = currentStep !== 'clinic' && currentStep !== 'complete';
+  const canGoBack = currentStep !== RegistrationStepEnum.Clinic && currentStep !== RegistrationStepEnum.Complete;
 
   const handleBack = () => {
     clearError();
@@ -59,9 +54,9 @@ export const RegisterFlow: React.FC = () => {
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'clinic':
+      case RegistrationStepEnum.Clinic:
         return <ClinicForm />;
-      case 'verification':
+      case RegistrationStepEnum.Verification:
         return (
           <EmailVerification
             email={data.clinic?.adminEmail || ''}
@@ -72,17 +67,17 @@ export const RegisterFlow: React.FC = () => {
             }}
           />
         );
-              case 'summary':
+      case RegistrationStepEnum.Summary:
           return (
             <RegistrationSummary
               clinicData={data.clinic}
-              onEditClinic={() => setStep('clinic')}
+              onEditClinic={() => setStep(RegistrationStepEnum.Clinic)}
               onProceedToPayment={() => nextStep()}
             />
           );
-      case 'payment':
+      case RegistrationStepEnum.Payment:
         return <PaymentModal />;
-      case 'complete':
+      case RegistrationStepEnum.Complete:
         return (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -132,16 +127,49 @@ export const RegisterFlow: React.FC = () => {
           </div>
 
           {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Langkah {getStepNumber()} dari 5
-              </span>
-              <span className="text-sm text-gray-500">
-                {Math.round(getProgressPercentage())}% selesai
-              </span>
+          <div className="mb-8 flex items-center justify-center">
+            <div className="w-full flex justify-center">
+              <div className="flex flex-row items-center w-full max-w-2xl mx-auto">
+                {/* 
+                  To center step 3, use fixed width for the progress bar container and 
+                  flex-grow only for the connecting lines, not the step circles.
+                  Each step circle is fixed width, so step 3 will always be in the center.
+                */}
+                {[1, 2, 3, 4, 5].map((step, idx) => (
+                  <div
+                    key={step}
+                    className={`flex items-center ${idx !== 0 ? 'flex-1' : ''} ${idx === 0 ? 'justify-end' : idx === 4 ? 'justify-start' : 'justify-center'}`}
+                  >
+                    {/* Connecting Line (before circle, except for first) */}
+                    {idx !== 0 && (
+                      <div
+                        className={`flex-1 h-1 transition-colors ${
+                          getStepNumber() > step
+                            ? 'bg-green-500'
+                            : getStepNumber() === step
+                            ? 'bg-blue-300'
+                            : 'bg-gray-300'
+                        }`}
+                      />
+                    )}
+                    {/* Step Circle */}
+                    <div className="flex flex-col items-center z-10">
+                      <div
+                        className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${
+                          getStepNumber() === step
+                            ? 'bg-blue-600 border-blue-600 text-white'
+                            : getStepNumber() > step
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'bg-white border-gray-300 text-gray-500'
+                        } font-semibold transition-colors`}
+                      >
+                        {step}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <Progress value={getProgressPercentage()} className="h-2" />
           </div>
 
           {/* Step Title */}

@@ -4,12 +4,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { useAuth } from '@/hooks/useAuth';
-import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useConfirmationDialog, ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 import { TherapistStatusEnum, UserRoleEnum } from '@/types/enums';
 import {
-  ArrowPathIcon,
   CheckCircleIcon,
   ClockIcon,
   EnvelopeIcon,
@@ -20,39 +19,36 @@ import {
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { TherapistFormModal } from '@/components/therapists/TherapistFormModal';
-
-interface Therapist {
+import { TherapistAPI } from '@/lib/api/therapist';
+import { Therapist } from '@/types/therapist';
+import { TherapistFormModal } from './TherapistFormModal';
+// Temporary interface for list data
+interface TherapistListData {
   id: string;
   name: string;
   email: string;
   phone: string;
-  specialization: string;
-  licenseNumber: string;
-  yearsExperience: number;
-  education: string;
-  certifications?: string;
-  adminNotes?: string;
-  status: 'active' | 'pending_setup' | 'inactive';
-  sessions_completed: number;
-  client_satisfaction: number;
-  registrationDate: string;
-  lastActive?: string;
+  status: 'active' | 'inactive' | 'pending';
+  specializations: string[];
+  joinDate: string;
+  clientCount: number;
+  lastActivity: string;
+  avatar?: string;
 }
 
 export const TherapistList: React.FC = () => {
-  const [therapists, setTherapists] = useState<Therapist[]>([]);
+  const [therapists, setTherapists] = useState<TherapistListData[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [resendCooldowns, setResendCooldowns] = useState<Record<string, number>>({});
-  const [selectedStatus, setSelectedStatus] = useState<'all' | Therapist['status']>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | TherapistListData['status']>('all');
   const [showTherapistFormModal, setShowTherapistFormModal] = useState(false);
   const [therapistFormMode, setTherapistFormMode] = useState<'create' | 'edit'>('create');
   const [therapistFormDefaultValues, setTherapistFormDefaultValues] = useState<Partial<any>>({});
   const { user, hasRole } = useAuth();
-  const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
+  const { showConfirmation } = useConfirmationDialog();
   const { addToast } = useToast();
   const router = useRouter();
 
@@ -81,79 +77,23 @@ export const TherapistList: React.FC = () => {
         // Mock API call
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Mock therapists data
-        const mockTherapists = [
-          {
-            id: 'th-1',
-            name: 'Dr. Budi Santoso',
-            email: 'budi@kliniksehat.com',
-            phone: '+62-812-3456-7890',
-            specialization: 'Anxiety Disorders',
-            licenseNumber: 'SIP-123456',
-            yearsExperience: 8,
-            education: 'S1 Psikologi, Universitas Indonesia',
-            certifications: 'Certified Hypnotherapist, CBT Practitioner',
-            adminNotes: 'Excellent therapist with strong client relationships',
-            status: 'active' as const,
-            sessions_completed: 45,
-            client_satisfaction: 4.8,
-            registrationDate: '2024-01-10',
-            lastActive: '2 hours ago'
-          },
-          {
-            id: 'th-2',
-            name: 'Dr. Siti Rahayu',
-            email: 'siti@kliniksehat.com',
-            phone: '+62-813-4567-8901',
-            specialization: 'Depression',
-            licenseNumber: 'SIP-123457',
-            yearsExperience: 12,
-            education: 'S2 Psikologi Klinis, Universitas Gadjah Mada',
-            certifications: 'EMDR Certified, Trauma Specialist',
-            adminNotes: 'Specializes in trauma and depression cases',
-            status: 'inactive' as const,
-            sessions_completed: 32,
-            client_satisfaction: 4.9,
-            registrationDate: '2024-01-08',
-            lastActive: '4 hours ago'
-          },
-          {
-            id: 'th-3',
-            name: 'Dr. Ahmad Pratama',
-            email: 'ahmad@kliniksehat.com',
-            phone: '+62-814-5678-9012',
-            specialization: 'PTSD',
-            licenseNumber: 'SIP-123458',
-            yearsExperience: 5,
-            education: 'S1 Psikologi, Universitas Airlangga',
-            certifications: 'PTSD Specialist, Military Trauma Certified',
-            adminNotes: 'New therapist, strong background in military trauma',
-            status: 'pending_setup' as const,
-            sessions_completed: 0,
-            client_satisfaction: 0,
-            registrationDate: '2024-01-12',
-            lastActive: 'Never'
-          },
-          {
-            id: 'th-4',
-            name: 'Dr. Maya Sari',
-            email: 'maya@kliniksehat.com',
-            phone: '+62-815-6789-0123',
-            specialization: 'Anxiety Disorders',
-            licenseNumber: 'SIP-123459',
-            yearsExperience: 6,
-            education: 'S1 Psikologi, Universitas Padjadjaran',
-            certifications: 'Anxiety Specialist, Mindfulness Practitioner',
-            adminNotes: 'Experienced in anxiety and stress management',
-            status: 'pending_setup' as const,
-            sessions_completed: 0,
-            client_satisfaction: 0,
-            registrationDate: '2024-01-14',
-            lastActive: 'Never'
-          }
-        ];
-
-        setTherapists(mockTherapists);
+        const response = await TherapistAPI.getTherapists();
+        if (response.success && response.data) {
+          // Transform API data to match component expectations
+          const therapistData: TherapistListData[] = response.data.items.map((t: Therapist) => ({
+            id: t.id,
+            name: t.fullName,
+            email: t.email,
+            phone: t.phone,
+            status: t.status as any,
+            specializations: t.specializations,
+            joinDate: t.joinDate,
+            clientCount: t.currentLoad,
+            lastActivity: t.updatedAt,
+            avatar: t.avatar
+          }));
+          setTherapists(therapistData);
+        }
       } catch (error) {
         console.error('Failed to load therapists:', error);
         addToast({
@@ -210,7 +150,7 @@ export const TherapistList: React.FC = () => {
     setShowTherapistFormModal(true);
   };
 
-  const handleEditTherapistModal = (therapist: Therapist) => {
+  const _handleEditTherapistModal = (therapist: Therapist) => {
     setTherapistFormMode('edit');
     setTherapistFormDefaultValues({
       name: therapist.name,
@@ -241,7 +181,7 @@ export const TherapistList: React.FC = () => {
           education: data.education,
           certifications: data.certifications,
           adminNotes: data.adminNotes,
-          status: 'pending_setup',
+          status: TherapistStatusEnum.PendingSetup,
           sessions_completed: 0,
           client_satisfaction: 0,
           registrationDate: new Date().toISOString().split('T')[0] || new Date().toISOString().slice(0, 10),
@@ -340,12 +280,12 @@ export const TherapistList: React.FC = () => {
     const actionColor = newStatus === 'active' ? 'success' : 'warning';
 
     showConfirmation({
-      type: actionColor,
       title: actionTitleId,
-      message: `Yakin ingin ${actionTextId} akun ${therapist.name}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
+      description: `Yakin ingin ${actionTextId} akun ${therapist.name}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
       confirmText: actionTextId.charAt(0).toUpperCase() + actionTextId.slice(1),
-      cancelText: 'Batal'
-    }, () => executeStatusChange(therapistId, newStatus));
+      cancelText: 'Batal',
+      onConfirm: () => executeStatusChange(therapistId, newStatus)
+    });
   };
 
   const executeStatusChange = async (therapistId: string, newStatus: 'active' | 'inactive') => {
@@ -401,7 +341,7 @@ export const TherapistList: React.FC = () => {
             Aktif
           </Badge>
         );
-      case 'pending_setup':
+      case TherapistStatusEnum.PendingSetup:
         return (
           <Badge variant="warning">
             <ClockIcon className="w-3 h-3 mr-1" />
@@ -551,7 +491,7 @@ export const TherapistList: React.FC = () => {
       variant: 'outline',
       show: (therapist) =>
         hasRole(UserRoleEnum.ClinicAdmin) &&
-        therapist.status === 'pending_setup',
+        therapist.status === TherapistStatusEnum.PendingSetup,
       loading: (therapist) => actionLoading === therapist.id,
       disabled: (therapist) => {
         const cooldown = resendCooldowns[therapist.id];
@@ -568,7 +508,7 @@ export const TherapistList: React.FC = () => {
     options: [
       { value: 'all', label: 'Semua Status' },
       { value: 'active', label: 'Aktif' },
-      { value: 'pending_setup', label: 'Menunggu Setup' },
+      { value: TherapistStatusEnum.PendingSetup, label: 'Menunggu Setup' },
       { value: 'inactive', label: 'Tidak Aktif' },
     ],
     value: selectedStatus,
@@ -797,7 +737,7 @@ export const TherapistList: React.FC = () => {
                       )}
 
                       {/* Resend Email Button for Pending Setup */}
-                      {selectedTherapist.status === 'pending_setup' && (() => {
+                      {selectedTherapist.status === TherapistStatusEnum.PendingSetup && (() => {
                         const cooldown = resendCooldowns[selectedTherapist.id];
                         const isInCooldown = Boolean(cooldown && cooldown > 0);
 

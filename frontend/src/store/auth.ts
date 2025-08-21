@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AuthState, LoginFormData } from '@/types/auth';
-import { AuthAPI } from '@/lib/api';
+import { AuthState, LoginFormData, User } from '@/types/auth';
+import { AuthAPI } from '@/lib/api/auth';
 
 interface AuthStore extends AuthState {
   login: (credentials: LoginFormData) => Promise<boolean>;
@@ -85,7 +85,7 @@ export const useAuthStore = create<AuthStore>()(
           
           if (user) {
             set({
-              user,
+              user: user.data as User,
               isAuthenticated: true,
               isLoading: false,
             });

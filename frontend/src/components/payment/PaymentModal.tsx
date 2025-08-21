@@ -8,10 +8,8 @@ import {
   CreditCardIcon,
   DevicePhoneMobileIcon
 } from '@heroicons/react/24/outline';
-import { 
-  PaymentFormData, 
-  paymentSchema
-} from '@/types/registration';
+import { PaymentFormData } from '@/types/registration';
+import { paymentSchema } from '@/schemas/registrationSchema';
 import { useRegistrationStore } from '@/store/registration';
 
 const paymentMethods = [
@@ -61,29 +59,14 @@ export const PaymentModal: React.FC = () => {
 
   const selectedMethod = watch('method');
 
-  // Define pricing tiers
-  const pricingTiers = {
-    free: {
-      name: 'Free Trial',
-      price: 0,
-      description: 'Coba gratis selama 14 hari'
-    },
-    pro: {
-      name: 'Pro',
-      price: 150000,
-      description: 'Akses seumur hidup'
-    },
-    premium: {
-      name: 'Premium',
-      price: 500000,
-      description: 'Akses seumur hidup dengan fitur lengkap'
-    }
+  // Default pricing tier
+  const selectedTier = {
+    name: 'Pro',
+    price: 299000,
+    therapists: 5,
+    clients: 100,
+    tokens: 50000
   };
-
-  // For now, default to 'pro' tier - in a real implementation, this would come from the summary step
-  // TODO: Pass selected tier from RegistrationSummary component
-  const selectedTierKey = 'pro'; // This should be passed from the previous step
-  const selectedTier = pricingTiers[selectedTierKey];
 
   const onSubmit = async (formData: PaymentFormData) => {
     clearError();

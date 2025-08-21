@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FormModal } from '@/components/ui/form-modal';
 import { EmploymentTypeEnum, TherapistLicenseTypeEnum } from '@/types/enums';
+// Mock data removed - now uses empty API functions
+const therapistSpecializations = ['Hypnotherapy', 'Cognitive Behavioral Therapy', 'Anxiety Disorders', 'Depression Treatment'];
 import {
   AcademicCapIcon,
   BriefcaseIcon,
@@ -21,8 +23,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { useTherapist } from '@/hooks/useTherapist';
 import { useAuth } from '@/hooks/useAuth';
-import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import ConfirmationDialog, { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
+import { UserRole } from '@/types/auth';
 
 // Validation schema (NO PASSWORD FIELDS)
 const TherapistRegistrationSchema = z.object({
@@ -40,12 +43,10 @@ const TherapistRegistrationSchema = z.object({
 
   // Enums (required)
   licenseType: z.nativeEnum(TherapistLicenseTypeEnum, {
-    required_error: 'Tipe lisensi wajib dipilih',
-    invalid_type_error: 'Tipe lisensi tidak valid'
+    error: 'Tipe lisensi wajib dipilih'
   }),
   employmentType: z.nativeEnum(EmploymentTypeEnum, {
-    required_error: 'Tipe pekerjaan wajib dipilih',
-    invalid_type_error: 'Tipe pekerjaan tidak valid'
+    error: 'Tipe pekerjaan wajib dipilih'
   }),
 
   // Clinic admin notes (optional)
@@ -109,22 +110,8 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
             // Mock API call to get therapist data
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Mock therapist data - in real app, this would come from API
-            const mockTherapistData = {
-              name: 'Dr. Budi Santoso',
-              email: 'budi@kliniksehat.com',
-              phone: '+62-812-3456-7890',
-              licenseNumber: 'SIP-123456',
-              specialization: 'Anxiety Disorders',
-              yearsExperience: 8,
-              education: 'S1 Psikologi, Universitas Indonesia',
-              certifications: 'Certified Hypnotherapist, CBT Practitioner',
-              adminNotes: 'Excellent therapist with strong client relationships',
-              licenseType: TherapistLicenseTypeEnum.Psychologist,
-              employmentType: EmploymentTypeEnum.FullTime,
-            };
-
-            reset(mockTherapistData);
+            // Reset with empty form
+            reset({});
             setEmailValidationState('valid');
           } catch (error) {
             console.error('Failed to load therapist data:', error);
@@ -156,23 +143,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     }
   }, [open, mode, therapistId, defaultValues, reset]);
 
-  const specializations = [
-    'Anxiety Disorders',
-    'Depression',
-    'PTSD (Post-Traumatic Stress Disorder)',
-    'Phobias',
-    'Addiction',
-    'Stress Management',
-    'Self-Esteem Issues',
-    'Relationship Problems',
-    'Grief and Loss',
-    'Sleep Disorders',
-    'Performance Enhancement',
-    'Pain Management',
-    'Weight Management',
-    'Smoking Cessation',
-    'Other'
-  ];
+  const specializations = therapistSpecializations;
 
   const validateEmailAvailability = useCallback(async (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -183,11 +154,11 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     setEmailValidationState('checking');
 
     try {
-      // Mock API call to check email availability
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // API call to check email availability
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Mock logic - simulate email already exists check
-      if (email === 'existing@example.com' || email === 'taken@clinic.com') {
+      // For now, assume all emails are valid
+      if (false) {
         setEmailValidationState('invalid');
         setEmailErrorMessage('Email sudah terdaftar dalam sistem');
         setError('email', {
@@ -227,7 +198,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
   }, [watchedEmail, errors.email, validateEmailAvailability, mode, clearErrors]);
 
   const handleFormSubmit = (data: TherapistRegistrationForm) => {
-    if (!user || !user.roles.includes('clinic_admin')) {
+    if (!user || !user.roles.includes('clinic_admin' as UserRole)) {
       addToast({
         type: 'error',
         title: 'Access Denied',

@@ -1,224 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Therapist, TherapistAssignment, TherapistFilters, TherapistFormData } from '@/types/therapist';
 import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from '@/types/enums';
-
-// Mock therapist data for development
-const mockTherapists: Therapist[] = [
-  {
-    id: 'therapist-001',
-    clinicId: 'clinic-001',
-    name: 'Dr. Ahmad Pratama, M.Psi',
-    email: 'ahmad.pratama@kliniksehat.com',
-    phone: '+62-812-3456-7890',
-    avatar: '/avatars/ahmad-pratama.jpg',
-    
-    licenseNumber: 'PSI-001234',
-    licenseType: TherapistLicenseTypeEnum.Psychologist,
-    specializations: ['anxiety-depression', 'stress-management'],
-    education: [
-      {
-        degree: 'S2 Psikologi Klinis',
-        institution: 'Universitas Indonesia',
-        year: 2018,
-        field: 'Psikologi Klinis'
-      },
-      {
-        degree: 'S1 Psikologi',
-        institution: 'Universitas Gadjah Mada',
-        year: 2015,
-        field: 'Psikologi'
-      }
-    ],
-    certifications: [
-      {
-        id: 'cert-001',
-        name: 'Certified Clinical Hypnotherapist',
-        issuingOrganization: 'Indonesian Hypnotherapy Association',
-        issueDate: '2019-06-15',
-        expiryDate: '2024-06-15',
-        certificateNumber: 'IHA-2019-001234',
-        status: 'active'
-      }
-    ],
-    yearsOfExperience: 6,
-    
-    status: TherapistStatusEnum.Active,
-    employmentType: EmploymentTypeEnum.FullTime,
-    joinDate: '2023-01-15',
-    
-    assignedClients: ['client-001', 'client-002', 'client-003'],
-    maxClients: 20,
-    currentLoad: 15,
-    
-
-    
-    schedule: [
-      { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', isAvailable: true },
-      { dayOfWeek: 2, startTime: '09:00', endTime: '17:00', isAvailable: true },
-      { dayOfWeek: 3, startTime: '09:00', endTime: '17:00', isAvailable: true },
-      { dayOfWeek: 4, startTime: '09:00', endTime: '17:00', isAvailable: true },
-      { dayOfWeek: 5, startTime: '09:00', endTime: '15:00', isAvailable: true }
-    ],
-    timezone: 'Asia/Jakarta',
-    
-    preferences: {
-      sessionDuration: 60,
-      breakBetweenSessions: 15,
-      maxSessionsPerDay: 8,
-      languages: ['id', 'en'],
-      workingDays: [1, 2, 3, 4, 5]
-    },
-    
-    createdAt: '2023-01-15T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 'therapist-002',
-    clinicId: 'clinic-001',
-    name: 'Dr. Sari Wulandari, M.Psi',
-    email: 'sari.wulandari@kliniksehat.com',
-    phone: '+62-812-3456-7891',
-    avatar: '/avatars/sari-wulandari.jpg',
-    
-    licenseNumber: 'PSI-001235',
-    licenseType: TherapistLicenseTypeEnum.Psychologist,
-    specializations: ['addiction-therapy', 'trauma-ptsd'],
-    education: [
-      {
-        degree: 'S2 Psikologi Klinis',
-        institution: 'Universitas Padjadjaran',
-        year: 2017,
-        field: 'Psikologi Klinis'
-      }
-    ],
-    certifications: [
-      {
-        id: 'cert-002',
-        name: 'Addiction Counseling Certificate',
-        issuingOrganization: 'Indonesia Addiction Professional Certification',
-        issueDate: '2020-03-10',
-        expiryDate: '2025-03-10',
-        certificateNumber: 'IAPC-2020-005678',
-        status: 'active'
-      }
-    ],
-    yearsOfExperience: 7,
-    
-    status: TherapistStatusEnum.Active,
-    employmentType: EmploymentTypeEnum.FullTime,
-    joinDate: '2023-02-01',
-    
-    assignedClients: ['client-004', 'client-005'],
-    maxClients: 15,
-    currentLoad: 12,
-    
-
-    
-    schedule: [
-      { dayOfWeek: 1, startTime: '10:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 2, startTime: '10:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 3, startTime: '10:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 4, startTime: '10:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 6, startTime: '09:00', endTime: '13:00', isAvailable: true }
-    ],
-    timezone: 'Asia/Jakarta',
-    
-    preferences: {
-      sessionDuration: 90,
-      breakBetweenSessions: 20,
-      maxSessionsPerDay: 6,
-      languages: ['id'],
-      workingDays: [1, 2, 3, 4, 6]
-    },
-    
-    createdAt: '2023-02-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 'therapist-003',
-    clinicId: 'clinic-001',
-    name: 'Rina Anggraini, M.Psi',
-    email: 'rina.anggraini@kliniksehat.com',
-    phone: '+62-812-3456-7892',
-    
-    licenseNumber: 'PSI-001236',
-    licenseType: TherapistLicenseTypeEnum.Counselor,
-    specializations: ['child-adolescent', 'couples-family'],
-    education: [
-      {
-        degree: 'S2 Psikologi Keluarga',
-        institution: 'Universitas Indonesia',
-        year: 2019,
-        field: 'Psikologi Keluarga'
-      }
-    ],
-    certifications: [
-      {
-        id: 'cert-003',
-        name: 'Child Psychology Specialist',
-        issuingOrganization: 'Indonesian Child Psychology Association',
-        issueDate: '2021-08-20',
-        expiryDate: '2026-08-20',
-        certificateNumber: 'ICPA-2021-009876',
-        status: 'active'
-      }
-    ],
-    yearsOfExperience: 4,
-    
-    status: TherapistStatusEnum.Active,
-    employmentType: EmploymentTypeEnum.PartTime,
-    joinDate: '2023-06-15',
-    
-    assignedClients: ['client-006'],
-    maxClients: 10,
-    currentLoad: 8,
-    
-
-    
-    schedule: [
-      { dayOfWeek: 1, startTime: '14:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 3, startTime: '14:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 5, startTime: '14:00', endTime: '18:00', isAvailable: true }
-    ],
-    timezone: 'Asia/Jakarta',
-    
-    preferences: {
-      sessionDuration: 45,
-      breakBetweenSessions: 10,
-      maxSessionsPerDay: 5,
-      languages: ['id', 'en'],
-      workingDays: [1, 3, 5]
-    },
-    
-    createdAt: '2023-06-15T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  }
-];
-
-const mockAssignments: TherapistAssignment[] = [
-  {
-    id: 'assign-001',
-    therapistId: 'therapist-001',
-    clientId: 'client-001',
-    assignedDate: '2023-11-01',
-    assignedBy: 'admin-001',
-    status: TherapistAssignmentStatusEnum.Active,
-    notes: 'Client dengan kecemasan sosial'
-  },
-  {
-    id: 'assign-002',
-    therapistId: 'therapist-002',
-    clientId: 'client-004',
-    assignedDate: '2023-11-15',
-    assignedBy: 'admin-001',
-    status: TherapistAssignmentStatusEnum.Active,
-    notes: 'Klien dengan masalah kecanduan alkohol'
-  }
-];
+import { TherapistAPI } from '@/lib/api/therapist';
 
 export const useTherapists = () => {
-  const [therapists, setTherapists] = useState<Therapist[]>(mockTherapists);
-  const [assignments, setAssignments] = useState<TherapistAssignment[]>(mockAssignments);
+  const [therapists, setTherapists] = useState<Therapist[]>([]);
+  const [assignments, setAssignments] = useState<TherapistAssignment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -227,78 +14,12 @@ export const useTherapists = () => {
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let filteredTherapists = [...mockTherapists];
-      
-      if (filters) {
-        // Apply filters
-        if (filters.status && filters.status.length > 0) {
-          filteredTherapists = filteredTherapists.filter(t => 
-            filters.status!.includes(t.status)
-          );
-        }
-        
-        if (filters.specializations && filters.specializations.length > 0) {
-          filteredTherapists = filteredTherapists.filter(t =>
-            t.specializations.some(spec => filters.specializations!.includes(spec))
-          );
-        }
-        
-        if (filters.employmentType && filters.employmentType.length > 0) {
-          filteredTherapists = filteredTherapists.filter(t =>
-            filters.employmentType!.includes(t.employmentType)
-          );
-        }
-        
-        if (filters.licenseType && filters.licenseType.length > 0) {
-          filteredTherapists = filteredTherapists.filter(t =>
-            filters.licenseType!.includes(t.licenseType)
-          );
-        }
-        
-        if (filters.searchQuery) {
-          const query = filters.searchQuery.toLowerCase();
-          filteredTherapists = filteredTherapists.filter(t =>
-            t.name.toLowerCase().includes(query) ||
-            t.email.toLowerCase().includes(query) ||
-            t.licenseNumber.toLowerCase().includes(query)
-          );
-        }
-        
-
-        
-        if (filters.maxLoad) {
-          filteredTherapists = filteredTherapists.filter(t =>
-            t.currentLoad <= filters.maxLoad!
-          );
-        }
-        
-        // Apply sorting
-        if (filters.sortBy) {
-          filteredTherapists.sort((a, b) => {
-            let comparison = 0;
-            
-            switch (filters.sortBy) {
-              case 'name':
-                comparison = a.name.localeCompare(b.name);
-                break;
-              case 'joinDate':
-                comparison = new Date(a.joinDate).getTime() - new Date(b.joinDate).getTime();
-                break;
-
-              case 'clientCount':
-                comparison = a.currentLoad - b.currentLoad;
-                break;
-            }
-            
-            return filters.sortOrder === 'desc' ? -comparison : comparison;
-          });
-        }
+      const response = await TherapistAPI.getTherapists(1, 50, filters);
+      if (response.success && response.data) {
+        setTherapists(response.data.items);
+      } else {
+        setError(response.message || 'Gagal mengambil data therapist');
       }
-      
-      setTherapists(filteredTherapists);
     } catch (err) {
       setError('Gagal mengambil data therapist');
     } finally {
@@ -311,81 +32,57 @@ export const useTherapists = () => {
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const therapist = mockTherapists.find(t => t.id === therapistId);
-      return therapist || null;
+      const response = await TherapistAPI.getTherapist(therapistId);
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Therapist tidak ditemukan');
+      }
     } catch (err) {
       setError('Gagal mengambil data therapist');
-      return null;
+      throw err;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const createTherapist = useCallback(async (formData: TherapistFormData) => {
+  const createTherapist = useCallback(async (therapistData: TherapistFormData) => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newTherapist: Therapist = {
-        id: `therapist-${Date.now()}`,
-        clinicId: 'clinic-001', // Would come from context/auth
-        ...formData,
-        avatar: '',
-        
-        assignedClients: [],
-        currentLoad: 0,
-        status: TherapistStatusEnum.Active,
-        joinDate: new Date().toISOString().split('T')[0] as string,
-        
-
-        
-        schedule: [],
-        timezone: 'Asia/Jakarta',
-        
-        certifications: (formData.certifications ?? []).map((cert, index) => ({
-          ...cert,
-          id: `cert-${Date.now()}-${index}`,
-          status: 'active'
-        })),
-        
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      setTherapists(prev => [...prev, newTherapist]);
-      return newTherapist;
+      const response = await TherapistAPI.createTherapist(therapistData);
+      if (response.success && response.data) {
+        setTherapists(prev => [...prev, response.data as Therapist]);
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Gagal membuat therapist baru');
+      }
     } catch (err) {
-      setError('Gagal membuat data therapist');
-      return null;
+      setError('Gagal membuat therapist baru');
+      throw err;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const updateTherapist = useCallback(async (therapistId: string, updates: Partial<Therapist>) => {
+  const updateTherapist = useCallback(async (therapistId: string, therapistData: Partial<TherapistFormData>) => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setTherapists(prev => prev.map(therapist =>
-        therapist.id === therapistId
-          ? { ...therapist, ...updates, updatedAt: new Date().toISOString() }
-          : therapist
-      ));
-      
-      return true;
+      const response = await TherapistAPI.updateTherapist(therapistId, therapistData);
+      if (response.success && response.data) {
+        setTherapists(prev => prev.map(t => 
+          t.id === therapistId ? response.data as Therapist : t
+        ));
+        return true;
+      } else {
+        throw new Error(response.message || 'Gagal memperbarui data therapist');
+      }
     } catch (err) {
       setError('Gagal memperbarui data therapist');
-      return false;
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -394,127 +91,132 @@ export const useTherapists = () => {
   const deleteTherapist = useCallback(async (therapistId: string) => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTherapists(prev => prev.filter(therapist => therapist.id !== therapistId));
-      return true;
-    } catch (err) {
-      setError('Gagal menghapus data therapist');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const assignTherapistToClient = useCallback(async (
-    therapistId: string, 
-    clientId: string, 
-    assignedBy: string, 
-    notes?: string
-  ) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const newAssignment: TherapistAssignment = {
-        id: `assign-${Date.now()}`,
-        therapistId,
-        clientId,
-        assignedDate: new Date().toISOString().split('T')[0] as string,
-        assignedBy: assignedBy ?? '',
-        status: TherapistAssignmentStatusEnum.Active,
-        notes: notes ?? ''
-      };
-      
-      setAssignments(prev => [...prev, newAssignment]);
-      
-      // Update therapist's assigned clients
-      setTherapists(prev => prev.map(therapist =>
-        therapist.id === therapistId
-          ? {
-              ...therapist,
-              assignedClients: [...therapist.assignedClients, clientId],
-              currentLoad: therapist.currentLoad + 1,
-              updatedAt: new Date().toISOString()
-            }
-          : therapist
-      ));
-      
-      return newAssignment;
-    } catch (err) {
-      setError('Gagal menugaskan therapist ke klien');
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const unassignTherapistFromClient = useCallback(async (
-    assignmentId: string,
-    reason?: string
-  ) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const assignment = assignments.find(a => a.id === assignmentId);
-      if (!assignment) {
-        throw new Error('Assignment not found');
+      const response = await TherapistAPI.deleteTherapist(therapistId);
+      if (response.success) {
+        setTherapists(prev => prev.filter(t => t.id !== therapistId));
+        return true;
+      } else {
+        throw new Error(response.message || 'Gagal menghapus therapist');
       }
-      
-      // Update assignment status
-      setAssignments(prev => prev.map(assign =>
-        assign.id === assignmentId
-          ? ({
-              ...assign,
-              status: TherapistAssignmentStatusEnum.Transferred,
-              endDate: new Date().toISOString().split('T')[0] as string,
-              transferReason: (reason ?? '') as string
-            } as TherapistAssignment)
-          : assign
-      ));
-      
-      // Update therapist's assigned clients
-      setTherapists(prev => prev.map(therapist =>
-        therapist.id === assignment.therapistId
-          ? {
-              ...therapist,
-              assignedClients: therapist.assignedClients.filter(id => id !== assignment.clientId),
-              currentLoad: Math.max(0, therapist.currentLoad - 1),
-              updatedAt: new Date().toISOString()
-            }
-          : therapist
-      ));
-      
-      return true;
     } catch (err) {
-      setError('Gagal membatalkan penugasan therapist');
-      return false;
+      setError('Gagal menghapus therapist');
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  }, [assignments]);
-
-  const getTherapistAssignments = useCallback((therapistId: string) => {
-    return assignments.filter(assignment => 
-      assignment.therapistId === therapistId && assignment.status === 'active'
-    );
-  }, [assignments]);
-
-  const clearError = useCallback(() => {
-    setError(null);
   }, []);
 
-  // Initialize data on mount
+  const updateTherapistStatus = useCallback(async (therapistId: string, status: TherapistStatusEnum) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await TherapistAPI.updateTherapistStatus(therapistId, status);
+      if (response.success && response.data) {
+        setTherapists(prev => prev.map(t => 
+          t.id === therapistId ? response.data as Therapist : t
+        ));
+        return true;
+      } else {
+        throw new Error(response.message || 'Gagal memperbarui status therapist');
+      }
+    } catch (err) {
+      setError('Gagal memperbarui status therapist');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const assignClientToTherapist = useCallback(async (therapistId: string, clientId: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await TherapistAPI.assignClientToTherapist(therapistId, clientId);
+      if (response.success && response.data) {
+        setAssignments(prev => [...prev, response.data as TherapistAssignment]);
+        // Update therapist's assigned clients
+        setTherapists(prev => prev.map(t => 
+          t.id === therapistId 
+            ? { 
+                ...t, 
+                assignedClients: [...t.assignedClients, clientId],
+                currentLoad: t.currentLoad + 1,
+                updatedAt: new Date().toISOString()
+              }
+            : t
+        ));
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Gagal menugaskan klien ke therapist');
+      }
+    } catch (err) {
+      setError('Gagal menugaskan klien ke therapist');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const removeClientFromTherapist = useCallback(async (therapistId: string, clientId: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await TherapistAPI.removeClientFromTherapist(therapistId, clientId);
+      if (response.success) {
+        // Update assignment status
+        setAssignments(prev => prev.map(a => 
+          a.therapistId === therapistId && a.clientId === clientId
+            ? { ...a, status: TherapistAssignmentStatusEnum.Active }
+            : a
+        ));
+        // Update therapist's assigned clients
+        setTherapists(prev => prev.map(t => 
+          t.id === therapistId 
+            ? { 
+                ...t, 
+                assignedClients: t.assignedClients.filter(id => id !== clientId),
+                currentLoad: Math.max(0, t.currentLoad - 1),
+                updatedAt: new Date().toISOString()
+              }
+            : t
+        ));
+        return true;
+      } else {
+        throw new Error(response.message || 'Gagal menghapus klien dari therapist');
+      }
+    } catch (err) {
+      setError('Gagal menghapus klien dari therapist');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const getTherapistAssignments = useCallback(async (therapistId?: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await TherapistAPI.getTherapistAssignments(therapistId || '');
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Gagal mengambil data penugasan therapist');
+      }
+    } catch (err) {
+      setError('Gagal mengambil data penugasan therapist');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Load initial data
   useEffect(() => {
     fetchTherapists();
   }, [fetchTherapists]);
@@ -529,9 +231,9 @@ export const useTherapists = () => {
     createTherapist,
     updateTherapist,
     deleteTherapist,
-    assignTherapistToClient,
-    unassignTherapistFromClient,
-    getTherapistAssignments,
-    clearError
+    updateTherapistStatus,
+    assignClientToTherapist,
+    removeClientFromTherapist,
+    getTherapistAssignments
   };
 };

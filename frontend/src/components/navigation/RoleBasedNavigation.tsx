@@ -16,7 +16,6 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({
   const { user, isLoading } = useAuth();
   const {
     navigationItems,
-    filteredNavigationItems,
     activeRole,
     isActiveItem,
   } = useNavigation();
@@ -41,7 +40,7 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({
   const currentRole = activeRole || user.roles[0] as UserRole;
   
   // Filter navigation items to show only items for the current role
-  const displayItems = navigationItems.filter(item => 
+  const displayItems = navigationItems.filter((item: any) => 
     currentRole && item.requiredRoles.includes(currentRole)
   );
 

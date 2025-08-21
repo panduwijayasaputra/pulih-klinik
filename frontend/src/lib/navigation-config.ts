@@ -77,14 +77,14 @@ export const portalNavigationItems: NavigationItem[] = [
     description: 'Kelola klien yang ditugaskan kepada Anda',
     requiredRoles: [UserRoleEnum.Therapist],
   },
-  {
-    id: 'therapist-sessions',
-    label: 'Sesi Terapi',
-    href: '/portal/therapist/sessions',
-    icon: CalendarIcon,
-    description: 'Kelola sesi terapi dan jadwal',
-    requiredRoles: [UserRoleEnum.Therapist],
-  },
+  // {
+  //   id: 'therapist-sessions',
+  //   label: 'Sesi Terapi',
+  //   href: '/portal/therapist/sessions',
+  //   icon: CalendarIcon,
+  //   description: 'Kelola sesi terapi dan jadwal',
+  //   requiredRoles: [UserRoleEnum.Therapist],
+  // },
 
   // Admin Routes
   {
@@ -172,14 +172,14 @@ export const quickAccessItems = [
     description: 'Lihat dan kelola klien yang ditugaskan',
     requiredRoles: [UserRoleEnum.Therapist],
   },
-  {
-    id: 'therapist-sessions-quick',
-    label: 'Sesi Terapi',
-    href: '/portal/therapist/sessions',
-    icon: CalendarIcon,
-    description: 'Kelola sesi terapi dan jadwal',
-    requiredRoles: [UserRoleEnum.Therapist],
-  },
+  // {
+  //   id: 'therapist-sessions-quick',
+  //   label: 'Sesi Terapi',
+  //   href: '/portal/therapist/sessions',
+  //   icon: CalendarIcon,
+  //   description: 'Kelola sesi terapi dan jadwal',
+  //   requiredRoles: [UserRoleEnum.Therapist],
+  // },
   {
     id: 'admin-clinics-quick',
     label: 'Manajemen Klinik',
@@ -211,9 +211,7 @@ export const portalBreadcrumbMapping: Record<string, { label: string; parent?: s
   '/portal/therapist/clients': { label: 'Klien Saya', parent: '/portal' },
   '/portal/therapist/clients/[id]': { label: 'Detail Klien', parent: '/portal/therapist/clients' },
   '/portal/therapist/therapy/[clientId]': { label: 'Terapi', parent: '/portal/therapist/clients' },
-  '/portal/therapist/sessions': { label: 'Sesi Terapi', parent: '/portal' },
-  '/portal/therapist/sessions/[id]': { label: 'Detail Sesi', parent: '/portal/therapist/sessions' },
-  '/portal/therapist/session/[sessionId]': { label: 'Detail Sesi', parent: '/portal/therapist/sessions' },
+
 
   // System Admin routes
   '/portal/admin/clinics': { label: 'Manajemen Klinik', parent: '/portal' },
@@ -255,7 +253,7 @@ export const portalConfigs: Record<UserRole, PortalConfig> = {
       '/portal',
       '/portal/therapist/*',
       '/portal/therapist/therapy/*',
-      '/portal/therapist/session/*',
+
       '/portal/profile',
       '/portal/settings',
     ],

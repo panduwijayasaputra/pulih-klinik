@@ -6,7 +6,6 @@ import type { Client, ClientFormData, SessionSummary } from '@/types/client';
 import { ClientEducationEnum, ClientGenderEnum, ClientStatusEnum } from '@/types/enums';
 import { useClientStore } from '@/store/client';
 import { ClientAPI } from '@/lib/api/client';
-import { mockClients } from '@/lib/api/mockData';
 
 export const useClient = () => {
   const {
@@ -30,24 +29,22 @@ export const useClient = () => {
   }, [clients]);
 
   const loadClients = useCallback(async (forceRefresh = false): Promise<Client[]> => {
-    // For development: always refresh to get latest mock data changes
-    const shouldRefresh = forceRefresh || process.env.NODE_ENV === 'development';
-    
     // Skip loading if clients are already loaded and not forcing refresh
-    if (clients.length > 0 && !shouldRefresh) {
+    if (clients.length > 0 && !forceRefresh) {
       return clients;
     }
     
     setLoading(true);
     setError(null);
     try {
-      // Mock API delay to show loading state
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Use comprehensive mock data from mockData.ts
-      // In the future, this would call ClientAPI.getClients()
-      setClients(mockClients);
-      return mockClients;
+      const response = await ClientAPI.getClients();
+      if (response.success && response.data) {
+        setClients(response.data);
+        return response.data;
+      } else {
+        setError(response.message || 'Gagal memuat data klien');
+        return [];
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Gagal memuat data klien');
       throw error;
@@ -84,7 +81,7 @@ export const useClient = () => {
       const client: Client = {
         ...data,
         id: `CLT${Date.now()}`,
-        status: ClientStatusEnum.Pending,
+        status: ClientStatusEnum.New,
         joinDate: new Date().toISOString().split('T')[0] || new Date().toISOString().slice(0, 10),
         totalSessions: 0,
         progress: 0,
@@ -125,7 +122,7 @@ export const useClient = () => {
     const optimisticClient = {
       ...client,
       assignedTherapist: therapistId,
-      status: ClientStatusEnum.Active,
+      status: ClientStatusEnum.Assigned,
     };
     updateClient(clientId, optimisticClient);
 
@@ -155,7 +152,7 @@ export const useClient = () => {
     const optimisticClient = {
       ...client,
       assignedTherapist: undefined,
-      status: ClientStatusEnum.Pending,
+      status: ClientStatusEnum.New,
     };
     updateClient(clientId, optimisticClient);
 

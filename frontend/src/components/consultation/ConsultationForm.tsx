@@ -12,27 +12,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 
 import {
-  ConsultationFormTypeEnum,
   ConsultationFormTypeLabels,
-  ConsultationStatusEnum,
-  ConsultationStatusLabels,
 } from '@/types/consultation';
+import { ConsultationFormTypeEnum, ConsultationStatusEnum } from '@/types/enums';
 import { ConsultationFormData } from '@/schemas/consultationSchema';
 import { Client } from '@/types/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  SYMPTOM_DURATION_OPTIONS,
-  PROBLEM_FREQUENCY_OPTIONS,
-  SYMPTOM_SEVERITY_OPTIONS,
-  EMOTION_SCALE_OPTIONS,
-  SLEEP_QUALITY_OPTIONS,
-  SELF_HARM_FREQUENCY_OPTIONS,
-  SUBSTANCE_OPTIONS,
-  PRIMARY_SUBSTANCE_OPTIONS,
-  TOLERANCE_LEVEL_OPTIONS,
-  DESIRE_TO_QUIT_OPTIONS,
   CONSULTATION_REASON_OPTIONS,
-  ACADEMIC_PERFORMANCE_OPTIONS,
+  EMOTION_SCALE_OPTIONS,
+  PRIMARY_SUBSTANCE_OPTIONS,
+  PROBLEM_FREQUENCY_OPTIONS,
+  SELF_HARM_FREQUENCY_OPTIONS,
+  SLEEP_QUALITY_OPTIONS,
+  SUBSTANCE_OPTIONS,
+  SYMPTOM_DURATION_OPTIONS,
+  SYMPTOM_SEVERITY_OPTIONS,
   THERAPY_PREFERENCE_OPTIONS,
 } from '@/lib/constants/consultation-options';
 
@@ -45,6 +40,8 @@ export interface ConsultationFormProps {
   mode?: 'create' | 'edit';
   allowTypeChange?: boolean;
   client?: Client; // Optional client data for pre-population
+  readOnly?: boolean; // Make form read-only
+  onCancel?: () => void; // Cancel editing callback
 }
 
 export const ConsultationForm: React.FC<ConsultationFormProps> = ({
@@ -56,17 +53,19 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   mode: _mode = 'create',
   allowTypeChange = true,
   client,
+  readOnly = false,
+  onCancel,
 }) => {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const { register, handleSubmit, watch, setValue, formState: { errors, isDirty, isValid } } = form;
 
   const formTypes = watch('formTypes') || [];
   const previousTherapyExperience = watch('previousTherapyExperience');
   const currentMedications = watch('currentMedications');
-  const previousPsychologicalDiagnosis = watch('previousPsychologicalDiagnosis');
-  const significantPhysicalIllness = watch('significantPhysicalIllness');
-  const traumaticExperience = watch('traumaticExperience');
-  const familyPsychologicalHistory = watch('familyPsychologicalHistory');
+  const _previousPsychologicalDiagnosis = watch('previousPsychologicalDiagnosis');
+  const _significantPhysicalIllness = watch('significantPhysicalIllness');
+  const _traumaticExperience = watch('traumaticExperience');
+  const _familyPsychologicalHistory = watch('familyPsychologicalHistory');
 
   // Handle save as draft
   const handleSaveDraft = useCallback(async () => {
@@ -79,7 +78,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   }, [onSave]);
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 ${readOnly ? 'pointer-events-none select-none opacity-80' : ''}`}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* 1. Consultation Information */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -103,9 +102,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       <Checkbox
                         id={`formType-${type}`}
                         checked={isChecked}
-                        disabled={isDisabled || !allowTypeChange}
+                        disabled={isDisabled || !allowTypeChange || readOnly}
                         onCheckedChange={(checked) => {
-                          if (!isDisabled && allowTypeChange) {
+                          if (!isDisabled && allowTypeChange && !readOnly) {
                             const newFormTypes = checked
                               ? [...formTypes, type]
                               : formTypes.filter(t => t !== type);
@@ -158,6 +157,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     placeholder="Ceritakan dengan detail masalah yang Anda alami..."
                     rows={4}
                     className="mt-2"
+                    disabled={readOnly}
                   />
                   {errors.primaryConcern && (
                     <p className="mt-1 text-sm text-red-600">{errors.primaryConcern.message}</p>
@@ -170,6 +170,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <Select
                       value={watch('symptomDuration') || ''}
                       onValueChange={(val) => setValue('symptomDuration', val, { shouldDirty: true, shouldValidate: true })}
+                      disabled={readOnly}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih durasi" />
@@ -189,7 +190,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
                   <div>
                     <Label className="text-base font-medium">Seberapa Sering</Label>
-                    <Select>
+                    <Select disabled={readOnly}>
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih frekuensi" />
                       </SelectTrigger>
@@ -208,6 +209,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <Select
                       value={watch('symptomSeverity')?.toString() || ''}
                       onValueChange={(val) => setValue('symptomSeverity', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true })}
+                      disabled={readOnly}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih tingkat" />
@@ -246,6 +248,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                           step="1"
                           className="w-full accent-blue-500"
                           {...register(`emotionScale.${emotion.key}`, { valueAsNumber: true })}
+                          disabled={readOnly}
                         />
                         <div className="flex justify-between text-xs text-gray-400">
                           <span>Tidak ada</span>
@@ -489,29 +492,32 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
                 <div>
                   <Label className="text-base font-medium">Kualitas Tidur</Label>
-                  <Select>
+                  <Select disabled={readOnly}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih kualitas tidur" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Good">Baik</SelectItem>
-                      <SelectItem value="Fair">Lumayan</SelectItem>
-                      <SelectItem value="Poor">Buruk</SelectItem>
-                      <SelectItem value="Disturbed">Terganggu</SelectItem>
+                      {SLEEP_QUALITY_OPTIONS.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
                   <Label className="text-base font-medium">Pikiran Menyakiti Diri</Label>
-                  <Select>
+                  <Select disabled={readOnly}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih frekuensi" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Never">Tidak pernah</SelectItem>
-                      <SelectItem value="Sometimes">Kadang-kadang</SelectItem>
-                      <SelectItem value="Often">Sering</SelectItem>
+                      {SELF_HARM_FREQUENCY_OPTIONS.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -968,14 +974,16 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
                 <div>
                   <Label className="text-base font-medium">Preferensi Jenis Terapi</Label>
-                  <Select>
+                  <Select disabled={readOnly}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih preferensi terapi" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="CBT">Cognitive Behavioral Therapy (CBT)</SelectItem>
-                      <SelectItem value="General counseling">Konseling Umum</SelectItem>
-                      <SelectItem value="Undecided">Belum yakin</SelectItem>
+                      {THERAPY_PREFERENCE_OPTIONS.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1818,32 +1826,48 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         </div>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleSaveDraft}
-            disabled={isSubmitting || isLoading}
-          >
-            Simpan sebagai Draft
-          </Button>
+        {!readOnly && (
+          <div className="flex justify-between space-x-4">
+            {/* Cancel button if editing existing consultation */}
+            {onCancel && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onCancel}
+                disabled={isSubmitting || isLoading}
+              >
+                Batal
+              </Button>
+            )}
 
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleSaveCompleted}
-            disabled={isSubmitting || isLoading || !isValid}
-          >
-            Simpan dan Selesaikan
-          </Button>
+            <div className="flex space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveDraft}
+                disabled={isSubmitting || isLoading}
+              >
+                Simpan sebagai Draft
+              </Button>
 
-          <Button
-            type="submit"
-            disabled={isSubmitting || isLoading || !isDirty || !isValid}
-          >
-            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
-          </Button>
-        </div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleSaveCompleted}
+                disabled={isSubmitting || isLoading || !isValid}
+              >
+                Simpan dan Selesaikan
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={isSubmitting || isLoading || !isDirty || !isValid}
+              >
+                {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+              </Button>
+            </div>
+          </div>
+        )}
 
       </form>
     </div>

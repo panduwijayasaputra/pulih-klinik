@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { 
-  ClinicDataFormData, 
-  PaymentFormData, 
+import {
+  ClinicDataFormData,
+  PaymentFormData,
   RegistrationState,
   RegistrationStep,
   VerificationData,
   mockRegistrationResult
 } from '@/types/registration';
+import { RegistrationStepEnum } from '@/types/enums';
 
 interface RegistrationStore extends RegistrationState {
   setStep: (step: RegistrationStep) => void;
@@ -24,12 +25,12 @@ interface RegistrationStore extends RegistrationState {
   clearError: () => void;
 }
 
-const stepOrder: RegistrationStep[] = ['clinic', 'verification', 'summary', 'payment', 'complete'];
+const stepOrder: RegistrationStep[] = [RegistrationStepEnum.Clinic, RegistrationStepEnum.Verification, RegistrationStepEnum.Summary, RegistrationStepEnum.Payment, RegistrationStepEnum.Complete];
 
 export const useRegistrationStore = create<RegistrationStore>()(
   persist(
     (set, get) => ({
-      currentStep: 'clinic',
+      currentStep: RegistrationStepEnum.Clinic,
       data: {},
       verificationData: {
         code: '',
@@ -144,11 +145,11 @@ export const useRegistrationStore = create<RegistrationStore>()(
 
           // Mock registration success
           const result = mockRegistrationResult;
-          
+
           if (result.success) {
             set({
               isLoading: false,
-              currentStep: 'complete',
+              currentStep: RegistrationStepEnum.Complete,
             });
             return true;
           } else {
@@ -169,7 +170,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
 
       resetRegistration: () => {
         set({
-          currentStep: 'clinic',
+          currentStep: RegistrationStepEnum.Clinic,
           data: {},
           verificationData: {
             code: '',
@@ -186,7 +187,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
     }),
     {
       name: 'registration-storage',
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         currentStep: state.currentStep,
         data: state.data,
       }),

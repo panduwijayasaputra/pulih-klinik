@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  ArrowPathIcon, 
+import {
+  ArrowPathIcon,
   CheckIcon,
-  ExclamationTriangleIcon 
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 interface EmailVerificationProps {
@@ -38,7 +38,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
 
   // Countdown timer effect
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (countdown > 0) {
       interval = setInterval(() => {
         setCountdown(prev => prev - 1);
@@ -72,10 +72,10 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
     try {
       // Mock API call - in real implementation, this would call the verification API
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Mock validation - code '123456' is considered valid
       const isValid = verificationCode === '123456';
-      
+
       if (isValid) {
         onVerificationSuccess();
       } else {
@@ -106,7 +106,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
 
   const formatEmail = (email: string) => {
     const [username, domain] = email.split('@');
-    if (username.length > 3) {
+    if (username && username.length > 3) {
       return `${username.slice(0, 3)}***@${domain}`;
     }
     return email;
@@ -135,25 +135,60 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
       {/* Verification Code Input */}
       <Card>
         <CardContent className="p-6">
-          <div className="space-y-4">
+          <div className="space-y-4 flex flex-col items-center justify-center">
             <div>
-              <Label htmlFor="verification-code" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="verification-code" className="text-sm font-medium text-gray-700 text-center mb-4 block">
                 Masukkan Kode Verifikasi
               </Label>
-              <Input
-                ref={inputRef}
-                id="verification-code"
-                type="text"
-                value={code}
-                onChange={handleCodeChange}
-                placeholder="123456"
-                maxLength={6}
-                className={`text-center text-lg font-mono tracking-widest ${
-                  error ? 'border-red-500 focus:border-red-500' : ''
-                }`}
-                disabled={loading}
-                aria-describedby={error ? 'verification-error' : undefined}
-              />
+              <div className="flex justify-center gap-2">
+                {[0, 1, 2, 3, 4, 5].map((idx) => (
+                  <Input
+                    key={idx}
+                    ref={idx === 0 ? inputRef : undefined}
+                    id={`verification-code-${idx}`}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={code[idx] || ''}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 1);
+                      let newCode = code.split('');
+                      newCode[idx] = val;
+                      // If user pastes or types more than one digit, fill next boxes
+                      if (e.target.value.length > 1) {
+                        const chars = e.target.value.replace(/[^0-9]/g, '').split('');
+                        for (let i = 0; i < chars.length && idx + i < 6; i++) {
+                          newCode[idx + i] = chars[i] || '';
+                        }
+                      }
+                      // Call handleCodeChange with a synthetic event that matches the expected type
+                      handleCodeChange({
+                        target: {
+                          value: newCode.join('')
+                        }
+                      } as React.ChangeEvent<HTMLInputElement>);
+                      // Move focus to next box if filled
+                      if (val && idx < 5) {
+                        const next = document.getElementById(`verification-code-${idx + 1}`) as HTMLInputElement;
+                        if (next) next.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Backspace' && !code[idx] && idx > 0) {
+                        const prev = document.getElementById(`verification-code-${idx - 1}`) as HTMLInputElement;
+                        if (prev) prev.focus();
+                      }
+                    }}
+                    placeholder="•"
+                    maxLength={1}
+                    className={`w-12 h-12 text-center text-2xl font-mono tracking-widest border rounded-md ${error ? 'border-red-500 focus:border-red-500' : ''
+                      }`}
+                    disabled={loading}
+                    aria-describedby={error ? 'verification-error' : undefined}
+                    autoComplete="one-time-code"
+                  />
+                ))}
+              </div>
               {error && (
                 <div id="verification-error" className="flex items-center mt-2 text-sm text-red-600">
                   <ExclamationTriangleIcon className="w-4 h-4 mr-1" />
@@ -166,7 +201,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
             <Button
               onClick={() => handleVerifyCode()}
               disabled={code.length !== 6 || loading}
-              className="w-full"
+              className="text-center"
             >
               {loading ? (
                 <>

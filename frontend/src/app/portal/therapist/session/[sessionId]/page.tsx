@@ -5,16 +5,11 @@ import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
+import { useParams } from 'next/navigation';
 
-interface SessionPageProps {
-  params: {
-    sessionId: string;
-  };
-}
-
-export default function SessionPage({ params }: SessionPageProps) {
+export default function SessionPage() {
   const { addToast } = useToast();
-  const { sessionId } = params;
+  const { sessionId } = useParams();
 
   // TODO: Implement session logic and data fetching
   React.useEffect(() => {

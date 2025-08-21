@@ -39,7 +39,7 @@ class ConsultationErrorBoundary extends Component<
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const errorString = `${error.toString()}\n${errorInfo.componentStack}`;
     
     this.setState({
@@ -69,7 +69,7 @@ class ConsultationErrorBoundary extends Component<
     }
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       // Use custom fallback if provided
       if (this.props.fallback) {
@@ -170,7 +170,7 @@ export function ConsultationDataErrorBoundary({
   onRetry 
 }: { 
   children: ReactNode; 
-  onRetry?: (() => void) | undefined;
+  onRetry?: (() => void) | undefined; // Add undefined type to onRetry  
 }) {
   return (
     <ConsultationErrorBoundary

@@ -24,13 +24,8 @@ import {
   CreateConsultationData,
   UpdateConsultationData
 } from '@/types/consultation';
-import { ConsultationSummaryData } from '@/types/therapy';
+import { ValidationError } from '@/types/consultation';
 import { ConsultationAPI } from '@/lib/api/consultation';
-import { 
-  validateConsultationSummaryData, 
-  safeParseConsultationSummary,
-  ValidationError 
-} from '@/schemas/therapySchema';
 
 // Generic hook for consultation forms
 export function useConsultationForm<T extends ConsultationFormTypeEnum>(
@@ -64,9 +59,9 @@ export function useConsultationForm<T extends ConsultationFormTypeEnum>(
   }, [formType, consultation, getSchemaForType]);
 
   const form = useForm<ConsultationFormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(consultationSchema),
     defaultValues: consultation || {
-      formType: formType || ConsultationFormTypeEnum.General,
+      formTypes: [formType || ConsultationFormTypeEnum.General],
       status: ConsultationStatusEnum.Draft,
       sessionDuration: 60,
       previousTherapyExperience: false,
@@ -110,7 +105,11 @@ export function useConsultationForm<T extends ConsultationFormTypeEnum>(
   useEffect(() => {
     if (consultation) {
       // Reset form with consultation data
-      form.reset(consultation);
+      form.reset({
+        ...consultation,
+        // Ensure formTypes is set properly from consultation data
+        formTypes: [consultation.formType || ConsultationFormTypeEnum.General],
+      });
     }
   }, [consultation, form]);
 
@@ -430,42 +429,7 @@ export function useConsultationQuery(consultationId: string, options?: { enabled
   });
 }
 
-export function useConsultationSummaryQuery(consultationId: string, options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: ['consultation-summary', consultationId],
-    queryFn: async (): Promise<ConsultationSummaryData> => {
-      const response = await ConsultationAPI.getConsultationSummary(consultationId);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch consultation summary');
-      }
-      
-      // Validate the received data
-      const validationResult = validateConsultationSummaryData(response.data);
-      if (!validationResult.success) {
-        console.warn('Invalid consultation summary data received:', validationResult.errors);
-        
-        // Use safe parsing with fallback data
-        const { data: safeData, error } = safeParseConsultationSummary(response.data);
-        if (error) {
-          console.error('Critical data validation error:', error);
-          // Still return the safe fallback data rather than throwing
-          return safeData as ConsultationSummaryData;
-        }
-        return safeData as ConsultationSummaryData;
-      }
-      
-      return validationResult.data!;
-    },
-    enabled: options?.enabled !== false && !!consultationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: (failureCount, error) => {
-      // Don't retry if consultation not found
-      if (error?.message?.includes('not found')) return false;
-      return failureCount < 3;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
-  });
-}
+
 
 export function useConsultationsQuery(filters?: {
   clientId?: string;
@@ -594,109 +558,9 @@ export function useDeleteConsultationMutation() {
   });
 }
 
-// Comprehensive hook that combines consultation data with AI predictions
-export function useConsultationSummary(consultationId: string, options?: { enabled?: boolean }) {
-  const {
-    data: summaryData,
-    isLoading,
-    error,
-    refetch,
-    isRefetching,
-  } = useConsultationSummaryQuery(consultationId, options);
 
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
-  // Validate data when it changes
-  useEffect(() => {
-    if (summaryData) {
-      const validationResult = validateConsultationSummaryData(summaryData);
-      if (!validationResult.success) {
-        setValidationErrors(validationResult.errors || []);
-      } else {
-        setValidationErrors([]);
-      }
-    }
-  }, [summaryData]);
 
-  const retryFetch = useCallback(() => {
-    setValidationErrors([]); // Clear validation errors on retry
-    refetch();
-  }, [refetch]);
-
-  const hasValidationIssues = validationErrors.length > 0;
-  const isDataComplete = !!(summaryData?.consultation && summaryData?.client && summaryData?.therapist);
-
-  return {
-    // Data
-    summaryData,
-    consultation: summaryData?.consultation,
-    aiPredictions: summaryData?.aiPredictions,
-    client: summaryData?.client,
-    therapist: summaryData?.therapist,
-    
-    // State
-    isLoading: isLoading || isRefetching,
-    error: error as Error | null,
-    hasData: !!summaryData,
-    isDataComplete,
-    
-    // Validation
-    validationErrors,
-    hasValidationIssues,
-    isDataValid: !!summaryData && !hasValidationIssues && isDataComplete,
-    
-    // Actions
-    retry: retryFetch,
-    refetch,
-    clearValidationErrors: () => setValidationErrors([]),
-  };
-}
-
-// Hook specifically for therapy page consultation display
-export function useTherapyPageConsultation(clientId: string, options?: { enabled?: boolean }) {
-  const consultationsQuery = useConsultationsQuery({ 
-    clientId,
-  });
-
-  const latestConsultation = useMemo(() => {
-    if (!consultationsQuery.data?.items?.length) return null;
-    
-    // Get the most recent completed consultation
-    const completedConsultations = consultationsQuery.data.items
-      .filter(c => c.status === ConsultationStatusEnum.Completed)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    
-    return completedConsultations[0] || null;
-  }, [consultationsQuery.data]);
-
-  const summaryQuery = useConsultationSummaryQuery(
-    latestConsultation?.id || '',
-    { 
-      enabled: options?.enabled !== false && !!latestConsultation?.id 
-    }
-  );
-
-  return {
-    // Data
-    consultation: latestConsultation,
-    summaryData: summaryQuery.data,
-    allConsultations: consultationsQuery.data?.items || [],
-    
-    // State
-    isLoading: consultationsQuery.isLoading || summaryQuery.isLoading,
-    error: consultationsQuery.error || summaryQuery.error,
-    hasConsultation: !!latestConsultation,
-    hasSummary: !!summaryQuery.data,
-    
-    // Actions
-    refetch: () => {
-      consultationsQuery.refetch();
-      if (latestConsultation?.id) {
-        summaryQuery.refetch();
-      }
-    },
-  };
-}
 
 // Export default hook for general use
 export default useConsultationData;

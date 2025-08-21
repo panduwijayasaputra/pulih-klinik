@@ -18,65 +18,14 @@ import {
   UserIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline';
+import { Clinic } from '@/types/clinic';
+import { ClinicStatusEnum } from '@/types/enums';
 
 function AdminClinicsPageContent() {
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock data for clinics
-  const mockClinics = [
-    {
-      id: '1',
-      name: 'Mindful Therapy Center Jakarta',
-      address: 'Jl. Sudirman No. 123, Jakarta Pusat',
-      phone: '+62-21-1234-5678',
-      email: 'admin@mindfultherapy.com',
-      status: 'active',
-      subscriptionTier: 'professional',
-      therapistsCount: 8,
-      clientsCount: 156,
-      createdAt: '2023-06-15T00:00:00Z',
-      lastActivity: '2024-01-14T10:30:00Z'
-    },
-    {
-      id: '2', 
-      name: 'Harmony Hypnotherapy Surabaya',
-      address: 'Jl. Basuki Rahmat No. 456, Surabaya',
-      phone: '+62-31-9876-5432',
-      email: 'contact@harmonyhypno.id',
-      status: 'active',
-      subscriptionTier: 'basic',
-      therapistsCount: 3,
-      clientsCount: 87,
-      createdAt: '2023-08-22T00:00:00Z',
-      lastActivity: '2024-01-13T15:20:00Z'
-    },
-    {
-      id: '3',
-      name: 'Serenity Mind Clinic Bandung',
-      address: 'Jl. Braga No. 789, Bandung',
-      phone: '+62-22-5555-1234',
-      email: 'info@serenitymind.com',
-      status: 'suspended',
-      subscriptionTier: 'professional',
-      therapistsCount: 5,
-      clientsCount: 42,
-      createdAt: '2023-04-10T00:00:00Z',
-      lastActivity: '2024-01-05T09:15:00Z'
-    },
-    {
-      id: '4',
-      name: 'Peaceful Therapy Medan',
-      address: 'Jl. Gatot Subroto No. 321, Medan',
-      phone: '+62-61-7777-8888',
-      email: 'admin@peacefultherapy.id',
-      status: 'pending',
-      subscriptionTier: 'basic',
-      therapistsCount: 2,
-      clientsCount: 15,
-      createdAt: '2024-01-10T00:00:00Z',
-      lastActivity: '2024-01-14T08:45:00Z'
-    }
-  ];
+  // Mock clinics data
+  const mockClinics: Clinic[] = [];
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -129,9 +78,9 @@ function AdminClinicsPageContent() {
   // Stats calculation
   const stats = {
     total: mockClinics.length,
-    active: mockClinics.filter(c => c.status === 'active').length,
-    suspended: mockClinics.filter(c => c.status === 'suspended').length,
-    pending: mockClinics.filter(c => c.status === 'pending').length
+    active: mockClinics.filter(c => c.status === ClinicStatusEnum.Active).length,
+    suspended: mockClinics.filter(c => c.status === ClinicStatusEnum.Suspended).length,
+    pending: mockClinics.filter(c => c.status === ClinicStatusEnum.Pending).length
   };
 
   return (
@@ -227,7 +176,7 @@ function AdminClinicsPageContent() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
                       <h4 className="font-medium">{clinic.name}</h4>
-                      {getStatusBadge(clinic.status)}
+                      {getStatusBadge(clinic.status as ClinicStatusEnum)}
                       {getTierBadge(clinic.subscriptionTier)}
                     </div>
                     
@@ -246,13 +195,13 @@ function AdminClinicsPageContent() {
                       </div>
                       <div className="flex items-center">
                         <UserIcon className="w-4 h-4 mr-1" />
-                        {clinic.therapistsCount} Therapist, {clinic.clientsCount} Klien
+                        {clinic.therapists.length} Therapist, {clinic.clients.length} Klien
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
                       <span>Bergabung: {new Date(clinic.createdAt).toLocaleDateString('id-ID')}</span>
-                      <span>Aktivitas Terakhir: {new Date(clinic.lastActivity).toLocaleDateString('id-ID')}</span>
+                      <span>Aktivitas Terakhir: {new Date(clinic.updatedAt).toLocaleDateString('id-ID')}</span>
                     </div>
                   </div>
                 </div>
@@ -261,7 +210,7 @@ function AdminClinicsPageContent() {
                   <Button variant="outline" size="sm">
                     Lihat Detail
                   </Button>
-                  {clinic.status === 'pending' && (
+                  {clinic.status === ClinicStatusEnum.Pending && (
                     <>
                       <Button size="sm">
                         Approve
@@ -271,12 +220,12 @@ function AdminClinicsPageContent() {
                       </Button>
                     </>
                   )}
-                  {clinic.status === 'active' && (
+                  {clinic.status === ClinicStatusEnum.Active && (
                     <Button variant="outline" size="sm">
                       Suspend
                     </Button>
                   )}
-                  {clinic.status === 'suspended' && (
+                  {clinic.status === ClinicStatusEnum.Suspended && (
                     <Button size="sm">
                       Aktifkan
                     </Button>

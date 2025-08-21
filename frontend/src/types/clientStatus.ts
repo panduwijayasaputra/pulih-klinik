@@ -1,22 +1,9 @@
+import { ClientStatusEnum, ClientStatusLabels } from './enums';
+
 type EnumValue<T> = T[keyof T];
 
-// Client Status Enum - updated to match consultation feature requirements
-export enum ClientStatusEnum {
-  New = 'new',
-  Assigned = 'assigned', 
-  Consultation = 'consultation',
-  Therapy = 'therapy',
-  Done = 'done',
-}
-
-// Status labels in Bahasa Indonesia for UI display
-export const ClientStatusLabels: Record<ClientStatusEnum, string> = {
-  [ClientStatusEnum.New]: 'Baru',
-  [ClientStatusEnum.Assigned]: 'Telah Ditugaskan',
-  [ClientStatusEnum.Consultation]: 'Konsultasi',
-  [ClientStatusEnum.Therapy]: 'Terapi',
-  [ClientStatusEnum.Done]: 'Selesai',
-};
+// Re-export for convenience
+export { ClientStatusEnum, ClientStatusLabels };
 
 // Status color mapping for UI components
 export const ClientStatusColors: Record<ClientStatusEnum, string> = {

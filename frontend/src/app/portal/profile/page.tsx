@@ -77,10 +77,6 @@ function ProfilePageContent() {
       [UserRoleEnum.Administrator]: 'Administrator Sistem',
       [UserRoleEnum.ClinicAdmin]: 'Administrator Klinik', 
       [UserRoleEnum.Therapist]: 'Therapist',
-      // Legacy compatibility
-      'administrator': 'Administrator Sistem',
-      'clinic_admin': 'Administrator Klinik', 
-      'therapist': 'Therapist'
     };
     
     return roles.map(role => roleLabels[role as keyof typeof roleLabels] || role).join(', ');
@@ -237,7 +233,7 @@ function ProfilePageContent() {
               </div>
 
               {/* Professional Information (for therapists) */}
-              {(user?.roles?.includes(UserRoleEnum.Therapist) || user?.roles?.includes('therapist' as any)) && (
+              {(user?.roles?.includes(UserRoleEnum.Therapist)) && (
                 <>
                   <div className="border-t pt-6">
                     <h3 className="text-lg font-medium mb-4">Informasi Profesional</h3>

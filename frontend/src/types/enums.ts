@@ -4,9 +4,9 @@
 
 // Auth / Roles / Subscription
 export enum UserRoleEnum {
-  Administrator = 'Administrator',
-  ClinicAdmin = 'ClinicAdmin',
-  Therapist = 'Therapist',
+  Administrator = 'administrator',
+  ClinicAdmin = 'clinic_admin',
+  Therapist = 'therapist',
 }
 
 export enum AuthSubscriptionTierEnum {
@@ -176,6 +176,7 @@ export enum TherapistStatusEnum {
   Inactive = 'inactive',
   OnLeave = 'on_leave',
   Suspended = 'suspended',
+  PendingSetup = 'pending_setup',
 }
 
 export enum EmploymentTypeEnum {
@@ -261,49 +262,47 @@ export enum MentalHealthIssueEnum {
   Other = 'other',
 }
 
-// Session
-export enum SessionStatusEnum {
-  Scheduled = 'scheduled',
+// Zod-compatible enum arrays for validation schemas
+// These correspond to the TypeScript enums above but are arrays for Zod
+export const ClientGenderValues = ['Male', 'Female'] as const;
+export const ClientEducationValues = [
+  'Elementary', 'Middle', 'High School', 'Associate', 'Bachelor', 'Master', 'Doctorate'
+] as const;
+export const ClientReligionValues = [
+  'Islam', 'Christianity', 'Catholicism', 'Hinduism', 'Buddhism', 'Konghucu', 'Other'
+] as const;
+export const ClientMaritalStatusValues = ['Single', 'Married', 'Widowed'] as const;
+export const ClientRelationshipWithSpouseValues = ['Good', 'Average', 'Bad'] as const;
+export const ClientStatusValues = ['new', 'assigned', 'consultation', 'therapy', 'done'] as const;
+export const ClientGuardianRelationshipValues = ['Father', 'Mother', 'Legal guardian', 'Other'] as const;
+export const ClientGuardianMaritalStatusValues = ['Married', 'Divorced', 'Widowed', 'Other'] as const;
+
+// Clinic document enum values
+export const ClinicDocumentTypeValues = ['license', 'certificate', 'insurance', 'tax', 'other'] as const;
+
+// Consultation
+export enum ConsultationStatusEnum {
+  Draft = 'draft',
   InProgress = 'in_progress',
   Completed = 'completed',
-  Cancelled = 'cancelled',
-  NoShow = 'no_show',
-  Rescheduled = 'rescheduled',
+  Archived = 'archived',
 }
 
-export enum SessionTypeEnum {
-  Initial = 'initial',
-  Regular = 'regular',
-  Follow = 'follow_up',
-  Emergency = 'emergency',
-  Group = 'group',
-  Assessment = 'assessment',
+export enum ConsultationFormTypeEnum {
+  General = 'general',
+  DrugAddiction = 'drug_addiction',
+  Minor = 'minor',
 }
 
-export enum SessionPhaseEnum {
-  PreSession = 'pre_session',
-  Intake = 'intake',
-  Assessment = 'assessment',
-  Induction = 'induction',
-  Therapy = 'therapy',
-  PostTherapy = 'post_therapy',
-  Closure = 'closure',
-  PostSession = 'post_session',
+// Clinic status enum values
+export enum ClinicStatusEnum {
+  Active = 'active',
+  Suspended = 'suspended',
+  Pending = 'pending',
+  Inactive = 'inactive',
 }
 
-export enum HypnosisDepthEnum {
-  Light = 'light',
-  Medium = 'medium',
-  Deep = 'deep',
-  Somnambulistic = 'somnambulistic',
-}
 
-export enum SessionOutcomeEnum {
-  Excellent = 'excellent',
-  Good = 'good',
-  Satisfactory = 'satisfactory',
-  NeedsImprovement = 'needs_improvement',
-  Unsuccessful = 'unsuccessful',
-}
+
 
 

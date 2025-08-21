@@ -275,8 +275,8 @@ export const responsiveUtils = {
   },
 
   // Get responsive modal class
-  getModal: (size: keyof typeof RESPONSIVE_MODAL = 'md'): string => {
-    return RESPONSIVE_MODAL[`modal-${size}`];
+  getModal: (size: keyof typeof RESPONSIVE_MODAL = 'modal-md'): string => {
+    return RESPONSIVE_MODAL[size];
   },
 
   // Get responsive form layout

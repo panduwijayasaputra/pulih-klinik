@@ -20,11 +20,24 @@ export { Badge, badgeVariants } from "./badge"
 
 // Navigation Components
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs"
+export { default as PageTabs } from "./page-tabs"
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuGroup, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuRadioGroup } from "./dropdown-menu"
 
 // Overlay Components
 export { Dialog, DialogPortal, DialogOverlay, DialogClose, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./dialog"
 
+// Modal Components
+export { FormModal } from "./form-modal"
+export { useConfirmationDialog } from "./confirmation-dialog"
+
+// Data Components  
+export { DataTable, TableAction, TableColumn } from "./data-table"
+
+// Feedback Components
+export { useToast, ToastProvider } from "./toast"
+
+// Form Components
+export { Switch } from "./switch"
+
 // Display Components
-export { Avatar, AvatarImage, AvatarFallback } from "./avatar"
-export { Skeleton } from "./skeleton" 
+export { Avatar, AvatarImage, AvatarFallback } from "./avatar" 

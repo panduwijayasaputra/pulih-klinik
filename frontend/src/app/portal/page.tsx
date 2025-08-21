@@ -15,7 +15,7 @@ export default function PortalPage() {
   useEffect(() => {
     if (!user) {
       return; // RouteGuard will handle this
-    }
+    }   
 
     // Use active role if set, otherwise fall back to primary role
     const currentRole = activeRole || user.roles[0];

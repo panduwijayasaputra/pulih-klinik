@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { TherapyPage } from '@/components/therapy/TherapyPage';
 import { useToast } from '@/components/ui/toast';
@@ -9,26 +9,13 @@ import { useClient } from '@/hooks/useClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigationStore } from '@/store/navigation';
 
-interface TherapyRouteProps {
-  params: Promise<{
-    clientId: string;
-  }>;
-}
-
-export default function TherapyRoute({ params }: TherapyRouteProps) {
+export default function TherapyRoute() {
   const router = useRouter();
   const { addToast } = useToast();
   const { clients } = useClient();
   const { user } = useAuth();
   const { setBreadcrumbs } = useNavigationStore();
-  const [clientId, setClientId] = React.useState<string>('');
-
-  // Resolve params promise
-  useEffect(() => {
-    params.then(resolvedParams => {
-      setClientId(resolvedParams.clientId);
-    });
-  }, [params]);
+  const { clientId } = useParams();
 
   // Find the specific client
   const client = useMemo(() => {

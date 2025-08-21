@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigation } from '@/hooks/useNavigation';
-import { RoleBasedNavigation, UserInfo } from './index';
+import { RoleBasedNavigation, UserInfo } from '@/components/navigation';
 
 interface SidebarProps {
   className?: string;

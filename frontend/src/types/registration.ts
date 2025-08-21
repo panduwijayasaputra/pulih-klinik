@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { PaymentMethodEnum, RegistrationStepEnum } from './enums';
 
 type EnumValue<T> = T[keyof T];
@@ -15,28 +14,8 @@ export interface VerificationData {
   verified: boolean;
 }
 
-// Clinic data validation schema
-export const clinicDataSchema = z.object({
-  // Clinic Information
-  name: z.string().min(3, 'Nama klinik minimal 3 karakter'),
-  province: z.string().min(1, 'Provinsi harus dipilih'),
-  city: z.string().min(1, 'Kota harus dipilih'),
-  address: z.string().min(10, 'Alamat lengkap minimal 10 karakter'),
-  phone: z.string().min(10, 'Nomor telepon minimal 10 karakter')
-    .regex(/^(\+62|0)[0-9]{9,12}$/, 'Format telepon tidak valid (contoh: 021-1234567 atau +62-812-3456-7890)'),
-  email: z.string().email('Format email tidak valid'),
-  website: z.string().url('Format website tidak valid').optional().or(z.literal('')),
-  officeHours: z.string().min(5, 'Jam operasional harus diisi'),
-  
-  // Admin Information
-  adminName: z.string().min(3, 'Nama admin minimal 3 karakter'),
-  adminEmail: z.string().email('Format email admin tidak valid'),
-  adminWhatsapp: z.string().min(10, 'Nomor WhatsApp minimal 10 karakter')
-    .regex(/^(\+62|0)[0-9]{9,12}$/, 'Format WhatsApp tidak valid'),
-  adminPosition: z.string().min(3, 'Posisi admin minimal 3 karakter'),
-});
-
-export type ClinicDataFormData = z.infer<typeof clinicDataSchema>;
+// Form data types (schemas are now in /schemas/registrationSchema.ts)
+export type { ClinicDataFormData, PaymentFormData } from '@/schemas/registrationSchema';
 
 // Token package type
 export interface TokenPackage {
@@ -58,18 +37,6 @@ export interface BusinessRules {
 
 // Payment method type
 export type PaymentMethod = EnumValue<typeof PaymentMethodEnum>;
-
-// Payment form validation schema
-export const paymentSchema = z.object({
-  method: z.enum([PaymentMethodEnum.BankTransfer, PaymentMethodEnum.CreditCard, PaymentMethodEnum.Ewallet], {
-    message: 'Pilih metode pembayaran'
-  }),
-  agreeTerms: z.boolean().refine(val => val === true, {
-    message: 'Anda harus menyetujui syarat dan ketentuan'
-  }),
-});
-
-export type PaymentFormData = z.infer<typeof paymentSchema>;
 
 // Complete registration data
 export interface RegistrationData {

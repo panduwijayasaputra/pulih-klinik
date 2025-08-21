@@ -3,11 +3,9 @@
 import React, { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
 import { useTherapists } from '@/hooks/useTherapists';
-import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 
 interface AssignTherapistModalProps {
@@ -21,11 +19,11 @@ interface AssignTherapistModalProps {
 export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
   open,
   onOpenChange,
-  clientId,
+  clientId: _clientId,
   currentTherapistId,
   onAssigned,
 }) => {
-  const { therapists, isLoading, fetchTherapists } = useTherapists();
+  const { therapists } = useTherapists();
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,7 +98,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
                 <span className="text-sm font-medium text-yellow-800">Therapist Saat Ini</span>
               </div>
               <p className="text-sm text-yellow-700">
-                <strong>{currentTherapist.name}</strong>
+                <strong>{currentTherapist.fullName}</strong>
               </p>
               <p className="text-xs text-yellow-600 mt-1">
                 {availableTherapists.length > 0 
@@ -117,7 +115,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
             <Select value={selectedTherapist} onValueChange={setSelectedTherapist}>
               <SelectTrigger className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 h-10">
                 <SelectValue placeholder="Pilih therapist dari daftar">
-                  {selectedTherapist && therapists.find(t => t.id === selectedTherapist)?.name}
+                  {selectedTherapist && therapists.find(t => t.id === selectedTherapist)?.fullName}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="max-h-60 w-full">
@@ -137,7 +135,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
                         disabled={disabled}
                         className="py-2"
                       >
-                        <span className="font-medium text-gray-900">{t.name}</span>
+                        <span className="font-medium text-gray-900">{t.fullName}</span>
                       </SelectItem>
                     );
                   })

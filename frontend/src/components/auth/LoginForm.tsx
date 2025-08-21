@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LoginFormData, loginSchema } from '@/types/auth';
+import { LoginFormData } from '@/types/auth';
+import { loginSchema } from '@/schemas/authSchema';
 import { useAuth } from '@/hooks/useAuth';
 
 interface LoginFormProps {

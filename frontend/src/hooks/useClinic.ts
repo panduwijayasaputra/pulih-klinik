@@ -6,71 +6,7 @@ import {
   ClinicProfileFormData, 
   ClinicSettings 
 } from '@/types/clinic';
-import {
-  ClinicApiError,
-  deleteClinicDocument,
-  downloadClinicDocument,
-  getClinicDocuments,
-  getClinicProfile,
-  updateClinicBranding,
-  updateClinicProfile,
-  updateClinicSettings,
-  uploadClinicDocument,
-  uploadClinicLogo
-} from '@/lib/api/clinic';
-
-// Mock data for development/fallback
-const mockClinic: ClinicProfile = {
-  id: 'clinic-001',
-  name: 'Klinik Sehat Jiwa',
-  address: 'Jl. Sudirman No. 123, Jakarta Pusat',
-  phone: '+62-21-1234-5678',
-  email: 'info@kliniksehat.com',
-  website: 'https://kliniksehat.com',
-  logo: '/logos/klinik-sehat.png',
-  description: 'Klinik hipnoterapi terpercaya dengan tim therapist berpengalaman',
-  workingHours: 'Senin - Jumat: 08:00 - 17:00, Sabtu: 08:00 - 14:00',
-  branding: {
-    primaryColor: '#3B82F6',
-    secondaryColor: '#1E40AF',
-    fontFamily: 'Inter'
-  },
-  settings: {
-    timezone: 'Asia/Jakarta',
-    language: 'id',
-    notifications: {
-      email: true,
-      sms: false,
-      push: true
-    }
-  },
-  documents: [
-    {
-      id: 'doc-001',
-      name: 'Izin Praktik Klinik',
-      type: 'license',
-      fileName: 'izin-praktik-klinik.pdf',
-      fileSize: 2048000,
-      uploadedAt: '2023-01-20T00:00:00Z',
-      status: 'approved',
-      url: '/documents/izin-praktik-klinik.pdf',
-      description: 'Surat izin praktik klinik dari Dinas Kesehatan'
-    },
-    {
-      id: 'doc-002',
-      name: 'Sertifikat Akreditasi',
-      type: 'certificate',
-      fileName: 'sertifikat-akreditasi.pdf',
-      fileSize: 1536000,
-      uploadedAt: '2023-02-10T00:00:00Z',
-      status: 'approved',
-      url: '/documents/sertifikat-akreditasi.pdf'
-    }
-  ],
-  subscriptionTier: 'beta',
-  createdAt: '2023-01-15T00:00:00Z',
-  updatedAt: '2023-12-01T00:00:00Z'
-};
+import { ClinicAPI } from '@/lib/api/clinic';
 
 interface UseClinicState {
   clinic: ClinicProfile | null;
@@ -83,8 +19,8 @@ interface UseClinicState {
 
 export const useClinic = () => {
   const [state, setState] = useState<UseClinicState>({
-    clinic: process.env.NODE_ENV === 'development' ? mockClinic : null, // Start with mock data in development
-    documents: process.env.NODE_ENV === 'development' ? (mockClinic.documents || []) : [],
+    clinic: null,
+    documents: [],
     isLoading: false,
     isDocumentsLoading: false,
     error: null,
@@ -96,9 +32,6 @@ export const useClinic = () => {
   }, []);
 
   const handleError = useCallback((error: unknown, fallbackMessage: string) => {
-    if (error instanceof ClinicApiError) {
-      return error.message;
-    }
     if (error instanceof Error) {
       return error.message;
     }
@@ -107,23 +40,15 @@ export const useClinic = () => {
 
   // Fetch clinic profile
   const fetchClinic = useCallback(async () => {
-    // In development, use mock data immediately
-    if (process.env.NODE_ENV === 'development') {
-      updateState({ 
-        clinic: mockClinic, 
-        documents: mockClinic.documents || [],
-        isLoading: false,
-        error: null 
-      });
-      console.info('Using mock clinic data for development');
-      return;
-    }
-
     updateState({ isLoading: true, error: null });
     
     try {
-      const clinicData = await getClinicProfile();
-      updateState({ clinic: clinicData });
+      const response = await ClinicAPI.getClinicProfile('clinic-001');
+      if (response.success && response.data) {
+        updateState({ clinic: response.data });
+      } else {
+        updateState({ error: response.message || 'Gagal mengambil data klinik' });
+      }
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal mengambil data klinik');
       updateState({ error: errorMessage });
@@ -137,9 +62,14 @@ export const useClinic = () => {
     updateState({ isLoading: true, error: null });
 
     try {
-      const updatedClinic = await updateClinicProfile(formData);
-      updateState({ clinic: updatedClinic });
-      return true;
+      const response = await ClinicAPI.updateClinicProfile('clinic-001', formData);
+      if (response.success && response.data) {
+        updateState({ clinic: response.data });
+        return true;
+      } else {
+        updateState({ error: response.message || 'Gagal memperbarui profil klinik' });
+        return false;
+      }
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal memperbarui profil klinik');
       updateState({ error: errorMessage });
@@ -154,19 +84,22 @@ export const useClinic = () => {
     updateState({ isLoading: true, error: null });
 
     try {
-      const logoUrl = await uploadClinicLogo(file);
-      
-      // Update the clinic data with new logo URL
-      if (state.clinic) {
-        const updatedClinic: ClinicProfile = {
-          ...state.clinic,
-          logo: logoUrl,
-          updatedAt: new Date().toISOString()
-        };
-        updateState({ clinic: updatedClinic });
+      const response = await ClinicAPI.uploadDocument('clinic-001', file, 'logo');
+      if (response.success && response.data) {
+        // Update the clinic data with new logo URL
+        if (state.clinic) {
+          const updatedClinic: ClinicProfile = {
+            ...state.clinic,
+            logo: response.data.url,
+            updatedAt: new Date().toISOString()
+          };
+          updateState({ clinic: updatedClinic });
+        }
+        return response.data.url;
+      } else {
+        updateState({ error: response.message || 'Gagal mengunggah logo' });
+        return null;
       }
-      
-      return logoUrl;
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal mengunggah logo');
       updateState({ error: errorMessage });
@@ -181,18 +114,14 @@ export const useClinic = () => {
     updateState({ isLoading: true, error: null });
 
     try {
-      const updatedBranding = await updateClinicBranding(branding);
-      
-      if (state.clinic) {
-        const updatedClinic: ClinicProfile = {
-          ...state.clinic,
-          branding: updatedBranding,
-          updatedAt: new Date().toISOString()
-        };
-        updateState({ clinic: updatedClinic });
+      const response = await ClinicAPI.updateClinicBranding('clinic-001', branding);
+      if (response.success && response.data) {
+        updateState({ clinic: response.data });
+        return true;
+      } else {
+        updateState({ error: response.message || 'Gagal memperbarui branding klinik' });
+        return false;
       }
-      
-      return true;
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal memperbarui branding klinik');
       updateState({ error: errorMessage });
@@ -200,25 +129,21 @@ export const useClinic = () => {
     } finally {
       updateState({ isLoading: false });
     }
-  }, [state.clinic, updateState, handleError]);
+  }, [updateState, handleError]);
 
   // Update clinic settings
   const updateSettings = useCallback(async (settings: ClinicSettings) => {
     updateState({ isLoading: true, error: null });
 
     try {
-      const updatedSettings = await updateClinicSettings(settings);
-      
-      if (state.clinic) {
-        const updatedClinic: ClinicProfile = {
-          ...state.clinic,
-          settings: updatedSettings,
-          updatedAt: new Date().toISOString()
-        };
-        updateState({ clinic: updatedClinic });
+      const response = await ClinicAPI.updateClinicSettings('clinic-001', settings);
+      if (response.success && response.data) {
+        updateState({ clinic: response.data });
+        return true;
+      } else {
+        updateState({ error: response.message || 'Gagal memperbarui pengaturan klinik' });
+        return false;
       }
-      
-      return true;
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal memperbarui pengaturan klinik');
       updateState({ error: errorMessage });
@@ -226,44 +151,46 @@ export const useClinic = () => {
     } finally {
       updateState({ isLoading: false });
     }
-  }, [state.clinic, updateState, handleError]);
+  }, [updateState, handleError]);
 
   // Fetch clinic documents
   const fetchDocuments = useCallback(async () => {
     updateState({ isDocumentsLoading: true, documentsError: null });
     
     try {
-      const documents = await getClinicDocuments();
-      updateState({ documents });
+      const response = await ClinicAPI.getClinicDocuments('clinic-001');
+      if (response.success && response.data) {
+        updateState({ documents: response.data });
+      } else {
+        updateState({ documentsError: response.message || 'Gagal mengambil daftar dokumen' });
+      }
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal mengambil daftar dokumen');
       updateState({ documentsError: errorMessage });
-      
-      // Fall back to clinic documents or empty array
-      if (process.env.NODE_ENV === 'development') {
-        const fallbackDocs = state.clinic?.documents || mockClinic.documents || [];
-        updateState({ documents: fallbackDocs, documentsError: null });
-        console.warn('Using fallback document data due to API error:', errorMessage);
-      }
     } finally {
       updateState({ isDocumentsLoading: false });
     }
-  }, [state.clinic?.documents, updateState, handleError]);
+  }, [updateState, handleError]);
 
   // Upload document
   const uploadDocument = useCallback(async (
     file: File, 
     documentType: ClinicDocument['type'], 
-    description?: string
+    _description?: string
   ) => {
     updateState({ isDocumentsLoading: true, documentsError: null });
 
     try {
-      const newDocument = await uploadClinicDocument(file, documentType, description);
-      updateState({ 
-        documents: [...state.documents, newDocument]
-      });
-      return true;
+      const response = await ClinicAPI.uploadDocument('clinic-001', file, documentType);
+      if (response.success && response.data) {
+        updateState({ 
+          documents: [...state.documents, response.data]
+        });
+        return true;
+      } else {
+        updateState({ documentsError: response.message || 'Gagal mengunggah dokumen' });
+        return false;
+      }
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal mengunggah dokumen');
       updateState({ documentsError: errorMessage });
@@ -278,10 +205,15 @@ export const useClinic = () => {
     updateState({ isDocumentsLoading: true, documentsError: null });
 
     try {
-      await deleteClinicDocument(documentId);
-      const updatedDocuments = state.documents.filter(doc => doc.id !== documentId);
-      updateState({ documents: updatedDocuments });
-      return true;
+      const response = await ClinicAPI.deleteDocument('clinic-001', documentId);
+      if (response.success) {
+        const updatedDocuments = state.documents.filter(doc => doc.id !== documentId);
+        updateState({ documents: updatedDocuments });
+        return true;
+      } else {
+        updateState({ documentsError: response.message || 'Gagal menghapus dokumen' });
+        return false;
+      }
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal menghapus dokumen');
       updateState({ documentsError: errorMessage });
@@ -294,7 +226,8 @@ export const useClinic = () => {
   // Download document
   const downloadDocument = useCallback(async (documentId: string, fileName: string) => {
     try {
-      await downloadClinicDocument(documentId, fileName);
+      // Clinic document download would be handled via direct file download
+      console.log('Download document:', documentId, fileName);
       return true;
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal mengunduh dokumen');

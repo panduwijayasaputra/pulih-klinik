@@ -1,19 +1,4 @@
-import { z } from 'zod';
-
-// Base consultation status enum
-export enum ConsultationStatusEnum {
-  Draft = 'draft',
-  InProgress = 'in_progress',
-  Completed = 'completed',
-  Archived = 'archived',
-}
-
-// Consultation form types
-export enum ConsultationFormTypeEnum {
-  General = 'general',
-  DrugAddiction = 'drug_addiction',
-  Minor = 'minor',
-}
+import { ConsultationStatusEnum, ConsultationFormTypeEnum } from './enums';
 
 // Base consultation interface with common fields
 export interface BaseConsultation {
@@ -204,3 +189,11 @@ export const SeverityLevelLabels: Record<1 | 2 | 3 | 4 | 5, string> = {
   4: 'Sedang-Berat',
   5: 'Berat',
 };
+
+
+
+// Validation error type
+export interface ValidationError {
+  path: string[];
+  message: string;
+}

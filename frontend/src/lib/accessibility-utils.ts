@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 // Accessibility utilities and constants for consistent implementation
 export const ACCESSIBILITY_CONSTANTS = {
   // ARIA labels
@@ -285,24 +287,21 @@ export const accessibilityUtils = {
     }, 1000);
   },
 
-  // Create skip link
-  createSkipLink: (targetId: string, label: string = 'Langsung ke konten'): JSX.Element => {
-    return (
-      <a
-        href={`#${targetId}`}
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        onClick={(e) => {
-          e.preventDefault();
-          const target = document.getElementById(targetId);
-          if (target) {
-            target.focus();
-            target.scrollIntoView();
-          }
-        }}
-      >
-        {label}
-      </a>
-    );
+  // Create skip link props
+  createSkipLinkProps: (targetId: string, label: string = 'Langsung ke konten') => {
+    return {
+      href: `#${targetId}`,
+      className: "sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded focus:outline-none focus:ring-2 focus:ring-blue-500",
+      onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.focus();
+          target.scrollIntoView();
+        }
+      },
+      children: label,
+    };
   },
 
   // Create focus trap hook
@@ -316,7 +315,7 @@ export const accessibilityUtils = {
       if (!container) return;
 
       const handleKeyDown = (event: KeyboardEvent) => {
-        accessibilityUtils.trapFocus(containerRef, event as any);
+        accessibilityUtils.trapFocus(containerRef as React.RefObject<HTMLElement>, event as any);
       };
 
       container.addEventListener('keydown', handleKeyDown);
@@ -326,21 +325,18 @@ export const accessibilityUtils = {
     return containerRef;
   },
 
-  // Create ARIA live region
-  createLiveRegion: (
+  // Create ARIA live region props
+  createLiveRegionProps: (
     message: string,
     priority: 'polite' | 'assertive' | 'off' = 'polite'
-  ): JSX.Element => {
-    return (
-      <div
-        aria-live={priority}
-        aria-atomic="true"
-        className="sr-only"
-        role="status"
-      >
-        {message}
-      </div>
-    );
+  ) => {
+    return {
+      'aria-live': priority,
+      'aria-atomic': 'true',
+      className: 'sr-only',
+      role: 'status',
+      children: message,
+    };
   },
 
   // Validate ARIA attributes
@@ -423,8 +419,8 @@ export const accessibilityUtils = {
   ): {
     inputProps: React.InputHTMLAttributes<HTMLInputElement>;
     labelProps: React.LabelHTMLAttributes<HTMLLabelElement>;
-    descriptionId?: string;
-    errorId?: string;
+    descriptionId: string | undefined;
+    errorId: string | undefined;
   } => {
     const { id, label, description, error, required, type } = props;
 
@@ -447,8 +443,8 @@ export const accessibilityUtils = {
     return {
       inputProps,
       labelProps,
-      descriptionId,
-      errorId,
+      descriptionId: descriptionId || undefined,
+      errorId: errorId || undefined,
     };
   },
 };

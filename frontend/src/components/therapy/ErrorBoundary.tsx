@@ -1,7 +1,7 @@
 'use client';
 
 import { Component, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Home, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -46,7 +46,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const errorString = `${error.toString()}\n${errorInfo.componentStack}`;
     
     this.setState({
@@ -160,7 +160,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     };
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       // Use custom fallback if provided
       if (this.props.fallback) {
@@ -305,19 +305,22 @@ export function useErrorHandler(options?: UseErrorHandlerOptions) {
 // Convenience wrapper for therapy-specific errors
 export function TherapyErrorBoundary({ 
   children, 
+  onError,
   onRetry,
   onGoHome,
   onGoBack,
   context = 'therapy'
 }: { 
   children: ReactNode; 
-  onRetry?: () => void;
-  onGoHome?: () => void;
-  onGoBack?: () => void;
+  onError?: (error: Error, errorId: string) => void; // Add undefined type to onError
+  onRetry?: (() => void) | undefined; // Add undefined type to onRetry
+  onGoHome?: (() => void) | undefined; // Add undefined type to onGoHome
+  onGoBack?: (() => void) | undefined; // Add undefined type to onGoBack
   context?: string;
 }) {
   return (
     <ErrorBoundary
+      onError={onError}
       context={context}
       onRetry={onRetry}
       onGoHome={onGoHome}

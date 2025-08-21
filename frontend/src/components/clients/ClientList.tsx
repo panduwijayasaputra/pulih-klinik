@@ -2,10 +2,9 @@
 
 import React, { useCallback, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { ClientFormModal } from '@/components/clients/ClientFormModal';
-import { SessionHistory } from '@/components/clients/SessionHistory';
+
 import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
 
 import { Client } from '@/types/client';
@@ -22,7 +21,6 @@ import {
   ChatBubbleLeftRightIcon,
   EnvelopeIcon,
   EyeIcon,
-  HeartIcon,
   MapPinIcon,
   PencilIcon,
   PhoneIcon,
@@ -707,7 +705,7 @@ export const ClientList: React.FC<ClientListProps> = ({
 
                 {/* Session History */}
                 <div>
-                  <SessionHistory clientId={selectedClient.id} pageSize={3} />
+                  {/* Session history content will be added here */}
                 </div>
               </div>
 

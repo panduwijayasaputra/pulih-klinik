@@ -1,49 +1,10 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  CheckCircleIcon, 
-  ClockIcon,
-  DocumentTextIcon,
-  PlayIcon,
-  UserPlusIcon
-} from '@heroicons/react/24/outline';
+import { CheckCircleIcon } from '@heroicons/react/24/outline';
+import { CONTACT_INFO, NEXT_STEPS, REGISTRATION_SUMMARY } from '@/lib/constants/thankyou-constants';
 
 export default function ThankYouPage() {
-  const nextSteps = [
-    {
-      id: 1,
-      icon: ClockIcon,
-      title: 'Konfirmasi Pembayaran',
-      description: 'Selesaikan pembayaran dalam 24 jam untuk mengaktifkan akun',
-      status: 'pending',
-      timeframe: '24 jam'
-    },
-    {
-      id: 2,
-      icon: UserPlusIcon,
-      title: 'Setup Akun Therapist',
-      description: 'Tambahkan therapist pertama dan atur profil klinik',
-      status: 'upcoming',
-      timeframe: 'Setelah aktivasi'
-    },
-    {
-      id: 3,
-      icon: DocumentTextIcon,
-      title: 'Import Data Klien',
-      description: 'Upload data klien yang sudah ada (opsional)',
-      status: 'upcoming',
-      timeframe: 'Kapan saja'
-    },
-    {
-      id: 4,
-      icon: PlayIcon,
-      title: 'Sesi Hipnoterapi Pertama',
-      description: 'Mulai menggunakan AI untuk sesi hipnoterapi',
-      status: 'upcoming',
-      timeframe: 'Setelah setup'
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100">
@@ -74,17 +35,17 @@ export default function ThankYouPage() {
                 <div>
                   <h3 className="font-medium text-gray-700 mb-2">Informasi Klinik</h3>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p>ID Klinik: <span className="font-mono bg-gray-100 px-2 py-1 rounded">CLINIC-001</span></p>
-                    <p>Status: <span className="text-yellow-600 font-medium">Pending Aktivasi</span></p>
-                    <p>Paket: <span className="font-medium">Beta (Standard)</span></p>
+                    <p>ID Klinik: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{REGISTRATION_SUMMARY.clinicId}</span></p>
+                    <p>Status: <span className="text-yellow-600 font-medium">{REGISTRATION_SUMMARY.status}</span></p>
+                    <p>Paket: <span className="font-medium">{REGISTRATION_SUMMARY.package}</span></p>
                   </div>
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-700 mb-2">Pembayaran</h3>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p>Total: <span className="font-medium">Rp 166.500/bulan</span></p>
-                    <p>Metode: <span className="font-medium">Transfer Bank</span></p>
-                    <p>Status: <span className="text-yellow-600 font-medium">Menunggu Pembayaran</span></p>
+                    <p>Total: <span className="font-medium">{REGISTRATION_SUMMARY.total}</span></p>
+                    <p>Metode: <span className="font-medium">{REGISTRATION_SUMMARY.paymentMethod}</span></p>
+                    <p>Status: <span className="text-yellow-600 font-medium">{REGISTRATION_SUMMARY.paymentStatus}</span></p>
                   </div>
                 </div>
               </div>
@@ -97,7 +58,7 @@ export default function ThankYouPage() {
               Langkah Selanjutnya
             </h2>
             <div className="space-y-4">
-              {nextSteps.map((step, index) => {
+              {NEXT_STEPS.map((step, index) => {
                 const Icon = step.icon;
                 return (
                   <Card key={step.id} className={`transition-all ${
@@ -167,13 +128,13 @@ export default function ThankYouPage() {
               </p>
               <div className="flex justify-center space-x-6 text-sm">
                 <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
-                  📧 support@terapintar.com
+                  📧 {CONTACT_INFO.email}
                 </a>
                 <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
-                  📱 +62-21-1234-5678
+                  📱 {CONTACT_INFO.phone}
                 </a>
                 <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
-                  💬 WhatsApp Support
+                  💬 {CONTACT_INFO.whatsapp}
                 </a>
               </div>
             </div>

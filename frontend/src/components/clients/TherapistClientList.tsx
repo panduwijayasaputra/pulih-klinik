@@ -4,26 +4,20 @@ import React, { useMemo, useState } from 'react';
 
 import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
-import { SessionHistory } from '@/components/clients/SessionHistory';
-import { ConsultationFormModal } from '@/components/consultation/ConsultationFormModal';
+
 
 import { Client } from '@/types/client';
 import { ClientEducationLabels, ClientGuardianMaritalStatusLabels, ClientGuardianRelationshipLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientReligionLabels, ClientStatusEnum, ClientStatusLabels } from '@/types/enums';
-import { Consultation, ConsultationFormTypeEnum } from '@/types/consultation';
-import { useAuth } from '@/hooks/useAuth';
 import {
   AcademicCapIcon,
   BriefcaseIcon,
   CalendarIcon,
   ChartBarIcon,
-  ChatBubbleLeftRightIcon,
   EnvelopeIcon,
   EyeIcon,
-  HeartIcon,
   MapPinIcon,
   PhoneIcon,
   PlayIcon,
-  PlusIcon,
   UserIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
@@ -35,7 +29,6 @@ export interface TherapistClientListProps {
   error?: string | null;
   onRefresh?: () => void;
   onViewClient?: (clientId: string) => void;
-  onStartConsultation?: (clientId: string) => void;
   onStartTherapy?: (clientId: string) => void;
 }
 
@@ -43,18 +36,14 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
   clients,
   totalClients,
   loading = false,
-  error = null,
+  error: _error = null,
   onRefresh,
-  onViewClient,
-  onStartConsultation,
+  onViewClient: _onViewClient,
   onStartTherapy,
 }) => {
-  const { user } = useAuth();
   const [status, setStatus] = useState<'all' | Client['status']>('all');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [showConsultationModal, setShowConsultationModal] = useState(false);
-  const [consultationClient, setConsultationClient] = useState<Client | null>(null);
 
   // Filter clients by status
   const filteredClients = useMemo(() => {
@@ -67,27 +56,6 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
   const handleCloseDetails = React.useCallback(() => {
     setShowDetailsModal(false);
     setSelectedClient(null);
-  }, []);
-
-  const handleStartConsultation = React.useCallback((client: Client) => {
-    setConsultationClient(client);
-    setShowConsultationModal(true);
-    // Close details modal if open
-    if (showDetailsModal) {
-      handleCloseDetails();
-    }
-  }, [showDetailsModal, handleCloseDetails]);
-
-  const handleConsultationSuccess = React.useCallback((consultation: Consultation) => {
-    // Update client status to consultation
-    onRefresh?.();
-    setShowConsultationModal(false);
-    setConsultationClient(null);
-  }, [onRefresh]);
-
-  const handleConsultationCancel = React.useCallback(() => {
-    setShowConsultationModal(false);
-    setConsultationClient(null);
   }, []);
   // Define table columns
   const columns: TableColumn<Client>[] = [
@@ -582,7 +550,7 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
 
                 {/* Session History */}
                 <div>
-                  <SessionHistory key={selectedClient.id} clientId={selectedClient.id} pageSize={3} />
+                  {/* Session history content will be added here */}
                 </div>
               </div>
 
@@ -619,19 +587,6 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
         </div>
       )}
 
-      {/* Consultation Form Modal */}
-      {showConsultationModal && consultationClient && user && (
-        <ConsultationFormModal
-          open={showConsultationModal}
-          onOpenChange={setShowConsultationModal}
-          clientId={consultationClient.id}
-          therapistId={user.id}
-          formType={ConsultationFormTypeEnum.General} // Default to general, user can change in form
-          mode="create"
-          onSuccess={handleConsultationSuccess}
-          onCancel={handleConsultationCancel}
-        />
-      )}
     </>
   );
 };

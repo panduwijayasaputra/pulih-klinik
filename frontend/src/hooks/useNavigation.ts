@@ -111,7 +111,7 @@ export const useNavigation = () => {
     }
     // If no specific role path and no active role, set to primary role
     else if (!activeRole && effectiveUserRoles.length > 0) {
-      setActiveRole(effectiveUserRoles[0]);
+      setActiveRole(effectiveUserRoles[0] as UserRole);
     }
   }, [pathname, effectiveUserRoles, activeRole, setActiveRole]);
 

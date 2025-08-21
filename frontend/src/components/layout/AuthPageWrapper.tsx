@@ -24,8 +24,6 @@ export const AuthPageWrapper: React.FC<AuthPageWrapperProps> = ({
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <PageWrapper 
-        maxWidth="md" 
-        padding="md" 
         className={cn(centerContent && 'sm:mx-auto sm:w-full sm:max-w-md', className)}
       >
         {/* Logo and Header */}

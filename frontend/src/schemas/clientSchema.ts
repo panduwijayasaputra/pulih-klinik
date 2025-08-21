@@ -1,35 +1,29 @@
 import { z } from 'zod';
+import {
+  ClientEducationValues,
+  ClientGenderValues,
+  ClientGuardianMaritalStatusValues,
+  ClientGuardianRelationshipValues,
+  ClientMaritalStatusValues,
+  ClientRelationshipWithSpouseValues,
+  ClientReligionValues,
+  ClientStatusValues
+} from '@/types/enums';
 
-// Common enums based on existing Client types
-export const genderEnum = z.enum(['Male', 'Female']);
-export const educationEnum = z.enum([
-  'Elementary',
-  'Middle',
-  'High School',
-  'Associate',
-  'Bachelor',
-  'Master',
-  'Doctorate',
-]);
-export const religionEnum = z.enum([
-  'Islam',
-  'Christianity',
-  'Catholicism',
-  'Hinduism',
-  'Buddhism',
-  'Konghucu',
-  'Other',
-]);
-export const maritalStatusEnum = z.enum(['Single', 'Married', 'Widowed']);
-export const relationshipWithSpouseEnum = z.enum(['Good', 'Average', 'Bad']);
-export const clientStatusEnum = z.enum(['active', 'inactive', 'completed', 'pending']);
+// Common enums using values from types
+export const genderEnum = z.enum(ClientGenderValues);
+export const educationEnum = z.enum(ClientEducationValues);
+export const religionEnum = z.enum(ClientReligionValues);
+export const maritalStatusEnum = z.enum(ClientMaritalStatusValues);
+export const relationshipWithSpouseEnum = z.enum(ClientRelationshipWithSpouseValues);
+export const clientStatusEnum = z.enum(ClientStatusValues);
 
 // Minor-specific enums
-export const guardianRelationshipEnum = z.enum(['Father', 'Mother', 'Legal guardian', 'Other']);
-export const guardianMaritalStatusEnum = z.enum(['Married', 'Divorced', 'Widowed', 'Other']);
+export const guardianRelationshipEnum = z.enum(ClientGuardianRelationshipValues);
+export const guardianMaritalStatusEnum = z.enum(ClientGuardianMaritalStatusValues);
 
 // Reusable patterns
-const phoneIdPattern = /^(\+62|0)[0-9]{9,13}$/; // e.g., +62812..., 0812...
+const phoneIdPattern = /^(?:\+62|62|0)8[1-9][0-9]{6,10}$/; // e.g., +62812..., 0812...
 
 export const emergencyContactSchema = z.object({
   name: z.string().min(2, 'Nama kontak darurat minimal 2 karakter'),
@@ -81,7 +75,7 @@ export const clientBaseSchema = z.object({
 });
 
 export const createClientSchema = clientBaseSchema.extend({
-  status: clientStatusEnum.default('active'),
+  status: clientStatusEnum.default('new'),
 });
 
 export const updateClientSchema = clientBaseSchema.partial().extend({

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { getPrimaryRole, hasAnyRole, hasRole } from '@/lib/api';
+import { getPrimaryRole, hasAnyRole, hasRole } from '@/lib/api/auth';
 
 export const useAuth = () => {
   const {

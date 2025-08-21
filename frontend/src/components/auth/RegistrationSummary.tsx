@@ -50,6 +50,7 @@ export const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
     clients: 20,
     tokens: 10,
     lifetime: true,
+    trialDays: 0,
     description: 'Akses seumur hidup'
   };
 
@@ -60,6 +61,7 @@ export const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
     clients: -1, // -1 indicates unlimited
     tokens: 50,
     lifetime: true,
+    trialDays: 0,
     description: 'Akses seumur hidup dengan fitur lengkap'
   };
 

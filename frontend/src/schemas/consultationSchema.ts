@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ConsultationFormTypeEnum, ConsultationStatusEnum } from '@/types/consultation';
+import { ConsultationFormTypeEnum, ConsultationStatusEnum } from '@/types/enums';
 
 // Emotion scale schema
 const emotionScaleSchema = z.object({
@@ -52,12 +52,8 @@ const consultationReasonsSchema = z.object({
 const baseConsultationSchema = z.object({
   clientId: z.string().min(1, 'Client ID wajib diisi'),
   therapistId: z.string().min(1, 'Therapist ID wajib diisi'),
-  formTypes: z.array(z.nativeEnum(ConsultationFormTypeEnum, {
-    errorMap: () => ({ message: 'Jenis konsultasi tidak valid' }),
-  })).min(1, 'Minimal satu jenis konsultasi harus dipilih'),
-  status: z.nativeEnum(ConsultationStatusEnum, {
-    errorMap: () => ({ message: 'Status konsultasi tidak valid' }),
-  }).default(ConsultationStatusEnum.Draft),
+  formTypes: z.array(z.nativeEnum(ConsultationFormTypeEnum)).min(1, 'Pilih minimal satu jenis konsultasi'),
+  status: z.nativeEnum(ConsultationStatusEnum).default(ConsultationStatusEnum.Draft),
   
   // Session information
   sessionDate: z.string().min(1, 'Tanggal sesi wajib diisi'),
@@ -67,13 +63,9 @@ const baseConsultationSchema = z.object({
   consultationNotes: z.string().optional(),
   
   // Client background information
-  previousTherapyExperience: z.boolean({
-    errorMap: () => ({ message: 'Pilih apakah klien pernah terapi sebelumnya' }),
-  }),
+  previousTherapyExperience: z.boolean(),
   previousTherapyDetails: z.string().optional(),
-  currentMedications: z.boolean({
-    errorMap: () => ({ message: 'Pilih apakah klien sedang mengonsumsi obat' }),
-  }),
+  currentMedications: z.boolean(),
   currentMedicationsDetails: z.string().optional(),
   
   // Additional psychological history
@@ -96,6 +88,16 @@ const baseConsultationSchema = z.object({
   
   // Emotion scale
   emotionScale: emotionScaleSchema.optional(),
+  
+  // Recent mood and emotions
+  recentMoodState: z.enum(['excellent', 'good', 'neutral', 'bad', 'very_bad']).optional(),
+  recentMoodStateDetails: z.string().optional(),
+  frequentEmotions: z.array(z.string()).optional(),
+  
+  // Self-harm and stress assessment
+  selfHarmThoughts: z.enum(['never', 'rarely', 'sometimes', 'often', 'very_often']).optional(),
+  selfHarmDetails: z.string().optional(),
+  dailyStressFrequency: z.enum(['never', 'rarely', 'sometimes', 'often', 'always', 'very_often']).optional(),
   
   // Goals and expectations
   treatmentGoals: z.array(z.string().min(1, 'Tujuan terapi tidak boleh kosong'))
@@ -146,7 +148,7 @@ const baseConsultationSchema = z.object({
 
 // General consultation schema
 export const generalConsultationSchema = baseConsultationSchema.extend({
-  formType: z.literal(ConsultationFormTypeEnum.General),
+  formTypes: z.array(z.literal(ConsultationFormTypeEnum.General)).min(1),
   
   // Life circumstances
   currentLifeStressors: z.array(z.string().min(1, 'Stressor tidak boleh kosong'))
@@ -157,13 +159,9 @@ export const generalConsultationSchema = baseConsultationSchema.extend({
     .max(5, 'Keseimbangan hidup-kerja maksimal 5') as z.ZodType<1 | 2 | 3 | 4 | 5>,
   
   // Mental health history
-  familyMentalHealthHistory: z.boolean({
-    errorMap: () => ({ message: 'Pilih apakah ada riwayat gangguan mental dalam keluarga' }),
-  }),
+  familyMentalHealthHistory: z.boolean(),
   familyMentalHealthDetails: z.string().optional(),
-  previousMentalHealthDiagnosis: z.boolean({
-    errorMap: () => ({ message: 'Pilih apakah pernah didiagnosis gangguan mental' }),
-  }),
+  previousMentalHealthDiagnosis: z.boolean(),
   previousMentalHealthDiagnosisDetails: z.string().optional(),
   
   // Lifestyle factors
@@ -188,7 +186,7 @@ export const generalConsultationSchema = baseConsultationSchema.extend({
 
 // Drug addiction consultation schema
 export const drugAddictionConsultationSchema = baseConsultationSchema.extend({
-  formType: z.literal(ConsultationFormTypeEnum.DrugAddiction),
+  formTypes: z.array(z.literal(ConsultationFormTypeEnum.DrugAddiction)).min(1),
   
   // Substance use history
   substanceHistory: substanceHistorySchema.optional(),
@@ -214,25 +212,19 @@ export const drugAddictionConsultationSchema = baseConsultationSchema.extend({
     .max(50, 'Jumlah percobaan berhenti tidak realistis'),
   
   // Social and environmental factors
-  socialCircleSubstanceUse: z.boolean({
-    errorMap: () => ({ message: 'Pilih apakah lingkungan sosial menggunakan zat' }),
-  }),
+  socialCircleSubstanceUse: z.boolean(),
   triggerSituations: z.array(z.string().min(1, 'Situasi pemicu tidak boleh kosong'))
     .min(0, 'Minimal satu situasi pemicu'),
   environmentalFactors: z.array(z.string().min(1, 'Faktor lingkungan tidak boleh kosong'))
     .default([]),
   
   // Recovery history
-  previousTreatmentPrograms: z.boolean({
-    errorMap: () => ({ message: 'Pilih apakah pernah mengikuti program pemulihan' }),
-  }),
+  previousTreatmentPrograms: z.boolean(),
   previousTreatmentDetails: z.string().optional(),
   currentSobrietyPeriod: z.string().optional(),
   
   // Legal and financial impact
-  legalIssuesRelated: z.boolean({
-    errorMap: () => ({ message: 'Pilih apakah ada masalah hukum terkait' }),
-  }),
+  legalIssuesRelated: z.boolean(),
   legalIssuesDetails: z.string().optional(),
   financialImpact: z.string().min(5, 'Dampak finansial minimal 5 karakter'),
   
@@ -257,7 +249,7 @@ export const drugAddictionConsultationSchema = baseConsultationSchema.extend({
 
 // Minor consultation schema
 export const minorConsultationSchema = baseConsultationSchema.extend({
-  formType: z.literal(ConsultationFormTypeEnum.Minor),
+  formTypes: z.array(z.literal(ConsultationFormTypeEnum.Minor)).min(1),
   
   // Guardian information
   guardianName: z.string().optional(),
@@ -337,12 +329,75 @@ export const minorConsultationSchema = baseConsultationSchema.extend({
   path: ['schoolBehaviorDetails', 'familyConflictsDetails', 'socialDifficultiesDetails', 'bullyingDetails', 'attentionDetails', 'behavioralDetails'],
 });
 
-// Union schema for all consultation types
-export const consultationSchema = z.discriminatedUnion('formType', [
-  generalConsultationSchema,
-  drugAddictionConsultationSchema,
-  minorConsultationSchema,
-]);
+// Comprehensive consultation schema that includes all fields from all types
+export const consultationSchema = baseConsultationSchema.extend({
+  // General consultation fields
+  currentLifeStressors: z.array(z.string().min(1, 'Stressor tidak boleh kosong')).optional(),
+  supportSystem: z.string().optional(),
+  workLifeBalance: z.number().optional(),
+  
+  // Drug addiction fields
+  substanceHistory: substanceHistorySchema.optional(),
+  otherSubstancesDetails: z.string().optional(),
+  primarySubstance: z.string().optional(),
+  additionalSubstances: z.array(z.string()).optional(),
+  ageOfFirstUse: z.number().optional(),
+  frequencyOfUse: z.string().optional(),
+  quantityPerUse: z.string().optional(),
+  lastUseDate: z.string().optional(),
+  withdrawalSymptoms: z.array(z.string()).optional(),
+  toleranceLevel: z.number().optional(),
+  impactOnDailyLife: z.string().optional(),
+  attemptsToQuit: z.number().optional(),
+  socialCircleSubstanceUse: z.boolean().optional(),
+  triggerSituations: z.array(z.string()).optional(),
+  environmentalFactors: z.array(z.string()).optional(),
+  previousTreatmentPrograms: z.boolean().optional(),
+  previousTreatmentDetails: z.string().optional(),
+  currentSobrietyPeriod: z.string().optional(),
+  legalIssuesRelated: z.boolean().optional(),
+  legalIssuesDetails: z.string().optional(),
+  financialImpact: z.string().optional(),
+  desireToQuit: z.string().optional(),
+  recoveryGoals: z.array(z.string()).optional(),
+  willingForFollowUp: z.boolean().optional(),
+  
+  // Minor consultation fields
+  guardianName: z.string().optional(),
+  guardianRelationship: z.string().optional(),
+  guardianPhone: z.string().optional(),
+  guardianOccupation: z.string().optional(),
+  parentalMaritalStatus: z.string().optional(),
+  legalCustody: z.boolean().optional(),
+  guardianAddress: z.string().optional(),
+  guardianSignatureName: z.string().optional(),
+  guardianSignatureDate: z.string().optional(),
+  clientCanSign: z.boolean().optional(),
+  consultationReasons: consultationReasonsSchema.optional(),
+  otherConsultationReason: z.string().optional(),
+  problemOnset: z.string().optional(),
+  previousPsychologicalHelp: z.boolean().optional(),
+  previousPsychologicalHelpDetails: z.string().optional(),
+  currentGradeLevel: z.string().optional(),
+  academicPerformance: z.number().optional(),
+  schoolBehaviorIssues: z.boolean().optional(),
+  schoolBehaviorDetails: z.string().optional(),
+  teacherConcerns: z.string().optional(),
+  bullyingHistory: z.boolean().optional(),
+  bullyingDetails: z.string().optional(),
+  familyStructure: z.string().optional(),
+  siblingRelationships: z.string().optional(),
+  peerRelationships: z.string().optional(),
+  familyConflicts: z.boolean().optional(),
+  familyConflictsDetails: z.string().optional(),
+  socialDifficulties: z.boolean().optional(),
+  socialDifficultiesDetails: z.string().optional(),
+  developmentalMilestones: z.string().optional(),
+  attentionConcerns: z.boolean().optional(),
+  attentionDetails: z.string().optional(),
+  behavioralConcerns: z.boolean().optional(),
+  behavioralDetails: z.string().optional(),
+});
 
 // Create a base update schema
 const baseUpdateSchema = z.object({
@@ -394,3 +449,4 @@ export type DrugAddictionConsultationFormData = z.infer<typeof drugAddictionCons
 export type MinorConsultationFormData = z.infer<typeof minorConsultationSchema>;
 export type ConsultationFormData = z.infer<typeof consultationSchema>;
 export type UpdateConsultationFormData = z.infer<typeof updateConsultationSchema>;
+

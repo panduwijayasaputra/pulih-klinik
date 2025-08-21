@@ -25,7 +25,7 @@ export interface UseClientStatusReturn {
   
   // Validation
   canTransitionTo: (clientId: string, toStatus: ClientStatusEnum) => boolean;
-  getAvailableTransitions: (clientId: string) => ClientStatusEnum[];
+  getAvailableTransitions: (clientId: string) => ClientStatusEnum[] | Promise<ClientStatusEnum[]>;
   
   // Utility
   clearError: () => void;

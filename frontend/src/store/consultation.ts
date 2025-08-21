@@ -3,13 +3,12 @@ import { persist } from 'zustand/middleware';
 import { ConsultationAPI } from '@/lib/api/consultation';
 import { 
   Consultation, 
-  ConsultationFormTypeEnum,
   ConsultationListResponse,
   ConsultationResponse,
-  ConsultationStatusEnum,
   CreateConsultationData,
   UpdateConsultationData
 } from '@/types/consultation';
+import { ConsultationFormTypeEnum, ConsultationStatusEnum } from '@/types/enums';
 
 interface ConsultationState {
   // State
@@ -93,11 +92,11 @@ export const useConsultation = create<ConsultationState>()(
               }
               // Remove existing consultation with same ID
               consultationsByClientId[consultation.clientId] = 
-                consultationsByClientId[consultation.clientId].filter(c => c.id !== consultation.id);
+                consultationsByClientId[consultation.clientId]!.filter(c => c.id !== consultation.id);
               // Add updated consultation
-              consultationsByClientId[consultation.clientId].push(consultation);
+              consultationsByClientId[consultation.clientId]!.push(consultation);
               // Sort by created date (newest first)
-              consultationsByClientId[consultation.clientId].sort(
+              consultationsByClientId[consultation.clientId]!.sort(
                 (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
               );
             });
@@ -150,8 +149,8 @@ export const useConsultation = create<ConsultationState>()(
               consultationsByClientId[consultation.clientId] = [];
             }
             consultationsByClientId[consultation.clientId] = 
-              consultationsByClientId[consultation.clientId].filter(c => c.id !== consultation.id);
-            consultationsByClientId[consultation.clientId].push(consultation);
+              consultationsByClientId[consultation.clientId]!.filter(c => c.id !== consultation.id);
+            consultationsByClientId[consultation.clientId]!.push(consultation);
 
             set({
               consultations,
@@ -191,7 +190,7 @@ export const useConsultation = create<ConsultationState>()(
             if (!consultationsByClientId[newConsultation.clientId]) {
               consultationsByClientId[newConsultation.clientId] = [];
             }
-            consultationsByClientId[newConsultation.clientId].unshift(newConsultation);
+            consultationsByClientId[newConsultation.clientId]!.unshift(newConsultation);
 
             set({
               consultations,
@@ -232,7 +231,7 @@ export const useConsultation = create<ConsultationState>()(
             const consultationsByClientId = { ...state.consultationsByClientId };
             if (consultationsByClientId[updatedConsultation.clientId]) {
               consultationsByClientId[updatedConsultation.clientId] = 
-                consultationsByClientId[updatedConsultation.clientId].map(c => 
+                consultationsByClientId[updatedConsultation.clientId]!.map(c => 
                   c.id === consultationId ? updatedConsultation : c
                 );
             }
@@ -276,7 +275,7 @@ export const useConsultation = create<ConsultationState>()(
             const consultationsByClientId = { ...state.consultationsByClientId };
             if (consultationToDelete && consultationsByClientId[consultationToDelete.clientId]) {
               consultationsByClientId[consultationToDelete.clientId] = 
-                consultationsByClientId[consultationToDelete.clientId].filter(c => c.id !== consultationId);
+                consultationsByClientId[consultationToDelete.clientId]!.filter(c => c.id !== consultationId);
             }
 
             set({

@@ -13,4 +13,4 @@ export default function TherapistLayout({ children }: TherapistLayoutProps) {
       {children}
     </RoleGuard>
   );
-}
+}   

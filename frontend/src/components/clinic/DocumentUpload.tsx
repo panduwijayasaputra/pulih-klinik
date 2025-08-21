@@ -3,11 +3,8 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  ClinicDocument, 
-  type DocumentUploadFormData,
-  documentUploadSchema 
-} from '@/types/clinic';
+import { ClinicDocument, type DocumentUploadFormData } from '@/types/clinic';
+import { documentUploadSchema } from '@/schemas/clinicSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,7 +20,8 @@ import {
   ExclamationTriangleIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { ClinicDocumentTypeEnum } from '@/types/enums';
+import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum } from '@/types/enums';
+import { EnumValue } from 'node_modules/zod/v4/core/util.cjs';
 
 interface DocumentUploadProps {
   onUploadSuccess?: (document: ClinicDocument) => void;
@@ -238,11 +236,11 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         const document: ClinicDocument = {
           id: `doc-${Date.now()}-${Math.random()}`,
           name: data.name || uploadFile.file.name.replace(/\.[^/.]+$/, ''),
-          type: data.type,
+          type: data.type as ClinicDocumentTypeEnum,
           fileName: uploadFile.file.name,
           fileSize: uploadFile.file.size,
           uploadedAt: new Date().toISOString(),
-          status: 'pending',
+          status: ClinicDocumentStatusEnum.Pending,
           url: URL.createObjectURL(uploadFile.file),
           description: data.description || ''
         };

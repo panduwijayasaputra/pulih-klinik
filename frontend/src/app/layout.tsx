@@ -12,15 +12,25 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Smart Therapy - Sistem AI Hipnoterapi Indonesia',
-    template: '%s | Smart Therapy',
+    default: 'Terapintar - Sistem AI Hipnoterapi Indonesia',
+    template: '%s | Terapintar',
   },
   description:
-    'Platform AI untuk terapis hipnotis Indonesia - Transformasi perencanaan sesi manual 2 jam menjadi workflow AI 15 menit',
-  keywords: ['hipnoterapi', 'indonesia', 'ai', 'terapi', 'kesehatan mental'],
-  authors: [{ name: 'Smart Therapy Team' }],
-  creator: 'Smart Therapy Team',
-  publisher: 'Smart Therapy',
+    'Terapintar: Platform AI untuk terapis hipnotis Indonesia - Transformasi perencanaan sesi manual 2 jam menjadi workflow AI 15 menit',
+  keywords: [
+    'hipnoterapi',
+    'indonesia',
+    'ai',
+    'terapi',
+    'kesehatan mental',
+    'klinik',
+    'digitalisasi',
+    'workflow',
+    'terapintar',
+  ],
+  authors: [{ name: 'Terapintar Team' }],
+  creator: 'Terapintar Team',
+  publisher: 'Terapintar',
   formatDetection: {
     email: false,
     address: false,
@@ -37,17 +47,27 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'id_ID',
-    url: '/',
-    title: 'Smart Therapy - Sistem AI Hipnoterapi Indonesia',
-    description: 'Platform AI untuk terapis hipnotis Indonesia',
-    siteName: 'Smart Therapy',
+    url: 'https://smart-therapy.id',
+    title: 'Terapintar - Sistem AI Hipnoterapi Indonesia',
+    description: 'Terapintar: Platform AI untuk terapis hipnotis Indonesia - Transformasi digital hipnoterapi',
+    siteName: 'Terapintar',
+    images: [
+      {
+        url: 'https://smart-therapy.id/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Terapintar - Sistem AI Hipnoterapi Indonesia',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Smart Therapy - Sistem AI Hipnoterapi Indonesia',
-    description: 'Platform AI untuk terapis hipnotis Indonesia',
+    title: 'Terapintar - Sistem AI Hipnoterapi Indonesia',
+    description: 'Terapintar: Platform AI untuk terapis hipnotis Indonesia - Transformasi digital hipnoterapi',
+    images: ['https://smart-therapy.id/og-image.png'],
+    creator: '@smarttherapyid',
   },
-};
+}
 
 export default function RootLayout({
   children,

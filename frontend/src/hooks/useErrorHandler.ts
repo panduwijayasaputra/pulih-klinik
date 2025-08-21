@@ -107,8 +107,8 @@ export function useErrorHandler(options: ErrorHandlerOptions = {}) {
       error,
       context,
       timestamp: new Date(),
-      userAction,
-      metadata,
+      userAction: userAction || '',
+      metadata: metadata || {},
     };
 
     // Add to errors list

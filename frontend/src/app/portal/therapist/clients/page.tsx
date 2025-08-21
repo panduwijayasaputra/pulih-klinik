@@ -3,24 +3,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { RoleGuard } from '@/components/auth/RoleGuard';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { TherapistClientList } from '@/components/clients/TherapistClientList';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClientStatusEnum, ClientStatusLabels, UserRoleEnum } from '@/types/enums';
+import { ClientStatusEnum, UserRoleEnum } from '@/types/enums';
 import { useToast } from '@/components/ui/toast';
 import { useTherapistClients } from '@/hooks/useTherapistClients';
 import { useClient } from '@/hooks/useClient';
 import { useAuth } from '@/hooks/useAuth';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export default function TherapistClientsPage() {
   const router = useRouter();
   const { addToast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ClientStatusEnum | 'all'>('all');
+  const [searchTerm, _setSearchTerm] = useState('');
+  const [statusFilter, _setStatusFilter] = useState<ClientStatusEnum | 'all'>('all');
   const { user } = useAuth();
 
   // Check if user has therapist role (regardless of other roles) for dashboard access
@@ -111,18 +106,6 @@ export default function TherapistClientsPage() {
     // router.push(`/portal/therapist/clients/${clientId}`);
   };
 
-  // Handle start/continue consultation
-  const handleStartConsultation = (_clientId: string) => {
-    // TODO: Navigate to consultation interface when implemented
-    addToast({
-      type: 'info',
-      title: 'Fitur Konsultasi',
-      message: 'Fitur konsultasi akan segera tersedia',
-    });
-
-    // For now, we could navigate to a consultation route (to be implemented)
-    // router.push(`/portal/therapist/consultation/${clientId}`);
-  };
 
   // Handle start therapy
   const handleStartTherapy = (clientId: string) => {
@@ -135,20 +118,19 @@ export default function TherapistClientsPage() {
   };
 
   return (
-      <PortalPageWrapper
-        title="Klien Saya"
-        description="Kelola klien yang ditugaskan kepada Anda"
-      >
-        <TherapistClientList
-          clients={therapistClients}
-          totalClients={totalClients}
-          loading={loading}
-          error={error}
-          onRefresh={handleRefresh}
-          onViewClient={handleViewClient}
-          onStartConsultation={handleStartConsultation}
-          onStartTherapy={handleStartTherapy}
-        />
-      </PortalPageWrapper>
+    <PortalPageWrapper
+      title="Klien Saya"
+      description="Kelola klien yang ditugaskan kepada Anda"
+    >
+      <TherapistClientList
+        clients={therapistClients}
+        totalClients={totalClients}
+        loading={loading}
+        error={error}
+        onRefresh={handleRefresh}
+        onViewClient={handleViewClient}
+        onStartTherapy={handleStartTherapy}
+      />
+    </PortalPageWrapper>
   );
 }

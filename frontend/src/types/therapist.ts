@@ -1,3 +1,5 @@
+import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from './enums';
+
 export interface TherapistSpecialization {
   id: string;
   name: string;
@@ -10,8 +12,6 @@ export interface TherapistEducation {
   year: number;
   field: string;
 }
-
-import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from './enums';
 
 type EnumValue<T> = T[keyof T];
 
@@ -47,7 +47,7 @@ export interface TherapistContact {
 export interface Therapist {
   id: string;
   clinicId: string;
-  name: string;
+  fullName: string; // Changed from 'name' to match API usage
   email: string;
   phone: string;
   avatar?: string;
@@ -70,8 +70,6 @@ export interface Therapist {
   maxClients: number;
   currentLoad: number; // Current number of active clients
   
-
-  
   // Schedule
   schedule: TherapistSchedule[];
   timezone: string;
@@ -84,14 +82,15 @@ export interface Therapist {
     languages: string[];
     workingDays: number[]; // 0-6 (Sunday-Saturday)
   };
-  
+    
   // Audit
   createdAt: string;
   updatedAt: string;
+
 }
 
 export interface TherapistFormData {
-  name: string;
+  fullName: string; // Changed from 'name' to match Therapist interface
   email: string;
   phone: string;
   licenseNumber: string;
@@ -106,11 +105,12 @@ export interface TherapistFormData {
 }
 
 export interface TherapistFilters {
-  status?: Therapist['status'][];
+  status?: Therapist['status'];
   specializations?: string[];
-  employmentType?: Therapist['employmentType'][];
-  licenseType?: Therapist['licenseType'][];
-  searchQuery?: string;
+  employmentType?: Therapist['employmentType'];
+  licenseType?: Therapist['licenseType'];
+  search?: string; // Added 'search' field that API expects
+  searchQuery?: string; // Keep for backward compatibility
   maxLoad?: number;
   sortBy?: 'name' | 'joinDate' | 'clientCount';
   sortOrder?: 'asc' | 'desc';

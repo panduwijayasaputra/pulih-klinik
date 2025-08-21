@@ -59,7 +59,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
       
       // Navigate to role-specific page instead of generic portal
       const roleBasedPath = getRoleBasedPath(selectedRole);
-      router.push(roleBasedPath);
+      router.push(roleBasedPath as any);
       
       // Small delay to prevent glitches
       await new Promise(resolve => setTimeout(resolve, 100));

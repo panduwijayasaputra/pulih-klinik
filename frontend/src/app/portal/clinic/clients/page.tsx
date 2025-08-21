@@ -110,13 +110,13 @@ export default function ClientsPage() {
         {selectedClientId && (
           <>
             <AssignTherapistModal
+              currentTherapistId={clients.find(c => c.id === selectedClientId)?.assignedTherapist || ''}  
               open={assignModalOpen}
               onOpenChange={(open) => {
                 setAssignModalOpen(open);
                 if (!open) setSelectedClientId(null);
               }}
               clientId={selectedClientId}
-              currentTherapistId={clients.find(c => c.id === selectedClientId)?.assignedTherapist}
               onAssigned={async (therapistId) => {
                 if (!selectedClientId) return;
                 try {
