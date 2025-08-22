@@ -19,7 +19,7 @@ import {
 
 function ClinicManagePageContent() {
   const router = useRouter();
-  const { clinic, isLoading } = useClinic();
+  const { clinic, stats, isLoading, isStatsLoading } = useClinic();
   const [activeTab, setActiveTab] = useState('profile');
 
   const handleSaveSuccess = () => {
@@ -115,20 +115,26 @@ function ClinicManagePageContent() {
                       <CardContent>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <div className="text-2xl font-bold text-blue-600">0</div>
+                            <div className="text-2xl font-bold text-blue-600">
+                              {isStatsLoading ? '...' : stats?.therapists || 0}
+                            </div>
                             <div className="text-sm text-gray-600">Therapist</div>
                           </div>
                           <div className="text-center p-3 bg-green-50 rounded-lg">
-                            <div className="text-2xl font-bold text-green-600">0</div>
+                            <div className="text-2xl font-bold text-green-600">
+                              {isStatsLoading ? '...' : stats?.clients || 0}
+                            </div>
                             <div className="text-sm text-gray-600">Klien</div>
                           </div>
                           <div className="text-center p-3 bg-purple-50 rounded-lg">
-                            <div className="text-2xl font-bold text-purple-600">0</div>
+                            <div className="text-2xl font-bold text-purple-600">
+                              {isStatsLoading ? '...' : stats?.sessions || 0}
+                            </div>
                             <div className="text-sm text-gray-600">Sesi</div>
                           </div>
                           <div className="text-center p-3 bg-orange-50 rounded-lg">
                             <div className="text-2xl font-bold text-orange-600">
-                              {clinic?.documents?.length || 0}
+                              {isStatsLoading ? '...' : stats?.documents || clinic?.documents?.length || 0}
                             </div>
                             <div className="text-sm text-gray-600">Dokumen</div>
                           </div>

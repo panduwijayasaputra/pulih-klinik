@@ -249,7 +249,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 // Hook-based error boundary wrapper for functional components
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UseErrorHandlerOptions {
   onError?: (error: Error, errorId: string) => void;

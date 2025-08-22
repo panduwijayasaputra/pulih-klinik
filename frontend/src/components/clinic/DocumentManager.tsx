@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -11,17 +10,14 @@ import { useClinic } from '@/hooks/useClinic';
 import { ClinicDocument } from '@/types/clinic';
 import { 
   ArrowDownTrayIcon,
-  CheckCircleIcon,
-  ClockIcon,
   DocumentArrowUpIcon,
   DocumentIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
   MagnifyingGlassIcon,
-  TrashIcon,
-  XCircleIcon
+  TrashIcon
 } from '@heroicons/react/24/outline';
-import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum } from '@/types/enums';
+import { ClinicDocumentTypeEnum } from '@/types/enums';
 
 interface DocumentManagerProps {
   onDeleteDocument?: (documentId: string) => void;
@@ -37,61 +33,69 @@ const DOCUMENT_TYPE_LABELS = {
   [ClinicDocumentTypeEnum.Other]: 'Lainnya',
 } as const;
 
-const STATUS_CONFIG = {
-  [ClinicDocumentStatusEnum.Pending]: {
-    label: 'Menunggu',
-    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    icon: ClockIcon
-  },
-  [ClinicDocumentStatusEnum.Approved]: {
-    label: 'Disetujui',
-    color: 'bg-green-100 text-green-800 border-green-200',
-    icon: CheckCircleIcon
-  },
-  [ClinicDocumentStatusEnum.Rejected]: {
-    label: 'Ditolak',
-    color: 'bg-red-100 text-red-800 border-red-200',
-    icon: XCircleIcon
-  }
-} as const;
 
 export const DocumentManager: React.FC<DocumentManagerProps> = ({
   onDeleteDocument,
   onDownloadDocument,
   className = ''
 }) => {
-  const { documents, isDocumentsLoading, documentsError, deleteDocument, downloadDocument } = useClinic();
+  const { 
+    documents, 
+    isDocumentsLoading, 
+    documentsError, 
+    fetchDocuments,
+    deleteDocument, 
+    downloadDocument,
+    clearDocumentsError
+  } = useClinic();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  // Fetch documents on component mount
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
 
   // Filter documents based on search and filters
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.fileName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || doc.type === filterType;
-    const matchesStatus = filterStatus === 'all' || doc.status === filterStatus;
     
-    return matchesSearch && matchesType && matchesStatus;
+    return matchesSearch && matchesType;
   });
 
   const handleDelete = async (documentId: string) => {
+    setDeletingId(documentId);
     try {
-      await deleteDocument(documentId);
-      onDeleteDocument?.(documentId);
-      setDeleteConfirmId(null);
+      const success = await deleteDocument(documentId);
+      if (success) {
+        onDeleteDocument?.(documentId);
+        setDeleteConfirmId(null);
+      }
     } catch (error) {
       console.error('Failed to delete document:', error);
+      // Error is handled by the useClinic hook and will show in documentsError
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const handleDownload = async (document: ClinicDocument) => {
+    setDownloadingId(document.id);
     try {
-      await downloadDocument(document.id, document.fileName);
-      onDownloadDocument?.(document);
+      const success = await downloadDocument(document.id, document.fileName);
+      if (success) {
+        onDownloadDocument?.(document);
+      }
     } catch (error) {
       console.error('Failed to download document:', error);
+      // Error is handled by the useClinic hook and will show in documentsError
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -142,8 +146,29 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         <CardContent className="p-6">
           <Alert className="border-red-200 bg-red-50">
             <ExclamationTriangleIcon className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
-              {documentsError}
+            <AlertDescription className="text-red-800 flex items-center justify-between">
+              <span>{documentsError}</span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    clearDocumentsError();
+                    fetchDocuments();
+                  }}
+                  className="ml-4"
+                >
+                  Coba Lagi
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearDocumentsError}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  ✕
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -193,17 +218,6 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
               </SelectContent>
             </Select>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Semua Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="pending">Menunggu</SelectItem>
-                <SelectItem value="approved">Disetujui</SelectItem>
-                <SelectItem value="rejected">Ditolak</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
@@ -224,9 +238,6 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         ) : (
           <div className="space-y-4">
             {filteredDocuments.map((document) => {
-              const statusConfig = STATUS_CONFIG[document.status];
-              const StatusIcon = statusConfig.icon;
-              
               return (
                 <div
                   key={document.id}
@@ -267,13 +278,6 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                     </div>
                   </div>
 
-                  {/* Status Badge */}
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline" className={statusConfig.color}>
-                      <StatusIcon className="w-3 h-3 mr-1" />
-                      {statusConfig.label}
-                    </Badge>
-                  </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
@@ -281,10 +285,15 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => handleDownload(document)}
+                      disabled={downloadingId === document.id}
                       className="flex items-center gap-1"
                     >
-                      <ArrowDownTrayIcon className="w-4 h-4" />
-                      Download
+                      {downloadingId === document.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600" />
+                      ) : (
+                        <ArrowDownTrayIcon className="w-4 h-4" />
+                      )}
+                      {downloadingId === document.id ? 'Downloading...' : 'Download'}
                     </Button>
 
                     {deleteConfirmId === document.id ? (
@@ -293,8 +302,16 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDelete(document.id)}
+                          disabled={deletingId === document.id}
                         >
-                          Hapus
+                          {deletingId === document.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                              Menghapus...
+                            </>
+                          ) : (
+                            'Hapus'
+                          )}
                         </Button>
                         <Button
                           variant="outline"
@@ -324,27 +341,15 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         {/* Summary Stats */}
         {documents.length > 0 && (
           <div className="pt-4 border-t">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-green-600">
-                  {documents.filter(d => d.status === 'approved').length}
-                </div>
-                <div className="text-xs text-gray-600">Disetujui</div>
-              </div>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {documents.filter(d => d.status === 'pending').length}
-                </div>
-                <div className="text-xs text-gray-600">Menunggu</div>
-              </div>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-red-600">
-                  {documents.filter(d => d.status === 'rejected').length}
-                </div>
-                <div className="text-xs text-gray-600">Ditolak</div>
-              </div>
+            <div className="grid grid-cols-2 gap-4 text-center">
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-blue-600">
+                  {documents.length}
+                </div>
+                <div className="text-xs text-gray-600">Total Dokumen</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-2xl font-bold text-green-600">
                   {Math.round(documents.reduce((sum, d) => sum + d.fileSize, 0) / 1024 / 1024)}MB
                 </div>
                 <div className="text-xs text-gray-600">Total Size</div>

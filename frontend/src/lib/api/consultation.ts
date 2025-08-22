@@ -4,7 +4,7 @@ import {
   CreateConsultationData,
   UpdateConsultationData
 } from '@/types/consultation';
-import { PaginatedResponse, ItemResponse } from './types';
+import { ItemResponse, PaginatedResponse } from './types';
 
 export const ConsultationAPI = {
   async getConsultations(clientId?: string, page = 1, pageSize = 10): Promise<ConsultationListResponse> {

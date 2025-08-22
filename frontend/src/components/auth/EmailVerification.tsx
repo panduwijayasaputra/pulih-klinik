@@ -151,7 +151,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
                     value={code[idx] || ''}
                     onChange={(e) => {
                       const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 1);
-                      let newCode = code.split('');
+                      const newCode = code.split('');
                       newCode[idx] = val;
                       // If user pastes or types more than one digit, fill next boxes
                       if (e.target.value.length > 1) {

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LoginFormData } from '@/types/auth';
 import { loginSchema } from '@/schemas/authSchema';
 import { useAuth } from '@/hooks/useAuth';
+import { demoCredentials } from '@/lib/mocks/auth';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -35,12 +36,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     },
   });
 
-  const demoCredentials = [
-    { label: 'Administrator', email: 'admin@terapintar.com', password: 'admin123' },
-    { label: 'Clinic Admin', email: 'admin@kliniksehat.com', password: 'clinic123' },
-    { label: 'Therapist', email: 'therapist@kliniksehat.com', password: 'therapist123' },
-    { label: 'Multi-Role', email: 'dr.ahmad@kliniksehat.com', password: 'multi123' },
-  ];
 
   const handleDemoSelect = (value: string) => {
     const selectedDemo = demoCredentials[parseInt(value)];

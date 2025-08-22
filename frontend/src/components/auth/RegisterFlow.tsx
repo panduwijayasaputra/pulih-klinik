@@ -7,7 +7,7 @@ import { PaymentModal } from '../payment/PaymentModal';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { RegistrationStepEnum } from '@/types/enums';
-import { stepTitles, stepDescriptions } from '@/lib/constants/registration';
+import { stepDescriptions, stepTitles } from '@/lib/constants/registration';
 
 export const RegisterFlow: React.FC = () => {
   const { 

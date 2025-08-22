@@ -11,20 +11,31 @@ import { ClinicAPI } from '@/lib/api/clinic';
 interface UseClinicState {
   clinic: ClinicProfile | null;
   documents: ClinicDocument[];
+  stats: {
+    therapists: number;
+    clients: number;
+    sessions: number;
+    documents: number;
+  } | null;
   isLoading: boolean;
   isDocumentsLoading: boolean;
+  isStatsLoading: boolean;
   error: string | null;
   documentsError: string | null;
+  statsError: string | null;
 }
 
 export const useClinic = () => {
   const [state, setState] = useState<UseClinicState>({
     clinic: null,
     documents: [],
+    stats: null,
     isLoading: false,
     isDocumentsLoading: false,
+    isStatsLoading: false,
     error: null,
-    documentsError: null
+    documentsError: null,
+    statsError: null
   });
 
   const updateState = useCallback((updates: Partial<UseClinicState>) => {
@@ -54,6 +65,25 @@ export const useClinic = () => {
       updateState({ error: errorMessage });
     } finally {
       updateState({ isLoading: false });
+    }
+  }, [updateState, handleError]);
+
+  // Fetch clinic statistics
+  const fetchStats = useCallback(async () => {
+    updateState({ isStatsLoading: true, statsError: null });
+    
+    try {
+      const response = await ClinicAPI.getClinicStats('clinic-001');
+      if (response.success && response.data) {
+        updateState({ stats: response.data });
+      } else {
+        updateState({ statsError: response.message || 'Gagal mengambil statistik klinik' });
+      }
+    } catch (error) {
+      const errorMessage = handleError(error, 'Gagal mengambil statistik klinik');
+      updateState({ statsError: errorMessage });
+    } finally {
+      updateState({ isStatsLoading: false });
     }
   }, [updateState, handleError]);
 
@@ -176,25 +206,29 @@ export const useClinic = () => {
   const uploadDocument = useCallback(async (
     file: File, 
     documentType: ClinicDocument['type'], 
-    _description?: string
+    options?: {
+      name?: string;
+      description?: string;
+      onProgress?: (progress: number) => void;
+    }
   ) => {
     updateState({ isDocumentsLoading: true, documentsError: null });
 
     try {
-      const response = await ClinicAPI.uploadDocument('clinic-001', file, documentType);
+      const response = await ClinicAPI.uploadDocument('clinic-001', file, documentType, options);
       if (response.success && response.data) {
         updateState({ 
           documents: [...state.documents, response.data]
         });
-        return true;
+        return response.data;
       } else {
         updateState({ documentsError: response.message || 'Gagal mengunggah dokumen' });
-        return false;
+        return null;
       }
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal mengunggah dokumen');
       updateState({ documentsError: errorMessage });
-      return false;
+      return null;
     } finally {
       updateState({ isDocumentsLoading: false });
     }
@@ -245,26 +279,35 @@ export const useClinic = () => {
     updateState({ documentsError: null });
   }, [updateState]);
 
-  // Auto-fetch clinic data on mount
+  const clearStatsError = useCallback(() => {
+    updateState({ statsError: null });
+  }, [updateState]);
+
+  // Auto-fetch clinic data and stats on mount
   useEffect(() => {
     fetchClinic();
-  }, [fetchClinic]);
+    fetchStats();
+  }, [fetchClinic, fetchStats]);
 
   return {
     // Data
     clinic: state.clinic,
     documents: state.documents,
+    stats: state.stats,
     
     // Loading states
     isLoading: state.isLoading,
     isDocumentsLoading: state.isDocumentsLoading,
+    isStatsLoading: state.isStatsLoading,
     
     // Error states
     error: state.error,
     documentsError: state.documentsError,
+    statsError: state.statsError,
     
     // Actions
     fetchClinic,
+    fetchStats,
     updateClinic,
     uploadLogo,
     updateBranding,
@@ -278,6 +321,7 @@ export const useClinic = () => {
     
     // Error clearing
     clearError,
-    clearDocumentsError
+    clearDocumentsError,
+    clearStatsError
   };
 };

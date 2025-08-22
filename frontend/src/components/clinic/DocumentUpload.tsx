@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ClinicDocument, type DocumentUploadFormData } from '@/types/clinic';
 import { documentUploadSchema } from '@/schemas/clinicSchema';
+import { useClinic } from '@/hooks/useClinic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,13 +16,13 @@ import { Alert } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { 
   CheckCircleIcon,
+  ClockIcon,
   DocumentArrowUpIcon,
   DocumentIcon,
   ExclamationTriangleIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum } from '@/types/enums';
-import { EnumValue } from 'node_modules/zod/v4/core/util.cjs';
+import { ClinicDocumentTypeEnum } from '@/types/enums';
 
 interface DocumentUploadProps {
   onUploadSuccess?: (document: ClinicDocument) => void;
@@ -35,8 +36,8 @@ interface DocumentUploadProps {
 interface UploadingFile {
   file: File;
   progress: number;
-  status: 'uploading' | 'success' | 'error';
-  error?: string;
+  status: 'ready' | 'uploading' | 'success' | 'error';
+  error?: string | undefined;
   id: string;
 }
 
@@ -56,6 +57,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   acceptedFileTypes = ['application/pdf', 'image/jpeg', 'image/png'],
   disabled = false
 }) => {
+  const { uploadDocument, documentsError, clearDocumentsError, fetchDocuments } = useClinic();
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +79,6 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     }
   });
 
-  const watchedType = watch('type');
 
   // Validate file
   const validateFile = useCallback((file: File): string | null => {
@@ -119,7 +120,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     const newUploadingFiles: UploadingFile[] = validFiles.map(file => ({
       file,
       progress: 0,
-      status: 'uploading',
+      status: 'ready',
       id: `${file.name}-${Date.now()}-${Math.random()}`
     }));
 
@@ -134,53 +135,9 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       }
     }
 
-    // Simulate upload process for each file
-    newUploadingFiles.forEach(uploadFile => {
-      simulateUpload(uploadFile);
-    });
-  }, [uploadingFiles.length, maxFiles, disabled, onUploadError, validateFile, setValue]);
+    // Files are now ready for upload on form submission
+  }, [uploadingFiles.length, maxFiles, disabled, onUploadError, validateFile, setValue, uploadDocument]);
 
-  // Simulate file upload (replace with actual API call)
-  const simulateUpload = async (uploadFile: UploadingFile) => {
-    const updateProgress = (progress: number) => {
-      setUploadingFiles(prev => 
-        prev.map(f => 
-          f.id === uploadFile.id 
-            ? { ...f, progress }
-            : f
-        )
-      );
-    };
-
-    try {
-      // Simulate upload progress
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        updateProgress(i);
-      }
-
-      // Mark as successful
-      setUploadingFiles(prev => 
-        prev.map(f => 
-          f.id === uploadFile.id 
-            ? { ...f, status: 'success' }
-            : f
-        )
-      );
-    } catch (error) {
-      setUploadingFiles(prev => 
-        prev.map(f => 
-          f.id === uploadFile.id 
-            ? { 
-                ...f, 
-                status: 'error', 
-                error: 'Upload gagal. Silakan coba lagi.' 
-              }
-            : f
-        )
-      );
-    }
-  };
 
   // Remove file from upload list
   const removeFile = useCallback((fileId: string) => {
@@ -222,38 +179,85 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
   // Form submission
   const onSubmit = async (data: DocumentUploadFormData) => {
-    const successfulFiles = uploadingFiles.filter(f => f.status === 'success');
+    const readyFiles = uploadingFiles.filter(f => f.status === 'ready');
     
-    if (successfulFiles.length === 0) {
-      onUploadError?.('Tidak ada file yang berhasil diunggah');
+    if (readyFiles.length === 0) {
+      onUploadError?.('Tidak ada file yang siap diunggah');
       return;
     }
 
-    // Process each successful file
-    for (const uploadFile of successfulFiles) {
-      try {
-        // Create mock document (replace with actual API call)
-        const document: ClinicDocument = {
-          id: `doc-${Date.now()}-${Math.random()}`,
-          name: data.name || uploadFile.file.name.replace(/\.[^/.]+$/, ''),
-          type: data.type as ClinicDocumentTypeEnum,
-          fileName: uploadFile.file.name,
-          fileSize: uploadFile.file.size,
-          uploadedAt: new Date().toISOString(),
-          status: ClinicDocumentStatusEnum.Pending,
-          url: URL.createObjectURL(uploadFile.file),
-          description: data.description || ''
-        };
+    // Clear any previous errors
+    clearDocumentsError();
 
-        onUploadSuccess?.(document);
+    // Process each file with proper metadata and progress tracking
+    for (const uploadFile of readyFiles) {
+      try {
+        // Update status to uploading
+        setUploadingFiles(prev => 
+          prev.map(f => 
+            f.id === uploadFile.id 
+              ? { ...f, status: 'uploading', progress: 0 }
+              : f
+          )
+        );
+
+        // Upload with progress tracking
+        const result = await uploadDocument(uploadFile.file, data.type as ClinicDocumentTypeEnum, {
+          name: data.name || uploadFile.file.name.replace(/\.[^/.]+$/, ''),
+          description: data.description || '',
+          onProgress: (progress) => {
+            setUploadingFiles(prev => 
+              prev.map(f => 
+                f.id === uploadFile.id 
+                  ? { ...f, progress }
+                  : f
+              )
+            );
+          }
+        });
+
+        if (result) {
+          // Mark as successful
+          setUploadingFiles(prev => 
+            prev.map(f => 
+              f.id === uploadFile.id 
+                ? { ...f, status: 'success', progress: 100 }
+                : f
+            )
+          );
+          onUploadSuccess?.(result);
+          // Refresh the document list to show the new document
+          fetchDocuments();
+        } else {
+          // Mark as error
+          setUploadingFiles(prev => 
+            prev.map(f => 
+              f.id === uploadFile.id 
+                ? { ...f, status: 'error', error: 'Upload gagal' }
+                : f
+            )
+          );
+          onUploadError?.(`Gagal menyimpan ${uploadFile.file.name}`);
+        }
       } catch (error) {
+        // Mark as error
+        setUploadingFiles(prev => 
+          prev.map(f => 
+            f.id === uploadFile.id 
+              ? { ...f, status: 'error', error: 'Upload gagal' }
+              : f
+          )
+        );
         onUploadError?.(`Gagal menyimpan ${uploadFile.file.name}`);
       }
     }
 
-    // Reset form and files
-    reset();
-    setUploadingFiles([]);
+    // Only reset if all uploads were successful
+    const allSuccessful = uploadingFiles.every(f => f.status === 'success');
+    if (allSuccessful) {
+      reset();
+      setUploadingFiles([]);
+    }
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -418,6 +422,9 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2">
+                        {uploadFile.status === 'ready' && (
+                          <ClockIcon className="w-5 h-5 text-blue-500" />
+                        )}
                         {uploadFile.status === 'success' && (
                           <CheckCircleIcon className="w-5 h-5 text-green-500" />
                         )}
@@ -442,18 +449,35 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             )}
 
             {/* Error Messages */}
-            {uploadingFiles.some(f => f.status === 'error') && (
+            {(documentsError || uploadingFiles.some(f => f.status === 'error')) && (
               <Alert className="border-red-200 bg-red-50">
                 <ExclamationTriangleIcon className="h-4 w-4 text-red-600" />
                 <div className="text-red-800">
-                  <p className="font-medium">Beberapa file gagal diunggah:</p>
-                  <ul className="mt-1 list-disc list-inside text-sm">
-                    {uploadingFiles
-                      .filter(f => f.status === 'error')
-                      .map(f => (
-                        <li key={f.id}>{f.file.name}: {f.error}</li>
-                      ))}
-                  </ul>
+                  {documentsError && (
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium">{documentsError}</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearDocumentsError}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  )}
+                  {uploadingFiles.some(f => f.status === 'error') && (
+                    <>
+                      <p className="font-medium">Beberapa file gagal diunggah:</p>
+                      <ul className="mt-1 list-disc list-inside text-sm">
+                        {uploadingFiles
+                          .filter(f => f.status === 'error')
+                          .map(f => (
+                            <li key={f.id}>{f.file.name}: {f.error}</li>
+                          ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
               </Alert>
             )}
@@ -478,7 +502,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                 disabled || 
                 uploadingFiles.length === 0 || 
                 uploadingFiles.some(f => f.status === 'uploading') ||
-                !uploadingFiles.some(f => f.status === 'success')
+                !uploadingFiles.some(f => f.status === 'ready')
               }
             >
               Simpan Dokumen

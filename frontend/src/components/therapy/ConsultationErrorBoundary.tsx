@@ -121,7 +121,7 @@ class ConsultationErrorBoundary extends Component<
 }
 
 // Hook-based error boundary wrapper for functional components
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface UseConsultationErrorBoundaryOptions {
   onError?: (error: Error) => void;

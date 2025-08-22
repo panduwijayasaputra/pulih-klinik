@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 interface ClinicProfileFormProps {
@@ -163,11 +163,14 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
             <Label className="text-base font-medium">Logo Klinik</Label>
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
-                <img
-                  src={logoPreview || clinic?.logo || '/placeholder-logo.png'}
+                <AvatarImage
+                  src={logoPreview || clinic?.logo || '/placeholder-logo.svg'}
                   alt="Logo klinik"
                   className="object-cover"
                 />
+                <AvatarFallback className="bg-gray-100">
+                  <BuildingOfficeIcon className="h-8 w-8 text-gray-400" />
+                </AvatarFallback>
               </Avatar>
               <div className="space-y-2">
                 <Button

@@ -1,5 +1,5 @@
 import { Therapist, TherapistAssignment, TherapistFilters, TherapistFormData } from '@/types/therapist';
-import { PaginatedResponse, ItemResponse, ListResponse, StatusResponse } from './types';
+import { ItemResponse, ListResponse, PaginatedResponse, StatusResponse } from './types';
 
 export class TherapistAPI {
   static async getTherapists(

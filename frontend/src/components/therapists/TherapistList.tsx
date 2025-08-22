@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { useAuth } from '@/hooks/useAuth';
-import { useConfirmationDialog, ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 import { TherapistStatusEnum, UserRoleEnum } from '@/types/enums';

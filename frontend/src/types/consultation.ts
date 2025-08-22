@@ -1,4 +1,4 @@
-import { ConsultationStatusEnum, ConsultationFormTypeEnum } from './enums';
+import { ConsultationFormTypeEnum, ConsultationStatusEnum } from './enums';
 
 // Base consultation interface with common fields
 export interface BaseConsultation {

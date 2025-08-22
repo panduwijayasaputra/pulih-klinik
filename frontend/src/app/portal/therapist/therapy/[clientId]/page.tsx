@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { TherapyPage } from '@/components/therapy/TherapyPage';

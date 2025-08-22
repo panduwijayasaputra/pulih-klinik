@@ -1,49 +1,7 @@
 import { LoginFormData, LoginResponse, User } from '@/types/auth';
-import { UserRoleEnum, AuthSubscriptionTierEnum } from '@/types/enums';
+import { UserRoleEnum } from '@/types/enums';
 import { ItemResponse } from './types';
-
-// Mock user data for demo purposes
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'admin@terapintar.com',
-    name: 'Administrator Sistem',
-    roles: [UserRoleEnum.Administrator],
-    subscriptionTier: AuthSubscriptionTierEnum.Alpha,
-  },
-  {
-    id: '2',
-    email: 'admin@kliniksehat.com',
-    name: 'Admin Klinik Sehat',
-    roles: [UserRoleEnum.ClinicAdmin],
-    clinicId: 'clinic-1',
-    subscriptionTier: AuthSubscriptionTierEnum.Beta,
-  },
-  {
-    id: '3',
-    email: 'therapist@kliniksehat.com',
-    name: 'Dr. Sarah Wijaya',
-    roles: [UserRoleEnum.Therapist],
-    clinicId: 'clinic-1',
-    subscriptionTier: AuthSubscriptionTierEnum.Beta,
-  },
-  {
-    id: '4',
-    email: 'dr.ahmad@kliniksehat.com',
-    name: 'Dr. Ahmad Rahman',
-    roles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
-    clinicId: 'clinic-1',
-    subscriptionTier: AuthSubscriptionTierEnum.Beta,
-  },
-];
-
-// Mock credentials mapping
-const mockCredentials = {
-  'admin@terapintar.com': 'admin123',
-  'admin@kliniksehat.com': 'clinic123',
-  'therapist@kliniksehat.com': 'therapist123',
-  'dr.ahmad@kliniksehat.com': 'multi123',
-};
+import { mockCredentials, mockUsers } from '@/lib/mocks/auth';
 
 export class AuthAPI {
   static async login(credentials: LoginFormData): Promise<LoginResponse> {

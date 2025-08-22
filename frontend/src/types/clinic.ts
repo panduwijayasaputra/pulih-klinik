@@ -29,7 +29,6 @@ export interface ClinicDocument {
   fileName: string;
   fileSize: number;
   uploadedAt: string;
-  status: EnumValue<typeof ClinicDocumentStatusEnum>;
   url: string;
   description?: string;
 }
