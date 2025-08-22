@@ -11,6 +11,7 @@ import {
 import { PaymentFormData } from '@/types/registration';
 import { paymentSchema } from '@/schemas/registrationSchema';
 import { useRegistrationStore } from '@/store/registration';
+import { formatPrice } from '@/lib/utils';
 
 const paymentMethods = [
   {
@@ -74,13 +75,7 @@ export const PaymentModal: React.FC = () => {
     await submitRegistration();
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+
 
   const calculateTotal = () => {
     const basePrice = selectedTier?.price || 0;

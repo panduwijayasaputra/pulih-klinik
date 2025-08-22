@@ -71,7 +71,7 @@ export const TherapistForm: React.FC<TherapistFormProps> = ({
   const { createTherapistAccount, loading } = useTherapist();
   const { user } = useAuth();
   const router = useRouter();
-  const { showConfirmation } = useConfirmationDialog();
+  const { openDialog, isOpen, config, closeDialog } = useConfirmationDialog();
   const { addToast } = useToast();
 
   const {
@@ -192,13 +192,14 @@ export const TherapistForm: React.FC<TherapistFormProps> = ({
     const confirmText = mode === 'edit' ? 'Update Account' : 'Create Account';
 
     // Enhanced confirmation dialog with more details
-    showConfirmation({
-      type: 'info',
+    openDialog({
+      variant: 'info',
       title: titleText,
-      message: `Are you sure you want to ${actionText} the therapist account for ${data.name}?\n\n• Email: ${data.email}\n• Specialization: ${data.specialization}\n• License: ${data.licenseNumber}\n\n${mode === 'edit' ? 'Changes will be applied immediately.' : `A registration email will be sent to ${data.email} with a secure link to complete their password setup.`}`,
+      description: `Are you sure you want to ${actionText} the therapist account for ${data.name}?\n\n• Email: ${data.email}\n• Specialization: ${data.specialization}\n• License: ${data.licenseNumber}\n\n${mode === 'edit' ? 'Changes will be applied immediately.' : `A registration email will be sent to ${data.email} with a secure link to complete their password setup.`}`,
       confirmText: confirmText,
-      cancelText: 'Review Details'
-    }, () => submitForm(data));
+      cancelText: 'Review Details',
+      onConfirm: () => submitForm(data)
+    });
   };
 
   const submitForm = async (data: TherapistRegistrationForm) => {
@@ -254,14 +255,15 @@ export const TherapistForm: React.FC<TherapistFormProps> = ({
           });
 
           // Show detailed success information
-          showConfirmation({
-            type: 'success',
+          openDialog({
+            variant: 'info',
             title: 'Account Created Successfully',
-            message: `Therapist account for ${data.name} has been created successfully. Here's what happens next:\n\n1. Registration email sent to ${data.email}\n2. Therapist will receive a secure setup link\n3. They have 24 hours to complete password setup\n4. Account will be activated after setup completion`,
+            description: `Therapist account for ${data.name} has been created successfully. Here's what happens next:\n\n1. Registration email sent to ${data.email}\n2. Therapist will receive a secure setup link\n3. They have 24 hours to complete password setup\n4. Account will be activated after setup completion`,
             confirmText: 'Go to Therapist Management',
-            cancelText: 'Create Another'
-          }, () => {
-            router.push('/portal/therapists' as any);
+            cancelText: 'Create Another',
+            onConfirm: () => {
+              router.push('/portal/therapists' as any);
+            }
           });
 
           // Reset form for potential next entry
@@ -755,7 +757,11 @@ export const TherapistForm: React.FC<TherapistFormProps> = ({
       )}
 
       {/* Confirmation Dialog */}
-      {ConfirmationDialog}
+      <ConfirmationDialog
+        isOpen={isOpen}
+        onClose={closeDialog}
+        {...config}
+      />
     </div>
   );
 };

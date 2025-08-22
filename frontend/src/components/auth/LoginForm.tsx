@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoginFormData } from '@/types/auth';
 import { loginSchema } from '@/schemas/authSchema';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,6 +24,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -32,6 +34,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       rememberMe: false,
     },
   });
+
+  const demoCredentials = [
+    { label: 'Administrator', email: 'admin@terapintar.com', password: 'admin123' },
+    { label: 'Clinic Admin', email: 'admin@kliniksehat.com', password: 'clinic123' },
+    { label: 'Therapist', email: 'therapist@kliniksehat.com', password: 'therapist123' },
+    { label: 'Multi-Role', email: 'dr.ahmad@kliniksehat.com', password: 'multi123' },
+  ];
+
+  const handleDemoSelect = (value: string) => {
+    const selectedDemo = demoCredentials[parseInt(value)];
+    if (selectedDemo) {
+      setValue('email', selectedDemo.email);
+      setValue('password', selectedDemo.password);
+    }
+  };
 
   const onSubmit = async (data: LoginFormData) => {
     clearError();
@@ -130,15 +147,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           </p>
         </div>
 
-        {/* Demo credentials info */}
-        <div className="mt-6 p-4 bg-muted rounded-lg">
-          <h4 className="text-sm font-medium text-foreground mb-2">Demo Login:</h4>
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p><strong>Administrator:</strong> admin@terapintar.com / admin123</p>
-            <p><strong>Clinic Admin:</strong> admin@kliniksehat.com / clinic123</p>
-            <p><strong>Therapist:</strong> therapist@kliniksehat.com / therapist123</p>
-            <p><strong>Multi-Role:</strong> dr.ahmad@kliniksehat.com / multi123</p>
-          </div>
+        {/* Demo credentials selector */}
+        <div className="mt-6 space-y-2">
+          <Label htmlFor="demo-select" className="text-sm font-medium text-foreground">
+            Demo Login:
+          </Label>
+          <Select onValueChange={handleDemoSelect}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Pilih akun demo untuk login cepat" />
+            </SelectTrigger>
+            <SelectContent>
+              {demoCredentials.map((credential, index) => (
+                <SelectItem key={index} value={index.toString()}>
+                  {credential.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>

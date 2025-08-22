@@ -1,13 +1,72 @@
-import { LoginFormData, LoginResponse } from '@/types/auth';
+import { LoginFormData, LoginResponse, User } from '@/types/auth';
+import { UserRoleEnum, AuthSubscriptionTierEnum } from '@/types/enums';
 import { ItemResponse } from './types';
+
+// Mock user data for demo purposes
+const mockUsers: User[] = [
+  {
+    id: '1',
+    email: 'admin@terapintar.com',
+    name: 'Administrator Sistem',
+    roles: [UserRoleEnum.Administrator],
+    subscriptionTier: AuthSubscriptionTierEnum.Alpha,
+  },
+  {
+    id: '2',
+    email: 'admin@kliniksehat.com',
+    name: 'Admin Klinik Sehat',
+    roles: [UserRoleEnum.ClinicAdmin],
+    clinicId: 'clinic-1',
+    subscriptionTier: AuthSubscriptionTierEnum.Beta,
+  },
+  {
+    id: '3',
+    email: 'therapist@kliniksehat.com',
+    name: 'Dr. Sarah Wijaya',
+    roles: [UserRoleEnum.Therapist],
+    clinicId: 'clinic-1',
+    subscriptionTier: AuthSubscriptionTierEnum.Beta,
+  },
+  {
+    id: '4',
+    email: 'dr.ahmad@kliniksehat.com',
+    name: 'Dr. Ahmad Rahman',
+    roles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
+    clinicId: 'clinic-1',
+    subscriptionTier: AuthSubscriptionTierEnum.Beta,
+  },
+];
+
+// Mock credentials mapping
+const mockCredentials = {
+  'admin@terapintar.com': 'admin123',
+  'admin@kliniksehat.com': 'clinic123',
+  'therapist@kliniksehat.com': 'therapist123',
+  'dr.ahmad@kliniksehat.com': 'multi123',
+};
 
 export class AuthAPI {
   static async login(credentials: LoginFormData): Promise<LoginResponse> {
-    // TODO: Implement actual API call
-    console.log('AuthAPI.login called with:', credentials);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const { email, password } = credentials;
+    
+    // Check if credentials match our mock data
+    if (mockCredentials[email as keyof typeof mockCredentials] === password) {
+      const user = mockUsers.find(u => u.email === email);
+      if (user) {
+        return {
+          success: true,
+          user,
+          message: 'Login berhasil'
+        };
+      }
+    }
+    
     return {
       success: false,
-      message: 'API not implemented yet'
+      message: 'Email atau password tidak valid'
     };
   }
 
@@ -26,18 +85,33 @@ export class AuthAPI {
   }
 }
 
-// Helper functions (placeholder implementations)
-export const hasRole = (user: any, role: string): boolean => {
-  console.log('hasRole called with:', { user, role });
-  return false;
+// Helper functions
+export const hasRole = (user: User | null, role: string): boolean => {
+  if (!user || !user.roles) return false;
+  return user.roles.includes(role as any);
 };
 
-export const hasAnyRole = (user: any, roles: string[]): boolean => {
-  console.log('hasAnyRole called with:', { user, roles });
-  return false;
+export const hasAnyRole = (user: User | null, roles: string[]): boolean => {
+  if (!user || !user.roles) return false;
+  return roles.some(role => user.roles.includes(role as any));
 };
 
-export const getPrimaryRole = (user: any): string | null => {
-  console.log('getPrimaryRole called with:', user);
-  return null;
+export const getPrimaryRole = (user: User | null): string | null => {
+  if (!user || !user.roles || user.roles.length === 0) return null;
+  
+  // Return the first role as primary role
+  // Priority order: Administrator > ClinicAdmin > Therapist
+  const rolePriority = [
+    UserRoleEnum.Administrator,
+    UserRoleEnum.ClinicAdmin,
+    UserRoleEnum.Therapist,
+  ];
+  
+  for (const priorityRole of rolePriority) {
+    if (user.roles.includes(priorityRole)) {
+      return priorityRole;
+    }
+  }
+  
+  return user.roles[0] || null;
 };

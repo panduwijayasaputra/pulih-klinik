@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { useRegistrationStore } from '@/store/registration';
 import {
   ArrowPathIcon,
   CheckIcon,
@@ -22,6 +23,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
   onVerificationSuccess,
   onResendEmail
 }) => {
+  const { markEmailAsVerified } = useRegistrationStore();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,15 +51,10 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
     };
   }, [countdown]);
 
-  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6); // Only allow digits, max 6
-    setCode(value);
+  const handleCodeChange = (value: string) => {
+    const cleanValue = value.replace(/\D/g, '').slice(0, 6); // Only allow digits, max 6
+    setCode(cleanValue);
     setError(''); // Clear error when user types
-
-    // Auto-submit when 6 digits are entered
-    if (value.length === 6) {
-      handleVerifyCode(value);
-    }
   };
 
   const handleVerifyCode = async (verificationCode: string = code) => {
@@ -77,6 +74,8 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
       const isValid = verificationCode === '123456';
 
       if (isValid) {
+        // Mark email as verified in the store
+        markEmailAsVerified(email);
         onVerificationSuccess();
       } else {
         setError('Kode verifikasi tidak valid. Silakan coba lagi.');
@@ -161,22 +160,40 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
                           newCode[idx + i] = chars[i] || '';
                         }
                       }
-                      // Call handleCodeChange with a synthetic event that matches the expected type
-                      handleCodeChange({
-                        target: {
-                          value: newCode.join('')
-                        }
-                      } as React.ChangeEvent<HTMLInputElement>);
-                      // Move focus to next box if filled
-                      if (val && idx < 5) {
-                        const next = document.getElementById(`verification-code-${idx + 1}`) as HTMLInputElement;
-                        if (next) next.focus();
+                      
+                      const finalCode = newCode.join('');
+                      
+                      // Call handleCodeChange with the new signature
+                      handleCodeChange(finalCode);
+                      
+                      // Handle paste scenario - move to the next empty box or last box
+                      if (e.target.value.length > 1) {
+                        const chars = e.target.value.replace(/[^0-9]/g, '').split('');
+                        const targetIdx = Math.min(idx + chars.length, 5);
+                        const target = document.getElementById(`verification-code-${targetIdx}`) as HTMLInputElement;
+                        if (target) target.focus();
                       }
+                    }}
+                    onFocus={(e) => {
+                      // Select all text when focused so user can type without deleting
+                      e.target.select();
+                    }}
+                    onClick={(e) => {
+                      // Select all text when clicked so user can type without deleting
+                      e.currentTarget.select();
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Backspace' && !code[idx] && idx > 0) {
                         const prev = document.getElementById(`verification-code-${idx - 1}`) as HTMLInputElement;
                         if (prev) prev.focus();
+                      }
+                      // Move to next box when any digit is typed, even if it's the same value
+                      else if (/^[0-9]$/.test(e.key) && idx < 5) {
+                        // Use setTimeout to let the onChange handler complete first
+                        setTimeout(() => {
+                          const next = document.getElementById(`verification-code-${idx + 1}`) as HTMLInputElement;
+                          if (next) next.focus();
+                        }, 0);
                       }
                     }}
                     placeholder="•"

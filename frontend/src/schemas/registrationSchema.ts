@@ -15,7 +15,7 @@ export const clinicDataSchema = z.object({
       'Format telepon tidak valid (contoh: 0812xxxxxxx, +62812xxxxxxx, atau 62812xxxxxxx)'
     ),
   email: z.string().email('Format email tidak valid'),
-  website: z.string().url('Format website tidak valid').optional().or(z.literal('')),
+  website: z.string().url({ message: 'Format website tidak valid' }).optional().or(z.literal('')),
   officeHours: z.string().min(5, 'Jam operasional harus diisi'),
   
   // Admin Information
@@ -28,6 +28,15 @@ export const clinicDataSchema = z.object({
       'Format WhatsApp tidak valid (contoh: 0812xxxxxxx, +62812xxxxxxx, atau 62812xxxxxxx)'
     ),
   adminPosition: z.string().min(3, 'Posisi admin minimal 3 karakter'),
+  
+  // Admin Password
+  adminPassword: z.string()
+    .min(8, 'Password minimal 8 karakter')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password harus mengandung huruf besar, huruf kecil, dan angka'),
+  confirmPassword: z.string(),
+}).refine((data) => data.adminPassword === data.confirmPassword, {
+  message: "Password tidak cocok",
+  path: ["confirmPassword"],
 });
 
 // Payment form validation schema

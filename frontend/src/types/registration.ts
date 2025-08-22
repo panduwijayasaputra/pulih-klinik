@@ -14,8 +14,11 @@ export interface VerificationData {
   verified: boolean;
 }
 
-// Form data types (schemas are now in /schemas/registrationSchema.ts)
-export type { ClinicDataFormData, PaymentFormData } from '@/schemas/registrationSchema';
+// Form data types (imported from schemas)
+import { ClinicDataFormData, PaymentFormData } from '@/schemas/registrationSchema';
+
+// Re-export the form data types
+export type { ClinicDataFormData, PaymentFormData };
 
 // Token package type
 export interface TokenPackage {
@@ -54,6 +57,7 @@ export interface RegistrationState {
   verificationData: VerificationData;
   isLoading: boolean;
   error: string | null;
+  verifiedEmails: string[];
 }
 
 // Token package constants

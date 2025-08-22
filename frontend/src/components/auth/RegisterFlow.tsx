@@ -7,22 +7,7 @@ import { PaymentModal } from '../payment/PaymentModal';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { RegistrationStepEnum } from '@/types/enums';
-
-const stepTitles = {
-  clinic: 'Informasi Klinik',
-  verification: 'Verifikasi Email',
-  summary: 'Ringkasan Registrasi',
-  payment: 'Pembayaran',
-  complete: 'Selesai'
-};
-
-const stepDescriptions = {
-  clinic: 'Masukkan informasi lengkap klinik Anda',
-  verification: 'Verifikasi email admin untuk keamanan akun',
-  summary: 'Tinjau informasi registrasi dan ketentuan layanan',
-  payment: 'Pilih metode pembayaran dan selesaikan transaksi',
-  complete: 'Registrasi berhasil! Ikuti langkah selanjutnya'
-};
+import { stepTitles, stepDescriptions } from '@/lib/constants/registration';
 
 export const RegisterFlow: React.FC = () => {
   const { 
@@ -41,7 +26,9 @@ export const RegisterFlow: React.FC = () => {
     return steps.indexOf(currentStep) + 1;
   };
 
-  const canGoBack = currentStep !== RegistrationStepEnum.Clinic && currentStep !== RegistrationStepEnum.Complete;
+  const canGoBack = currentStep !== RegistrationStepEnum.Clinic && 
+                    currentStep !== RegistrationStepEnum.Complete && 
+                    currentStep !== RegistrationStepEnum.Verification;
 
   const handleBack = () => {
     clearError();
@@ -50,6 +37,11 @@ export const RegisterFlow: React.FC = () => {
 
   const handleStartOver = () => {
     resetRegistration();
+  };
+
+  const handleGoToLogin = () => {
+    resetRegistration(); // Clear registration data
+    window.location.href = '/login';
   };
 
   const renderCurrentStep = () => {
@@ -91,7 +83,7 @@ export const RegisterFlow: React.FC = () => {
             </p>
             <div className="space-y-3">
               <Button
-                onClick={() => window.location.href = '/login'}
+                onClick={handleGoToLogin}
                 className="w-full"
               >
                 Masuk ke Akun

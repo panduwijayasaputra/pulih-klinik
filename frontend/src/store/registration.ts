@@ -23,6 +23,8 @@ interface RegistrationStore extends RegistrationState {
   submitRegistration: () => Promise<boolean>;
   resetRegistration: () => void;
   clearError: () => void;
+  markEmailAsVerified: (email: string) => void;
+  isEmailVerified: (email: string) => boolean;
 }
 
 const stepOrder: RegistrationStep[] = [RegistrationStepEnum.Clinic, RegistrationStepEnum.Verification, RegistrationStepEnum.Summary, RegistrationStepEnum.Payment, RegistrationStepEnum.Complete];
@@ -40,15 +42,24 @@ export const useRegistrationStore = create<RegistrationStore>()(
       },
       isLoading: false,
       error: null,
+      verifiedEmails: [],
 
       setStep: (step: RegistrationStep) => {
         set({ currentStep: step });
       },
 
       nextStep: () => {
-        const { currentStep } = get();
+        const { currentStep, data, verifiedEmails } = get();
         const currentIndex = stepOrder.indexOf(currentStep);
-        const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
+        let nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
+        
+        // Skip verification step if email is already verified
+        if (currentStep === RegistrationStepEnum.Clinic && 
+            data.clinic?.adminEmail && 
+            verifiedEmails.includes(data.clinic.adminEmail)) {
+          nextIndex = Math.min(currentIndex + 2, stepOrder.length - 1); // Skip verification step
+        }
+        
         const nextStep = stepOrder[nextIndex];
         if (nextStep) {
           set({ currentStep: nextStep });
@@ -180,16 +191,38 @@ export const useRegistrationStore = create<RegistrationStore>()(
           },
           isLoading: false,
           error: null,
+          verifiedEmails: [],
         });
       },
 
       clearError: () => set({ error: null }),
+
+      markEmailAsVerified: (email: string) => {
+        const { verifiedEmails } = get();
+        if (!verifiedEmails.includes(email)) {
+          set({ 
+            verifiedEmails: [...verifiedEmails, email],
+            verificationData: {
+              code: '',
+              emailSent: false,
+              attempts: 0,
+              verified: true
+            }
+          });
+        }
+      },
+
+      isEmailVerified: (email: string) => {
+        const { verifiedEmails } = get();
+        return verifiedEmails.includes(email);
+      },
     }),
     {
       name: 'registration-storage',
       partialize: (state) => ({
         currentStep: state.currentStep,
         data: state.data,
+        verifiedEmails: state.verifiedEmails,
       }),
     }
   )

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,12 +13,15 @@ import { clinicDataSchema } from '@/schemas/registrationSchema';
 import { useRegistrationStore } from '@/store/registration';
 
 export const ClinicForm: React.FC = () => {
-  const { data, updateClinicData, nextStep, clearError } = useRegistrationStore();
+  const { data, updateClinicData, nextStep, clearError, isEmailVerified } = useRegistrationStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ClinicDataFormData>({
     resolver: zodResolver(clinicDataSchema),
@@ -34,20 +38,30 @@ export const ClinicForm: React.FC = () => {
       adminEmail: '',
       adminWhatsapp: '',
       adminPosition: '',
+      adminPassword: '',
+      confirmPassword: '',
     },
   });
+
+  const adminEmail = watch('adminEmail');
+  const isCurrentEmailVerified = adminEmail ? isEmailVerified(adminEmail) : false;
 
   const onSubmit = async (formData: ClinicDataFormData) => {
     try {
       setIsSubmitting(true);
       clearError();
       
-      // Mock email verification sending
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Update store and proceed
+      // Update store first
       updateClinicData(formData);
-      nextStep();
+      
+      // If email is already verified, skip verification step
+      if (isCurrentEmailVerified) {
+        nextStep(); // This will automatically skip verification due to store logic
+      } else {
+        // Mock email verification sending for new email
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        nextStep();
+      }
     } catch (error) {
       clearError();
       // In a real implementation, this would show an error message
@@ -217,13 +231,26 @@ export const ClinicForm: React.FC = () => {
 
           <div>
             <Label htmlFor="adminEmail">Email Admin *</Label>
-            <Input
-              {...register('adminEmail')}
-              id="adminEmail"
-              type="email"
-              placeholder="Contoh: admin@kliniksehat.com"
-              className={errors.adminEmail ? 'border-red-500' : ''}
-            />
+            <div className="relative">
+              <Input
+                {...register('adminEmail')}
+                id="adminEmail"
+                type="email"
+                placeholder="Contoh: admin@kliniksehat.com"
+                className={`${errors.adminEmail ? 'border-red-500' : ''} ${isCurrentEmailVerified ? 'bg-green-50 border-green-300' : ''}`}
+                disabled={isCurrentEmailVerified}
+              />
+              {isCurrentEmailVerified && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            {isCurrentEmailVerified && (
+              <p className="mt-1 text-sm text-green-600">Email sudah terverifikasi ✓</p>
+            )}
             {errors.adminEmail && (
               <p className="mt-1 text-sm text-red-600">{errors.adminEmail.message}</p>
             )}
@@ -241,6 +268,60 @@ export const ClinicForm: React.FC = () => {
               <p className="mt-1 text-sm text-red-600">{errors.adminWhatsapp.message}</p>
             )}
           </div>
+
+          <div>
+            <Label htmlFor="adminPassword">Password Admin *</Label>
+            <div className="relative">
+              <Input
+                {...register('adminPassword')}
+                id="adminPassword"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Minimal 8 karakter, huruf besar, kecil, dan angka"
+                className={`pr-10 ${errors.adminPassword ? 'border-red-500' : ''}`}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-4 w-4 text-gray-400" />
+                ) : (
+                  <EyeIcon className="h-4 w-4 text-gray-400" />
+                )}
+              </button>
+            </div>
+            {errors.adminPassword && (
+              <p className="mt-1 text-sm text-red-600">{errors.adminPassword.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="confirmPassword">Konfirmasi Password *</Label>
+            <div className="relative">
+              <Input
+                {...register('confirmPassword')}
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="Ulangi password yang sama"
+                className={`pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? (
+                  <EyeSlashIcon className="h-4 w-4 text-gray-400" />
+                ) : (
+                  <EyeIcon className="h-4 w-4 text-gray-400" />
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -254,10 +335,10 @@ export const ClinicForm: React.FC = () => {
           {isSubmitting ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-              Mengirim Email Verifikasi...
+              {isCurrentEmailVerified ? 'Memproses...' : 'Mengirim Email Verifikasi...'}
             </>
           ) : (
-            'Lanjutkan ke Verifikasi Email'
+            isCurrentEmailVerified ? 'Lanjutkan ke Ringkasan' : 'Lanjutkan ke Verifikasi Email'
           )}
         </Button>
       </div>

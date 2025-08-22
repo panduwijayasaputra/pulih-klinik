@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { useRegistrationStore } from '@/store/registration';
+import { RegistrationStepEnum } from '@/types/enums';
 import { 
   BuildingOfficeIcon,
   CheckCircleIcon,
@@ -27,10 +29,25 @@ export const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
   onEditClinic,
   onProceedToPayment
 }) => {
+  const { isEmailVerified, setStep } = useRegistrationStore();
   const [selectedTier, setSelectedTier] = useState<'free' | 'pro' | 'premium'>('free');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeService, setAgreeService] = useState(false);
+
+  // Check if current admin email is verified
+  const isCurrentEmailVerified = clinicData?.adminEmail ? isEmailVerified(clinicData.adminEmail) : false;
+
+  // Handle back navigation - skip verification if email is verified
+  const handleBackToClinic = () => {
+    if (isCurrentEmailVerified) {
+      // Skip verification step and go directly to clinic form
+      setStep(RegistrationStepEnum.Clinic);
+    } else {
+      // Go to previous step (verification)
+      onEditClinic();
+    }
+  };
 
   // Pricing constants
   const freeTrial = {
@@ -104,7 +121,7 @@ export const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={onEditClinic}
+              onClick={handleBackToClinic}
               className="flex items-center"
             >
               <PencilIcon className="w-4 h-4 mr-1" />
@@ -434,7 +451,7 @@ export const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
       <div className="flex justify-between pt-4 border-t border-gray-200">
         <Button
           variant="outline"
-          onClick={onEditClinic}
+          onClick={handleBackToClinic}
           className="flex items-center"
         >
           <PencilIcon className="w-4 h-4 mr-2" />
