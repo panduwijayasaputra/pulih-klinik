@@ -509,31 +509,24 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
                 </div>
 
                 {/* Emergency Contact */}
-                {(selectedClient.emergencyContact || selectedClient.emergencyContactDetails) && (
+                {(selectedClient.emergencyContactName || selectedClient.emergencyContactPhone) && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Kontak Darurat</h3>
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      {selectedClient.emergencyContact ? (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-xs font-medium text-red-700">Kontak Darurat</label>
-                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContact}</p>
+                          <label className="block text-xs font-medium text-red-700">Nama</label>
+                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactName}</p>
                         </div>
-                      ) : selectedClient.emergencyContactDetails ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-xs font-medium text-red-700">Nama</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.name}</p>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-red-700">Telepon</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.phone}</p>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-red-700">Hubungan</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.relationship}</p>
-                          </div>
+                        <div>
+                          <label className="block text-xs font-medium text-red-700">Telepon</label>
+                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactPhone}</p>
                         </div>
-                      ) : null}
+                        <div>
+                          <label className="block text-xs font-medium text-red-700">Hubungan</label>
+                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactRelationship}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

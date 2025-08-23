@@ -1,7 +1,6 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 import {
   ClinicApiError,
@@ -47,8 +46,7 @@ interface ClinicStoreState {
 }
 
 export const useClinicStore = create<ClinicStoreState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       profile: null,
       documents: [],
 
@@ -152,15 +150,7 @@ export const useClinicStore = create<ClinicStoreState>()(
           throw err;
         }
       },
-    }),
-    {
-      name: 'clinic-store',
-      partialize: (state) => ({
-        profile: state.profile,
-        documents: state.documents,
-      }),
-    }
-  )
-);
+    })
+  );
 
 

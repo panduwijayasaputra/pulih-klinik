@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { ConsultationAPI } from '@/lib/api/consultation';
 import { 
   Consultation, 
@@ -63,8 +62,7 @@ const initialState = {
 };
 
 export const useConsultation = create<ConsultationState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       ...initialState,
 
       // CRUD Operations
@@ -405,14 +403,5 @@ export const useConsultation = create<ConsultationState>()(
       resetStore: () => {
         set(initialState);
       },
-    }),
-    {
-      name: 'consultation-store',
-      partialize: (state) => ({
-        consultations: state.consultations,
-        consultationsByClientId: state.consultationsByClientId,
-        // Don't persist loading states or errors
-      }),
-    }
-  )
-);
+    })
+  );

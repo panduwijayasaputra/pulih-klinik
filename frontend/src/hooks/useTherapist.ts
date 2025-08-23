@@ -1,4 +1,6 @@
 import { useCallback, useState } from 'react';
+import { TherapistAPI } from '@/lib/api/therapist';
+import { TherapistFormData } from '@/types/therapist';
 
 // New interface for therapist account creation (NO password fields)
 interface TherapistAccountCreationData {
@@ -9,10 +11,14 @@ interface TherapistAccountCreationData {
   
   // Professional Information
   licenseNumber: string;
-  specialization: string;
+  specializations: string[];
   yearsExperience: number;
   education: string;
   certifications?: string | undefined;
+  
+  // Enum fields
+  licenseType: string;
+  employmentType: string;
   
   // Admin fields
   adminNotes?: string | undefined;
@@ -43,107 +49,81 @@ export const useTherapist = () => {
     setError(null);
 
     try {
-      // Mock API call - simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock validation
-      if (!therapistData.email || !therapistData.name) {
-        throw new Error('Email dan nama wajib diisi');
-      }
-
-      // Mock email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(therapistData.email)) {
-        throw new Error('Format email tidak valid');
-      }
-
-      // Check for duplicate email (mock)
-      if (therapistData.email === 'existing@example.com') {
-        throw new Error('Email sudah terdaftar');
-      }
-
-      // Generate unique therapist ID and registration token
-      const therapistId = 'th-' + Date.now();
-      const registrationToken = 'token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-      
-      // Mock saving to system with pending_setup status
-      const savedTherapist = {
-        ...therapistData,
-        id: therapistId,
-        status: 'pending_setup' as const, // Waiting for password setup
-        createdAt: new Date().toISOString(),
-        registrationToken,
-        tokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-        // Convert certifications string to array
+      // Convert the therapist data to the format expected by TherapistAPI
+      const formData: TherapistFormData = {
+        fullName: therapistData.name,
+        email: therapistData.email,
+        phone: therapistData.phone,
+        licenseNumber: therapistData.licenseNumber,
+        licenseType: therapistData.licenseType as any,
+        specializations: therapistData.specializations,
+        yearsOfExperience: therapistData.yearsExperience,
+        employmentType: therapistData.employmentType as any,
+        maxClients: 15, // Default value, can be made configurable
+        education: [{
+          degree: therapistData.education,
+          institution: '',
+          year: new Date().getFullYear(),
+          field: ''
+        }],
         certifications: therapistData.certifications 
-          ? therapistData.certifications.split(',').map(cert => cert.trim())
-          : []
+          ? therapistData.certifications.split(',').map(cert => ({
+              name: cert.trim(),
+              issuingOrganization: '',
+              issueDate: new Date().toISOString().split('T')[0]!,
+              certificateNumber: ''
+            }))
+          : [],
+        preferences: {
+          sessionDuration: 60,
+          breakBetweenSessions: 15,
+          maxSessionsPerDay: 8,
+          languages: ['Indonesian'],
+          workingDays: [1, 2, 3, 4, 5]
+        }
       };
+
+      // Call the API
+      const result = await TherapistAPI.createTherapist(formData);
       
-      console.warn('Creating therapist account:', savedTherapist);
-      
-      // Mock sending registration email with setup link
-      const registrationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/therapist/setup?token=${registrationToken}`;
-      
-      console.warn('Sending therapist registration email:', {
-        to: therapistData.email,
-        subject: '🔐 Complete Your Therapist Registration - TeraPin.tar',
-        emailTemplate: {
-          greeting: `Selamat datang, ${therapistData.name}!`,
-          introduction: 'Anda telah berhasil didaftarkan sebagai therapist di TeraPin.tar.',
-          clinicInfo: 'Klinik Sehat Jiwa Jakarta', // Would come from therapistData.clinicId lookup
-          instructions: [
-            'Klik tautan di bawah untuk mengatur password Anda',
-            'Tautan ini akan berlaku selama 24 jam',
-            'Setelah mengatur password, Anda dapat langsung login'
-          ],
-          registrationLink,
-          securityNote: 'Untuk keamanan, tautan ini hanya dapat digunakan sekali.',
-          supportInfo: {
-            helpText: 'Jika Anda memerlukan bantuan, silakan hubungi administrator klinik Anda.',
-            supportEmail: 'admin@kliniksehatjiwa.com'
-          }
-        },
-        expiresIn: '24 hours',
-        timestamp: new Date().toISOString()
-      });
-      
-      // Mock clinic admin notification with detailed info
-      console.warn('Notifying clinic admin of therapist registration:', {
-        adminId: therapistData.createdBy,
-        notificationType: 'therapist_registration_created',
-        therapistDetails: {
-          name: therapistData.name,
-          email: therapistData.email,
-          specialization: therapistData.specialization,
-          licenseNumber: therapistData.licenseNumber
-        },
-        systemMessage: `New therapist account created for ${therapistData.name}`,
-        actions: {
-          emailSent: true,
-          registrationEmailTo: therapistData.email,
-          tokenGenerated: true,
-          tokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        },
-        adminNotificationEmail: {
-          subject: '✅ New Therapist Account Created - Action Required',
-          message: `A new therapist account has been created for ${therapistData.name} (${therapistData.email}). The therapist has been sent a registration email to complete their password setup.`,
-          nextSteps: [
-            'Therapist will receive registration email with secure setup link',
-            'Monitor therapist activation status in the management dashboard',
-            'Contact therapist if they don\'t complete setup within 24 hours'
-          ]
-        },
-        timestamp: new Date().toISOString()
-      });
-      
-      return {
-        success: true,
-        therapist_id: therapistId,
-        registration_token: registrationToken,
-        email_sent: true,
-        message: 'Akun therapist berhasil dibuat. Email registrasi telah dikirim.'
-      };
+      if (result.success && result.data) {
+        // Mock sending registration email with setup link
+        const registrationToken = 'token-' + Date.now() + '-' + Math.random().toString(36).substring(2, 11);
+        const registrationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/therapist/setup?token=${registrationToken}`;
+        
+        console.warn('Sending therapist registration email:', {
+          to: therapistData.email,
+          subject: '🔐 Complete Your Therapist Registration - Smart Therapy',
+          emailTemplate: {
+            greeting: `Selamat datang, ${therapistData.name}!`,
+            introduction: 'Anda telah berhasil didaftarkan sebagai therapist di Smart Therapy.',
+            clinicInfo: 'Smart Therapy Clinic',
+            instructions: [
+              'Klik tautan di bawah untuk mengatur password Anda',
+              'Tautan ini akan berlaku selama 24 jam',
+              'Setelah mengatur password, Anda dapat langsung login'
+            ],
+            registrationLink,
+            securityNote: 'Untuk keamanan, tautan ini hanya dapat digunakan sekali.',
+            supportInfo: {
+              helpText: 'Jika Anda memerlukan bantuan, silakan hubungi administrator klinik Anda.',
+              supportEmail: 'admin@smarttherapy.id'
+            }
+          },
+          expiresIn: '24 hours',
+          timestamp: new Date().toISOString()
+        });
+
+        return {
+          success: true,
+          therapist_id: result.data.id,
+          registration_token: registrationToken,
+          email_sent: true,
+          message: 'Akun therapist berhasil dibuat. Email registrasi telah dikirim.'
+        };
+      } else {
+        throw new Error(result.message || 'Failed to create therapist');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal membuat akun therapist';
       setError(errorMessage);

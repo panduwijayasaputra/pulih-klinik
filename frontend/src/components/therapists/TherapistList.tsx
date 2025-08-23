@@ -6,7 +6,7 @@ import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table'
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { useRouter } from 'next/navigation';
+// useRouter import removed - using modal-based editing
 import { TherapistStatusEnum, UserRoleEnum } from '@/types/enums';
 import {
   CheckCircleIcon,
@@ -15,42 +15,36 @@ import {
   EyeIcon,
   PencilIcon,
   PlusIcon,
-  StarIcon,
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { TherapistAPI } from '@/lib/api/therapist';
-import { Therapist } from '@/types/therapist';
+import { Therapist, THERAPIST_SPECIALIZATIONS } from '@/types/therapist';
 import { TherapistFormModal } from './TherapistFormModal';
-// Temporary interface for list data
-interface TherapistListData {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'active' | 'inactive' | 'pending';
-  specializations: string[];
-  joinDate: string;
-  clientCount: number;
-  lastActivity: string;
-  avatar?: string;
-}
+
+// Helper functions to convert between specialization IDs and names
+const getSpecializationNameById = (id: string): string => {
+  const spec = THERAPIST_SPECIALIZATIONS.find(s => s.id === id);
+  return spec ? spec.name : id; // Return id as fallback
+};
+
+// Helper function removed - no longer needed with direct ID handling
 
 export const TherapistList: React.FC = () => {
-  const [therapists, setTherapists] = useState<TherapistListData[]>([]);
+  const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [resendCooldowns, setResendCooldowns] = useState<Record<string, number>>({});
-  const [selectedStatus, setSelectedStatus] = useState<'all' | TherapistListData['status']>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | Therapist['status']>('all');
   const [showTherapistFormModal, setShowTherapistFormModal] = useState(false);
   const [therapistFormMode, setTherapistFormMode] = useState<'create' | 'edit'>('create');
   const [therapistFormDefaultValues, setTherapistFormDefaultValues] = useState<Partial<any>>({});
   const { user, hasRole } = useAuth();
-  const { showConfirmation } = useConfirmationDialog();
+  const { openDialog, isOpen: dialogIsOpen, config: dialogConfig, closeDialog } = useConfirmationDialog();
   const { addToast } = useToast();
-  const router = useRouter();
+  // Router removed since we're using modal-based editing instead of navigation
 
   // Handle resend cooldown countdown
   useEffect(() => {
@@ -70,63 +64,36 @@ export const TherapistList: React.FC = () => {
   }, []);
 
   // Load therapists data
-  useEffect(() => {
-    const loadTherapists = async () => {
-      setLoading(true);
-      try {
-        // Mock API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        const response = await TherapistAPI.getTherapists();
-        if (response.success && response.data) {
-          // Transform API data to match component expectations
-          const therapistData: TherapistListData[] = response.data.items.map((t: Therapist) => ({
-            id: t.id,
-            name: t.fullName,
-            email: t.email,
-            phone: t.phone,
-            status: t.status as any,
-            specializations: t.specializations,
-            joinDate: t.joinDate,
-            clientCount: t.currentLoad,
-            lastActivity: t.updatedAt,
-            avatar: t.avatar
-          }));
-          setTherapists(therapistData);
-        }
-      } catch (error) {
-        console.error('Failed to load therapists:', error);
-        addToast({
-          type: 'error',
-          title: 'Kesalahan Koneksi',
-          message: 'Gagal terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.'
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTherapists();
-  }, [addToast]);
-
-  // Refresh function
-  const refreshTherapists = useCallback(async () => {
+  const loadTherapists = useCallback(async () => {
     setLoading(true);
     try {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 800));
-      // In a real app, this would reload the data
+
+      const response = await TherapistAPI.getTherapists();
+      if (response.success && response.data) {
+        setTherapists(response.data.items);
+      }
     } catch (error) {
-      console.error('Failed to refresh therapists:', error);
+      console.error('Failed to load therapists:', error);
       addToast({
         type: 'error',
-        title: 'Refresh Failed',
-        message: 'Failed to refresh therapist data. Please try again.'
+        title: 'Kesalahan Koneksi',
+        message: 'Gagal terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.'
       });
     } finally {
       setLoading(false);
     }
   }, [addToast]);
+
+  useEffect(() => {
+    loadTherapists();
+  }, [loadTherapists]);
+
+  // Refresh function
+  const refreshTherapists = useCallback(async () => {
+    await loadTherapists();
+  }, [loadTherapists]);
 
   const handleViewDetails = (therapist: Therapist) => {
     setSelectedTherapist(therapist);
@@ -139,8 +106,11 @@ export const TherapistList: React.FC = () => {
   };
 
   const handleEditTherapist = (therapistId: string) => {
-    handleCloseDetails();
-    router.push(`/portal/therapists/edit/${therapistId}` as any);
+    const therapist = therapists.find(t => t.id === therapistId);
+    if (therapist) {
+      handleCloseDetails();
+      handleEditTherapistModal(therapist);
+    }
   };
 
   // Therapist form modal handlers
@@ -150,18 +120,27 @@ export const TherapistList: React.FC = () => {
     setShowTherapistFormModal(true);
   };
 
-  const _handleEditTherapistModal = (therapist: Therapist) => {
+  const handleEditTherapistModal = (therapist: Therapist) => {
+    setSelectedTherapist(therapist);
     setTherapistFormMode('edit');
     setTherapistFormDefaultValues({
-      name: therapist.name,
+      name: therapist.fullName,  // Form expects 'name', not 'fullName'
       email: therapist.email,
       phone: therapist.phone,
       licenseNumber: therapist.licenseNumber,
-      specialization: therapist.specialization,
-      yearsExperience: therapist.yearsExperience,
-      education: therapist.education,
-      certifications: therapist.certifications,
-      adminNotes: therapist.adminNotes,
+      licenseType: therapist.licenseType,
+      specializations: therapist.specializations, // Keep as array of IDs
+      yearsExperience: therapist.yearsOfExperience, // Form expects 'yearsExperience'
+      employmentType: therapist.employmentType,
+      // Convert education array to string
+      education: therapist.education.map(edu => 
+        `${edu.degree} ${edu.field} - ${edu.institution} (${edu.year})`
+      ).join('; '),
+      // Convert certifications array to string
+      certifications: therapist.certifications.map(cert => 
+        `${cert.name} - ${cert.issuingOrganization}`
+      ).join('; '),
+      adminNotes: therapist.adminNotes || '', // Use actual adminNotes or empty string
     });
     setShowTherapistFormModal(true);
   };
@@ -169,35 +148,37 @@ export const TherapistList: React.FC = () => {
   const handleTherapistFormSuccess = async (data: any) => {
     try {
       if (therapistFormMode === 'create') {
-        // Add new therapist to the list
-        const newTherapist: Therapist = {
-          id: `th-${Date.now()}`,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          specialization: data.specialization,
-          licenseNumber: data.licenseNumber,
-          yearsExperience: data.yearsExperience,
-          education: data.education,
-          certifications: data.certifications,
-          adminNotes: data.adminNotes,
-          status: TherapistStatusEnum.PendingSetup,
-          sessions_completed: 0,
-          client_satisfaction: 0,
-          registrationDate: new Date().toISOString().split('T')[0] || new Date().toISOString().slice(0, 10),
-        };
-        setTherapists(prev => [...prev, newTherapist]);
+        // Note: In a real implementation, this would be handled by the API
+        // For now, we'll just add a toast notification
         addToast({
           type: 'success',
           title: 'Therapist Berhasil Ditambahkan',
           message: `Therapist ${data.name} telah berhasil ditambahkan ke sistem.`,
         });
+        // Refresh the list to show the new therapist
+        refreshTherapists();
       } else {
         // Update existing therapist
         if (selectedTherapist) {
+          // In a real implementation, this would call the API
+          // For now, we'll update the local state and show success message
           setTherapists(prev => prev.map(t => 
             t.id === selectedTherapist.id 
-              ? { ...t, ...data }
+              ? { 
+                  ...t, 
+                  fullName: data.name, // Form returns 'name', convert to 'fullName'
+                  email: data.email,
+                  phone: data.phone,
+                  licenseNumber: data.licenseNumber,
+                  licenseType: data.licenseType,
+                  specializations: data.specializations, // Already an array of IDs
+                  yearsOfExperience: data.yearsExperience, // Form returns 'yearsExperience'
+                  employmentType: data.employmentType,
+                  adminNotes: data.adminNotes,
+                  // Keep existing education and certifications arrays (form only edits as strings)
+                  // In a real app, these would be properly parsed or handled by the API
+                  updatedAt: new Date().toISOString()
+                }
               : t
           ));
           addToast({
@@ -205,6 +186,9 @@ export const TherapistList: React.FC = () => {
             title: 'Therapist Berhasil Diperbarui',
             message: `Data therapist ${data.name} telah berhasil diperbarui.`,
           });
+          // Close the form modal
+          setShowTherapistFormModal(false);
+          setSelectedTherapist(null);
         }
       }
     } catch (error) {
@@ -277,11 +261,10 @@ export const TherapistList: React.FC = () => {
 
     const actionTextId = newStatus === 'active' ? 'aktifkan' : 'nonaktifkan';
     const actionTitleId = newStatus === 'active' ? 'Aktifkan Akun Therapist' : 'Nonaktifkan Akun Therapist';
-    const actionColor = newStatus === 'active' ? 'success' : 'warning';
 
-    showConfirmation({
+    openDialog({
       title: actionTitleId,
-      description: `Yakin ingin ${actionTextId} akun ${therapist.name}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
+      description: `Yakin ingin ${actionTextId} akun ${therapist.fullName}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
       confirmText: actionTextId.charAt(0).toUpperCase() + actionTextId.slice(1),
       cancelText: 'Batal',
       onConfirm: () => executeStatusChange(therapistId, newStatus)
@@ -309,7 +292,7 @@ export const TherapistList: React.FC = () => {
       setTherapists(prev => {
         const updated = prev.map(therapist =>
           therapist.id === therapistId
-            ? { ...therapist, status: newStatus }
+            ? { ...therapist, status: newStatus === 'active' ? TherapistStatusEnum.Active : TherapistStatusEnum.Inactive }
             : therapist
         );
         return updated;
@@ -318,7 +301,7 @@ export const TherapistList: React.FC = () => {
       addToast({
         type: 'success',
         title: 'Status Berhasil Diperbarui',
-        message: `Akun ${therapist?.name} telah ${newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan'}. ${newStatus === 'active' ? 'Mereka sekarang dapat mengakses akun dan melakukan sesi.' : 'Mereka tidak akan dapat mengakses akun lagi.'}`
+        message: `Akun ${therapist?.fullName} telah ${newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan'}. ${newStatus === 'active' ? 'Mereka sekarang dapat mengakses akun dan melakukan sesi.' : 'Mereka tidak akan dapat mengakses akun lagi.'}`
       });
     } catch (error) {
       console.error('Status update error:', error);
@@ -360,9 +343,6 @@ export const TherapistList: React.FC = () => {
     }
   };
 
-  const formatRating = (rating: number) => {
-    return rating > 0 ? rating.toFixed(1) : 'N/A';
-  };
 
   const formatCountdown = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -382,8 +362,8 @@ export const TherapistList: React.FC = () => {
       header: 'Therapist',
       render: (therapist) => (
         <div>
-          <div className="font-medium text-gray-900">{therapist.name}</div>
-          <div className="text-xs text-gray-500">{therapist.specialization}</div>
+          <div className="font-medium text-gray-900">{therapist.fullName}</div>
+          <div className="text-xs text-gray-500">{therapist.specializations.map(id => getSpecializationNameById(id)).join(', ')}</div>
         </div>
       ),
     },
@@ -403,35 +383,16 @@ export const TherapistList: React.FC = () => {
       render: (therapist) => getStatusBadge(therapist.status),
     },
     {
-      key: 'performance',
-      header: 'Kinerja',
+      key: 'specializations',
+      header: 'Spesialisasi',
       render: (therapist) => (
         <div>
-          <div className="text-sm">{therapist.sessions_completed} sesi</div>
-          <div className="flex items-center text-xs text-gray-500">
-            <div className="flex items-center mr-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <StarIcon
-                  key={star}
-                  className={`w-3 h-3 ${
-                    star <= Math.round(therapist.client_satisfaction)
-                      ? 'text-yellow-500 fill-current'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            {formatRating(therapist.client_satisfaction)}
+          <div className="text-sm">
+            {therapist.specializations.map(id => getSpecializationNameById(id)).join(', ')}
           </div>
-        </div>
-      ),
-    },
-    {
-      key: 'registration',
-      header: 'Registrasi',
-      render: (therapist) => (
-        <div className="text-sm text-gray-600">
-          {new Date(therapist.registrationDate).toLocaleDateString('id-ID')}
+          <div className="text-xs text-gray-500">
+            {therapist.yearsOfExperience} tahun pengalaman
+          </div>
         </div>
       ),
     },
@@ -529,7 +490,7 @@ export const TherapistList: React.FC = () => {
         emptyMessage="Tidak ada therapist yang ditemukan"
         loadingMessage="Memuat data therapist..."
         searchPlaceholder="Cari nama, email, atau spesialisasi..."
-        searchKeys={['name', 'email', 'specialization']}
+        searchKeys={['fullName', 'email', 'specializations']}
         filters={[statusFilter]}
         refreshAction={{
           label: 'Segarkan',
@@ -544,7 +505,11 @@ export const TherapistList: React.FC = () => {
       />
 
       {/* Confirmation Dialog */}
-      {ConfirmationDialog}
+      <ConfirmationDialog
+        isOpen={dialogIsOpen}
+        onClose={closeDialog}
+        {...dialogConfig}
+      />
 
       {/* Therapist Details Modal */}
       {showDetailsModal && selectedTherapist && (
@@ -555,7 +520,7 @@ export const TherapistList: React.FC = () => {
               <div className="mb-6 flex items-start justify-between">
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    {selectedTherapist.name}
+                    {selectedTherapist.fullName}
                   </h2>
                   <p className="text-gray-600 mt-1">Detail Therapist</p>
                 </div>
@@ -575,7 +540,7 @@ export const TherapistList: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.name}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.fullName}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Alamat Email</label>
@@ -604,69 +569,55 @@ export const TherapistList: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Spesialisasi</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.specialization}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.specializations.map(id => getSpecializationNameById(id)).join(', ')}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Tahun Pengalaman</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.yearsExperience} tahun</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.yearsOfExperience} tahun</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Pendidikan</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.education}</p>
+                      <div className="mt-1 text-sm text-gray-900">
+                        {selectedTherapist.education.map((edu, index) => (
+                          <div key={index} className="mb-1">
+                            {edu.degree} {edu.field} - {edu.institution} ({edu.year})
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   {selectedTherapist.certifications && (
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-gray-700">Sertifikasi</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedTherapist.certifications}</p>
+                      <div className="mt-1 text-sm text-gray-900">
+                        {selectedTherapist.certifications.map((cert, index) => (
+                          <div key={index} className="mb-1">
+                            {cert.name} - {cert.issuingOrganization} ({cert.certificateNumber})
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
 
                 {/* Performance Metrics */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Metrik Kinerja</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Kerja</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Sesi Selesai</span>
-                        <span className="text-2xl font-bold text-blue-600">{selectedTherapist.sessions_completed}</span>
+                        <span className="text-sm font-medium text-gray-700">Klien Aktif</span>
+                        <span className="text-2xl font-bold text-blue-600">{selectedTherapist.currentLoad}</span>
                       </div>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Kepuasan Klien</span>
-                        <div className="flex items-center">
-                          <div className="flex items-center mr-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <StarIcon
-                                key={star}
-                                className={`w-5 h-5 ${
-                                  star <= Math.round(selectedTherapist.client_satisfaction)
-                                    ? 'text-yellow-500 fill-current'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-2xl font-bold text-yellow-600">
-                            {formatRating(selectedTherapist.client_satisfaction)}
-                          </span>
-                        </div>
+                        <span className="text-sm font-medium text-gray-700">Maksimal Klien</span>
+                        <span className="text-2xl font-bold text-green-600">{selectedTherapist.maxClients}</span>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Admin Notes */}
-                {selectedTherapist.adminNotes && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Catatan Admin</h3>
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-800">{selectedTherapist.adminNotes}</p>
-                    </div>
-                  </div>
-                )}
               </div>
 
 

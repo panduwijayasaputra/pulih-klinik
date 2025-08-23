@@ -34,11 +34,28 @@ export class AuthAPI {
   }
 
   static async getCurrentUser(): Promise<ItemResponse<any>> {
-    // TODO: Implement actual API call
-    console.log('AuthAPI.getCurrentUser called');
+    // Check Zustand's persisted storage for user data
+    if (typeof window !== 'undefined') {
+      const authStorage = localStorage.getItem('auth-storage');
+      if (authStorage) {
+        try {
+          const parsed = JSON.parse(authStorage);
+          if (parsed.state && parsed.state.user && parsed.state.isAuthenticated) {
+            return {
+              success: true,
+              data: parsed.state.user,
+              message: 'User found in persisted storage'
+            };
+          }
+        } catch (error) {
+          console.error('Error parsing persisted auth storage:', error);
+        }
+      }
+    }
+    
     return {
       success: false,
-      message: 'API not implemented yet'
+      message: 'No user found'
     };
   }
 }

@@ -25,9 +25,6 @@ export const useAuthStore = create<AuthStore>()(
           const response = await AuthAPI.login(credentials);
           
           if (response.success && response.user) {
-            // Store user in localStorage for persistence
-            localStorage.setItem('user', JSON.stringify(response.user));
-            
             set({
               user: response.user,
               isAuthenticated: true,
@@ -57,7 +54,6 @@ export const useAuthStore = create<AuthStore>()(
         
         try {
           await AuthAPI.logout();
-          localStorage.removeItem('user');
           
           set({
             user: null,
@@ -81,11 +77,11 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true });
         
         try {
-          const user = await AuthAPI.getCurrentUser();
+          const response = await AuthAPI.getCurrentUser();
           
-          if (user) {
+          if (response.success && response.data) {
             set({
-              user: user.data as User,
+              user: response.data as User,
               isAuthenticated: true,
               isLoading: false,
             });

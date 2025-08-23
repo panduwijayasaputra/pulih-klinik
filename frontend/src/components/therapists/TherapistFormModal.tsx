@@ -11,13 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FormModal } from '@/components/ui/form-modal';
 import { EmploymentTypeEnum, TherapistLicenseTypeEnum } from '@/types/enums';
-// Mock data removed - now uses empty API functions
-const therapistSpecializations = ['Hypnotherapy', 'Cognitive Behavioral Therapy', 'Anxiety Disorders', 'Depression Treatment'];
+import { THERAPIST_SPECIALIZATIONS } from '@/types/therapist';
 import {
   AcademicCapIcon,
   BriefcaseIcon,
   CheckCircleIcon,
-  EnvelopeIcon,
   UserIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline';
@@ -36,7 +34,7 @@ const TherapistRegistrationSchema = z.object({
 
   // Professional Information
   licenseNumber: z.string().min(1, 'Nomor SIP wajib diisi'),
-  specialization: z.string().min(1, 'Spesialisasi wajib diisi'),
+  specializations: z.array(z.string()).min(1, 'Minimal pilih satu spesialisasi'),
   yearsExperience: z.number().min(0, 'Pengalaman tidak boleh negatif').max(50, 'Pengalaman maksimal 50 tahun'),
   education: z.string().min(1, 'Pendidikan wajib diisi'),
   certifications: z.string().optional(),
@@ -80,7 +78,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
   const [isLoadingTherapist, setIsLoadingTherapist] = useState(mode === 'edit');
   const { createTherapistAccount, loading } = useTherapist();
   const { user } = useAuth();
-  const { showConfirmation, ConfirmationDialog } = useConfirmationDialog();
+  const { openDialog, isOpen: dialogIsOpen, config: dialogConfig, closeDialog } = useConfirmationDialog();
   const { addToast } = useToast();
 
   const {
@@ -90,6 +88,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     reset,
     setError,
     watch,
+    setValue,
     clearErrors
   } = useForm<TherapistRegistrationForm>({
     resolver: zodResolver(TherapistRegistrationSchema),
@@ -110,8 +109,21 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
             // Mock API call to get therapist data
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Reset with empty form
-            reset({});
+            // Reset with default values for edit mode
+            reset({
+              name: '',
+              email: '',
+              phone: '',
+              licenseNumber: '',
+              specializations: [],
+              yearsExperience: 0,
+              education: '',
+              certifications: '',
+              adminNotes: '',
+              licenseType: TherapistLicenseTypeEnum.Psychologist,
+              employmentType: EmploymentTypeEnum.FullTime,
+              ...defaultValues, // Apply the default values passed from parent
+            });
             setEmailValidationState('valid');
           } catch (error) {
             console.error('Failed to load therapist data:', error);
@@ -128,7 +140,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           email: '',
           phone: '',
           licenseNumber: '',
-          specialization: '',
+          specializations: [],
           yearsExperience: 0,
           education: '',
           certifications: '',
@@ -143,7 +155,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     }
   }, [open, mode, therapistId, defaultValues, reset]);
 
-  const specializations = therapistSpecializations;
+  // Remove the old specializations mapping since we now use THERAPIST_SPECIALIZATIONS directly
 
   const validateEmailAvailability = useCallback(async (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -201,31 +213,68 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     if (!user || !user.roles.includes('clinic_admin' as UserRole)) {
       addToast({
         type: 'error',
-        title: 'Access Denied',
-        message: `Only clinic administrators can ${mode === 'edit' ? 'edit' : 'register'} therapists`
+        title: 'Akses Ditolak',
+        message: `Hanya administrator klinik yang dapat ${mode === 'edit' ? 'mengedit' : 'mendaftarkan'} therapist`
       });
       return;
     }
 
-    const actionText = mode === 'edit' ? 'update' : 'create';
-    const titleText = mode === 'edit' ? 'Update Therapist Account' : 'Create Therapist Account';
-    const confirmText = mode === 'edit' ? 'Update Account' : 'Create Account';
+    const titleText = mode === 'edit' ? 'Perbarui Akun Therapist' : 'Buat Akun Therapist';
+    const confirmText = mode === 'edit' ? 'Perbarui Akun' : 'Buat Akun';
+    const specializations = data.specializations
+      .map(id => THERAPIST_SPECIALIZATIONS.find(s => s.id === id)?.name)
+      .filter(Boolean)
+      .join(', ');
 
-    showConfirmation({
-      type: 'info',
+    openDialog({
       title: titleText,
-      message: `Are you sure you want to ${actionText} the therapist account for ${data.name}?\n\n• Email: ${data.email}\n• Specialization: ${data.specialization}\n• License: ${data.licenseNumber}\n\n${mode === 'edit' ? 'Changes will be applied immediately.' : `A registration email will be sent to ${data.email} with a secure link to complete their password setup.`}`,
+      description: mode === 'edit' 
+        ? `Apakah Anda yakin ingin memperbarui data therapist berikut?`
+        : `Apakah Anda yakin ingin membuat akun therapist baru dengan data berikut?`,
       confirmText: confirmText,
-      cancelText: 'Review Details'
-    }, () => submitForm(data));
+      cancelText: 'Tinjau Kembali',
+      variant: mode === 'edit' ? 'info' : 'create',
+      children: (
+        <div className="space-y-3 py-2">
+          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-600">Nama:</span>
+              <span className="text-sm font-semibold text-gray-900">{data.name}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-600">Email:</span>
+              <span className="text-sm font-semibold text-gray-900">{data.email}</span>
+            </div>
+            <div className="flex justify-between items-start">
+              <span className="text-sm font-medium text-gray-600">Spesialisasi:</span>
+              <span className="text-sm font-semibold text-gray-900 text-right max-w-60">{specializations}</span>
+            </div>
+            {mode === 'create' && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">Nomor Lisensi:</span>
+                <span className="text-sm font-semibold text-gray-900">{data.licenseNumber}</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            {mode === 'edit' 
+              ? '✏️ Perubahan akan diterapkan segera setelah dikonfirmasi.'
+              : `📧 Email registrasi akan dikirim ke ${data.email} dengan tautan aman untuk menyelesaikan pengaturan kata sandi.`
+            }
+          </div>
+        </div>
+      ),
+      onConfirm: () => submitForm(data)
+    });
   };
 
   const submitForm = async (data: TherapistRegistrationForm) => {
     if (!user) {
       addToast({
         type: 'error',
-        title: 'Authentication Error',
-        message: 'User session not found. Please login again.'
+        title: 'Kesalahan Autentikasi',
+        message: 'Sesi pengguna tidak ditemukan. Silakan masuk kembali.'
       });
       return;
     }
@@ -237,19 +286,23 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         // Mock update API call
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        addToast({
-          type: 'success',
-          title: 'Therapist Updated!',
-          message: `Therapist information for ${data.name} has been updated successfully.`,
-          duration: 8000,
-        });
-
+        // Don't show toast here for edit mode - parent component handles it
         onSubmitSuccess?.(data);
         onOpenChange(false);
       } else {
         // Create new therapist
         const result = await createTherapistAccount({
-          ...data,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          licenseNumber: data.licenseNumber,
+          licenseType: data.licenseType,
+          specializations: data.specializations,
+          yearsExperience: data.yearsExperience,
+          employmentType: data.employmentType,
+          education: data.education,
+          certifications: data.certifications,
+          adminNotes: data.adminNotes,
           createdBy: user.id,
           clinicId: user.clinicId || 'default-clinic',
           status: 'pending_setup'
@@ -258,8 +311,8 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         if (result.success) {
           addToast({
             type: 'success',
-            title: 'Therapist Account Created!',
-            message: `Registration email sent to ${data.email}. The therapist will receive a secure link to complete their registration.`,
+            title: 'Akun Therapist Berhasil Dibuat!',
+            message: `Email registrasi telah dikirim ke ${data.email}. Therapist akan menerima tautan aman untuk menyelesaikan pendaftaran.`,
             duration: 8000,
           });
 
@@ -268,20 +321,20 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         } else {
           addToast({
             type: 'error',
-            title: 'Creation Failed',
-            message: result.message || 'Failed to create therapist account. Please try again.'
+            title: 'Pembuatan Gagal',
+            message: result.message || 'Gagal membuat akun therapist. Silakan coba lagi.'
           });
-          setError('root', { message: result.message || 'Failed to create therapist account' });
+          setError('root', { message: result.message || 'Gagal membuat akun therapist' });
         }
       }
     } catch (error) {
       console.error('Form submission error:', error);
       addToast({
         type: 'error',
-        title: 'System Error',
-        message: `An unexpected error occurred while ${mode === 'edit' ? 'updating' : 'creating'} the therapist account`
+        title: 'Kesalahan Sistem',
+        message: `Terjadi kesalahan tak terduga saat ${mode === 'edit' ? 'memperbarui' : 'membuat'} akun therapist`
       });
-      setError('root', { message: `An error occurred while ${mode === 'edit' ? 'updating' : 'creating'} the therapist account` });
+      setError('root', { message: `Terjadi kesalahan saat ${mode === 'edit' ? 'memperbarui' : 'membuat'} akun therapist` });
     } finally {
       setIsSubmitting(false);
     }
@@ -292,10 +345,10 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     onOpenChange(false);
   };
 
-  const title = mode === 'edit' ? 'Edit Therapist' : 'Register New Therapist';
+  const title = mode === 'edit' ? 'Edit Therapist' : 'Daftar Therapist Baru';
   const description = mode === 'edit' 
-    ? 'Update therapist information. Changes will be reflected immediately.'
-    : 'Create a new therapist account. The therapist will receive an email to set their password.';
+    ? 'Perbarui informasi therapist. Perubahan akan diterapkan segera.'
+    : 'Buat akun therapist baru. Therapist akan menerima email untuk mengatur kata sandi mereka.';
 
   if (isLoadingTherapist) {
     return (
@@ -308,7 +361,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
       >
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-          <span className="ml-2 text-gray-600">Loading therapist data...</span>
+          <span className="ml-2 text-gray-600">Memuat data therapist...</span>
         </div>
       </FormModal>
     );
@@ -331,94 +384,92 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               Informasi Pribadi
             </h3>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div>
-                  <Label htmlFor="name">Nama Lengkap *</Label>
-                  <div className="relative">
-                    <Input
-                      {...register('name')}
-                      id="name"
-                      placeholder="contoh: Dr. Budi Santoso"
-                      className={`
-                        ${errors.name ? 'border-red-500 focus:border-red-500' : ''}
-                        ${touchedFields.name && !errors.name && watchedFormData.name ? 'border-green-500 focus:border-green-500' : ''}
-                      `}
-                    />
-                    {touchedFields.name && !errors.name && watchedFormData.name && (
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                      </div>
-                    )}
-                  </div>
-                  {errors.name && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <XCircleIcon className="w-3 h-3 mr-1" />
-                      {errors.name.message}
-                    </p>
+              <div>
+                <Label htmlFor="name">Nama Lengkap *</Label>
+                <div className="relative">
+                  <Input
+                    {...register('name')}
+                    id="name"
+                    placeholder="contoh: Dr. Budi Santoso"
+                    className={`
+                      ${errors.name ? 'border-red-500 focus:border-red-500' : ''}
+                      ${touchedFields.name && !errors.name && watchedFormData.name ? 'border-green-500 focus:border-green-500' : ''}
+                    `}
+                  />
+                  {touchedFields.name && !errors.name && watchedFormData.name && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                    </div>
                   )}
                 </div>
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <Label htmlFor="email">
-                    Alamat Email * {mode === 'edit' && <span className="text-gray-500 text-xs">(Tidak dapat diubah)</span>}
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      {...register('email')}
-                      id="email"
-                      type="email"
-                      placeholder="therapist@contoh.com"
-                      disabled={mode === 'edit'}
-                      className={`
-                        ${errors.email || emailValidationState === 'invalid' ? 'border-red-500' : ''}
-                        ${emailValidationState === 'valid' ? 'border-green-500' : ''}
-                        ${emailValidationState === 'checking' ? 'pr-10' : ''}
-                        ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
-                      `}
-                    />
-                    {emailValidationState === 'checking' && (
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
-                      </div>
-                    )}
-                    {emailValidationState === 'valid' && !errors.email && (
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                      </div>
-                    )}
-                  </div>
-                  {(errors.email || emailErrorMessage) && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.email?.message || emailErrorMessage}
-                    </p>
+              <div>
+                <Label htmlFor="email">
+                  Alamat Email *
+                </Label>
+                <div className="relative">
+                  <Input
+                    {...register('email')}
+                    id="email"
+                    type="email"
+                    placeholder="therapist@contoh.com"
+                    disabled={mode === 'edit'}
+                    className={`
+                      ${errors.email || emailValidationState === 'invalid' ? 'border-red-500' : ''}
+                      ${emailValidationState === 'valid' ? 'border-green-500' : ''}
+                      ${emailValidationState === 'checking' ? 'pr-10' : ''}
+                      ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
+                    `}
+                  />
+                  {emailValidationState === 'checking' && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+                    </div>
+                  )}
+                  {emailValidationState === 'valid' && !errors.email && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                    </div>
                   )}
                 </div>
+                {(errors.email || emailErrorMessage) && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.email?.message || emailErrorMessage}
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <Label htmlFor="phone">Nomor Telepon *</Label>
-                  <div className="relative">
-                    <Input
-                      {...register('phone')}
-                      id="phone"
-                      placeholder="+62-812-3456-7890"
-                      className={`
-                        ${errors.phone ? 'border-red-500 focus:border-red-500' : ''}
-                        ${touchedFields.phone && !errors.phone && watchedFormData.phone ? 'border-green-500 focus:border-green-500' : ''}
-                      `}
-                    />
-                    {touchedFields.phone && !errors.phone && watchedFormData.phone && (
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                      </div>
-                    )}
-                  </div>
-                  {errors.phone && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <XCircleIcon className="w-3 h-3 mr-1" />
-                      {errors.phone.message}
-                    </p>
+              <div>
+                <Label htmlFor="phone">Nomor Telepon *</Label>
+                <div className="relative">
+                  <Input
+                    {...register('phone')}
+                    id="phone"
+                    placeholder="+62-812-3456-7890"
+                    className={`
+                      ${errors.phone ? 'border-red-500 focus:border-red-500' : ''}
+                      ${touchedFields.phone && !errors.phone && watchedFormData.phone ? 'border-green-500 focus:border-green-500' : ''}
+                    `}
+                  />
+                  {touchedFields.phone && !errors.phone && watchedFormData.phone && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                    </div>
                   )}
                 </div>
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -457,41 +508,47 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               </div>
 
               <div>
-                <Label htmlFor="specialization">Spesialisasi *</Label>
-                <div className="relative">
-                  <Select
-                    value={watch('specialization')}
-                    onValueChange={(value) => {
-                      const event = { target: { value } };
-                      register('specialization').onChange(event);
-                    }}
-                  >
-                    <SelectTrigger
-                      className={`
-                        ${errors.specialization ? 'border-red-500 focus:border-red-500' : ''}
-                        ${touchedFields.specialization && !errors.specialization && watchedFormData.specialization ? 'border-green-500 focus:border-green-500' : ''}
-                      `}
-                    >
-                      <SelectValue placeholder="Select Specialization" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {specializations.map((spec) => (
-                        <SelectItem key={spec} value={spec}>
-                          {spec}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {touchedFields.specialization && !errors.specialization && watchedFormData.specialization && (
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                <Label htmlFor="specializations">Spesialisasi *</Label>
+                <div className="space-y-2">
+                  <div className="border rounded-md p-3 min-h-[40px] max-h-40 overflow-y-auto">
+                    {THERAPIST_SPECIALIZATIONS.map((spec) => {
+                      const isSelected = (watch('specializations') || []).includes(spec.id);
+                      return (
+                        <div key={spec.id} className="flex items-center space-x-2 py-1">
+                          <input
+                            type="checkbox"
+                            id={`spec-${spec.id}`}
+                            checked={isSelected}
+                            onChange={(e) => {
+                              const current = watch('specializations') || [];
+                              if (e.target.checked) {
+                                setValue('specializations', [...current, spec.id], { shouldValidate: true });
+                              } else {
+                                setValue('specializations', current.filter(id => id !== spec.id), { shouldValidate: true });
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <label htmlFor={`spec-${spec.id}`} className="text-sm text-gray-700 cursor-pointer">
+                            {spec.name}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {watch('specializations') && watch('specializations')!.length > 0 && (
+                    <div className="text-xs text-gray-600">
+                      Terpilih: {watch('specializations')!.map(id => {
+                        const spec = THERAPIST_SPECIALIZATIONS.find(s => s.id === id);
+                        return spec?.name;
+                      }).join(', ')}
                     </div>
                   )}
                 </div>
-                {errors.specialization && (
+                {errors.specializations && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <XCircleIcon className="w-3 h-3 mr-1" />
-                    {errors.specialization.message}
+                    {errors.specializations.message}
                   </p>
                 )}
               </div>
@@ -502,17 +559,17 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                   <Select
                     value={watch('licenseType')}
                     onValueChange={(value) => {
-                      const event = { target: { value } } as any;
-                      register('licenseType').onChange(event);
+                      setValue('licenseType', value as any, { shouldValidate: true });
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih tipe lisensi" />
+                      <SelectValue placeholder="Pilih Tipe Lisensi" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(TherapistLicenseTypeEnum).map((val) => (
-                        <SelectItem key={val} value={val}>{val}</SelectItem>
-                      ))}
+                      <SelectItem value={TherapistLicenseTypeEnum.Psychologist}>Psikolog</SelectItem>
+                      <SelectItem value={TherapistLicenseTypeEnum.Psychiatrist}>Psikiater</SelectItem>
+                      <SelectItem value={TherapistLicenseTypeEnum.Counselor}>Konselor</SelectItem>
+                      <SelectItem value={TherapistLicenseTypeEnum.Hypnotherapist}>Hipnoterapis</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.licenseType && (
@@ -528,17 +585,17 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                   <Select
                     value={watch('employmentType')}
                     onValueChange={(value) => {
-                      const event = { target: { value } } as any;
-                      register('employmentType').onChange(event);
+                      setValue('employmentType', value as any, { shouldValidate: true });
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih tipe pekerjaan" />
+                      <SelectValue placeholder="Pilih Tipe Pekerjaan" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(EmploymentTypeEnum).map((val) => (
-                        <SelectItem key={val} value={val}>{val}</SelectItem>
-                      ))}
+                      <SelectItem value={EmploymentTypeEnum.FullTime}>Penuh Waktu</SelectItem>
+                      <SelectItem value={EmploymentTypeEnum.PartTime}>Paruh Waktu</SelectItem>
+                      <SelectItem value={EmploymentTypeEnum.Contract}>Kontrak</SelectItem>
+                      <SelectItem value={EmploymentTypeEnum.Freelance}>Freelance</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.employmentType && (
@@ -606,16 +663,16 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               </div>
 
               <div>
-                <Label htmlFor="certifications">Certifications (Optional)</Label>
+                <Label htmlFor="certifications">Sertifikasi (Opsional)</Label>
                 <Textarea
                   {...register('certifications')}
                   id="certifications"
                   rows={3}
-                  placeholder="contoh: Certified Hypnotherapist, CBT Practitioner, EMDR Certified"
+                  placeholder="contoh: Hipnoterapis Tersertifikasi, Praktisi CBT, EMDR Tersertifikasi"
                   className="resize-none"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Separate multiple certifications with commas
+                  Pisahkan beberapa sertifikasi dengan koma
                 </p>
               </div>
             </div>
@@ -675,7 +732,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               ) : emailValidationState === 'checking' ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Validating Email...
+                  Memvalidasi Email...
                 </>
               ) : !isValid || !isDirty ? (
                 mode === 'edit' ? 'Lengkapi Form untuk Update' : 'Lengkapi Form untuk Melanjutkan'
@@ -688,7 +745,11 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
       </FormModal>
 
       {/* Confirmation Dialog */}
-      {ConfirmationDialog}
+      <ConfirmationDialog
+        isOpen={dialogIsOpen}
+        onClose={closeDialog}
+        {...dialogConfig}
+      />
     </>
   );
 };

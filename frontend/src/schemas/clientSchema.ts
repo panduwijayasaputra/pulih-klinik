@@ -25,14 +25,33 @@ export const guardianMaritalStatusEnum = z.enum(ClientGuardianMaritalStatusValue
 // Reusable patterns
 const phoneIdPattern = /^(?:\+62|62|0)8[1-9][0-9]{6,10}$/; // e.g., +62812..., 0812...
 
-export const emergencyContactSchema = z.object({
-  name: z.string().min(2, 'Nama kontak darurat minimal 2 karakter'),
-  phone: z
-    .string()
-    .regex(phoneIdPattern, 'Format nomor telepon tidak valid (gunakan +62 atau 0)')
-    .min(10),
-  relationship: z.string().min(2, 'Hubungan minimal 2 karakter'),
-});
+// Phone validation that allows empty strings for optional fields
+const optionalPhoneValidation = z.string().optional().or(z.literal('')).transform(v => (v === '' ? undefined : v));
+
+// Required phone validation for main phone field
+const requiredPhoneValidation = z
+  .string()
+  .regex(phoneIdPattern, 'Format nomor telepon tidak valid (gunakan +62 atau 0)')
+  .min(10, 'Nomor telepon minimal 10 digit');
+
+// Optional phone validation for emergency contact details
+const optionalEmergencyPhoneValidation = z
+  .string()
+  .optional()
+  .or(z.literal(''))
+  .refine(
+    (val) => {
+      if (!val || val === '') return true; // Allow empty
+      return phoneIdPattern.test(val) && val.length >= 10;
+    },
+    { message: 'Format nomor telepon tidak valid (gunakan +62 atau 0)' }
+  )
+  .transform(v => (v === '' ? undefined : v));
+
+// Individual emergency contact field validations
+const emergencyContactNameValidation = z.string().min(2, 'Nama kontak darurat minimal 2 karakter').optional();
+const emergencyContactRelationshipValidation = z.string().min(2, 'Hubungan minimal 2 karakter').optional();
+const emergencyContactAddressValidation = z.string().min(5, 'Alamat kontak darurat minimal 5 karakter').optional();
 
 // Base schema for client form
 export const clientBaseSchema = z.object({
@@ -45,19 +64,20 @@ export const clientBaseSchema = z.object({
   education: educationEnum,
   educationMajor: z.string().optional(),
   address: z.string().min(5, 'Alamat minimal 5 karakter'),
-  phone: z
-    .string()
-    .regex(phoneIdPattern, 'Format nomor telepon tidak valid (gunakan +62 atau 0)'),
-  email: z.string().email('Email tidak valid').optional().or(z.literal('')).transform(v => (v === '' ? undefined : v)),
+  phone: requiredPhoneValidation,
+  email: z.string().email('Email tidak valid').optional().or(z.literal('')).transform(v => (v === '' ? '' : v)),
   hobbies: z.string().optional(),
   maritalStatus: maritalStatusEnum,
   spouseName: z.string().optional(),
   relationshipWithSpouse: relationshipWithSpouseEnum.optional(),
-  emergencyContact: z.string().optional(),
+
   firstVisit: z.boolean(),
   previousVisitDetails: z.string().optional(),
   province: z.string().optional(),
-  emergencyContactDetails: emergencyContactSchema.optional(),
+  emergencyContactName: emergencyContactNameValidation,
+  emergencyContactPhone: optionalEmergencyPhoneValidation,
+  emergencyContactRelationship: emergencyContactRelationshipValidation,
+  emergencyContactAddress: emergencyContactAddressValidation,
   notes: z.string().max(1000, 'Catatan maksimal 1000 karakter').optional(),
   // Minor-specific fields
   isMinor: z.boolean().default(false),
@@ -66,7 +86,7 @@ export const clientBaseSchema = z.object({
   // Guardian information
   guardianFullName: z.string().optional(),
   guardianRelationship: guardianRelationshipEnum.optional(),
-  guardianPhone: z.string().optional(),
+  guardianPhone: optionalPhoneValidation,
   guardianAddress: z.string().optional(),
   guardianOccupation: z.string().optional(),
   guardianMaritalStatus: guardianMaritalStatusEnum.optional(),

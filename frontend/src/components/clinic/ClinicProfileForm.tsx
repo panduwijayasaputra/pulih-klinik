@@ -164,7 +164,7 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
                 <AvatarImage
-                  src={logoPreview || clinic?.logo || '/placeholder-logo.svg'}
+                  src={logoPreview || clinic?.logo || '/placeholder-logo.png'}
                   alt="Logo klinik"
                   className="object-cover"
                 />

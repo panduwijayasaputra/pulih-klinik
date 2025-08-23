@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Trash2, X, Plus, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -12,7 +12,7 @@ export interface ConfirmationDialogProps {
   description?: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: 'danger' | 'warning' | 'info' | 'create' | 'success';
   icon?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
@@ -39,6 +39,18 @@ const variantConfig = {
     iconClassName: 'text-blue-600',
     bgClassName: 'bg-blue-50',
   },
+  create: {
+    icon: Plus,
+    confirmButtonVariant: 'default' as const,
+    iconClassName: 'text-blue-600',
+    bgClassName: 'bg-blue-50',
+  },
+  success: {
+    icon: CheckCircle,
+    confirmButtonVariant: 'default' as const,
+    iconClassName: 'text-green-600',
+    bgClassName: 'bg-green-50',
+  },
 };
 
 export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
@@ -49,7 +61,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   description,
   confirmText = 'Konfirmasi',
   cancelText = 'Batal',
-  variant = 'danger',
+  variant = 'info',
   icon,
   children,
   className,

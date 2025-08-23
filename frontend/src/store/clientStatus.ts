@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 import type { StatusTransition } from '@/types/client';
 import { ClientStatusEnum } from '@/types/enums';
@@ -37,8 +36,7 @@ interface ClientStatusStoreState {
 }
 
 export const useClientStatusStore = create<ClientStatusStoreState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       // Initial State
       statusTransitions: [],
       loading: false,
@@ -110,12 +108,5 @@ export const useClientStatusStore = create<ClientStatusStoreState>()(
       clearStatusHistory: (clientId: string) => set((state) => ({
         statusTransitions: state.statusTransitions.filter(t => t.clientId !== clientId),
       })),
-    }),
-    {
-      name: 'client-status-storage',
-      partialize: (state) => ({
-        statusTransitions: state.statusTransitions,
-      }),
-    }
-  )
-);
+    })
+  );

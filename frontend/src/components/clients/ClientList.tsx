@@ -95,6 +95,13 @@ export const ClientList: React.FC<ClientListProps> = ({
   };
 
   const handleEditClientModal = (client: Client) => {
+    console.log('ClientList - Editing client:', client);
+    console.log('ClientList - Emergency contact fields:', {
+      emergencyContactName: client.emergencyContactName,
+      emergencyContactPhone: client.emergencyContactPhone,
+      emergencyContactRelationship: client.emergencyContactRelationship,
+      emergencyContactAddress: client.emergencyContactAddress,
+    });
     setClientFormMode('edit');
     setClientFormDefaultValues({
       fullName: client.fullName || client.name,
@@ -112,7 +119,10 @@ export const ClientList: React.FC<ClientListProps> = ({
       maritalStatus: client.maritalStatus,
       spouseName: client.spouseName,
       relationshipWithSpouse: client.relationshipWithSpouse,
-      emergencyContact: client.emergencyContact,
+      emergencyContactName: client.emergencyContactName,
+      emergencyContactPhone: client.emergencyContactPhone,
+      emergencyContactRelationship: client.emergencyContactRelationship,
+      emergencyContactAddress: client.emergencyContactAddress,
       firstVisit: client.firstVisit,
       previousVisitDetails: client.previousVisitDetails,
       province: client.province,
@@ -131,7 +141,6 @@ export const ClientList: React.FC<ClientListProps> = ({
       guardianCustodyDocsAttached: client.guardianCustodyDocsAttached,
       // Legacy fields for backward compatibility
       name: client.name,
-      emergencyContactDetails: client.emergencyContactDetails,
     });
     setShowClientFormModal(true);
   };
@@ -292,7 +301,7 @@ export const ClientList: React.FC<ClientListProps> = ({
           label: 'Ganti Therapist',
           icon: UserPlusIcon,
           variant: 'outline',
-          show: (client) => client.assignedTherapist && client.status !== ClientStatusEnum.Done,
+          show: (client) => client.assignedTherapist && client.status !== ClientStatusEnum.Done || client.status !== ClientStatusEnum.New,
           onClick: (client) => onAssign?.(client.id),
         },
         {
@@ -664,31 +673,36 @@ export const ClientList: React.FC<ClientListProps> = ({
                 </div>
 
                 {/* Emergency Contact */}
-                {(selectedClient.emergencyContact || selectedClient.emergencyContactDetails) && (
+                {(selectedClient.emergencyContactName || selectedClient.emergencyContactPhone) && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Kontak Darurat</h3>
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      {selectedClient.emergencyContact ? (
-                        <div>
-                          <label className="block text-xs font-medium text-red-700">Kontak Darurat</label>
-                          <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContact}</p>
-                        </div>
-                      ) : selectedClient.emergencyContactDetails ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedClient.emergencyContactName && (
                           <div>
                             <label className="block text-xs font-medium text-red-700">Nama</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.name}</p>
+                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactName}</p>
                           </div>
+                        )}
+                        {selectedClient.emergencyContactPhone && (
                           <div>
                             <label className="block text-xs font-medium text-red-700">Telepon</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.phone}</p>
+                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactPhone}</p>
                           </div>
+                        )}
+                        {selectedClient.emergencyContactRelationship && (
                           <div>
                             <label className="block text-xs font-medium text-red-700">Hubungan</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactDetails.relationship}</p>
+                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactRelationship}</p>
                           </div>
-                        </div>
-                      ) : null}
+                        )}
+                        {selectedClient.emergencyContactAddress && (
+                          <div>
+                            <label className="block text-xs font-medium text-red-700">Alamat</label>
+                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactAddress}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

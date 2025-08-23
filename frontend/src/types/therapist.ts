@@ -83,6 +83,9 @@ export interface Therapist {
     workingDays: number[]; // 0-6 (Sunday-Saturday)
   };
     
+  // Admin Notes
+  adminNotes?: string; // Internal notes by clinic admins
+  
   // Audit
   createdAt: string;
   updatedAt: string;

@@ -23,7 +23,7 @@ export interface Client {
   maritalStatus: EnumValue<typeof ClientMaritalStatusEnum>;
   spouseName?: string;
   relationshipWithSpouse?: EnumValue<typeof ClientRelationshipWithSpouseEnum>;
-  emergencyContact?: string;
+
   firstVisit: boolean;
   previousVisitDetails?: string;
   assignedTherapist?: string | undefined;
@@ -38,11 +38,10 @@ export interface Client {
   name?: string;
   age?: number;
   primaryIssue?: string;
-  emergencyContactDetails?: {
-    name: string;
-    phone: string;
-    relationship: string;
-  } | undefined;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  emergencyContactAddress?: string;
   // Minor-specific fields
   isMinor?: boolean;
   school?: string;
@@ -86,14 +85,14 @@ export interface ClientFormData {
   maritalStatus: Client['maritalStatus'];
   spouseName?: string;
   relationshipWithSpouse?: Client['relationshipWithSpouse'];
-  emergencyContact?: string;
   firstVisit: boolean;
   previousVisitDetails?: string;
   province?: Client['province'];
   notes?: string;
-  // Legacy fields for backward compatibility
-  name?: string;
-  emergencyContactDetails?: Client['emergencyContactDetails'];
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  emergencyContactAddress?: string;
   // Minor-specific fields
   isMinor?: boolean;
   school?: string;

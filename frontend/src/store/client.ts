@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 import type { Client } from '@/types/client';
 import type { SessionSummary } from '@/types/client';
@@ -30,8 +29,7 @@ interface ClientStoreState {
 }
 
 export const useClientStore = create<ClientStoreState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       // Initial State
       clients: [],
       selectedClientId: null,
@@ -70,15 +68,7 @@ export const useClientStore = create<ClientStoreState>()(
         const { [clientId]: _removed, ...rest } = state.sessionsByClientId;
         return { sessionsByClientId: rest };
       }),
-    }),
-    {
-      name: 'client-storage',
-      partialize: (state) => ({
-        clients: state.clients,
-        selectedClientId: state.selectedClientId,
-      }),
-    }
-  )
-);
+    })
+  );
 
 

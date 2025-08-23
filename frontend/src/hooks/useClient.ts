@@ -30,6 +30,7 @@ export const useClient = () => {
 
   const loadClients = useCallback(async (forceRefresh = false): Promise<Client[]> => {
     // Skip loading if clients are already loaded and not forcing refresh
+    // But always load if clients array is empty (after localStorage clear)
     if (clients.length > 0 && !forceRefresh) {
       return clients;
     }
@@ -39,8 +40,8 @@ export const useClient = () => {
     try {
       const response = await ClientAPI.getClients();
       if (response.success && response.data) {
-        setClients(response.data);
-        return response.data;
+        setClients(response.data.items);
+        return response.data.items;
       } else {
         setError(response.message || 'Gagal memuat data klien');
         return [];
@@ -77,17 +78,16 @@ export const useClient = () => {
     setLoading(true);
     setError(null);
     try {
-      // Placeholder: client creation would go to API; using local generation for now
-      const client: Client = {
-        ...data,
-        id: `CLT${Date.now()}`,
-        status: ClientStatusEnum.New,
-        joinDate: new Date().toISOString().split('T')[0] || new Date().toISOString().slice(0, 10),
-        totalSessions: 0,
-        progress: 0,
-      };
-      addClient(client);
-      return client;
+      const response = await ClientAPI.createClient(data);
+      if (response.success && response.data) {
+        addClient(response.data);
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Gagal membuat klien');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Gagal membuat klien');
+      throw error;
     } finally {
       setLoading(false);
     }

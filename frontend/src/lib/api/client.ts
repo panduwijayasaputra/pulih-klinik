@@ -1,6 +1,178 @@
-import { ApiResponse, PaginatedResponse } from './types';
+import { ApiResponse, PaginatedResponse, ItemResponse, StatusResponse, ListResponse } from './types';
+import { Client, ClientFormData, ClientFilters } from '@/types/client';
+import { getMockClients, getMockClientById } from '@/lib/mocks/client';
 
 export const ClientAPI = {
+  async getClients(
+    page: number = 1,
+    pageSize: number = 10,
+    filters?: ClientFilters
+  ): Promise<PaginatedResponse<Client>> {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      let clients = getMockClients();
+
+      // Apply filters
+      if (filters) {
+        if (filters.status) {
+          clients = clients.filter(c => c.status === filters.status);
+        }
+        if (filters.therapist) {
+          clients = clients.filter(c => c.assignedTherapist === filters.therapist);
+        }
+        if (filters.search) {
+          const searchTerm = filters.search.toLowerCase();
+          clients = clients.filter(c => 
+            c.fullName.toLowerCase().includes(searchTerm) ||
+            c.email.toLowerCase().includes(searchTerm) ||
+            c.phone.includes(searchTerm)
+          );
+        }
+        if (filters.province) {
+          clients = clients.filter(c => c.province === filters.province);
+        }
+      }
+
+      // Apply pagination
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedClients = clients.slice(startIndex, endIndex);
+
+      return {
+        success: true,
+        data: {
+          items: paginatedClients,
+          total: clients.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(clients.length / pageSize)
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch clients'
+      };
+    }
+  },
+
+  async getClient(clientId: string): Promise<ItemResponse<Client>> {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const client = getMockClientById(clientId);
+      
+      if (!client) {
+        return {
+          success: false,
+          message: 'Client not found'
+        };
+      }
+
+      return {
+        success: true,
+        data: client
+      };
+    } catch (error) {
+      console.error('Error fetching client:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch client'
+      };
+    }
+  },
+
+  async createClient(data: ClientFormData): Promise<ItemResponse<Client>> {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Generate new client ID
+      const newId = `client-${String(Date.now()).slice(-6)}`;
+
+      // Create new client object
+      const newClient: Client = {
+        id: newId,
+        fullName: data.fullName,
+        gender: data.gender,
+        birthPlace: data.birthPlace,
+        birthDate: data.birthDate,
+        religion: data.religion,
+        occupation: data.occupation,
+        education: data.education,
+        educationMajor: data.educationMajor || '',
+        address: data.address,
+        phone: data.phone,
+        email: data.email,
+        hobbies: data.hobbies || '',
+        maritalStatus: data.maritalStatus,
+        spouseName: data.spouseName || '',
+        relationshipWithSpouse: data.relationshipWithSpouse,
+
+        firstVisit: data.firstVisit,
+        previousVisitDetails: data.previousVisitDetails,
+        
+        // Auto-assigned fields
+        status: 'new' as any,
+        joinDate: new Date().toISOString().split('T')[0]!,
+        totalSessions: 0,
+        progress: 0,
+        notes: data.notes,
+        province: data.province,
+        
+        // Minor-specific fields
+        isMinor: data.isMinor,
+        school: data.school,
+        grade: data.grade,
+        guardianFullName: data.guardianFullName,
+        guardianRelationship: data.guardianRelationship,
+        guardianPhone: data.guardianPhone,
+        guardianAddress: data.guardianAddress,
+        guardianOccupation: data.guardianOccupation,
+        guardianMaritalStatus: data.guardianMaritalStatus,
+        guardianLegalCustody: data.guardianLegalCustody,
+        guardianCustodyDocsAttached: data.guardianCustodyDocsAttached,
+      };
+
+      // In a real implementation, this would save to the database
+      // For mock purposes, we'll just return the new client without modifying the original data
+      // const currentClients = getMockClients();
+      // currentClients.push(newClient);
+
+      return {
+        success: true,
+        data: newClient
+      };
+    } catch (error) {
+      console.error('Error creating client:', error);
+      return {
+        success: false,
+        message: 'Failed to create client'
+      };
+    }
+  },
+
+  async updateClient(clientId: string, data: Partial<ClientFormData>): Promise<ItemResponse<Client>> {
+    // TODO: Implement actual API call
+    console.log('ClientAPI.updateClient called with:', { clientId, data });
+    return {
+      success: false,
+      message: 'API not implemented yet'
+    };
+  },
+
+  async deleteClient(clientId: string): Promise<StatusResponse> {
+    // TODO: Implement actual API call
+    console.log('ClientAPI.deleteClient called with:', { clientId });
+    return {
+      success: false,
+      message: 'API not implemented yet'
+    };
+  },
   async assignClientToTherapist(clientId: string, therapistId: string): Promise<ApiResponse<{ clientId: string; therapistId: string }>> {
     // TODO: Implement actual API call
     console.log('ClientAPI.assignClientToTherapist called with:', { clientId, therapistId });
