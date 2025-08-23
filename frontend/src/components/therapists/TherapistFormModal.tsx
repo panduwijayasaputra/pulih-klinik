@@ -21,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useTherapist } from '@/hooks/useTherapist';
 import { useAuth } from '@/hooks/useAuth';
+import { TherapistAPI } from '@/lib/api/therapist';
 import ConfirmationDialog, { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
 import { UserRole } from '@/types/auth';
@@ -106,10 +107,51 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         const loadTherapistData = async () => {
           setIsLoadingTherapist(true);
           try {
-            // Mock API call to get therapist data
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Reset with default values for edit mode
+            // Fetch fresh therapist data from API
+            const response = await TherapistAPI.getTherapist(therapistId);
+            if (response.success && response.data) {
+              const therapistData = response.data;
+              
+              // Reset with fetched therapist data
+              reset({
+                name: therapistData.fullName || '',
+                email: therapistData.email || '',
+                phone: therapistData.phone || '',
+                licenseNumber: therapistData.licenseNumber || '',
+                specializations: therapistData.specializations || [],
+                yearsExperience: therapistData.yearsOfExperience || 0,
+                education: therapistData.education.map(edu => 
+                  `${edu.degree} ${edu.field} - ${edu.institution} (${edu.year})`
+                ).join('; '),
+                certifications: therapistData.certifications.map(cert => 
+                  `${cert.name} - ${cert.issuingOrganization}`
+                ).join('; '),
+                adminNotes: therapistData.adminNotes || '',
+                licenseType: therapistData.licenseType || TherapistLicenseTypeEnum.Psychologist,
+                employmentType: therapistData.employmentType || EmploymentTypeEnum.FullTime,
+              });
+              setEmailValidationState('valid');
+            } else {
+              // Fallback to default values if API fails
+              reset({
+                name: '',
+                email: '',
+                phone: '',
+                licenseNumber: '',
+                specializations: [],
+                yearsExperience: 0,
+                education: '',
+                certifications: '',
+                adminNotes: '',
+                licenseType: TherapistLicenseTypeEnum.Psychologist,
+                employmentType: EmploymentTypeEnum.FullTime,
+                ...defaultValues,
+              });
+              setEmailValidationState('valid');
+            }
+          } catch (error) {
+            console.error('Failed to load therapist data:', error);
+            // Fallback to default values on error
             reset({
               name: '',
               email: '',
@@ -122,11 +164,9 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               adminNotes: '',
               licenseType: TherapistLicenseTypeEnum.Psychologist,
               employmentType: EmploymentTypeEnum.FullTime,
-              ...defaultValues, // Apply the default values passed from parent
+              ...defaultValues,
             });
             setEmailValidationState('valid');
-          } catch (error) {
-            console.error('Failed to load therapist data:', error);
           } finally {
             setIsLoadingTherapist(false);
           }

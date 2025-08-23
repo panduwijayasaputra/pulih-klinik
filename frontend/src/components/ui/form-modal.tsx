@@ -33,7 +33,7 @@ export const FormModal: React.FC<FormModalProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}>
+      <DialogContent className={`${sizeClasses[size]} max-h-[90vh] min-h-[60vh] overflow-y-auto`}>
         <DialogHeader className="pb-6 border-b border-gray-200">
           <div className="flex items-start justify-between">
             <div className="flex-1">

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { ClientFormModal } from '@/components/clients/ClientFormModal';
+import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
 
 import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
 
@@ -13,6 +14,7 @@ import { useClient } from '@/hooks/useClient';
 import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/useAuth';
 import { ClientAPI } from '@/lib/api/client';
+import { useDataTableActions } from '@/hooks/useDataTableActions';
 import {
   AcademicCapIcon,
   ArrowPathIcon,
@@ -53,10 +55,13 @@ export const ClientList: React.FC<ClientListProps> = ({
   const { user } = useAuth();
   const [status, setStatus] = useState<'all' | Client['status']>('all');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showClientFormModal, setShowClientFormModal] = useState(false);
   const [clientFormMode, setClientFormMode] = useState<'create' | 'edit'>('create');
   const [clientFormDefaultValues, setClientFormDefaultValues] = useState<Partial<any>>({});
+
+  // Initialize data table actions hook
+  const { createDetailAction, createEditAction } = useDataTableActions();
 
   // Load clients data
   const loadClients = useCallback(async () => {
@@ -93,7 +98,7 @@ export const ClientList: React.FC<ClientListProps> = ({
   // Modal handlers
   const handleCloseDetails = () => {
     setShowDetailsModal(false);
-    setSelectedClient(null);
+    setSelectedClientId(null);
   };
 
 
@@ -106,53 +111,8 @@ export const ClientList: React.FC<ClientListProps> = ({
   };
 
   const handleEditClientModal = (client: Client) => {
-    console.log('ClientList - Editing client:', client);
-    console.log('ClientList - Emergency contact fields:', {
-      emergencyContactName: client.emergencyContactName,
-      emergencyContactPhone: client.emergencyContactPhone,
-      emergencyContactRelationship: client.emergencyContactRelationship,
-      emergencyContactAddress: client.emergencyContactAddress,
-    });
     setClientFormMode('edit');
-    setClientFormDefaultValues({
-      fullName: client.fullName || client.name,
-      gender: client.gender,
-      birthPlace: client.birthPlace,
-      birthDate: client.birthDate || '',
-      religion: client.religion,
-      occupation: client.occupation,
-      education: client.education,
-      educationMajor: client.educationMajor,
-      address: client.address,
-      phone: client.phone,
-      email: client.email,
-      hobbies: client.hobbies,
-      maritalStatus: client.maritalStatus,
-      spouseName: client.spouseName,
-      relationshipWithSpouse: client.relationshipWithSpouse,
-      emergencyContactName: client.emergencyContactName,
-      emergencyContactPhone: client.emergencyContactPhone,
-      emergencyContactRelationship: client.emergencyContactRelationship,
-      emergencyContactAddress: client.emergencyContactAddress,
-      firstVisit: client.firstVisit,
-      previousVisitDetails: client.previousVisitDetails,
-      province: client.province,
-      notes: client.notes,
-      // Minor-specific fields
-      isMinor: client.isMinor,
-      school: client.school,
-      grade: client.grade,
-      guardianFullName: client.guardianFullName,
-      guardianRelationship: client.guardianRelationship,
-      guardianPhone: client.guardianPhone,
-      guardianAddress: client.guardianAddress,
-      guardianOccupation: client.guardianOccupation,
-      guardianMaritalStatus: client.guardianMaritalStatus,
-      guardianLegalCustody: client.guardianLegalCustody,
-      guardianCustodyDocsAttached: client.guardianCustodyDocsAttached,
-      // Legacy fields for backward compatibility
-      name: client.name,
-    });
+    setSelectedClientId(client.id); // Store the client ID for the form modal
     setShowClientFormModal(true);
   };
 
@@ -166,15 +126,15 @@ export const ClientList: React.FC<ClientListProps> = ({
           message: `Klien ${data.fullName} telah berhasil ditambahkan ke sistem.`,
         });
       } else {
-        if (selectedClient) {
-          await updateClient(selectedClient.id, data);
-          addToast({
-            type: 'success',
-            title: 'Klien Berhasil Diperbarui',
-            message: `Data klien ${data.fullName} telah berhasil diperbarui.`,
-          });
-        }
+        // For edit mode, the form modal handles the update internally
+        addToast({
+          type: 'success',
+          title: 'Klien Berhasil Diperbarui',
+          message: `Data klien ${data.fullName} telah berhasil diperbarui.`,
+        });
       }
+      // Refresh the client list
+      refreshClients();
     } catch (error) {
       addToast({
         type: 'error',
@@ -272,9 +232,9 @@ export const ClientList: React.FC<ClientListProps> = ({
         key: 'view',
         label: 'Detail',
         icon: EyeIcon,
-        variant: 'outline',
-        onClick: (client) => {
-          setSelectedClient(client);
+        variant: 'outline' as const,
+        onClick: async (client) => {
+          setSelectedClientId(client.id);
           setShowDetailsModal(true);
         },
       },
@@ -296,8 +256,10 @@ export const ClientList: React.FC<ClientListProps> = ({
           key: 'edit',
           label: 'Edit',
           icon: PencilIcon,
-          variant: 'outline',
-          onClick: (client) => handleEditClientModal(client),
+          variant: 'outline' as const,
+                  onClick: async (client) => {
+          handleEditClientModal(client);
+        },
         },
         {
           key: 'assign-therapist',
@@ -315,12 +277,11 @@ export const ClientList: React.FC<ClientListProps> = ({
           show: (client) => client.assignedTherapist && client.status !== ClientStatusEnum.Done || client.status !== ClientStatusEnum.New,
           onClick: (client) => onAssign?.(client.id),
         },
-
       );
     }
 
     return baseActions;
-      }, [isTherapist, onConsultation, onAssign]);
+  }, [isTherapist, onConsultation, onAssign, createDetailAction, createEditAction]);
 
   // Define status filter
   const statusFilter = {
@@ -369,441 +330,22 @@ export const ClientList: React.FC<ClientListProps> = ({
       />
 
       {/* Client Details Modal */}
-      {showDetailsModal && selectedClient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" style={{ margin: 0 }}>
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto mx-4">
-            <div className="p-6">
-              {/* Modal Header */}
-                              <div className="mb-6 flex items-start justify-between">
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {selectedClient.fullName || selectedClient.name}
-                    </h2>
-                    <p className="text-gray-600 mt-1">Detail Klien</p>
-                  </div>
-                <button
-                  onClick={handleCloseDetails}
-                  className="ml-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <XMarkIcon className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-
-              {/* Client Information */}
-              <div className="space-y-6">
-                {/* Basic Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Dasar</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <UserIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {selectedClient.fullName || selectedClient.name}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Tempat Lahir</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedClient.birthPlace}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedClient.birthDate ? new Date(selectedClient.birthDate).toLocaleDateString('id-ID') : '-'}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Jenis Kelamin</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedClient.gender}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Status Pernikahan</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {ClientMaritalStatusLabels[selectedClient.maritalStatus as keyof typeof ClientMaritalStatusLabels] || selectedClient.maritalStatus}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Status Akun</label>
-                      <div className="mt-1">
-                        {getStatusBadge(selectedClient.status)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Minor-specific Information */}
-                {selectedClient.isMinor && (
-                  <>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Sekolah</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {selectedClient.school && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Nama Sekolah</label>
-                            <p className="mt-1 text-sm text-gray-900">{selectedClient.school}</p>
-                          </div>
-                        )}
-                        {selectedClient.grade && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Kelas</label>
-                            <p className="mt-1 text-sm text-gray-900">{selectedClient.grade}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Wali</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {selectedClient.guardianFullName && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Nama Lengkap Wali</label>
-                            <p className="mt-1 text-sm text-gray-900">{selectedClient.guardianFullName}</p>
-                          </div>
-                        )}
-                        {selectedClient.guardianRelationship && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Hubungan dengan Klien</label>
-                            <p className="mt-1 text-sm text-gray-900">
-                              {ClientGuardianRelationshipLabels[selectedClient.guardianRelationship as keyof typeof ClientGuardianRelationshipLabels] || selectedClient.guardianRelationship}
-                            </p>
-                          </div>
-                        )}
-                        {selectedClient.guardianPhone && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Nomor Telepon Wali</label>
-                            <p className="mt-1 text-sm text-gray-900">{selectedClient.guardianPhone}</p>
-                          </div>
-                        )}
-                        {selectedClient.guardianOccupation && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Pekerjaan Wali</label>
-                            <p className="mt-1 text-sm text-gray-900">{selectedClient.guardianOccupation}</p>
-                          </div>
-                        )}
-                        {selectedClient.guardianMaritalStatus && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Status Pernikahan Wali</label>
-                            <p className="mt-1 text-sm text-gray-900">
-                              {ClientGuardianMaritalStatusLabels[selectedClient.guardianMaritalStatus as keyof typeof ClientGuardianMaritalStatusLabels] || selectedClient.guardianMaritalStatus}
-                            </p>
-                          </div>
-                        )}
-                        {selectedClient.guardianAddress && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Alamat Wali</label>
-                            <p className="mt-1 text-sm text-gray-900">{selectedClient.guardianAddress}</p>
-                          </div>
-                        )}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Hak Asuh Hukum</label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {selectedClient.guardianLegalCustody ? 'Ya' : 'Tidak'}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Dokumen Hak Asuh</label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {selectedClient.guardianCustodyDocsAttached ? 'Terlampir' : 'Belum terlampir'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Contact Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Kontak</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Nomor Telepon</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <PhoneIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {selectedClient.phone}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Alamat Email</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <EnvelopeIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {selectedClient.email}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Alamat</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <MapPinIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {selectedClient.address}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Professional & Education Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Profesional & Pendidikan</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Pekerjaan</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <BriefcaseIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {selectedClient.occupation}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Pendidikan</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <AcademicCapIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        {ClientEducationLabels[selectedClient.education as keyof typeof ClientEducationLabels] || selectedClient.education}
-                        {selectedClient.educationMajor && (
-                          <span className="text-gray-600 ml-1">- {selectedClient.educationMajor}</span>
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Agama</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {ClientReligionLabels[selectedClient.religion as keyof typeof ClientReligionLabels] || selectedClient.religion}
-                      </p>
-                    </div>
-                    {selectedClient.hobbies && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Hobi</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedClient.hobbies}</p>
-                      </div>
-                    )}
-                    {selectedClient.province && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Provinsi</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedClient.province}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Marital Information */}
-                {selectedClient.maritalStatus === 'Married' && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Pernikahan</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedClient.spouseName && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Nama Pasangan</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedClient.spouseName}</p>
-                        </div>
-                      )}
-                      {selectedClient.relationshipWithSpouse && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Hubungan dengan Pasangan</label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {ClientRelationshipWithSpouseLabels[selectedClient.relationshipWithSpouse as keyof typeof ClientRelationshipWithSpouseLabels] || selectedClient.relationshipWithSpouse}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Visit Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Kunjungan</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Kunjungan Pertama</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedClient.firstVisit ? 'Ya' : 'Tidak'}
-                      </p>
-                    </div>
-                    {!selectedClient.firstVisit && selectedClient.previousVisitDetails && (
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Detail Kunjungan Sebelumnya</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedClient.previousVisitDetails}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Therapy Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Terapi</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Progress</label>
-                      <div className="mt-1 flex items-center">
-                        <ChartBarIcon className="w-4 h-4 mr-2 text-gray-400" />
-                        <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${selectedClient.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-gray-600">{selectedClient.progress}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Session Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Sesi</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Total Sesi</span>
-                        <span className="text-2xl font-bold text-blue-600">{selectedClient.totalSessions}</span>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Bergabung</span>
-                        <span className="text-sm text-gray-600 flex items-center">
-                          <CalendarIcon className="w-4 h-4 mr-1" />
-                          {new Date(selectedClient.joinDate).toLocaleDateString('id-ID')}
-                        </span>
-                      </div>
-                    </div>
-                    {selectedClient.lastSession && (
-                      <div className="p-4 bg-gray-50 rounded-lg md:col-span-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">Sesi Terakhir</span>
-                          <span className="text-sm text-gray-600">
-                            {new Date(selectedClient.lastSession).toLocaleDateString('id-ID')}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Emergency Contact */}
-                {(selectedClient.emergencyContactName || selectedClient.emergencyContactPhone) && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Kontak Darurat</h3>
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {selectedClient.emergencyContactName && (
-                          <div>
-                            <label className="block text-xs font-medium text-red-700">Nama</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactName}</p>
-                          </div>
-                        )}
-                        {selectedClient.emergencyContactPhone && (
-                          <div>
-                            <label className="block text-xs font-medium text-red-700">Telepon</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactPhone}</p>
-                          </div>
-                        )}
-                        {selectedClient.emergencyContactRelationship && (
-                          <div>
-                            <label className="block text-xs font-medium text-red-700">Hubungan</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactRelationship}</p>
-                          </div>
-                        )}
-                        {selectedClient.emergencyContactAddress && (
-                          <div>
-                            <label className="block text-xs font-medium text-red-700">Alamat</label>
-                            <p className="mt-1 text-sm text-red-800">{selectedClient.emergencyContactAddress}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {selectedClient.notes && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Catatan</h3>
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-800">{selectedClient.notes}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Session History */}
-                <div>
-                  {/* Session history content will be added here */}
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
-                <div className="flex space-x-3">
-                  {/* Edit Client - show for all except therapists */}
-                  {!isTherapist && (
-                    <button
-                      onClick={() => handleEditClientModal(selectedClient)}
-                      className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-md hover:bg-blue-50 flex items-center"
-                    >
-                      <PencilIcon className="w-4 h-4 mr-2" />
-                      Edit Klien
-                    </button>
-                  )}
-
-                  {/* Assign Therapist - only for New clients without therapist */}
-                  {!isTherapist && selectedClient.status === ClientStatusEnum.New && !selectedClient.assignedTherapist && (
-                    <button
-                      onClick={() => {
-                        handleCloseDetails();
-                        onAssign?.(selectedClient.id);
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-green-600 bg-white border border-green-300 rounded-md hover:bg-green-50 flex items-center"
-                    >
-                      <UserPlusIcon className="w-4 h-4 mr-2" />
-                      Tugaskan Therapist
-                    </button>
-                  )}
-
-                  {/* Re-assign Therapist - only for clients with therapist but not Done */}
-                  {!isTherapist && selectedClient.assignedTherapist && selectedClient.status !== ClientStatusEnum.Done && (
-                    <button
-                      onClick={() => {
-                        handleCloseDetails();
-                        onAssign?.(selectedClient.id);
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-orange-600 bg-white border border-orange-300 rounded-md hover:bg-orange-50 flex items-center"
-                    >
-                      <UserPlusIcon className="w-4 h-4 mr-2" />
-                      Ganti Therapist
-                    </button>
-                  )}
-
-
-
-                  {/* Consultation - for therapists */}
-                  {isTherapist && (
-                    <button
-                      onClick={() => {
-                        handleCloseDetails();
-                        onConsultation?.(selectedClient.id);
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 flex items-center"
-                    >
-                      <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
-                      Konsultasi
-                    </button>
-                  )}
-                </div>
-                
-                <button
-                  onClick={handleCloseDetails}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
-                >
-                  <XMarkIcon className="w-4 h-4 mr-2" />
-                  Tutup
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ClientDetailsModal
+        isOpen={showDetailsModal}
+        onClose={handleCloseDetails}
+        clientId={selectedClientId || undefined}
+        isTherapist={isTherapist}
+        onEdit={handleEditClientModal}
+        onAssign={onAssign || (() => {})}
+        onConsultation={onConsultation || (() => {})}
+      />
 
       {/* Client Form Modal */}
       <ClientFormModal
         open={showClientFormModal}
         onOpenChange={setShowClientFormModal}
         mode={clientFormMode}
+        clientId={clientFormMode === 'edit' && selectedClientId ? selectedClientId : undefined}
         defaultValues={clientFormDefaultValues}
         onSubmitSuccess={handleClientFormSuccess}
         onCancel={() => setShowClientFormModal(false)}

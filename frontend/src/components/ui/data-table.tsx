@@ -22,10 +22,12 @@ export interface TableAction<T> {
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   variant?: 'default' | 'outline' | 'destructive' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
-  onClick: (item: T) => void;
+  onClick: (item: T) => void | Promise<void>;
   disabled?: (item: T) => boolean;
   loading?: (item: T) => boolean;
   show?: (item: T) => boolean;
+  // New property to indicate if action needs to fetch data
+  requiresDataFetch?: boolean;
 }
 
 export interface DataTableProps<T> {
@@ -227,12 +229,23 @@ export function DataTable<T extends { id: string }>({
 
                               const label = typeof action.label === 'function' ? action.label(item) : action.label;
                               
+                              const handleClick = async () => {
+                                try {
+                                  const result = action.onClick(item);
+                                  if (result instanceof Promise) {
+                                    await result;
+                                  }
+                                } catch (error) {
+                                  console.error(`Error in action ${action.key}:`, error);
+                                }
+                              };
+                              
                               return (
                                 <Button
                                   key={action.key}
                                   size={action.size || 'sm'}
                                   variant={action.variant || 'outline'}
-                                  onClick={() => action.onClick(item)}
+                                  onClick={handleClick}
                                   disabled={isDisabled || isLoading}
                                 >
                                   {isLoading ? (

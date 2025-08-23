@@ -155,6 +155,250 @@ const MyTable = ({ data }) => {
 - **Loading**: Show skeleton loading state while data loads
 - **Empty State**: Show meaningful message when no data
 
+### Table Actions Consistency
+- **Detail Actions**: Always fetch fresh data, show loading in modal
+- **Edit Actions**: Always fetch fresh data, show loading in modal/form
+- **Delete Actions**: Use confirmation dialog, loading in dialog
+- **Custom Actions**: Use `useDataTableActions` hook for consistent loading states
+
+#### Action Pattern Example
+```typescript
+import { useDataTableActions } from '@/hooks/useDataTableActions';
+
+const MyTable = () => {
+  const { createAction, createDetailAction, createEditAction } = useDataTableActions();
+
+  const actions = [
+    createDetailAction(
+      (freshData) => {
+        setSelectedItem(freshData);
+        setShowDetailModal(true);
+      },
+      {
+        fetchData: async (item) => {
+          // This function will be called to fetch fresh data
+          return await fetchItemDetails(item.id);
+        }
+      }
+    ),
+    createEditAction(
+      (item) => {
+        // Form modals now handle their own data fetching
+        setSelectedItem(item);
+        setShowEditModal(true);
+      }
+    ),
+    createAction('custom', async (item) => {
+      // Custom action with loading state
+      await performCustomAction(item);
+    }, { showLoading: true })
+  ];
+
+  return <DataTable actions={actions} />;
+};
+```
+
+#### Fixing Inconsistency Example (ClientList)
+```typescript
+// ❌ Inconsistent - Detail uses existing data, Edit fetches data
+const actions: TableAction<Client>[] = [
+  {
+    key: 'view',
+    label: 'Detail',
+    onClick: (client) => {
+      setSelectedClient(client); // Uses existing data
+      setShowDetailsModal(true);
+    },
+  },
+  {
+    key: 'edit',
+    label: 'Edit',
+    onClick: (client) => handleEditClientModal(client), // Fetches data again
+  },
+];
+
+// ✅ Consistent - Details fetch fresh data, Edit passes ID to form modal
+const { createAction, createDetailAction, createEditAction } = useDataTableActions();
+
+const actions: TableAction<Client>[] = [
+  createDetailAction(
+    (freshData) => {
+      setSelectedClient(freshData);
+      setShowDetailsModal(true);
+    },
+    {
+      fetchData: async (client) => {
+        const response = await ClientAPI.getClient(client.id);
+        return response.success ? response.data : client;
+      }
+    }
+  ),
+  createEditAction(
+    (client) => {
+      // Form modal handles its own data fetching
+      handleEditClientModal(client);
+    }
+  ),
+];
+```
+
+#### Modal Data Fetching Pattern
+```typescript
+// ✅ Both form modals and details modals handle their own data fetching
+export interface ClientFormModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode?: 'create' | 'edit';
+  clientId?: string; // For edit mode - form modal fetches data using this ID
+  defaultValues?: Partial<ClientFormData>;
+  onSubmitSuccess?: (data: ClientFormData) => void;
+  onCancel?: () => void;
+}
+
+export interface ClientDetailsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  clientId?: string; // Details modal fetches data using this ID
+  isTherapist: boolean;
+  onEdit: (client: Client) => void;
+  onAssign: (clientId: string) => void;
+  onConsultation: (clientId: string) => void;
+}
+
+// ✅ Form modal implementation
+export const ClientFormModal: React.FC<ClientFormModalProps> = ({
+  open,
+  onOpenChange,
+  mode = 'create',
+  clientId,
+  defaultValues,
+  onSubmitSuccess,
+  onCancel,
+}) => {
+  const [isLoadingClient, setIsLoadingClient] = useState(mode === 'edit');
+
+  // Form modal handles its own data fetching
+  React.useEffect(() => {
+    if (open && mode === 'edit' && clientId) {
+      const loadClientData = async () => {
+        setIsLoadingClient(true);
+        try {
+          const response = await ClientAPI.getClient(clientId);
+          if (response.success && response.data) {
+            reset(response.data); // Reset form with fresh data
+          }
+        } catch (error) {
+          console.error('Failed to load client data:', error);
+        } finally {
+          setIsLoadingClient(false);
+        }
+      };
+      loadClientData();
+    }
+  }, [open, mode, clientId]);
+
+  // ... rest of component
+};
+
+// ✅ Details modal implementation
+export const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
+  isOpen,
+  onClose,
+  clientId,
+  isTherapist,
+  onEdit,
+  onAssign,
+  onConsultation,
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [clientData, setClientData] = useState<Client | null>(null);
+
+  // Details modal handles its own data fetching
+  useEffect(() => {
+    if (isOpen && clientId) {
+      setLoading(true);
+      
+      const fetchClientData = async () => {
+        try {
+          const response = await ClientAPI.getClient(clientId);
+          if (response.success && response.data) {
+            setClientData(response.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch client details:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchClientData();
+    } else {
+      setClientData(null);
+      setLoading(false);
+    }
+  }, [isOpen, clientId]);
+
+  // ... rest of component
+};
+```
+
+#### Complete Implementation Example (ClientList)
+```typescript
+// ✅ Updated ClientList with form modal data fetching
+import { useDataTableActions } from '@/hooks/useDataTableActions';
+
+export const ClientList: React.FC<ClientListProps> = ({ onAssign, onConsultation }) => {
+  const { createAction, createDetailAction, createEditAction } = useDataTableActions();
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showClientFormModal, setShowClientFormModal] = useState(false);
+
+  // Define table actions with consistent pattern
+  const actions: TableAction<Client>[] = React.useMemo(() => {
+    const baseActions: TableAction<Client>[] = [
+      createDetailAction(
+        (freshData) => {
+          setSelectedClient(freshData);
+          setShowDetailsModal(true);
+        },
+        {
+          fetchData: async (client) => {
+            const response = await ClientAPI.getClient(client.id);
+            return response.success ? response.data : client;
+          }
+        }
+      ),
+      createEditAction(
+        (freshData) => {
+          setClientFormDefaultValues(freshData);
+          setClientFormMode('edit');
+          setShowClientFormModal(true);
+        },
+        {
+          fetchData: async (client) => {
+            const response = await ClientAPI.getClient(client.id);
+            return response.success ? response.data : client;
+          }
+        }
+      ),
+    ];
+
+    // Add role-specific actions...
+    return baseActions;
+  }, []);
+
+  return (
+    <DataTable
+      data={clients}
+      columns={columns}
+      actions={actions}
+      loading={loading}
+      // ... other props
+    />
+  );
+};
+```
+
 ## API Mock & Mock Data
 
 ### Mock Data Structure

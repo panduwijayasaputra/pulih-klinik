@@ -7,15 +7,12 @@ import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { TherapistClientList } from '@/components/clients/TherapistClientList';
 import { ClientStatusEnum, UserRoleEnum } from '@/types/enums';
 import { useToast } from '@/components/ui/toast';
-import { useTherapistClients } from '@/hooks/useTherapistClients';
-import { useClient } from '@/hooks/useClient';
+import { useTherapistClient } from '@/hooks/useTherapistClient';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function TherapistClientsPage() {
   const router = useRouter();
   const { addToast } = useToast();
-  const [searchTerm, _setSearchTerm] = useState('');
-  const [statusFilter, _setStatusFilter] = useState<ClientStatusEnum | 'all'>('all');
   const { user } = useAuth();
 
   // Check if user has therapist role (regardless of other roles) for dashboard access
@@ -37,54 +34,16 @@ export default function TherapistClientsPage() {
     return normalizedUserRoles.includes(UserRoleEnum.Therapist);
   }, [user?.roles]);
 
-  // Access client data directly for multi-role user handling  
-  const { clients: allClients } = useClient();
-
-  // For TherapistClientList, we want to treat anyone with therapist role as a therapist
-  // even if they have other roles (unlike the main ClientList which prioritizes ClinicAdmin)
-  const forceTherapistMode = hasTherapistRole;
-
+  // Use the new therapist client hook
   const {
-    filteredClients,
+    clients: therapistClients,
+    stats,
     loading,
     error,
     loadClients,
-  } = useTherapistClients(searchTerm, statusFilter);
-
-  // Override client filtering for multi-role users in therapist dashboard
-  const therapistClients = useMemo(() => {
-    if (!forceTherapistMode || !user?.id) return filteredClients;
-
-    // For multi-role users accessing therapist dashboard, show their assigned clients
-    const userAssignedClients = allClients.filter(client => client.assignedTherapist === user.id);
-
-    // Apply search and status filters
-    let filtered = [...userAssignedClients];
-
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(client =>
-        client.fullName.toLowerCase().includes(searchLower) ||
-        client.name?.toLowerCase().includes(searchLower) ||
-        client.email.toLowerCase().includes(searchLower) ||
-        client.phone.includes(searchLower)
-      );
-    }
-
-    // Apply status filter  
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(client => client.status === statusFilter);
-    }
-
-    return filtered;
-  }, [forceTherapistMode, user?.id, allClients, filteredClients, searchTerm, statusFilter]);
-
-  // Calculate total clients for display
-  const totalClients = useMemo(() => {
-    if (!forceTherapistMode || !user?.id) return filteredClients.length;
-    return allClients.filter(client => client.assignedTherapist === user.id).length;
-  }, [forceTherapistMode, user?.id, allClients, filteredClients.length]);
+    setFilters,
+    clearError
+  } = useTherapistClient();
 
   // Load clients on component mount
   useEffect(() => {
@@ -106,7 +65,6 @@ export default function TherapistClientsPage() {
     // router.push(`/portal/therapist/clients/${clientId}`);
   };
 
-
   // Handle start therapy
   const handleStartTherapy = (clientId: string) => {
     router.push(`/portal/therapist/therapy/${clientId}`);
@@ -116,6 +74,9 @@ export default function TherapistClientsPage() {
   const handleRefresh = async () => {
     await loadClients(true);
   };
+
+  // Calculate total clients for display
+  const totalClients = therapistClients.length;
 
   return (
     <PortalPageWrapper

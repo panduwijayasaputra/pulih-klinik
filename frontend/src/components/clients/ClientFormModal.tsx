@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/toast';
 import { createClientSchema } from '@/schemas/clientSchema';
 import type { ClientFormData } from '@/types/client';
 import { useClient } from '@/hooks/useClient';
+import { ClientAPI } from '@/lib/api/client';
 import {
   ClientEducationEnum,
   ClientEducationLabels,
@@ -37,6 +38,7 @@ export interface ClientFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode?: 'create' | 'edit';
+  clientId?: string | undefined; // For edit mode
   defaultValues?: Partial<ClientFormData>;
   onSubmitSuccess?: (data: ClientFormData) => void;
   onCancel?: () => void;
@@ -46,6 +48,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   open,
   onOpenChange,
   mode = 'create',
+  clientId,
   defaultValues,
   onSubmitSuccess,
   onCancel,
@@ -106,15 +109,94 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   // Reset form when modal opens/closes or defaultValues change
   React.useEffect(() => {
     if (open) {
-      if (mode === 'edit') {
+      if (mode === 'edit' && clientId) {
         // Load client data for edit mode
         const loadClientData = async () => {
           setIsLoadingClient(true);
           try {
-            // Mock API call to get client data
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Fetch fresh client data from API
+            const response = await ClientAPI.getClient(clientId);
+            if (response.success && response.data) {
+              const clientData = response.data;
+              
+              // Reset with fetched client data
+              reset({
+                fullName: clientData.fullName || clientData.name || '',
+                gender: clientData.gender || ClientGenderEnum.Male,
+                birthPlace: clientData.birthPlace || '',
+                birthDate: clientData.birthDate || '',
+                religion: clientData.religion || ClientReligionEnum.Islam,
+                occupation: clientData.occupation || '',
+                education: clientData.education || ClientEducationEnum.Bachelor,
+                educationMajor: clientData.educationMajor || '',
+                address: clientData.address || '',
+                phone: clientData.phone || '',
+                email: clientData.email || '',
+                hobbies: clientData.hobbies || '',
+                maritalStatus: clientData.maritalStatus || ClientMaritalStatusEnum.Single,
+                spouseName: clientData.spouseName || '',
+                relationshipWithSpouse: clientData.relationshipWithSpouse,
 
-            // Reset with default values for edit mode
+                firstVisit: clientData.firstVisit ?? true,
+                previousVisitDetails: clientData.previousVisitDetails || '',
+                isMinor: clientData.isMinor ?? false,
+                school: clientData.school || '',
+                grade: clientData.grade || '',
+                guardianFullName: clientData.guardianFullName || '',
+                guardianRelationship: clientData.guardianRelationship,
+                guardianPhone: clientData.guardianPhone || '',
+                guardianAddress: clientData.guardianAddress || '',
+                guardianOccupation: clientData.guardianOccupation || '',
+                guardianMaritalStatus: clientData.guardianMaritalStatus,
+                guardianLegalCustody: clientData.guardianLegalCustody ?? false,
+                guardianCustodyDocsAttached: clientData.guardianCustodyDocsAttached ?? false,
+                emergencyContactName: clientData.emergencyContactName || '',
+                emergencyContactPhone: clientData.emergencyContactPhone || '',
+                emergencyContactRelationship: clientData.emergencyContactRelationship || '',
+                emergencyContactAddress: clientData.emergencyContactAddress || '',
+              });
+            } else {
+              // Fallback to default values if API fails
+              reset({
+                fullName: '',
+                gender: ClientGenderEnum.Male,
+                birthPlace: '',
+                birthDate: '',
+                religion: ClientReligionEnum.Islam,
+                occupation: '',
+                education: ClientEducationEnum.Bachelor,
+                educationMajor: '',
+                address: '',
+                phone: '',
+                email: '',
+                hobbies: '',
+                maritalStatus: ClientMaritalStatusEnum.Single,
+                spouseName: '',
+                relationshipWithSpouse: undefined,
+
+                firstVisit: true,
+                previousVisitDetails: '',
+                isMinor: false,
+                school: '',
+                grade: '',
+                guardianFullName: '',
+                guardianRelationship: undefined,
+                guardianPhone: '',
+                guardianAddress: '',
+                guardianOccupation: '',
+                guardianMaritalStatus: undefined,
+                guardianLegalCustody: false,
+                guardianCustodyDocsAttached: false,
+                emergencyContactName: '',
+                emergencyContactPhone: '',
+                emergencyContactRelationship: '',
+                emergencyContactAddress: '',
+                ...defaultValues,
+              });
+            }
+          } catch (error) {
+            console.error('Failed to load client data:', error);
+            // Fallback to default values on error
             reset({
               fullName: '',
               gender: ClientGenderEnum.Male,
@@ -149,12 +231,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               emergencyContactPhone: '',
               emergencyContactRelationship: '',
               emergencyContactAddress: '',
-              ...defaultValues, // Apply the default values passed from parent
+              ...defaultValues,
             });
-
-            // Don't force dirty state - let the form be clean initially
-          } catch (error) {
-            console.error('Failed to load client data:', error);
           } finally {
             setIsLoadingClient(false);
           }
