@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { ClientFormModal } from '@/components/clients/ClientFormModal';
@@ -12,6 +12,7 @@ import { ClientEducationLabels, ClientGuardianMaritalStatusLabels, ClientGuardia
 import { useClient } from '@/hooks/useClient';
 import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/useAuth';
+import { ClientAPI } from '@/lib/api/client';
 import {
   AcademicCapIcon,
   ArrowPathIcon,
@@ -34,7 +35,6 @@ export interface ClientListProps {
   clients?: Client[];
   onAssign?: (clientId: string) => void;
   onConsultation?: (clientId: string) => void;
-  onStartOver?: (clientId: string) => void;
 }
 
 const getStatusBadge = (status: Client['status']) => {
@@ -45,9 +45,10 @@ export const ClientList: React.FC<ClientListProps> = ({
   clients: clientsProp,
   onAssign,
   onConsultation,
-  onStartOver,
 }) => {
-  const { clients: storeClients, loadClients, loading, createClient, updateClient } = useClient();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { createClient, updateClient } = useClient();
   const { addToast } = useToast();
   const { user } = useAuth();
   const [status, setStatus] = useState<'all' | Client['status']>('all');
@@ -57,27 +58,37 @@ export const ClientList: React.FC<ClientListProps> = ({
   const [clientFormMode, setClientFormMode] = useState<'create' | 'edit'>('create');
   const [clientFormDefaultValues, setClientFormDefaultValues] = useState<Partial<any>>({});
 
-  // Refresh function
-  const refreshClients = useCallback(async () => {
+  // Load clients data
+  const loadClients = useCallback(async () => {
+    setLoading(true);
     try {
-      await loadClients(true); // Force refresh
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const response = await ClientAPI.getClients();
+      if (response.success && response.data) {
+        setClients(response.data.items);
+      }
     } catch (error) {
-      console.error('Failed to refresh clients:', error);
+      console.error('Failed to load clients:', error);
+      addToast({
+        type: 'error',
+        title: 'Kesalahan Koneksi',
+        message: 'Gagal terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.'
+      });
+    } finally {
+      setLoading(false);
     }
+  }, [addToast]);
+
+  useEffect(() => {
+    loadClients();
   }, [loadClients]);
 
-  // Load clients on component mount
-  React.useEffect(() => {
-    const initializeClients = async () => {
-      try {
-        await loadClients(); // This will check internal logic for cache vs fresh load
-      } catch (error) {
-        console.error('Failed to load clients:', error);
-      }
-    };
-    
-    initializeClients();
-  }, []); // Run only once on mount
+  // Refresh function
+  const refreshClients = useCallback(async () => {
+    await loadClients();
+  }, [loadClients]);
 
   // Modal handlers
   const handleCloseDetails = () => {
@@ -197,16 +208,16 @@ export const ClientList: React.FC<ClientListProps> = ({
     return hasTherapist && !hasClinicAdmin;
   }, [user?.roles]);
 
-  // Prefer store clients if available; fallback to prop
-  let clients = (storeClients && storeClients.length > 0) ? storeClients : (clientsProp ?? []);
+  // Use local clients state, fallback to prop if provided
+  let displayClients = clients.length > 0 ? clients : (clientsProp ?? []);
 
   // For therapists, filter to only show assigned clients
   if (isTherapist && user?.id) {
-    clients = clients.filter(client => client.assignedTherapist === user.id);
+    displayClients = displayClients.filter(client => client.assignedTherapist === user.id);
   }
 
   // Filter clients by status
-  const filteredClients = clients.filter((c) => {
+  const filteredClients = displayClients.filter((c) => {
     return status === 'all' ? true : c.status === status;
   });
 
@@ -304,19 +315,12 @@ export const ClientList: React.FC<ClientListProps> = ({
           show: (client) => client.assignedTherapist && client.status !== ClientStatusEnum.Done || client.status !== ClientStatusEnum.New,
           onClick: (client) => onAssign?.(client.id),
         },
-        {
-          key: 'start-over',
-          label: 'Mulai Ulang',
-          icon: ArrowPathIcon,
-          variant: 'secondary',
-          show: (client) => client.status === ClientStatusEnum.Done,
-          onClick: (client) => onStartOver?.(client.id),
-        }
+
       );
     }
 
     return baseActions;
-  }, [isTherapist, onConsultation, onAssign, onStartOver]);
+      }, [isTherapist, onConsultation, onAssign]);
 
   // Define status filter
   const statusFilter = {
@@ -765,19 +769,7 @@ export const ClientList: React.FC<ClientListProps> = ({
                     </button>
                   )}
 
-                  {/* Start Over - only for Done clients */}
-                  {!isTherapist && selectedClient.status === ClientStatusEnum.Done && (
-                    <button
-                      onClick={() => {
-                        handleCloseDetails();
-                        onStartOver?.(selectedClient.id);
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-purple-600 bg-white border border-purple-300 rounded-md hover:bg-purple-50 flex items-center"
-                    >
-                      <ArrowPathIcon className="w-4 h-4 mr-2" />
-                      Mulai Ulang
-                    </button>
-                  )}
+
 
                   {/* Consultation - for therapists */}
                   {isTherapist && (

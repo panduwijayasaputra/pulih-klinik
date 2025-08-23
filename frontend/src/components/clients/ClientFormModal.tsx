@@ -95,6 +95,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       guardianMaritalStatus: undefined,
       guardianLegalCustody: false,
       guardianCustodyDocsAttached: false,
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      emergencyContactRelationship: '',
+      emergencyContactAddress: '',
       ...defaultValues,
     },
   });
@@ -141,13 +145,14 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               guardianMaritalStatus: undefined,
               guardianLegalCustody: false,
               guardianCustodyDocsAttached: false,
+              emergencyContactName: '',
+              emergencyContactPhone: '',
+              emergencyContactRelationship: '',
+              emergencyContactAddress: '',
               ...defaultValues, // Apply the default values passed from parent
             });
 
-            // Force form to be dirty in edit mode so submit button is enabled
-            setTimeout(() => {
-              setValue('fullName', defaultValues?.fullName || '', { shouldDirty: true });
-            }, 100);
+            // Don't force dirty state - let the form be clean initially
           } catch (error) {
             console.error('Failed to load client data:', error);
           } finally {
@@ -188,6 +193,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
           guardianMaritalStatus: undefined,
           guardianLegalCustody: false,
           guardianCustodyDocsAttached: false,
+          emergencyContactName: '',
+          emergencyContactPhone: '',
+          emergencyContactRelationship: '',
+          emergencyContactAddress: '',
           ...defaultValues,
         });
         setIsLoadingClient(false);

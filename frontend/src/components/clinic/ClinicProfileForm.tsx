@@ -319,7 +319,16 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
 
           {/* Action Buttons */}
           {showActions && (
-            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+                className="flex-1 sm:flex-none"
+              >
+                Batal
+              </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting || !isDirty}
@@ -333,16 +342,6 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
                 ) : (
                   'Simpan Perubahan'
                 )}
-              </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-none"
-              >
-                Batal
               </Button>
             </div>
           )}

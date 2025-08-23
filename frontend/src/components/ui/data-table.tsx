@@ -187,7 +187,7 @@ export function DataTable<T extends { id: string }>({
                   </th>
                 ))}
                 {actions.length > 0 && (
-                  <th className="text-left p-3 font-medium">Aksi</th>
+                  <th className="text-left p-3 font-medium w-0">Aksi</th>
                 )}
               </tr>
             </thead>

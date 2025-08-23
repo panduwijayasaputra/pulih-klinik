@@ -19,8 +19,9 @@ import {
 
 function ClinicManagePageContent() {
   const router = useRouter();
-  const { clinic, stats, isLoading, isStatsLoading } = useClinic();
+  const { clinic, stats, isLoading, isStatsLoading, fetchClinic, fetchStats } = useClinic();
   const [activeTab, setActiveTab] = useState('profile');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleSaveSuccess = () => {
     console.log('Profile updated successfully');
@@ -31,14 +32,16 @@ function ClinicManagePageContent() {
     router.push('/portal/clinic');
   };
 
-  if (isLoading && !clinic) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        <span className="ml-2 text-gray-600">Memuat data klinik...</span>
-      </div>
-    );
-  }
+  // Refresh data when profile tab becomes active
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'profile') {
+      setIsRefreshing(true);
+      Promise.all([fetchClinic(), fetchStats()]).finally(() => {
+        setIsRefreshing(false);
+      });
+    }
+  };
 
   return (
     <PortalPageWrapper
@@ -74,36 +77,46 @@ function ClinicManagePageContent() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Status:</span>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Aktif
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Paket:</span>
-                          <span className="text-sm text-gray-600 capitalize">
-                            {clinic?.subscriptionTier}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Dibuat:</span>
-                          <span className="text-sm text-gray-600">
-                            {clinic?.createdAt ?
-                              new Date(clinic.createdAt).toLocaleDateString('id-ID')
-                              : '-'
-                            }
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Diperbarui:</span>
-                          <span className="text-sm text-gray-600">
-                            {clinic?.updatedAt ?
-                              new Date(clinic.updatedAt).toLocaleDateString('id-ID')
-                              : '-'
-                            }
-                          </span>
-                        </div>
+                                {(isLoading || isRefreshing) && activeTab === 'profile' ? (
+          // Loading state for clinic status
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+            <span className="ml-2 text-sm text-gray-600">Memuat status...</span>
+          </div>
+        ) : (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Status:</span>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Aktif
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Paket:</span>
+                              <span className="text-sm text-gray-600 capitalize">
+                                {clinic?.subscriptionTier}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Dibuat:</span>
+                              <span className="text-sm text-gray-600">
+                                {clinic?.createdAt ?
+                                  new Date(clinic.createdAt).toLocaleDateString('id-ID')
+                                  : '-'
+                                }
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Diperbarui:</span>
+                              <span className="text-sm text-gray-600">
+                                {clinic?.updatedAt ?
+                                  new Date(clinic.updatedAt).toLocaleDateString('id-ID')
+                                  : '-'
+                                }
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </CardContent>
                     </Card>
 
@@ -114,30 +127,40 @@ function ClinicManagePageContent() {
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-2 gap-4">
-                          <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <div className="text-2xl font-bold text-blue-600">
-                              {isStatsLoading ? '...' : stats?.therapists || 0}
+                          {(isStatsLoading || isRefreshing) && activeTab === 'profile' ? (
+                            // Loading state for stats
+                            <div className="flex items-center justify-center py-8">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+                              <span className="ml-2 text-sm text-gray-600">Memuat statistik...</span>
                             </div>
-                            <div className="text-sm text-gray-600">Therapist</div>
-                          </div>
-                          <div className="text-center p-3 bg-green-50 rounded-lg">
-                            <div className="text-2xl font-bold text-green-600">
-                              {isStatsLoading ? '...' : stats?.clients || 0}
-                            </div>
-                            <div className="text-sm text-gray-600">Klien</div>
-                          </div>
-                          <div className="text-center p-3 bg-purple-50 rounded-lg">
-                            <div className="text-2xl font-bold text-purple-600">
-                              {isStatsLoading ? '...' : stats?.sessions || 0}
-                            </div>
-                            <div className="text-sm text-gray-600">Sesi</div>
-                          </div>
-                          <div className="text-center p-3 bg-orange-50 rounded-lg">
-                            <div className="text-2xl font-bold text-orange-600">
-                              {isStatsLoading ? '...' : stats?.documents || clinic?.documents?.length || 0}
-                            </div>
-                            <div className="text-sm text-gray-600">Dokumen</div>
-                          </div>
+                          ) : (
+                            <>
+                              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                <div className="text-2xl font-bold text-blue-600">
+                                  {stats?.therapists || 0}
+                                </div>
+                                <div className="text-sm text-gray-600">Therapist</div>
+                              </div>
+                              <div className="text-center p-3 bg-green-50 rounded-lg">
+                                <div className="text-2xl font-bold text-green-600">
+                                  {stats?.clients || 0}
+                                </div>
+                                <div className="text-sm text-gray-600">Klien</div>
+                              </div>
+                              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                <div className="text-2xl font-bold text-purple-600">
+                                  {stats?.sessions || 0}
+                                </div>
+                                <div className="text-sm text-gray-600">Sesi</div>
+                              </div>
+                              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                                <div className="text-2xl font-bold text-orange-600">
+                                  {stats?.documents || clinic?.documents?.length || 0}
+                                </div>
+                                <div className="text-sm text-gray-600">Dokumen</div>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -184,7 +207,7 @@ function ClinicManagePageContent() {
           },
         ]}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         gridCols={3}
       />
     </PortalPageWrapper>

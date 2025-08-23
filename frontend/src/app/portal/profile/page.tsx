@@ -9,8 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/components/ui/toast';
 import { UserRoleEnum } from '@/types/enums';
+import { ProfileFormData } from '@/types/profile';
 import { 
   CameraIcon,
   EnvelopeIcon,
@@ -22,54 +24,92 @@ import {
 
 function ProfilePageContent() {
   const { user } = useAuth();
+  const { profile, loading, error, updateProfile, uploadAvatar } = useProfile(user?.id);
   const { addToast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Profile form state
-  const [profileData, setProfileData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
+  const [profileData, setProfileData] = useState<ProfileFormData>({
+    name: '',
+    email: '',
     phone: '',
     address: '',
-    bio: '',
-    specializations: '',
-    licenseNumber: '',
-    experience: ''
+    bio: ''
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  // Update form data when profile loads
+  React.useEffect(() => {
+    if (profile) {
+      setProfileData({
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone || '',
+        address: profile.address || '',
+        bio: profile.bio || ''
+      });
+    }
+  }, [profile]);
+
+  const handleInputChange = (field: keyof ProfileFormData, value: string) => {
     setProfileData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleSaveProfile = () => {
-    // Mock save functionality
-    console.log('Saving profile data:', profileData);
+  const handleSaveProfile = async () => {
+    if (!user?.id) return;
     
-    addToast({
-      type: 'success',
-      title: "Profil berhasil diperbarui",
-      message: "Informasi profil Anda telah disimpan.",
-    });
-    
-    setIsEditing(false);
+    setIsSaving(true);
+    try {
+      await updateProfile(profileData);
+      addToast({
+        type: 'success',
+        title: "Profil berhasil diperbarui",
+        message: "Informasi profil Anda telah disimpan.",
+      });
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: "Gagal memperbarui profil",
+        message: error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan profil.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    // Reset form data
-    setProfileData({
-      name: user?.name || '',
-      email: user?.email || '',
-      phone: '',
-      address: '',
-      bio: '',
-      specializations: '',
-      licenseNumber: '',
-      experience: ''
-    });
-    setIsEditing(false);
+    // Reset form data to current profile
+    if (profile) {
+      setProfileData({
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone || '',
+        address: profile.address || '',
+        bio: profile.bio || ''
+      });
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    try {
+      await uploadAvatar(file);
+      addToast({
+        type: 'success',
+        title: "Avatar berhasil diperbarui",
+        message: "Foto profil Anda telah diperbarui.",
+      });
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: "Gagal memperbarui avatar",
+        message: error instanceof Error ? error.message : "Terjadi kesalahan saat mengunggah foto.",
+      });
+    }
   };
 
   const getUserRoleLabel = (roles: string[]) => {
@@ -91,6 +131,44 @@ function ProfilePageContent() {
       .slice(0, 2);
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <PortalPageWrapper
+        title="Profil Saya"
+        description="Kelola informasi profil dan pengaturan akun Anda"
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <span className="ml-2 text-gray-600">Memuat profil...</span>
+        </div>
+      </PortalPageWrapper>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <PortalPageWrapper
+        title="Profil Saya"
+        description="Kelola informasi profil dan pengaturan akun Anda"
+      >
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-red-600 mb-4">
+              <ShieldCheckIcon className="w-12 h-12 mx-auto mb-2" />
+              <h3 className="text-lg font-semibold">Gagal memuat profil</h3>
+              <p className="text-sm">{error}</p>
+            </div>
+            <Button onClick={() => window.location.reload()}>
+              Coba Lagi
+            </Button>
+          </CardContent>
+        </Card>
+      </PortalPageWrapper>
+    );
+  }
+
   return (
     <PortalPageWrapper
       title="Profil Saya"
@@ -103,36 +181,49 @@ function ProfilePageContent() {
             <CardHeader className="text-center">
               <div className="relative mx-auto mb-4">
                 <Avatar className="w-24 h-24">
-                  <AvatarImage src="" alt={user?.name || 'User'} />
+                  <AvatarImage src={profile?.avatar || ''} alt={profile?.name || 'User'} />
                   <AvatarFallback className="text-lg">
-                    {user?.name ? getInitials(user.name) : 'U'}
+                    {profile?.name ? getInitials(profile.name) : 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                >
-                  <CameraIcon className="w-4 h-4" />
-                </Button>
+                <label htmlFor="avatar-upload" className="cursor-pointer">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
+                    asChild
+                  >
+                    <div>
+                      <CameraIcon className="w-4 h-4" />
+                    </div>
+                  </Button>
+                </label>
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
               </div>
-              <CardTitle>{user?.name || 'Nama User'}</CardTitle>
+              <CardTitle>{profile?.name || 'Nama User'}</CardTitle>
               <CardDescription>
                 {user?.roles ? getUserRoleLabel(user.roles) : 'User'}
               </CardDescription>
+
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-3 text-sm">
                 <EnvelopeIcon className="w-4 h-4 text-gray-400" />
-                <span>{user?.email || '-'}</span>
+                <span>{profile?.email || '-'}</span>
               </div>
               <div className="flex items-center space-x-3 text-sm">
                 <PhoneIcon className="w-4 h-4 text-gray-400" />
-                <span>{profileData.phone || 'Belum diisi'}</span>
+                <span>{profile?.phone || 'Belum diisi'}</span>
               </div>
               <div className="flex items-center space-x-3 text-sm">
                 <MapPinIcon className="w-4 h-4 text-gray-400" />
-                <span>{profileData.address || 'Belum diisi'}</span>
+                <span>{profile?.address || 'Belum diisi'}</span>
               </div>
               <div className="flex items-center space-x-3 text-sm">
                 <ShieldCheckIcon className="w-4 h-4 text-gray-400" />
@@ -163,27 +254,11 @@ function ProfilePageContent() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Informasi Profil</CardTitle>
-                  <CardDescription>
-                    Kelola informasi dasar dan profesional Anda
-                  </CardDescription>
-                </div>
-                {!isEditing ? (
-                  <Button onClick={() => setIsEditing(true)}>
-                    Edit Profil
-                  </Button>
-                ) : (
-                  <div className="flex space-x-2">
-                    <Button variant="outline" onClick={handleCancel}>
-                      Batal
-                    </Button>
-                    <Button onClick={handleSaveProfile}>
-                      Simpan
-                    </Button>
-                  </div>
-                )}
+              <div>
+                <CardTitle>Informasi Profil</CardTitle>
+                <CardDescription>
+                  Kelola informasi dasar dan profesional Anda
+                </CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -195,7 +270,6 @@ function ProfilePageContent() {
                     id="name"
                     value={profileData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    disabled={!isEditing}
                     placeholder="Masukkan nama lengkap"
                   />
                 </div>
@@ -206,7 +280,6 @@ function ProfilePageContent() {
                     type="email"
                     value={profileData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    disabled={!isEditing}
                     placeholder="user@example.com"
                   />
                 </div>
@@ -216,7 +289,6 @@ function ProfilePageContent() {
                     id="phone"
                     value={profileData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    disabled={!isEditing}
                     placeholder="+62-xxx-xxxx-xxxx"
                   />
                 </div>
@@ -226,53 +298,12 @@ function ProfilePageContent() {
                     id="address"
                     value={profileData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
-                    disabled={!isEditing}
                     placeholder="Alamat lengkap"
                   />
                 </div>
               </div>
 
-              {/* Professional Information (for therapists) */}
-              {(user?.roles?.includes(UserRoleEnum.Therapist)) && (
-                <>
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-medium mb-4">Informasi Profesional</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="licenseNumber">Nomor Izin Praktik</Label>
-                        <Input
-                          id="licenseNumber"
-                          value={profileData.licenseNumber}
-                          onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-                          disabled={!isEditing}
-                          placeholder="Nomor sertifikat/izin praktik"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="experience">Pengalaman (Tahun)</Label>
-                        <Input
-                          id="experience"
-                          value={profileData.experience}
-                          onChange={(e) => handleInputChange('experience', e.target.value)}
-                          disabled={!isEditing}
-                          placeholder="Jumlah tahun pengalaman"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2 mt-4">
-                      <Label htmlFor="specializations">Spesialisasi</Label>
-                      <Textarea
-                        id="specializations"
-                        value={profileData.specializations}
-                        onChange={(e) => handleInputChange('specializations', e.target.value)}
-                        disabled={!isEditing}
-                        placeholder="Daftar area spesialisasi (contoh: Anxiety, Depression, PTSD, dll.)"
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+
 
               {/* Bio Section */}
               <div className="border-t pt-6">
@@ -282,10 +313,28 @@ function ProfilePageContent() {
                     id="bio"
                     value={profileData.bio}
                     onChange={(e) => handleInputChange('bio', e.target.value)}
-                    disabled={!isEditing}
                     placeholder="Ceritakan tentang diri Anda, background, atau filosofi dalam praktik..."
                     rows={4}
                   />
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="border-t pt-6">
+                <div className="flex justify-end space-x-3">
+                  <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+                    Reset
+                  </Button>
+                  <Button onClick={handleSaveProfile} disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      'Simpan Perubahan'
+                    )}
+                  </Button>
                 </div>
               </div>
             </CardContent>
