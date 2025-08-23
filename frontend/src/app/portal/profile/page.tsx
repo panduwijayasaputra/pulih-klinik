@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,8 +14,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/components/ui/toast';
 import { UserRoleEnum } from '@/types/enums';
-import { ProfileFormData } from '@/types/profile';
-import { 
+import { profileSchema, type ProfileFormData } from '@/schemas/profileSchema';
+import {
   CameraIcon,
   EnvelopeIcon,
   KeyIcon,
@@ -27,42 +29,44 @@ function ProfilePageContent() {
   const { profile, loading, error, updateProfile, uploadAvatar } = useProfile(user?.id);
   const { addToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  
-  // Profile form state
-  const [profileData, setProfileData] = useState<ProfileFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    bio: ''
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isDirty },
+    reset
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      bio: ''
+    }
   });
 
   // Update form data when profile loads
   React.useEffect(() => {
     if (profile) {
-      setProfileData({
+      reset({
         name: profile.name,
         email: profile.email,
         phone: profile.phone || '',
         address: profile.address || '',
         bio: profile.bio || ''
-      });
+      } as ProfileFormData);
     }
-  }, [profile]);
+  }, [profile, reset]);
 
-  const handleInputChange = (field: keyof ProfileFormData, value: string) => {
-    setProfileData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSaveProfile = async () => {
+  const onSubmit = async (data: ProfileFormData) => {
     if (!user?.id) return;
-    
+
     setIsSaving(true);
     try {
-      await updateProfile(profileData);
+      await updateProfile(data);
       addToast({
         type: 'success',
         title: "Profil berhasil diperbarui",
@@ -82,7 +86,7 @@ function ProfilePageContent() {
   const handleCancel = () => {
     // Reset form data to current profile
     if (profile) {
-      setProfileData({
+      reset({
         name: profile.name,
         email: profile.email,
         phone: profile.phone || '',
@@ -115,10 +119,10 @@ function ProfilePageContent() {
   const getUserRoleLabel = (roles: string[]) => {
     const roleLabels = {
       [UserRoleEnum.Administrator]: 'Administrator Sistem',
-      [UserRoleEnum.ClinicAdmin]: 'Administrator Klinik', 
+      [UserRoleEnum.ClinicAdmin]: 'Administrator Klinik',
       [UserRoleEnum.Therapist]: 'Therapist',
     };
-    
+
     return roles.map(role => roleLabels[role as keyof typeof roleLabels] || role).join(', ');
   };
 
@@ -131,44 +135,6 @@ function ProfilePageContent() {
       .slice(0, 2);
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <PortalPageWrapper
-        title="Profil Saya"
-        description="Kelola informasi profil dan pengaturan akun Anda"
-      >
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-          <span className="ml-2 text-gray-600">Memuat profil...</span>
-        </div>
-      </PortalPageWrapper>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <PortalPageWrapper
-        title="Profil Saya"
-        description="Kelola informasi profil dan pengaturan akun Anda"
-      >
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-red-600 mb-4">
-              <ShieldCheckIcon className="w-12 h-12 mx-auto mb-2" />
-              <h3 className="text-lg font-semibold">Gagal memuat profil</h3>
-              <p className="text-sm">{error}</p>
-            </div>
-            <Button onClick={() => window.location.reload()}>
-              Coba Lagi
-            </Button>
-          </CardContent>
-        </Card>
-      </PortalPageWrapper>
-    );
-  }
-
   return (
     <PortalPageWrapper
       title="Profil Saya"
@@ -179,56 +145,77 @@ function ProfilePageContent() {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader className="text-center">
-              <div className="relative mx-auto mb-4">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src={profile?.avatar || ''} alt={profile?.name || 'User'} />
-                  <AvatarFallback className="text-lg">
-                    {profile?.name ? getInitials(profile.name) : 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <label htmlFor="avatar-upload" className="cursor-pointer">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                    asChild
-                  >
-                    <div>
-                      <CameraIcon className="w-4 h-4" />
-                    </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  <span className="ml-2 text-gray-600">Memuat profil...</span>
+                </div>
+              ) : error ? (
+                <div className="text-red-600 mb-4">
+                  <ShieldCheckIcon className="w-12 h-12 mx-auto mb-2" />
+                  <h3 className="text-lg font-semibold">Gagal memuat profil</h3>
+                  <p className="text-sm">{error}</p>
+                  <Button onClick={() => window.location.reload()} className="mt-2">
+                    Coba Lagi
                   </Button>
-                </label>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                />
-              </div>
-              <CardTitle>{profile?.name || 'Nama User'}</CardTitle>
-              <CardDescription>
-                {user?.roles ? getUserRoleLabel(user.roles) : 'User'}
-              </CardDescription>
-
+                </div>
+              ) : (
+                <>
+                  <div className="relative mx-auto mb-4">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={profile?.avatar || ''} alt={profile?.name || 'User'} />
+                      <AvatarFallback className="text-lg">
+                        {profile?.name ? getInitials(profile.name) : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <label htmlFor="avatar-upload" className="cursor-pointer">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
+                        asChild
+                      >
+                        <div>
+                          <CameraIcon className="w-4 h-4" />
+                        </div>
+                      </Button>
+                    </label>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                  </div>
+                  <CardTitle>{profile?.name || 'Nama User'}</CardTitle>
+                  <CardDescription>
+                    {user?.roles ? getUserRoleLabel(user.roles) : 'User'}
+                  </CardDescription>
+                </>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center space-x-3 text-sm">
-                <EnvelopeIcon className="w-4 h-4 text-gray-400" />
-                <span>{profile?.email || '-'}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <PhoneIcon className="w-4 h-4 text-gray-400" />
-                <span>{profile?.phone || 'Belum diisi'}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <MapPinIcon className="w-4 h-4 text-gray-400" />
-                <span>{profile?.address || 'Belum diisi'}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <ShieldCheckIcon className="w-4 h-4 text-gray-400" />
-                <span>Akun terverifikasi</span>
-              </div>
+              {loading ? null : error ? null : (
+                <>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <EnvelopeIcon className="w-4 h-4 text-gray-400" />
+                    <span>{profile?.email || '-'}</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <PhoneIcon className="w-4 h-4 text-gray-400" />
+                    <span>{profile?.phone || 'Belum diisi'}</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <MapPinIcon className="w-4 h-4 text-gray-400" />
+                    <span>{profile?.address || 'Belum diisi'}</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <ShieldCheckIcon className="w-4 h-4 text-gray-400" />
+                    <span>Akun terverifikasi</span>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -262,81 +249,111 @@ function ProfilePageContent() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nama Lengkap</Label>
-                  <Input
-                    id="name"
-                    value={profileData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    placeholder="Masukkan nama lengkap"
-                  />
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  <span className="ml-2 text-gray-600">Memuat form profil...</span>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={profileData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="user@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Nomor Telepon</Label>
-                  <Input
-                    id="phone"
-                    value={profileData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="+62-xxx-xxxx-xxxx"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Alamat</Label>
-                  <Input
-                    id="address"
-                    value={profileData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    placeholder="Alamat lengkap"
-                  />
-                </div>
-              </div>
-
-
-
-              {/* Bio Section */}
-              <div className="border-t pt-6">
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio / Deskripsi Singkat</Label>
-                  <Textarea
-                    id="bio"
-                    value={profileData.bio}
-                    onChange={(e) => handleInputChange('bio', e.target.value)}
-                    placeholder="Ceritakan tentang diri Anda, background, atau filosofi dalam praktik..."
-                    rows={4}
-                  />
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="border-t pt-6">
-                <div className="flex justify-end space-x-3">
-                  <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-                    Reset
-                  </Button>
-                  <Button onClick={handleSaveProfile} disabled={isSaving}>
-                    {isSaving ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                        Menyimpan...
-                      </>
-                    ) : (
-                      'Simpan Perubahan'
-                    )}
+              ) : error ? (
+                <div className="text-center py-8">
+                  <div className="text-red-600 mb-4">
+                    <ShieldCheckIcon className="w-12 h-12 mx-auto mb-2" />
+                    <h3 className="text-lg font-semibold">Gagal memuat profil</h3>
+                    <p className="text-sm">{error}</p>
+                  </div>
+                  <Button onClick={() => window.location.reload()}>
+                    Coba Lagi
                   </Button>
                 </div>
-              </div>
+              ) : (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nama Lengkap</Label>
+                      <Input
+                        id="name"
+                        {...register('name')}
+                        placeholder="Masukkan nama lengkap"
+                      />
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        {...register('email')}
+                        placeholder="user@example.com"
+                      />
+                      {errors.email && (
+                        <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Nomor Telepon</Label>
+                      <Input
+                        id="phone"
+                        {...register('phone')}
+                        placeholder="+62-xxx-xxxx-xxxx"
+                      />
+                      {errors.phone && (
+                        <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Alamat</Label>
+                      <Input
+                        id="address"
+                        {...register('address')}
+                        placeholder="Alamat lengkap"
+                      />
+                      {errors.address && (
+                        <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bio Section */}
+                  <div className="border-t pt-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Bio / Deskripsi Singkat</Label>
+                      <Textarea
+                        id="bio"
+                        {...register('bio')}
+                        placeholder="Ceritakan tentang diri Anda, background, atau filosofi dalam praktik..."
+                        rows={4}
+                      />
+                      {errors.bio && (
+                        <p className="mt-1 text-sm text-red-600">{errors.bio.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Submit Buttons */}
+                  <div className="border-t pt-6">
+                    <div className="flex justify-end space-x-3">
+                      <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>
+                        Reset
+                      </Button>
+                      <Button type="submit" disabled={isSaving || !isDirty}>
+                        {isSaving ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                            Menyimpan...
+                          </>
+                        ) : !isDirty ? (
+                          'Tidak Ada Perubahan'
+                        ) : (
+                          'Simpan Perubahan'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
         </div>

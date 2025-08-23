@@ -119,18 +119,7 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
     onCancel?.();
   };
 
-  if (isLoading && !clinic) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">Memuat data klinik...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+
 
   return (
     <Card className="w-full">
@@ -157,7 +146,15 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {isLoading && !clinic ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
+              <p className="text-gray-600">Memuat data klinik...</p>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Logo Section */}
           <div className="space-y-4">
             <Label className="text-base font-medium">Logo Klinik</Label>
@@ -346,6 +343,7 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
             </div>
           )}
         </form>
+        )}
       </CardContent>
     </Card>
   );

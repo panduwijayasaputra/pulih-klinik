@@ -18,3 +18,27 @@ export function formatPrice(price: number): string {
     minimumFractionDigits: 0,
   }).format(price);
 }
+
+/**
+ * Formats file size in bytes to human-readable format
+ * @param bytes - File size in bytes
+ * @returns Formatted file size string (B, KB, MB)
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${Math.round(bytes / 1024 / 1024)} MB`;
+}
+
+/**
+ * Formats a date string to Indonesian locale format
+ * @param dateString - Date string to format
+ * @returns Formatted date string in Indonesian format
+ */
+export function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('id-ID', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}

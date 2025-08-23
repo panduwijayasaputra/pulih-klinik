@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useClinic } from '@/hooks/useClinic';
 import { ClinicDocument } from '@/types/clinic';
-import { 
+import { formatFileSize, formatDate } from '@/lib/utils';
+import {
   ArrowDownTrayIcon,
   DocumentArrowUpIcon,
   DocumentIcon,
@@ -27,7 +28,7 @@ interface DocumentManagerProps {
 
 const DOCUMENT_TYPE_LABELS = {
   [ClinicDocumentTypeEnum.License]: 'Izin Praktik',
-  [ClinicDocumentTypeEnum.Certificate]: 'Sertifikat', 
+  [ClinicDocumentTypeEnum.Certificate]: 'Sertifikat',
   [ClinicDocumentTypeEnum.Insurance]: 'Asuransi',
   [ClinicDocumentTypeEnum.Tax]: 'Dokumen Pajak',
   [ClinicDocumentTypeEnum.Other]: 'Lainnya',
@@ -39,12 +40,12 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   onDownloadDocument,
   className = ''
 }) => {
-  const { 
-    documents, 
-    isDocumentsLoading, 
-    documentsError, 
+  const {
+    documents,
+    isDocumentsLoading,
+    documentsError,
     fetchDocuments,
-    deleteDocument, 
+    deleteDocument,
     downloadDocument,
     clearDocumentsError
   } = useClinic();
@@ -62,9 +63,9 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   // Filter documents based on search and filters
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.fileName.toLowerCase().includes(searchTerm.toLowerCase());
+      doc.fileName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || doc.type === filterType;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -99,19 +100,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
     }
   };
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    return `${Math.round(bytes / 1024 / 1024)} MB`;
-  };
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   const getDocumentIcon = (document: ClinicDocument) => {
     if (document.fileName.endsWith('.pdf')) {
@@ -127,18 +116,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
     return <DocumentIcon className="w-6 h-6 text-gray-500" />;
   };
 
-  if (isDocumentsLoading) {
-    return (
-      <Card className={className}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-            <span className="ml-2 text-gray-600">Memuat dokumen...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+
 
   if (documentsError) {
     return (
@@ -193,7 +171,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Search and Filters */}
+
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -204,7 +182,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
               className="pl-10"
             />
           </div>
-          
+
           <div className="flex gap-2">
             <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="w-40">
@@ -221,141 +199,153 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
           </div>
         </div>
 
-        {/* Documents List */}
-        {filteredDocuments.length === 0 ? (
-          <div className="text-center py-12">
-            <DocumentIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {documents.length === 0 ? 'Belum ada dokumen' : 'Tidak ada dokumen yang sesuai'}
-            </h3>
-            <p className="text-gray-500 mb-4">
-              {documents.length === 0 
-                ? 'Upload dokumen pertama Anda untuk memulai'
-                : 'Coba ubah pencarian atau filter'
-              }
-            </p>
+        {isDocumentsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            <span className="ml-2 text-gray-600">Memuat dokumen...</span>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredDocuments.map((document) => {
-              return (
-                <div
-                  key={document.id}
-                  className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  {/* Document Icon */}
-                  <div className="flex-shrink-0">
-                    {getDocumentIcon(document)}
-                  </div>
-
-                  {/* Document Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {document.name}
-                        </h4>
-                        <p className="text-sm text-gray-500 truncate">
-                          {document.fileName}
-                        </p>
-                        <div className="flex items-center gap-4 mt-1">
-                          <span className="text-xs text-gray-500">
-                            {DOCUMENT_TYPE_LABELS[document.type]}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatFileSize(document.fileSize)}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatDate(document.uploadedAt)}
-                          </span>
-                        </div>
-                        {document.description && (
-                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                            {document.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+          <>
+            {/* Search and Filters */}
 
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(document)}
-                      disabled={downloadingId === document.id}
-                      className="flex items-center gap-1"
+            {/* Documents List */}
+            {filteredDocuments.length === 0 ? (
+              <div className="text-center py-12">
+                <DocumentIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {documents.length === 0 ? 'Belum ada dokumen' : 'Tidak ada dokumen yang sesuai'}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {documents.length === 0
+                    ? 'Upload dokumen pertama Anda untuk memulai'
+                    : 'Coba ubah pencarian atau filter'
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredDocuments.map((document) => {
+                  return (
+                    <div
+                      key={document.id}
+                      className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      {downloadingId === document.id ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600" />
-                      ) : (
-                        <ArrowDownTrayIcon className="w-4 h-4" />
-                      )}
-                      {downloadingId === document.id ? 'Downloading...' : 'Download'}
-                    </Button>
+                      {/* Document Icon */}
+                      <div className="flex-shrink-0">
+                        {getDocumentIcon(document)}
+                      </div>
 
-                    {deleteConfirmId === document.id ? (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDelete(document.id)}
-                          disabled={deletingId === document.id}
-                        >
-                          {deletingId === document.id ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                              Menghapus...
-                            </>
-                          ) : (
-                            'Hapus'
-                          )}
-                        </Button>
+                      {/* Document Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-sm font-medium text-gray-900 truncate">
+                              {document.name}
+                            </h4>
+                            <p className="text-sm text-gray-500 truncate">
+                              {document.fileName}
+                            </p>
+                            <div className="flex items-center gap-4 mt-1">
+                              <span className="text-xs text-gray-500">
+                                {DOCUMENT_TYPE_LABELS[document.type]}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {formatFileSize(document.fileSize)}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {formatDate(document.uploadedAt)}
+                              </span>
+                            </div>
+                            {document.description && (
+                              <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                {document.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setDeleteConfirmId(null)}
+                          onClick={() => handleDownload(document)}
+                          disabled={downloadingId === document.id}
+                          className="flex items-center gap-1"
                         >
-                          Batal
+                          {downloadingId === document.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600" />
+                          ) : (
+                            <ArrowDownTrayIcon className="w-4 h-4" />
+                          )}
+                          {downloadingId === document.id ? 'Downloading...' : 'Download'}
                         </Button>
+
+                        {deleteConfirmId === document.id ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(document.id)}
+                              disabled={deletingId === document.id}
+                            >
+                              {deletingId === document.id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                  Menghapus...
+                                </>
+                              ) : (
+                                'Hapus'
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setDeleteConfirmId(null)}
+                            >
+                              Batal
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDeleteConfirmId(document.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeleteConfirmId(document.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
-                    )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Summary Stats */}
+            {documents.length > 0 && (
+              <div className="pt-4 border-t">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {documents.length}
+                    </div>
+                    <div className="text-xs text-gray-600">Total Dokumen</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold text-green-600">
+                      {Math.round(documents.reduce((sum, d) => sum + d.fileSize, 0) / 1024 / 1024)}MB
+                    </div>
+                    <div className="text-xs text-gray-600">Total Size</div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Summary Stats */}
-        {documents.length > 0 && (
-          <div className="pt-4 border-t">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-blue-600">
-                  {documents.length}
-                </div>
-                <div className="text-xs text-gray-600">Total Dokumen</div>
               </div>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-green-600">
-                  {Math.round(documents.reduce((sum, d) => sum + d.fileSize, 0) / 1024 / 1024)}MB
-                </div>
-                <div className="text-xs text-gray-600">Total Size</div>
-              </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
