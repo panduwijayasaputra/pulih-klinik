@@ -59,7 +59,8 @@ export default function ClientsPage() {
       await assignTherapist(selectedClientId, therapistId);
 
       // Then transition status to consultation
-      await transitionStatus(selectedClientId, ClientStatusEnum.Consultation, reason || 'Klien memulai ulang terapi dengan therapist baru');
+      const client = clients.find(c => c.id === selectedClientId);
+      await transitionStatus(selectedClientId, ClientStatusEnum.Consultation, reason || 'Klien memulai ulang terapi dengan therapist baru', client?.status);
 
       addToast({
         type: 'success',
@@ -76,32 +77,6 @@ export default function ClientsPage() {
     }
   };
 
-  const handleAssignSuccess = async () => {
-    if (!selectedClientId) return;
-
-    // Get the client to check current status
-    const client = clients.find(c => c.id === selectedClientId);
-
-    // If client is new, transition to consultation
-    if (client?.status === ClientStatusEnum.New) {
-      try {
-        await transitionStatus(selectedClientId, ClientStatusEnum.Consultation, 'Klien ditugaskan ke therapist untuk konsultasi');
-      } catch (error) {
-        // Don't block success flow for status transition failure
-      }
-    }
-
-    setAssignModalOpen(false);
-    setSelectedClientId(null);
-    setCurrentTherapistId(undefined);
-    addToast({
-      type: 'success',
-      title: 'Berhasil',
-      message: client?.status === ClientStatusEnum.New
-        ? 'Klien berhasil ditugaskan ke therapist dan status berubah ke Konsultasi'
-        : 'Klien berhasil ditugaskan ulang ke therapist',
-    });
-  };
 
   return (
     <RoleGuard allowedRoles={[UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]}>
@@ -126,11 +101,37 @@ export default function ClientsPage() {
               }
             }}
             clientId={selectedClientId}
-            onAssigned={async (therapistId) => {
+            onAssigned={async (therapistId, reason) => {
               if (!selectedClientId) return;
               try {
                 await assignTherapist(selectedClientId, therapistId);
-                handleAssignSuccess();
+                
+                // Show specific success message based on whether it's reassignment
+                const client = clients.find(c => c.id === selectedClientId);
+                const isReassignment = !!currentTherapistId;
+                
+                addToast({
+                  type: 'success',
+                  title: isReassignment ? 'Therapist Berhasil Diganti' : 'Therapist Berhasil Ditugaskan',
+                  message: isReassignment 
+                    ? `Klien ${client?.fullName || 'ini'} telah berhasil dipindahkan ke therapist baru.${reason ? ` Alasan: ${reason}` : ''}`
+                    : `Klien ${client?.fullName || 'ini'} telah berhasil ditugaskan ke therapist.`,
+                  duration: 6000,
+                });
+
+                // Close modal and reset
+                setAssignModalOpen(false);
+                setSelectedClientId(null);
+                setCurrentTherapistId(undefined);
+
+                // Handle status transition if needed
+                if (client?.status === ClientStatusEnum.New) {
+                  try {
+                    await transitionStatus(selectedClientId, ClientStatusEnum.Consultation, 'Klien ditugaskan ke therapist untuk konsultasi', client.status);
+                  } catch (error) {
+                    // Don't block success flow for status transition failure
+                  }
+                }
               } catch (error) {
                 addToast({
                   type: 'error',

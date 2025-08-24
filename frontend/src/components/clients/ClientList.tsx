@@ -48,9 +48,8 @@ export const ClientList: React.FC<ClientListProps> = ({
   onAssign,
   onConsultation,
 }) => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { createClient, updateClient } = useClient();
+  const { clients: storeClients, createClient, updateClient, loadClients, loading: storeLoading } = useClient();
+  const [localLoading, setLocalLoading] = useState(false);
   const { addToast } = useToast();
   const { user } = useAuth();
   const [status, setStatus] = useState<'all' | Client['status']>('all');
@@ -63,35 +62,36 @@ export const ClientList: React.FC<ClientListProps> = ({
   // Initialize data table actions hook
   const { createDetailAction, createEditAction } = useDataTableActions();
 
-  // Load clients data
-  const loadClients = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const response = await ClientAPI.getClients();
-      if (response.success && response.data) {
-        setClients(response.data.items);
-      }
-    } catch (error) {
-      addToast({
-        type: 'error',
-        title: 'Kesalahan Koneksi',
-        message: 'Gagal terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.'
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addToast]);
-
+  // Load clients data on mount
   useEffect(() => {
-    loadClients();
-  }, [loadClients]);
+    const loadData = async () => {
+      setLocalLoading(true);
+      try {
+        // Mock API call delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        await loadClients(true); // Force refresh
+      } catch (error) {
+        addToast({
+          type: 'error',
+          title: 'Kesalahan Koneksi',
+          message: 'Gagal terhubung ke server. Silakan periksa koneksi internet Anda dan coba lagi.'
+        });
+      } finally {
+        setLocalLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [loadClients, addToast]);
 
   // Refresh function
   const refreshClients = useCallback(async () => {
-    await loadClients();
+    setLocalLoading(true);
+    try {
+      await loadClients(true); // Force refresh
+    } finally {
+      setLocalLoading(false);
+    }
   }, [loadClients]);
 
   // Modal handlers
@@ -133,7 +133,7 @@ export const ClientList: React.FC<ClientListProps> = ({
         });
       }
       // Refresh the client list
-      refreshClients();
+      await refreshClients();
     } catch (error) {
       addToast({
         type: 'error',
@@ -167,8 +167,11 @@ export const ClientList: React.FC<ClientListProps> = ({
     return hasTherapist && !hasClinicAdmin;
   }, [user?.roles]);
 
-  // Use local clients state, fallback to prop if provided
-  let displayClients = clients.length > 0 ? clients : (clientsProp ?? []);
+  // Use store clients data, fallback to prop if provided
+  let displayClients = storeClients.length > 0 ? storeClients : (clientsProp ?? []);
+  
+  // Combine loading states
+  const loading = storeLoading || localLoading;
 
   // For therapists, filter to only show assigned clients
   if (isTherapist && user?.id) {

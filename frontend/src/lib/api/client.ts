@@ -169,10 +169,34 @@ export const ClientAPI = {
     };
   },
   async assignClientToTherapist(clientId: string, therapistId: string): Promise<ApiResponse<{ clientId: string; therapistId: string }>> {
-    // TODO: Implement actual API call
+    // Mock API call with success response
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+    
+    // In a real implementation, this would make an API call to update the database
+    // For now, we'll simulate success since mock data is read-only
+    const client = getMockClientById(clientId);
+    if (!client) {
+      return {
+        success: false,
+        message: 'Klien tidak ditemukan'
+      };
+    }
+
+    // Get therapist name from therapist mock data
+    const { mockTherapists } = await import('@/lib/mocks/therapist');
+    const therapist = mockTherapists.find((t: any) => t.id === therapistId);
+    
+    if (!therapist) {
+      return {
+        success: false,
+        message: 'Therapist tidak ditemukan'
+      };
+    }
+    
     return {
-      success: false,
-      message: 'API not implemented yet'
+      success: true,
+      message: `Therapist ${therapist.fullName} berhasil ditugaskan ke klien ${client.fullName}`,
+      data: { clientId, therapistId }
     };
   },
 

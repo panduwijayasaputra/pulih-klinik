@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTherapists } from '@/hooks/useTherapists';
 import { Textarea } from '@/components/ui/textarea';
+import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface AssignTherapistModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
   onAssigned,
 }) => {
   const { therapists, isLoading: therapistsLoading } = useTherapists();
+  const { isOpen: confirmDialogOpen, config: confirmConfig, openDialog: openConfirmDialog, closeDialog: closeConfirmDialog } = useConfirmationDialog();
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,6 +73,88 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
   const handleConfirm = async (): Promise<void> => {
     if (!selectedTherapist) return;
     if (isReassign && !reason.trim()) return;
+
+    const selectedTherapistData = therapists.find(t => t.id === selectedTherapist);
+    if (!selectedTherapistData) return;
+
+    if (isReassign) {
+      // Show confirmation dialog for reassignment
+      openConfirmDialog({
+        title: 'Konfirmasi Penggantian Therapist',
+        description: 'Apakah Anda yakin ingin mengganti therapist untuk klien ini?',
+        variant: 'warning',
+        confirmText: 'Ya, Ganti Therapist',
+        cancelText: 'Batal',
+        children: (
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">Therapist Saat Ini:</span>
+                <span className="text-sm font-semibold text-gray-900">
+                  {currentTherapist?.fullName || 'Tidak diketahui'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">Therapist Baru:</span>
+                <span className="text-sm font-semibold text-blue-900">
+                  {selectedTherapistData.fullName}
+                </span>
+              </div>
+              <div className="border-t border-gray-200 pt-3">
+                <span className="text-sm font-medium text-gray-600">Alasan:</span>
+                <p className="text-sm text-gray-800 mt-1 bg-white rounded p-2 border">
+                  {reason.trim()}
+                </p>
+              </div>
+            </div>
+            <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              ⚠️ Tindakan ini akan mengubah penugasan therapist dan tidak dapat dibatalkan.
+            </div>
+          </div>
+        ),
+        onConfirm: () => performAssignment()
+      });
+    } else {
+      // Show confirmation dialog for initial assignment
+      openConfirmDialog({
+        title: 'Konfirmasi Penugasan Therapist',
+        description: 'Apakah Anda yakin ingin menugaskan therapist untuk klien ini?',
+        variant: 'info',
+        confirmText: 'Ya, Tugaskan Therapist',
+        cancelText: 'Batal',
+        children: (
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">Therapist yang Dipilih:</span>
+                <span className="text-sm font-semibold text-blue-900">
+                  {selectedTherapistData.fullName}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">Kapasitas Saat Ini:</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  {selectedTherapistData.currentLoad}/{selectedTherapistData.maxClients} klien
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">Spesialisasi:</span>
+                <span className="text-sm text-gray-700">
+                  {selectedTherapistData.specializations?.slice(0, 2).join(', ') || 'Hipnoterapi Umum'}
+                </span>
+              </div>
+            </div>
+            <div className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              ℹ️ Setelah therapist ditugaskan, status klien akan berubah menjadi "Konsultasi".
+            </div>
+          </div>
+        ),
+        onConfirm: () => performAssignment()
+      });
+    }
+  };
+
+  const performAssignment = async (): Promise<void> => {
     setIsSubmitting(true);
     try {
       await onAssigned(selectedTherapist, isReassign ? reason.trim() : undefined);
@@ -83,7 +167,8 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header Section */}
         <div className="pb-6 border-b border-gray-200">
@@ -252,6 +337,14 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialogOpen}
+        onClose={closeConfirmDialog}
+        {...confirmConfig}
+      />
+    </>
   );
 };
 

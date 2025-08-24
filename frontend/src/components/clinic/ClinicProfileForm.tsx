@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 interface ClinicProfileFormProps {
@@ -27,6 +28,7 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
   showActions = true
 }) => {
   const { clinic, isLoading, error, updateClinic, uploadLogo, clearError } = useClinic();
+  const { isOpen: confirmDialogOpen, config: confirmConfig, openDialog: openConfirmDialog, closeDialog: closeConfirmDialog } = useConfirmationDialog();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,6 +92,56 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
   };
 
   const onSubmit = async (data: ClinicProfileFormValidation) => {
+    // Show confirmation dialog before submitting
+    const hasLogoChange = fileInputRef.current?.files?.[0] !== undefined;
+    
+    openConfirmDialog({
+      title: 'Konfirmasi Perubahan Profil Klinik',
+      description: 'Apakah Anda yakin ingin menyimpan perubahan profil klinik?',
+      variant: 'info',
+      confirmText: 'Ya, Simpan Perubahan',
+      cancelText: 'Batal',
+      children: (
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+            <h4 className="text-sm font-medium text-gray-900">Perubahan yang akan disimpan:</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Nama Klinik:</span>
+                <span className="text-gray-900 font-medium">{data.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Email:</span>
+                <span className="text-gray-900">{data.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Telepon:</span>
+                <span className="text-gray-900">{data.phone}</span>
+              </div>
+              {data.website && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Website:</span>
+                  <span className="text-gray-900">{data.website}</span>
+                </div>
+              )}
+              {hasLogoChange && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Logo:</span>
+                  <span className="text-green-600 font-medium">✓ Logo baru akan diupload</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            ℹ️ Perubahan akan langsung terlihat di profil klinik Anda.
+          </div>
+        </div>
+      ),
+      onConfirm: () => performSubmit(data)
+    });
+  };
+
+  const performSubmit = async (data: ClinicProfileFormValidation) => {
     clearError();
 
     try {
@@ -122,7 +174,8 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
 
 
   return (
-    <Card className="w-full">
+    <>
+      <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><BuildingOfficeIcon className="w-5 h-5" /> Profil Klinik</CardTitle>
         <CardDescription>
@@ -346,5 +399,13 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
         )}
       </CardContent>
     </Card>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialogOpen}
+        onClose={closeConfirmDialog}
+        {...confirmConfig}
+      />
+    </>
   );
 };

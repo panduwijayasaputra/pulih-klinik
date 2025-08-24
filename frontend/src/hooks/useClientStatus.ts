@@ -20,7 +20,8 @@ export interface UseClientStatusReturn {
   transitionStatus: (
     clientId: string,
     toStatus: ClientStatusEnum,
-    reason?: string
+    reason?: string,
+    fromStatusOverride?: ClientStatusEnum | null
   ) => Promise<boolean>;
   
   // Validation
@@ -64,7 +65,7 @@ export const useClientStatus = (): UseClientStatusReturn => {
 
   // Transition client status with validation and error handling
   const transitionStatus = useCallback(
-    async (clientId: string, toStatus: ClientStatusEnum, reason?: string) => {
+    async (clientId: string, toStatus: ClientStatusEnum, reason?: string, fromStatusOverride?: ClientStatusEnum | null) => {
       if (!user?.id) {
         setError('Pengguna tidak terautentikasi');
         addToast({
@@ -75,11 +76,12 @@ export const useClientStatus = (): UseClientStatusReturn => {
         return false;
       }
 
-      const currentStatus = getCurrentClientStatus(clientId);
+      // Use override status if provided, otherwise get from status store
+      const currentStatus = fromStatusOverride !== undefined ? fromStatusOverride : getCurrentClientStatus(clientId);
       
       // Validate transition
       if (!validateStatusTransition(currentStatus, toStatus)) {
-        const errorMsg = 'Transisi status tidak valid';
+        const errorMsg = `Transisi status tidak valid: ${currentStatus || 'null'} → ${toStatus}`;
         setError(errorMsg);
         addToast({
           type: 'error',
