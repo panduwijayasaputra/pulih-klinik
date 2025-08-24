@@ -20,7 +20,7 @@ export interface TableAction<T> {
   key: string;
   label: string | ((item: T) => string);
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  variant?: 'default' | 'outline' | 'destructive' | 'secondary' | 'ghost' | 'link';
+  variant?: 'default' | 'outline' | 'destructive' | 'secondary' | 'ghost' | 'link' | 'info' | 'success' | 'warning' | 'purple' | 'orange' | 'teal' | 'outlineSuccess' | 'outlineWarning' | 'outlineInfo' | 'outlinePurple' | 'outlineOrange' | 'outlineTeal' | 'softSuccess' | 'softWarning' | 'softInfo' | 'softPurple' | 'softOrange' | 'softTeal' | 'muted' | 'outlineMuted';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   onClick: (item: T) => void | Promise<void>;
   disabled?: (item: T) => boolean;

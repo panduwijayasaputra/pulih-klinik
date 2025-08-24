@@ -24,7 +24,6 @@ function ClinicManagePageContent() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleSaveSuccess = () => {
-    console.log('Profile updated successfully');
     // Could add toast notification here
   };
 

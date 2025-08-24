@@ -19,6 +19,50 @@ const buttonVariants = cva(
           "bg-gray-100 text-gray-900 shadow-sm hover:bg-gray-200",
         ghost: "hover:bg-gray-100 hover:text-gray-900",
         link: "text-primary-600 underline-offset-4 hover:underline",
+        // New color variants
+        success:
+          "bg-green-600 text-white shadow-sm hover:bg-green-700",
+        warning:
+          "bg-yellow-500 text-white shadow-sm hover:bg-yellow-600",
+        info:
+          "bg-blue-600 text-white shadow-sm hover:bg-blue-700",
+        purple:
+          "bg-purple-600 text-white shadow-sm hover:bg-purple-700",
+        orange:
+          "bg-orange-600 text-white shadow-sm hover:bg-orange-700",
+        teal:
+          "bg-teal-600 text-white shadow-sm hover:bg-teal-700",
+        // Outline variants with colors
+        outlineSuccess:
+          "border border-green-300 bg-white text-green-700 shadow-sm hover:bg-green-50 hover:text-green-800",
+        outlineWarning:
+          "border border-yellow-300 bg-white text-yellow-700 shadow-sm hover:bg-yellow-50 hover:text-yellow-800",
+        outlineInfo:
+          "border border-blue-300 bg-white text-blue-700 shadow-sm hover:bg-blue-50 hover:text-blue-800",
+        outlinePurple:
+          "border border-purple-300 bg-white text-purple-700 shadow-sm hover:bg-purple-50 hover:text-purple-800",
+        outlineOrange:
+          "border border-orange-300 bg-white text-orange-700 shadow-sm hover:bg-orange-50 hover:text-orange-800",
+        outlineTeal:
+          "border border-teal-300 bg-white text-teal-700 shadow-sm hover:bg-teal-50 hover:text-teal-800",
+        // Soft variants (light backgrounds)
+        softSuccess:
+          "bg-green-100 text-green-800 shadow-sm hover:bg-green-200",
+        softWarning:
+          "bg-yellow-100 text-yellow-800 shadow-sm hover:bg-yellow-200",
+        softInfo:
+          "bg-blue-100 text-blue-800 shadow-sm hover:bg-blue-200",
+        softPurple:
+          "bg-purple-100 text-purple-800 shadow-sm hover:bg-purple-200",
+        softOrange:
+          "bg-orange-100 text-orange-800 shadow-sm hover:bg-orange-200",
+        softTeal:
+          "bg-teal-100 text-teal-800 shadow-sm hover:bg-teal-200",
+        // Muted variants
+        muted:
+          "bg-gray-500 text-white shadow-sm hover:bg-gray-600",
+        outlineMuted:
+          "border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-800",
       },
       size: {
         default: "h-9 px-4 py-2",

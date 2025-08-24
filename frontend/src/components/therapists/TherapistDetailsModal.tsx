@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { XMarkIcon, CheckCircleIcon, ClockIcon, EnvelopeIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Therapist } from '@/types/therapist';
 import { THERAPIST_SPECIALIZATIONS } from '@/types/therapist';
 import { TherapistStatusEnum, UserRoleEnum } from '@/types/enums';
@@ -69,6 +71,7 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [therapistData, setTherapistData] = useState<Therapist | null>(null);
+  const { openDialog, isOpen: dialogIsOpen, config: dialogConfig, closeDialog } = useConfirmationDialog();
 
   // Fetch therapist data when modal opens
   useEffect(() => {
@@ -94,6 +97,19 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
       setLoading(false);
     }
   }, [isOpen, therapistId]);
+
+  const handleResendEmailConfirm = () => {
+    if (!therapistData) return;
+    
+    openDialog({
+      title: 'Kirim Ulang Email Registrasi',
+      description: `Yakin ingin mengirim ulang email registrasi ke ${therapistData.email}? Therapist akan menerima link setup yang baru.`,
+      confirmText: 'Kirim Ulang',
+      cancelText: 'Batal',
+      variant: 'info',
+      onConfirm: () => onResendEmail(therapistData.id)
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -219,66 +235,79 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
 
           {/* Modal Footer */}
           {!loading && therapistData && (
-            <div className="flex justify-end items-center mt-6 pt-6 border-t border-gray-200">
+            <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
+              {/* Left side - Close button */}
+              <Button
+                onClick={onClose}
+                variant="outline"
+                size="sm"
+              >
+                <XMarkIcon className="w-4 h-4" />
+                Tutup
+              </Button>
+
               {/* Right side - Action buttons */}
               <div className="flex space-x-3">
                 {/* Clinic Admin Actions */}
                 {hasRole(UserRoleEnum.ClinicAdmin) && (
                   <>
                     {/* Edit Button */}
-                    <button
+                    <Button
                       onClick={() => onEdit(therapistData.id)}
-                      className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-md hover:bg-blue-50 flex items-center"
+                      variant="info"
+                      size="sm"
                     >
-                      <PencilIcon className="w-4 h-4 mr-2" />
+                      <PencilIcon className="w-4 h-4" />
                       Edit Therapist
-                    </button>
+                    </Button>
 
                     {/* Status Management Buttons */}
                     {therapistData.status === 'active' && (
-                      <button
+                      <Button
                         onClick={() => {
                           onClose();
                           onStatusChange(therapistData.id, 'inactive');
                         }}
                         disabled={actionLoading === therapistData.id}
-                        className="px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50 flex items-center"
+                        variant="destructive"
+                        size="sm"
                       >
                         {actionLoading === therapistData.id ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2" />
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                             Memproses...
                           </>
                         ) : (
                           <>
-                            <XMarkIcon className="w-4 h-4 mr-2" />
+                            <XMarkIcon className="w-4 h-4" />
                             Nonaktifkan Akun
                           </>
                         )}
-                      </button>
+                      </Button>
                     )}
 
                     {therapistData.status === 'inactive' && (
-                      <button
+                      <Button
                         onClick={() => {
                           onClose();
                           onStatusChange(therapistData.id, 'active');
                         }}
                         disabled={actionLoading === therapistData.id}
-                        className="px-4 py-2 text-sm font-medium text-green-600 bg-white border border-green-300 rounded-md hover:bg-green-50 disabled:opacity-50 flex items-center"
+                        variant="success"
+                        size="sm"
                       >
                         {actionLoading === therapistData.id ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2" />
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                             Memproses...
                           </>
                         ) : (
                           <>
-                            <CheckCircleIcon className="w-4 h-4 mr-2" />
+                            <CheckCircleIcon className="w-4 h-4" />
                             Aktifkan Akun
                           </>
                         )}
-                      </button>
+                      </Button>
                     )}
 
                     {/* Resend Email Button for Pending Setup */}
@@ -287,45 +316,45 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                       const isInCooldown = Boolean(cooldown && cooldown > 0);
 
                       return (
-                        <button
-                          onClick={() => onResendEmail(therapistData.id)}
+                        <Button
+                          onClick={handleResendEmailConfirm}
                           disabled={actionLoading === therapistData.id || isInCooldown}
-                          className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-md hover:bg-blue-50 disabled:opacity-50 flex items-center"
+                          variant="softInfo"
+                          size="sm"
                         >
                           {actionLoading === therapistData.id ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                               Mengirim...
                             </>
                           ) : isInCooldown ? (
                             <>
-                              <ClockIcon className="w-4 h-4 mr-2" />
+                              <ClockIcon className="w-4 h-4" />
                               Kirim Ulang Email dalam {formatCountdown(cooldown || 0)}
                             </>
                           ) : (
                             <>
-                              <EnvelopeIcon className="w-4 h-4 mr-2" />
+                              <EnvelopeIcon className="w-4 h-4" />
                               Kirim Ulang Email
                             </>
                           )}
-                        </button>
+                        </Button>
                       );
                     })()}
                   </>
                 )}
-
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
-                >
-                  <XMarkIcon className="w-4 h-4 mr-2" />
-                  Tutup
-                </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={dialogIsOpen}
+        onClose={closeDialog}
+        {...dialogConfig}
+      />
     </div>
   );
 };

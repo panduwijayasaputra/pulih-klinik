@@ -60,7 +60,6 @@ function SettingsPageContent() {
 
   const handleSaveSettings = () => {
     // Mock save functionality
-    console.log('Saving settings:', settings);
     
     addToast({
       type: 'success',

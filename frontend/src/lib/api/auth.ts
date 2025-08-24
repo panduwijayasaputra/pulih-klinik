@@ -30,7 +30,6 @@ export class AuthAPI {
 
   static async logout(): Promise<void> {
     // TODO: Implement actual API call
-    console.log('AuthAPI.logout called');
   }
 
   static async getCurrentUser(): Promise<ItemResponse<any>> {
@@ -48,7 +47,6 @@ export class AuthAPI {
             };
           }
         } catch (error) {
-          console.error('Error parsing persisted auth storage:', error);
         }
       }
     }

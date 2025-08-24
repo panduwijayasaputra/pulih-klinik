@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
@@ -12,7 +12,7 @@ interface AssignTherapistModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
-  currentTherapistId?: string;
+  currentTherapistId?: string | undefined;
   onAssigned: (therapistId: string, reason?: string) => Promise<void> | void;
 }
 
@@ -23,16 +23,27 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
   currentTherapistId,
   onAssigned,
 }) => {
-  const { therapists } = useTherapists();
+  const { therapists, isLoading: therapistsLoading } = useTherapists();
   const [selectedTherapist, setSelectedTherapist] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
   const currentTherapist = useMemo(() => {
-    return currentTherapistId ? therapists.find(t => t.id === currentTherapistId) : null;
+    const found = currentTherapistId && currentTherapistId.trim() && currentTherapistId !== '' ? therapists.find(t => t.id === currentTherapistId) : null;
+    return found;
   }, [currentTherapistId, therapists]);
 
-  const isReassign = !!currentTherapistId;
+  const isReassign = !!currentTherapistId && currentTherapistId.trim() !== '' && currentTherapistId !== 'undefined';
+
+
+  // Reset form when modal opens/closes or currentTherapistId changes
+  useEffect(() => {
+    if (!open) {
+      setSelectedTherapist('');
+      setReason('');
+    }
+  }, [open, currentTherapistId]);
 
   const isAtCapacity = (therapistId: string): boolean => {
     const t = therapists.find((x) => x.id === therapistId);
@@ -89,7 +100,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
         {/* Content Section */}
         <div className="py-6 space-y-6">
           {/* Current Therapist Section (for re-assign) */}
-          {isReassign && currentTherapist && (
+          {isReassign && (
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -97,15 +108,28 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
                 </svg>
                 <span className="text-sm font-medium text-yellow-800">Therapist Saat Ini</span>
               </div>
-              <p className="text-sm text-yellow-700">
-                <strong>{currentTherapist.fullName}</strong>
-              </p>
-              <p className="text-xs text-yellow-600 mt-1">
-                {availableTherapists.length > 0 
-                  ? 'Therapist ini akan digantikan dengan pilihan baru Anda' 
-                  : 'Tidak ada therapist lain yang tersedia untuk penggantian'
-                }
-              </p>
+              {therapistsLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600" />
+                  <span className="text-sm text-yellow-700">Memuat data therapist...</span>
+                </div>
+              ) : currentTherapist ? (
+                <>
+                  <p className="text-sm text-yellow-700">
+                    <strong>{currentTherapist.fullName}</strong>
+                  </p>
+                  <p className="text-xs text-yellow-600 mt-1">
+                    {availableTherapists.length > 0 
+                      ? 'Therapist ini akan digantikan dengan pilihan baru Anda' 
+                      : 'Tidak ada therapist lain yang tersedia untuk penggantian'
+                    }
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-yellow-700">
+                  <strong>Therapist saat ini tidak ditemukan</strong>
+                </p>
+              )}
             </div>
           )}
 
@@ -125,7 +149,6 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
                   </div>
                 ) : (
                   availableTherapists.map((t) => {
-                    const loadPct = Math.round((t.currentLoad / t.maxClients) * 100);
                     const disabled = t.currentLoad >= t.maxClients;
 
                     return (

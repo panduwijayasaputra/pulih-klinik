@@ -35,7 +35,7 @@ import {
 
 export interface ClientListProps {
   clients?: Client[];
-  onAssign?: (clientId: string) => void;
+  onAssign?: (clientId: string, currentTherapistId?: string) => void;
   onConsultation?: (clientId: string) => void;
 }
 
@@ -75,7 +75,6 @@ export const ClientList: React.FC<ClientListProps> = ({
         setClients(response.data.items);
       }
     } catch (error) {
-      console.error('Failed to load clients:', error);
       addToast({
         type: 'error',
         title: 'Kesalahan Koneksi',
@@ -203,6 +202,22 @@ export const ClientList: React.FC<ClientListProps> = ({
       ),
     },
     {
+      key: 'assignedTherapist',
+      header: 'Therapist',
+      render: (client) => (
+        <div>
+          {client.assignedTherapistName ? (
+            <div className="flex items-center">
+              <UserIcon className="w-4 h-4 mr-2 text-gray-400" />
+              <span className="text-sm text-gray-900">{client.assignedTherapistName}</span>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-400 italic">Belum ditugaskan</span>
+          )}
+        </div>
+      ),
+    },
+    {
       key: 'status',
       header: 'Status',
       render: (client) => getStatusBadge(client.status),
@@ -256,26 +271,26 @@ export const ClientList: React.FC<ClientListProps> = ({
           key: 'edit',
           label: 'Edit',
           icon: PencilIcon,
-          variant: 'outline' as const,
-                  onClick: async (client) => {
-          handleEditClientModal(client);
-        },
+          variant: 'default' as const,
+          onClick: async (client) => {
+            handleEditClientModal(client);
+          },
         },
         {
           key: 'assign-therapist',
           label: 'Tugaskan Therapist',
           icon: UserPlusIcon,
-          variant: 'default',
+          variant: 'success',
           show: (client) => client.status === ClientStatusEnum.New && !client.assignedTherapist,
-          onClick: (client) => onAssign?.(client.id),
+          onClick: (client) => onAssign?.(client.id, undefined),
         },
         {
           key: 're-assign-therapist',
           label: 'Ganti Therapist',
           icon: UserPlusIcon,
-          variant: 'outline',
-          show: (client) => client.assignedTherapist && client.status !== ClientStatusEnum.Done || client.status !== ClientStatusEnum.New,
-          onClick: (client) => onAssign?.(client.id),
+          variant: 'orange',
+          show: (client) => !!client.assignedTherapist && (client.status !== ClientStatusEnum.Done && client.status !== ClientStatusEnum.New),
+          onClick: (client) => onAssign?.(client.id, client.assignedTherapist),
         },
       );
     }

@@ -283,12 +283,9 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   }, [open, mode, defaultValues, reset]);
 
   const onSubmit = (data: ClientFormData) => {
-    console.log('onSubmit called with data:', data);
-    console.log('Mode:', mode);
     const titleText = mode === 'edit' ? 'Perbarui Data Klien' : 'Tambah Klien Baru';
     const confirmText = mode === 'edit' ? 'Perbarui Data' : 'Tambah Klien';
 
-    console.log('Opening dialog...');
     openDialog({
       title: titleText,
       description: mode === 'edit'
@@ -369,7 +366,6 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
         }
       }
     } catch (error) {
-      console.error('Form submission error:', error);
       addToast({
         type: 'error',
         title: 'Kesalahan Sistem',
@@ -391,16 +387,6 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   // Watch isMinor to conditionally show fields
   const isMinor = watch('isMinor');
 
-  // Debug form state
-  console.log('ClientFormModal Debug:', {
-    mode,
-    isDirty,
-    isValid,
-    errors: Object.keys(errors),
-    isLoadingClient,
-    isSubmitting,
-    clientLoading
-  });
 
   if (isLoadingClient) {
     return (
@@ -893,24 +879,22 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
 
 
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+            {/* Left side - Cancel button */}
             <Button type="button" variant="outline" onClick={handleCancel}>
               Batal
             </Button>
+
+            {/* Right side - Submit button */}
             <Button
               type="submit"
+              variant="default"
               disabled={
                 clientLoading ||
                 isSubmitting ||
                 !isValid ||
                 !isDirty
               }
-              onClick={() => {
-                console.log('Submit button clicked');
-                console.log('Form state:', { isSubmitting, clientLoading, isDirty, isValid, mode });
-                console.log('Form errors:', errors);
-                console.log('Form values:', watch());
-              }}
             >
               {clientLoading || isSubmitting ? (
                 <>

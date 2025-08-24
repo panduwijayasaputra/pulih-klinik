@@ -748,12 +748,16 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+            {/* Left side - Cancel button */}
             <Button type="button" variant="outline" onClick={handleCancel}>
               Batal
             </Button>
+
+            {/* Right side - Submit button */}
             <Button
               type="submit"
+              variant="default"
               className="px-8"
               disabled={
                 loading ||

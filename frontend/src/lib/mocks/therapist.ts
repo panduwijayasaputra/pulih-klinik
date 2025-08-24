@@ -79,10 +79,10 @@ export const mockTherapists: Therapist[] = [
   {
     id: 'th-001',
     clinicId: 'clinic-001',
-    fullName: 'Dr. Sarah Wijaya, M.Psi',
-    email: 'sarah.wijaya@smarttherapy.id',
+    fullName: 'Dr. Ahmad Rahman',
+    email: 'dr.ahmad@kliniksehat.com',
     phone: '+628123456789',
-    avatar: '/avatars/sarah-wijaya.jpg',
+    avatar: '/avatars/ahmad-rahman.jpg',
     
     // Professional Info
     licenseNumber: 'SIP-001-2020',
@@ -131,10 +131,10 @@ export const mockTherapists: Therapist[] = [
   {
     id: 'th-002',
     clinicId: 'clinic-001',
-    fullName: 'Ahmad Hidayat, S.Psi, M.Psi',
-    email: 'ahmad.hidayat@smarttherapy.id',
+    fullName: 'Dr. Sarah Wijaya',
+    email: 'therapist@kliniksehat.com',
     phone: '+628234567890',
-    avatar: '/avatars/ahmad-hidayat.jpg',
+    avatar: '/avatars/sarah-wijaya.jpg',
     
     // Professional Info
     licenseNumber: 'SIP-002-2021',

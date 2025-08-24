@@ -16,12 +16,20 @@ export default function ClientsPage() {
   const { addToast } = useToast();
   const { assignTherapist, clients } = useClient();
   const { transitionStatus } = useClientStatus();
+  
+  // // Debug: Log all clients with their assigned therapists
+  // console.log('🔍 All Clients Debug:');
+  // clients.forEach(client => {
+  //   console.log(`  - ${client.fullName} (${client.id}): assignedTherapist = ${client.assignedTherapist}`);
+  // });
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [startOverModalOpen, setStartOverModalOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [currentTherapistId, setCurrentTherapistId] = useState<string | undefined>(undefined);
 
-  const handleAssign = (clientId: string) => {
+  const handleAssign = (clientId: string, currentTherapistId?: string) => {
     setSelectedClientId(clientId);
+    setCurrentTherapistId(currentTherapistId);
     setAssignModalOpen(true);
   };
 
@@ -79,13 +87,13 @@ export default function ClientsPage() {
       try {
         await transitionStatus(selectedClientId, ClientStatusEnum.Consultation, 'Klien ditugaskan ke therapist untuk konsultasi');
       } catch (error) {
-        console.error('Failed to transition status:', error);
         // Don't block success flow for status transition failure
       }
     }
 
     setAssignModalOpen(false);
     setSelectedClientId(null);
+    setCurrentTherapistId(undefined);
     addToast({
       type: 'success',
       title: 'Berhasil',
@@ -108,11 +116,14 @@ export default function ClientsPage() {
 
         {selectedClientId && (
           <AssignTherapistModal
-            currentTherapistId={clients.find(c => c.id === selectedClientId)?.assignedTherapist || ''}
+            currentTherapistId={currentTherapistId}
             open={assignModalOpen}
             onOpenChange={(open) => {
               setAssignModalOpen(open);
-              if (!open) setSelectedClientId(null);
+              if (!open) {
+                setSelectedClientId(null);
+                setCurrentTherapistId(undefined);
+              }
             }}
             clientId={selectedClientId}
             onAssigned={async (therapistId) => {

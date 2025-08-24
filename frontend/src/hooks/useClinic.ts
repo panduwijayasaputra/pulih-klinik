@@ -261,7 +261,6 @@ export const useClinic = () => {
   const downloadDocument = useCallback(async (documentId: string, fileName: string) => {
     try {
       // Clinic document download would be handled via direct file download
-      console.log('Download document:', documentId, fileName);
       return true;
     } catch (error) {
       const errorMessage = handleError(error, 'Gagal mengunduh dokumen');

@@ -87,7 +87,6 @@ export class TherapistAPI {
         }
       };
     } catch (error) {
-      console.error('Error fetching therapists:', error);
       return {
         success: false,
         message: 'Failed to fetch therapists'
@@ -114,7 +113,6 @@ export class TherapistAPI {
         data: therapist
       };
     } catch (error) {
-      console.error('Error fetching therapist:', error);
       return {
         success: false,
         message: 'Failed to fetch therapist'
@@ -184,7 +182,6 @@ export class TherapistAPI {
         data: newTherapist
       };
     } catch (error) {
-      console.error('Error creating therapist:', error);
       return {
         success: false,
         message: 'Failed to create therapist'
@@ -194,7 +191,6 @@ export class TherapistAPI {
 
   static async updateTherapist(therapistId: string, data: Partial<TherapistFormData>): Promise<ItemResponse<Therapist>> {
     // TODO: Implement actual API call
-    console.log('TherapistAPI.updateTherapist called with:', { therapistId, data });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -203,7 +199,6 @@ export class TherapistAPI {
 
   static async deleteTherapist(therapistId: string): Promise<StatusResponse> {
     // TODO: Implement actual API call
-    console.log('TherapistAPI.deleteTherapist called with:', { therapistId });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -212,7 +207,6 @@ export class TherapistAPI {
 
   static async getTherapistAssignments(therapistId: string): Promise<ListResponse<TherapistAssignment>> {
     // TODO: Implement actual API call
-    console.log('TherapistAPI.getTherapistAssignments called with:', { therapistId });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -246,7 +240,6 @@ export class TherapistAPI {
         data: updatedTherapist
       };
     } catch (error) {
-      console.error('Error updating therapist status:', error);
       return {
         success: false,
         message: 'Failed to update therapist status'
@@ -256,7 +249,6 @@ export class TherapistAPI {
 
   static async assignClientToTherapist(therapistId: string, clientId: string): Promise<ItemResponse<TherapistAssignment>> {
     // TODO: Implement actual API call
-    console.log('TherapistAPI.assignClientToTherapist called with:', { therapistId, clientId });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -265,7 +257,6 @@ export class TherapistAPI {
 
   static async removeClientFromTherapist(therapistId: string, clientId: string): Promise<StatusResponse> {
     // TODO: Implement actual API call
-    console.log('TherapistAPI.removeClientFromTherapist called with:', { therapistId, clientId });
     return {
       success: false,
       message: 'API not implemented yet'

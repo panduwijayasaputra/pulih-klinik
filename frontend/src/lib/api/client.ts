@@ -51,7 +51,6 @@ export const ClientAPI = {
         }
       };
     } catch (error) {
-      console.error('Error fetching clients:', error);
       return {
         success: false,
         message: 'Failed to fetch clients'
@@ -78,7 +77,6 @@ export const ClientAPI = {
         data: client
       };
     } catch (error) {
-      console.error('Error fetching client:', error);
       return {
         success: false,
         message: 'Failed to fetch client'
@@ -148,7 +146,6 @@ export const ClientAPI = {
         data: newClient
       };
     } catch (error) {
-      console.error('Error creating client:', error);
       return {
         success: false,
         message: 'Failed to create client'
@@ -158,7 +155,6 @@ export const ClientAPI = {
 
   async updateClient(clientId: string, data: Partial<ClientFormData>): Promise<ItemResponse<Client>> {
     // TODO: Implement actual API call
-    console.log('ClientAPI.updateClient called with:', { clientId, data });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -167,7 +163,6 @@ export const ClientAPI = {
 
   async deleteClient(clientId: string): Promise<StatusResponse> {
     // TODO: Implement actual API call
-    console.log('ClientAPI.deleteClient called with:', { clientId });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -175,7 +170,6 @@ export const ClientAPI = {
   },
   async assignClientToTherapist(clientId: string, therapistId: string): Promise<ApiResponse<{ clientId: string; therapistId: string }>> {
     // TODO: Implement actual API call
-    console.log('ClientAPI.assignClientToTherapist called with:', { clientId, therapistId });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -184,7 +178,6 @@ export const ClientAPI = {
 
   async unassignClient(clientId: string): Promise<ApiResponse<{ clientId: string }>> {
     // TODO: Implement actual API call
-    console.log('ClientAPI.unassignClient called with:', { clientId });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -193,7 +186,6 @@ export const ClientAPI = {
 
   async getTherapistCapacity(therapistId: string): Promise<ApiResponse<{ currentLoad: number; maxClients: number }>> {
     // TODO: Implement actual API call
-    console.log('ClientAPI.getTherapistCapacity called with:', { therapistId });
     return {
       success: false,
       message: 'API not implemented yet'
@@ -202,7 +194,6 @@ export const ClientAPI = {
 
   async getClientSessions(clientId: string, page = 1, pageSize = 10): Promise<PaginatedResponse<any>> {
     // TODO: Implement actual API call
-    console.log('ClientAPI.getClientSessions called with:', { clientId, page, pageSize });
     return {
       success: false,
       message: 'API not implemented yet'

@@ -10,7 +10,6 @@ import { mockClinicProfile, mockClinicStats } from '@/lib/mocks/clinic';
 
 export class ClinicAPI {
   static async getClinicProfile(clinicId: string): Promise<ItemResponse<ClinicProfile>> {
-    console.log('ClinicAPI.getClinicProfile called with:', { clinicId });
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -23,7 +22,6 @@ export class ClinicAPI {
   }
 
   static async updateClinicProfile(clinicId: string, data: ClinicProfileFormData): Promise<ItemResponse<ClinicProfile>> {
-    console.log('ClinicAPI.updateClinicProfile called with:', { clinicId, data });
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -61,7 +59,6 @@ export class ClinicAPI {
       onProgress?: (progress: number) => void;
     }
   ): Promise<ItemResponse<ClinicDocument>> {
-    console.log('ClinicAPI.uploadDocument called with:', { clinicId, file, type, options });
     
     const { name, description, onProgress } = options || {};
     
@@ -118,7 +115,6 @@ export class ClinicAPI {
   }
 
   static async getClinicDocuments(clinicId: string): Promise<ListResponse<ClinicDocument>> {
-    console.log('ClinicAPI.getClinicDocuments called with:', { clinicId });
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -131,7 +127,6 @@ export class ClinicAPI {
   }
 
   static async deleteDocument(clinicId: string, documentId: string): Promise<StatusResponse> {
-    console.log('ClinicAPI.deleteDocument called with:', { clinicId, documentId });
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -143,7 +138,6 @@ export class ClinicAPI {
   }
 
   static async updateClinicBranding(clinicId: string, branding: ClinicBranding): Promise<ItemResponse<ClinicProfile>> {
-    console.log('ClinicAPI.updateClinicBranding called with:', { clinicId, branding });
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -164,7 +158,6 @@ export class ClinicAPI {
   }
 
   static async updateClinicSettings(clinicId: string, settings: ClinicSettings): Promise<ItemResponse<ClinicProfile>> {
-    console.log('ClinicAPI.updateClinicSettings called with:', { clinicId, settings });
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 600));
@@ -186,7 +179,6 @@ export class ClinicAPI {
 
   // Get clinic statistics
   static async getClinicStats(clinicId: string): Promise<ItemResponse<typeof mockClinicStats>> {
-    console.log('ClinicAPI.getClinicStats called with:', { clinicId });
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 400));

@@ -203,6 +203,27 @@ export const TherapistList: React.FC = () => {
     }
   };
 
+  const handleResendEmailConfirm = (therapistId: string) => {
+    const therapist = therapists.find(t => t.id === therapistId);
+    if (!therapist) {
+      addToast({
+        type: 'error',
+        title: 'Therapist Not Found',
+        message: 'Therapist tidak ditemukan. Silakan segarkan halaman dan coba lagi.'
+      });
+      return;
+    }
+
+    openDialog({
+      title: 'Kirim Ulang Email Registrasi',
+      description: `Yakin ingin mengirim ulang email registrasi ke ${therapist.email}? Therapist akan menerima link setup yang baru.`,
+      confirmText: 'Kirim Ulang',
+      cancelText: 'Batal',
+      variant: 'info',
+      onConfirm: () => handleResendEmail(therapistId)
+    });
+  };
+
   const handleStatusChangeRequest = (therapistId: string, newStatus: 'active' | 'inactive') => {
     if (!hasRole(UserRoleEnum.ClinicAdmin)) {
       addToast({
@@ -227,6 +248,7 @@ export const TherapistList: React.FC = () => {
     const actionTitleId = newStatus === 'active' ? 'Aktifkan Akun Therapist' : 'Nonaktifkan Akun Therapist';
 
     openDialog({
+      variant: 'danger',
       title: actionTitleId,
       description: `Yakin ingin ${actionTextId} akun ${therapist.fullName}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
       confirmText: actionTextId.charAt(0).toUpperCase() + actionTextId.slice(1),
@@ -378,17 +400,17 @@ export const TherapistList: React.FC = () => {
       key: 'edit',
       label: 'Edit',
       icon: PencilIcon,
-      variant: 'outline',
+      variant: 'default',
       show: () => hasRole(UserRoleEnum.ClinicAdmin),
-              onClick: async (therapist) => {
-          handleEditTherapistModal(therapist);
-        },
+      onClick: async (therapist) => {
+        handleEditTherapistModal(therapist);
+      },
     },
     {
       key: 'activate',
       label: 'Aktifkan',
       icon: CheckCircleIcon,
-      variant: 'default',
+      variant: 'success',
       show: (therapist) =>
         hasRole(UserRoleEnum.ClinicAdmin) &&
         therapist.status === TherapistStatusEnum.Inactive,
@@ -418,7 +440,7 @@ export const TherapistList: React.FC = () => {
         return 'Kirim Ulang Email';
       },
       icon: EnvelopeIcon,
-      variant: 'outline',
+      variant: 'softInfo',
       show: (therapist) =>
         hasRole(UserRoleEnum.ClinicAdmin) &&
         therapist.status === TherapistStatusEnum.PendingSetup,
@@ -427,7 +449,7 @@ export const TherapistList: React.FC = () => {
         const cooldown = resendCooldowns[therapist.id];
         return Boolean(cooldown && cooldown > 0);
       },
-      onClick: (therapist) => handleResendEmail(therapist.id),
+      onClick: (therapist) => handleResendEmailConfirm(therapist.id),
     },
   ];
 

@@ -27,6 +27,7 @@ export interface Client {
   firstVisit: boolean;
   previousVisitDetails?: string;
   assignedTherapist?: string | undefined;
+  assignedTherapistName?: string | undefined;
   status: EnumValue<typeof ClientStatusEnum>;
   joinDate: string;
   totalSessions: number;

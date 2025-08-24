@@ -22,7 +22,6 @@ function ClinicPageContent() {
   const [activeTab, setActiveTab] = useState('profile');
 
   const handleSaveSuccess = () => {
-    console.log('Profile updated successfully');
     // Could add toast notification here
   };
 

@@ -6,6 +6,7 @@ import { Client } from '@/types/client';
 import { ClientEducationLabels, ClientGuardianMaritalStatusLabels, ClientGuardianRelationshipLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientReligionLabels, ClientStatusEnum, ClientStatusLabels, UserRoleEnum } from '@/types/enums';
 import { ClientStatusBadge } from './ClientStatusBadge';
 import { ClientAPI } from '@/lib/api/client';
+import { Button } from '@/components/ui/button';
 
 interface ClientDetailsModalProps {
   isOpen: boolean;
@@ -433,68 +434,75 @@ export const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
           {/* Modal Footer */}
           {!loading && clientData && (
             <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
+              {/* Left side - Close button */}
+              <Button
+                onClick={onClose}
+                variant="outline"
+                size="sm"
+              >
+                <XMarkIcon className="w-4 h-4" />
+                Tutup
+              </Button>
+
+              {/* Right side - Action buttons */}
               <div className="flex space-x-3">
                 {/* Edit Client - show for all except therapists */}
                 {!isTherapist && (
-                  <button
+                  <Button
                     onClick={() => onEdit(clientData)}
-                    className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-md hover:bg-blue-50 flex items-center"
+                    variant="info"
+                    size="sm"
                   >
-                    <PencilIcon className="w-4 h-4 mr-2" />
+                    <PencilIcon className="w-4 h-4" />
                     Edit Klien
-                  </button>
+                  </Button>
                 )}
 
                 {/* Assign Therapist - only for New clients without therapist */}
                 {!isTherapist && clientData.status === ClientStatusEnum.New && !clientData.assignedTherapist && (
-                  <button
+                  <Button
                     onClick={() => {
                       onClose();
                       onAssign(clientData.id);
                     }}
-                    className="px-4 py-2 text-sm font-medium text-green-600 bg-white border border-green-300 rounded-md hover:bg-green-50 flex items-center"
+                    variant="success"
+                    size="sm"
                   >
-                    <UserPlusIcon className="w-4 h-4 mr-2" />
+                    <UserPlusIcon className="w-4 h-4" />
                     Tugaskan Therapist
-                  </button>
+                  </Button>
                 )}
 
                 {/* Re-assign Therapist - only for clients with therapist but not Done */}
                 {!isTherapist && clientData.assignedTherapist && clientData.status !== ClientStatusEnum.Done && (
-                  <button
+                  <Button
                     onClick={() => {
                       onClose();
                       onAssign(clientData.id);
                     }}
-                    className="px-4 py-2 text-sm font-medium text-orange-600 bg-white border border-orange-300 rounded-md hover:bg-orange-50 flex items-center"
+                    variant="orange"
+                    size="sm"
                   >
-                    <UserPlusIcon className="w-4 h-4 mr-2" />
+                    <UserPlusIcon className="w-4 h-4" />
                     Ganti Therapist
-                  </button>
+                  </Button>
                 )}
 
                 {/* Consultation - for therapists */}
                 {isTherapist && (
-                  <button
+                  <Button
                     onClick={() => {
                       onClose();
                       onConsultation(clientData.id);
                     }}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 flex items-center"
+                    variant="info"
+                    size="sm"
                   >
-                    <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
+                    <ChatBubbleLeftRightIcon className="w-4 h-4" />
                     Konsultasi
-                  </button>
+                  </Button>
                 )}
               </div>
-              
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
-              >
-                <XMarkIcon className="w-4 h-4 mr-2" />
-                Tutup
-              </button>
             </div>
           )}
         </div>
