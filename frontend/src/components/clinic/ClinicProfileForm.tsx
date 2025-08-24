@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert } from '@/components/ui/alert';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useToast } from '@/components/ui/toast';
 import { BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 interface ClinicProfileFormProps {
@@ -29,6 +30,7 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
 }) => {
   const { clinic, isLoading, error, updateClinic, uploadLogo, clearError } = useClinic();
   const { isOpen: confirmDialogOpen, config: confirmConfig, openDialog: openConfirmDialog, closeDialog: closeConfirmDialog } = useConfirmationDialog();
+  const { addToast } = useToast();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -158,6 +160,12 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
       const success = await updateClinic(formData);
       
       if (success) {
+        addToast({
+          type: 'success',
+          title: 'Profil Berhasil Diperbarui',
+          message: 'Profil klinik telah berhasil disimpan dan akan terlihat di seluruh sistem.',
+          duration: 5000,
+        });
         onSaveSuccess?.();
       }
     } catch (err) {

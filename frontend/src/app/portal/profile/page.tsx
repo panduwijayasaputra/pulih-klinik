@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { UserRoleEnum } from '@/types/enums';
 import { profileSchema, type ProfileFormData } from '@/schemas/profileSchema';
 import {
@@ -28,6 +29,7 @@ function ProfilePageContent() {
   const { user } = useAuth();
   const { profile, loading, error, updateProfile, uploadAvatar } = useProfile(user?.id);
   const { addToast } = useToast();
+  const { isOpen: confirmDialogOpen, config: confirmConfig, openDialog: openConfirmDialog, closeDialog: closeConfirmDialog } = useConfirmationDialog();
   const [isSaving, setIsSaving] = useState(false);
 
   const {
@@ -64,13 +66,64 @@ function ProfilePageContent() {
   const onSubmit = async (data: ProfileFormData) => {
     if (!user?.id) return;
 
+    // Show confirmation dialog before submitting
+    openConfirmDialog({
+      title: 'Konfirmasi Perubahan Profil',
+      description: 'Apakah Anda yakin ingin menyimpan perubahan profil?',
+      variant: 'info',
+      confirmText: 'Ya, Simpan Perubahan',
+      cancelText: 'Batal',
+      children: (
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+            <h4 className="text-sm font-medium text-gray-900">Perubahan yang akan disimpan:</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Nama Lengkap:</span>
+                <span className="text-gray-900 font-medium">{data.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Email:</span>
+                <span className="text-gray-900">{data.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Telepon:</span>
+                <span className="text-gray-900">{data.phone || 'Tidak diisi'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Alamat:</span>
+                <span className="text-gray-900">{data.address || 'Tidak diisi'}</span>
+              </div>
+              {data.bio && (
+                <div className="border-t border-gray-200 pt-2">
+                  <span className="text-sm font-medium text-gray-600">Bio:</span>
+                  <p className="text-sm text-gray-800 mt-1 bg-white rounded p-2 border max-h-20 overflow-y-auto">
+                    {data.bio}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            ℹ️ Perubahan akan langsung terlihat di profil Anda di seluruh sistem.
+          </div>
+        </div>
+      ),
+      onConfirm: () => performSubmit(data)
+    });
+  };
+
+  const performSubmit = async (data: ProfileFormData) => {
+    if (!user?.id) return;
+
     setIsSaving(true);
     try {
       await updateProfile(data);
       addToast({
         type: 'success',
-        title: "Profil berhasil diperbarui",
-        message: "Informasi profil Anda telah disimpan.",
+        title: "Profil Berhasil Diperbarui",
+        message: "Informasi profil Anda telah disimpan dan akan terlihat di seluruh sistem.",
+        duration: 5000,
       });
     } catch (error) {
       addToast({
@@ -358,6 +411,13 @@ function ProfilePageContent() {
           </Card>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialogOpen}
+        onClose={closeConfirmDialog}
+        {...confirmConfig}
+      />
     </PortalPageWrapper>
   );
 }
