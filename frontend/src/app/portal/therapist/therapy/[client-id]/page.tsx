@@ -11,10 +11,10 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useClient } from '@/hooks/useClient';
+import { useTherapistClient } from '@/hooks/useTherapistClient';
 import { ClientStatusLabels, ClientGenderEnum } from '@/types/enums';
 import { ClientStatusColors } from '@/types/clientStatus';
-import type { Client } from '@/types/client';
+import type { TherapistClient } from '@/types/therapistClient';
 import {
   CalendarIcon,
   ClockIcon,
@@ -33,38 +33,45 @@ export default function ClientTherapyPage() {
   const router = useRouter();
   const { addToast } = useToast();
   const { user } = useAuth();
-  const { clients, loading: clientsLoading } = useClient();
+  const { clients, loading: clientsLoading, loadClients } = useTherapistClient();
   
   const clientId = params['client-id'] as string;
-  const [client, setClient] = useState<Client | null>(null);
+  const [client, setClient] = useState<TherapistClient | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Load clients on mount if not already loaded
+  useEffect(() => {
+    if (clients.length === 0 && !clientsLoading) {
+      loadClients();
+    }
+  }, [loadClients, clients.length, clientsLoading]);
 
   // Find the client from the clients list
   useEffect(() => {
-    if (!clientsLoading && clients.length > 0) {
+    // Only proceed if we have user data and clients are not loading
+    if (!user?.id || clientsLoading) {
+      return;
+    }
+
+    // If clients data is available
+    if (clients.length > 0) {
       const foundClient = clients.find(c => c.id === clientId);
       if (foundClient) {
-        // Verify this client is assigned to the current therapist
-        if (foundClient.assignedTherapist === user?.id) {
-          setClient(foundClient);
-        } else {
-          addToast({
-            type: 'error',
-            title: 'Akses Ditolak',
-            message: 'Anda tidak memiliki akses ke klien ini',
-          });
-          router.push('/portal/therapist/clients');
-          return;
-        }
+        // TherapistClient data is already filtered for the current therapist
+        setClient(foundClient);
+        setLoading(false);
       } else {
         addToast({
           type: 'error',
           title: 'Klien Tidak Ditemukan',
-          message: 'Data klien tidak ditemukan atau tidak tersedia',
+          message: 'Data klien tidak ditemukan atau Anda tidak memiliki akses',
         });
         router.push('/portal/therapist/clients');
         return;
       }
+    } else {
+      // If clients array is empty but not loading, still set loading to false
+      // This handles the case where there are no clients at all
       setLoading(false);
     }
   }, [clientId, clients, clientsLoading, user?.id, addToast, router]);
@@ -241,14 +248,14 @@ export default function ClientTherapyPage() {
                   <div className="flex items-center text-sm">
                     <ClockIcon className="w-4 h-4 text-gray-400 mr-3" />
                     <span className="text-gray-600">Total Sesi:</span>
-                    <span className="ml-auto font-medium">{client.totalSessions || 0}</span>
+                    <span className="ml-auto font-medium">{client.sessionCount || client.totalSessions || 0}</span>
                   </div>
 
-                  {client.lastSession && (
+                  {(client.lastSessionDate || client.lastSession) && (
                     <div className="flex items-center text-sm">
                       <span className="text-gray-600">Sesi Terakhir:</span>
                       <span className="ml-auto font-medium">
-                        {new Date(client.lastSession).toLocaleDateString('id-ID')}
+                        {new Date(client.lastSessionDate || client.lastSession!).toLocaleDateString('id-ID')}
                       </span>
                     </div>
                   )}
@@ -276,11 +283,19 @@ export default function ClientTherapyPage() {
                     />
                   </div>
                 </div>
-                {client.notes && (
+                {(client.progressNotes || client.notes) && (
                   <div>
                     <label className="text-sm font-medium text-gray-600">Catatan Progres:</label>
                     <p className="text-sm text-gray-800 mt-1 p-3 bg-gray-50 rounded-lg">
-                      {client.notes}
+                      {client.progressNotes || client.notes}
+                    </p>
+                  </div>
+                )}
+                {client.therapistNotes && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Catatan Therapist:</label>
+                    <p className="text-sm text-gray-800 mt-1 p-3 bg-blue-50 rounded-lg">
+                      {client.therapistNotes}
                     </p>
                   </div>
                 )}
