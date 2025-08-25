@@ -2,3 +2,4 @@
 export * from './auth';
 export * from './clinic';
 export * from './consultation';
+export * from './therapySession';

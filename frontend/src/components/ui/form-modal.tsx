@@ -12,6 +12,7 @@ export interface FormModalProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
   showCloseButton?: boolean;
+  fitContent?: boolean;
 }
 
 const sizeClasses = {
@@ -35,10 +36,11 @@ export const FormModal: React.FC<FormModalProps> = ({
   children,
   size = '2xl',
   showCloseButton = false,
+  fitContent = false,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${sizeClasses[size]} max-h-[90vh] min-h-[60vh] overflow-y-auto`}>
+      <DialogContent className={`${sizeClasses[size]} ${fitContent ? 'h-fit max-h-[90vh]' : 'max-h-[90vh] min-h-[60vh]'} overflow-y-auto`}>
         <DialogHeader className="pb-6 border-b border-gray-200 self-start">
           <div className="flex items-start justify-between">
             <div className="flex-1">
