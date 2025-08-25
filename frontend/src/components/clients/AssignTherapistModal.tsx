@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTherapists } from '@/hooks/useTherapists';
 import { Textarea } from '@/components/ui/textarea';
 import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface AssignTherapistModalProps {
   open: boolean;
@@ -188,9 +189,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
           {isReassign && (
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
+                <CheckCircleIcon className="w-5 h-5 text-yellow-600" />
                 <span className="text-sm font-medium text-yellow-800">Therapist Saat Ini</span>
               </div>
               {therapistsLoading ? (
@@ -291,16 +290,12 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
 
               {isAtCapacity(selectedTherapist) ? (
                 <div className="flex items-center gap-2 text-red-600">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
+                  <ExclamationTriangleIcon className="w-4 h-4" />
                   <span className="text-sm">Therapist penuh. Silakan pilih therapist lain.</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-green-600">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
+                  <CheckCircleIcon className="w-4 h-4" />
                   <span className="text-sm">Kapasitas tersedia ({selectedInfo.loadPct}%)</span>
                 </div>
               )}

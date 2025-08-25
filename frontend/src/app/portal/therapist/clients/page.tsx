@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import { TherapistClientList } from '@/components/clients/TherapistClientList';
 import { ClientStatusEnum, UserRoleEnum } from '@/types/enums';
 import { useToast } from '@/components/ui/toast';
@@ -79,7 +79,7 @@ export default function TherapistClientsPage() {
   const totalClients = therapistClients.length;
 
   return (
-    <PortalPageWrapper
+    <PageWrapper
       title="Klien Saya"
       description="Kelola klien yang ditugaskan kepada Anda"
     >
@@ -92,6 +92,6 @@ export default function TherapistClientsPage() {
         onViewClient={handleViewClient}
         onStartTherapy={handleStartTherapy}
       />
-    </PortalPageWrapper>
+    </PageWrapper>
   );
 }

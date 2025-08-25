@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -84,7 +84,7 @@ function AdminClinicsPageContent() {
   };
 
   return (
-    <PortalPageWrapper
+    <PageWrapper
       title="Manajemen Klinik"
       description="Kelola semua klinik yang terdaftar dalam sistem"
       actions={headerActions}
@@ -254,7 +254,7 @@ function AdminClinicsPageContent() {
           )}
         </CardContent>
       </Card>
-    </PortalPageWrapper>
+    </PageWrapper>
   );
 }
 

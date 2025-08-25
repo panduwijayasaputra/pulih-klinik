@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigation } from '@/hooks/useNavigation';
 import { UserRoleEnum } from '@/types/enums';
-import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function PortalPage() {
@@ -39,7 +39,7 @@ export default function PortalPage() {
 
   // Show loading state while redirecting
   return (
-    <PortalPageWrapper
+          <PageWrapper
       title="Mengalihkan..."
       description="Mengarahkan ke dashboard yang sesuai"
     >
@@ -48,6 +48,6 @@ export default function PortalPage() {
           <p className="text-gray-600">Mengalihkan ke dashboard Anda...</p>
         </CardContent>
       </Card>
-    </PortalPageWrapper>
+          </PageWrapper>
   );
 }

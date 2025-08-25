@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import { TherapistList } from '@/components/therapists/TherapistList';
 import { UserIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,12 +10,12 @@ import { UserRoleEnum } from '@/types/enums';
 
 function TherapistsPageContent() {
   return (
-    <PortalPageWrapper
+    <PageWrapper
       title="Therapist Management"
       description="Manage and monitor therapists in your clinic"
     >
       <TherapistList />
-    </PortalPageWrapper>
+    </PageWrapper>
   );
 }
 

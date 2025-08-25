@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { 
-  TherapySession, 
-  TherapySessionStats, 
+import {
+  TherapySession,
+  TherapySessionStats,
   TherapySessionFilters,
   CreateTherapySessionData,
   UpdateTherapySessionData,
@@ -9,6 +9,7 @@ import {
   AIPrediction
 } from '@/types/therapySession';
 import { TherapySessionAPI, TherapySessionAPIError } from '@/lib/api/therapySession';
+import { TherapySessionStatusEnum } from '@/types/therapySession';
 import { useAuth } from './useAuth';
 
 export interface UseTherapySessionReturn {
@@ -37,6 +38,7 @@ export interface UseTherapySessionReturn {
   generatePredictions: (clientId: string) => Promise<boolean>;
   setFilters: (filters: Partial<TherapySessionFilters>) => void;
   clearError: () => void;
+  setPredictions: (predictions: AIPredictions | null) => void;
 }
 
 export const useTherapySession = (): UseTherapySessionReturn => {
@@ -72,13 +74,16 @@ export const useTherapySession = (): UseTherapySessionReturn => {
       setError(null);
 
       const response = await TherapySessionAPI.getTherapySessions(
-        clientId,
+        therapistId!,
         1,
-        100 // Load all sessions for now
+        100, // Load all sessions for now
+        filters
       );
 
       if (response.success && response.data) {
-        setSessions(response.data.items);
+        // Filter sessions by clientId
+        const clientSessions = response.data.items.filter(session => session.clientId === clientId);
+        setSessions(clientSessions);
       } else {
         setError(response.message || 'Failed to load therapy sessions');
       }
@@ -90,7 +95,7 @@ export const useTherapySession = (): UseTherapySessionReturn => {
     } finally {
       setLoading(false);
     }
-  }, [therapistId]);
+  }, [therapistId, filters]);
 
   // Load stats
   const loadStats = useCallback(async (clientId: string) => {
@@ -100,10 +105,34 @@ export const useTherapySession = (): UseTherapySessionReturn => {
       setLoadingStats(true);
       setError(null);
 
-      const response = await TherapySessionAPI.getTherapySessionStats(clientId);
+      // Get all sessions for the therapist and filter by client
+      const response = await TherapySessionAPI.getTherapySessions(
+        therapistId!,
+        1,
+        1000 // Get all sessions to calculate stats
+      );
 
       if (response.success && response.data) {
-        setStats(response.data);
+        // Filter sessions by clientId and calculate stats
+        const clientSessions = response.data.items.filter(session => session.clientId === clientId);
+        
+        const now = new Date();
+        const upcomingSessions = clientSessions.filter(session => 
+          session.status === TherapySessionStatusEnum.Scheduled &&
+          new Date(session.date) > now
+        ).length;
+
+        const stats = {
+          totalSessions: clientSessions.length,
+          completedSessions: clientSessions.filter(s => s.status === TherapySessionStatusEnum.Completed).length,
+          scheduledSessions: clientSessions.filter(s => s.status === TherapySessionStatusEnum.Scheduled).length,
+          plannedSessions: clientSessions.filter(s => s.status === TherapySessionStatusEnum.Planned).length,
+          inProgressSessions: clientSessions.filter(s => s.status === TherapySessionStatusEnum.InProgress).length,
+          cancelledSessions: clientSessions.filter(s => s.status === TherapySessionStatusEnum.Cancelled).length,
+          upcomingSessions
+        };
+
+        setStats(stats as any); // Type assertion to handle interface mismatch
       } else {
         setError(response.message || 'Failed to load therapy session stats');
       }
@@ -173,7 +202,7 @@ export const useTherapySession = (): UseTherapySessionReturn => {
       const response = await TherapySessionAPI.updateTherapySession(sessionId, data);
 
       if (response.success && response.data) {
-        setSessions(prev => prev.map(session => 
+        setSessions(prev => prev.map(session =>
           session.id === sessionId ? response.data! : session
         ));
         if (selectedSession?.id === sessionId) {
@@ -255,6 +284,11 @@ export const useTherapySession = (): UseTherapySessionReturn => {
     setError(null);
   }, []);
 
+  // Set AI predictions
+  const setPredictions = useCallback((predictions: AIPredictions | null) => {
+    setAiPredictions(predictions);
+  }, []);
+
   return {
     // Data
     sessions,
@@ -280,6 +314,7 @@ export const useTherapySession = (): UseTherapySessionReturn => {
     deleteSession,
     generatePredictions,
     setFilters,
-    clearError
+    clearError,
+    setPredictions
   };
 };

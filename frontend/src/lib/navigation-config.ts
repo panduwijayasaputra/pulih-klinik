@@ -77,14 +77,14 @@ export const portalNavigationItems: NavigationItem[] = [
     description: 'Kelola klien yang ditugaskan kepada Anda',
     requiredRoles: [UserRoleEnum.Therapist],
   },
-  // {
-  //   id: 'therapist-sessions',
-  //   label: 'Sesi Terapi',
-  //   href: '/portal/therapist/sessions',
-  //   icon: CalendarIcon,
-  //   description: 'Kelola sesi terapi dan jadwal',
-  //   requiredRoles: [UserRoleEnum.Therapist],
-  // },
+  {
+    id: 'therapist-sessions',
+    label: 'Sesi Saya',
+    href: '/portal/therapist/sessions',
+    icon: CalendarIcon,
+    description: 'Kelola sesi terapi dan jadwal klien yang ditugaskan',
+    requiredRoles: [UserRoleEnum.Therapist],
+  },
 
   // Admin Routes
   {

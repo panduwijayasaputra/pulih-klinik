@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -189,7 +189,7 @@ function ProfilePageContent() {
   };
 
   return (
-    <PortalPageWrapper
+    <PageWrapper
       title="Profil Saya"
       description="Kelola informasi profil dan pengaturan akun Anda"
     >
@@ -418,7 +418,7 @@ function ProfilePageContent() {
         onClose={closeConfirmDialog}
         {...confirmConfig}
       />
-    </PortalPageWrapper>
+    </PageWrapper>
   );
 }
 

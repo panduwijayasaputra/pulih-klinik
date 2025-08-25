@@ -56,14 +56,12 @@ export interface TherapySessionStats {
 }
 
 export interface TherapySessionFilters {
-  status: 'all' | TherapySessionStatusEnum;
-  dateRange?: {
-    start: string;
-    end: string;
-  };
-  search: string;
-  sortBy: 'date' | 'sessionNumber' | 'title' | 'status';
-  sortOrder: 'asc' | 'desc';
+  status?: TherapySessionStatusEnum | 'all';
+  search?: string;
+  sortBy?: 'date' | 'client' | 'sessionNumber';
+  sortOrder?: 'asc' | 'desc';
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 // API Response Types

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ClinicProfileForm } from '@/components/clinic/ClinicProfileForm';
 import { DocumentUpload } from '@/components/clinic/DocumentUpload';
 import { DocumentManager } from '@/components/clinic/DocumentManager';
-import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -60,7 +60,7 @@ function ClinicPageContent() {
   );
 
   return (
-    <PortalPageWrapper
+    <PageWrapper
       title="Manajemen Klinik"
       description="Kelola informasi klinik, dokumen, dan pengaturan"
       actions={headerActions}
@@ -199,7 +199,7 @@ function ClinicPageContent() {
           </Card>
         </TabsContent>
       </Tabs>
-    </PortalPageWrapper>
+    </PageWrapper>
   );
 }
 

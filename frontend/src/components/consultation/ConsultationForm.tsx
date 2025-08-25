@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { InformationCircleIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 
 import {
@@ -1895,13 +1896,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         variant="info"
         confirmButtonProps={{ disabled: isSubmitting }}
       >
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <InformationCircleIcon className="h-5 w-5 text-blue-600" />
+                </div>
             <div className="flex-1">
               <h4 className="text-sm font-medium text-blue-900 mb-2">
               Sistem AI akan memproses data konsultasi ini untuk menghasilkan script hipnoterapi yang sesuai pada sesi terapi berikutnya:
@@ -1914,8 +1913,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <li><strong>Memberikan rekomendasi</strong> teknik hipnoterapi yang sesuai</li>
                   <li><strong>Menyiapkan script</strong> hipnoterapi yang dipersonalisasi</li>
                 </ul>
-                <p className="font-medium mt-3">
-                  💡 Proses ini akan membantu Anda memberikan terapi yang lebih efektif dan terarah.
+                <p className="font-medium mt-3 flex items-center gap-2">
+                  <LightBulbIcon className="w-4 h-4 text-blue-600" />
+                  Proses ini akan membantu Anda memberikan terapi yang lebih efektif dan terarah.
                 </p>
               </div>
             </div>

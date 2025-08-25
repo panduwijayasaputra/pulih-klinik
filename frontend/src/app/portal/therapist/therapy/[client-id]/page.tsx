@@ -22,9 +22,10 @@ import { useTherapySession } from '@/hooks/useTherapySession';
 import { ClientStatusLabels, ClientGenderEnum, ConsultationStatusEnum } from '@/types/enums';
 import { ClientStatusColors } from '@/types/clientStatus';
 import type { TherapistClient } from '@/types/therapistClient';
-import { consultationSchema, type ConsultationFormData } from '@/schemas/consultationSchema';
+// import { consultationSchema, type ConsultationFormData } from '@/schemas/consultationSchema'; // Replaced by consultationFormSchema
+import { consultationFormSchema, type ConsultationFormSchemaType } from '@/schemas/consultationFormSchema';
 import { getConsultationByClientId } from '@/lib/mocks/consultation';
-import { mockSessionHistory } from '@/lib/mocks/therapySession';
+import { mockSessionHistory, mockTherapySessions } from '@/lib/mocks/therapySession';
 import { TherapySessionStatusEnum } from '@/types/therapySession';
 import {
   CalendarIcon,
@@ -44,7 +45,11 @@ import {
   SparklesIcon,
   InformationCircleIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  TagIcon,
+  WrenchScrewdriverIcon,
+  LightBulbIcon,
+  CpuChipIcon
 } from '@heroicons/react/24/outline';
 
 export default function ClientTherapyPage() {
@@ -61,7 +66,8 @@ export default function ClientTherapyPage() {
     loadSessions,
     createSession,
     updateSession,
-    generatePredictions
+    generatePredictions,
+    setPredictions
   } = useTherapySession();
 
   const clientId = params['client-id'] as string;
@@ -82,20 +88,24 @@ export default function ClientTherapyPage() {
   const [selectedIssues, setSelectedIssues] = useState<Array<{ id: string; name: string; confidence?: number }>>([]);
   const [selectedTechniques, setSelectedTechniques] = useState<Array<{ id: string; name: string; effectiveness?: number }>>([]);
   const [newIssue, setNewIssue] = useState('');
-  
+
   // Cancel session state
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancellingSession, setCancellingSession] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
-  
+
   // Continue session state
   const [showContinueDialog, setShowContinueDialog] = useState(false);
   const [continuingSession, setContinuingSession] = useState<string | null>(null);
-  
+
   // Start session confirmation state
   const [showStartConfirmation, setShowStartConfirmation] = useState(false);
   const [startingSession, setStartingSession] = useState<string | null>(null);
-  
+
+  // Session save confirmation state
+  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
+  const [savingSession, setSavingSession] = useState(false);
+
   // Session collapse state
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
 
@@ -109,12 +119,12 @@ export default function ClientTherapyPage() {
     duration: 90 as number | undefined
   });
 
-  // Use mock session history from the mock data
-  const mockSessions = mockSessionHistory;
+  // Use mock session history from the mock data (unused for now)
+  // const mockSessions = mockSessionHistory;
 
   // Initialize consultation form
-  const consultationForm = useForm<ConsultationFormData>({
-    resolver: zodResolver(consultationSchema),
+  const consultationForm = useForm<ConsultationFormSchemaType>({
+    resolver: zodResolver(consultationFormSchema),
     defaultValues: {
       clientId: clientId,
       therapistId: user?.id || '',
@@ -122,15 +132,41 @@ export default function ClientTherapyPage() {
       status: ConsultationStatusEnum.Draft,
       sessionDate: new Date().toISOString().split('T')[0] || '',
       sessionDuration: 60,
-      previousTherapyExperience: false,
-      currentMedications: false,
-      previousPsychologicalDiagnosis: false,
-      significantPhysicalIllness: false,
-      traumaticExperience: false,
-      familyPsychologicalHistory: false,
-      symptomSeverity: 3,
-      treatmentGoals: [],
+      consultationNotes: '',
       scriptGenerationPreferences: '',
+      previousTherapyExperience: false,
+      previousTherapyDetails: '',
+      currentMedications: false,
+      currentMedicationsDetails: '',
+      previousPsychologicalDiagnosis: false,
+      previousPsychologicalDiagnosisDetails: '',
+      significantPhysicalIllness: false,
+      significantPhysicalIllnessDetails: '',
+      traumaticExperience: false,
+      traumaticExperienceDetails: '',
+      familyPsychologicalHistory: false,
+      familyPsychologicalHistoryDetails: '',
+      primaryConcern: 'Assessment awal klien untuk evaluasi kondisi psikologis dan kebutuhan terapi.',
+      secondaryConcerns: [],
+      symptomSeverity: 3,
+      symptomDuration: '1-2 bulan',
+      emotionScale: undefined,
+      recentMoodState: undefined,
+      recentMoodStateDetails: '',
+      frequentEmotions: [],
+      selfHarmThoughts: undefined,
+      selfHarmDetails: '',
+      dailyStressFrequency: undefined,
+      treatmentGoals: ['Meningkatkan kesejahteraan psikologis klien'],
+      clientExpectations: '',
+      initialAssessment: '',
+      recommendedTreatmentPlan: '',
+      consentAgreement: false,
+      clientSignatureName: '',
+      clientSignatureDate: '',
+      therapistName: '',
+      registrationDate: '',
+      initialRecommendation: [],
     },
   });
 
@@ -152,17 +188,17 @@ export default function ClientTherapyPage() {
   useEffect(() => {
     if (therapySessions.length > 0) {
       const sortedSessions = [...therapySessions].sort((a, b) => a.sessionNumber - b.sessionNumber);
-      
+
       // Find the last completed session
       const lastCompletedSession = sortedSessions
         .filter(s => s.status === TherapySessionStatusEnum.Completed)
         .pop();
-      
+
       let sessionToExpand: string | null = null;
-      
+
       if (lastCompletedSession) {
         // Find the next session after the last completed session
-        const nextSession = sortedSessions.find(s => 
+        const nextSession = sortedSessions.find(s =>
           s.sessionNumber > lastCompletedSession.sessionNumber
         );
         if (nextSession) {
@@ -172,7 +208,7 @@ export default function ClientTherapyPage() {
         // If no completed sessions, expand the first session
         sessionToExpand = sortedSessions[0]?.id || null;
       }
-      
+
       if (sessionToExpand) {
         setExpandedSessions(new Set([sessionToExpand]));
       }
@@ -238,15 +274,41 @@ export default function ClientTherapyPage() {
       status: ConsultationStatusEnum.Draft,
       sessionDate: new Date().toISOString().split('T')[0] || '',
       sessionDuration: 60,
-      previousTherapyExperience: false,
-      currentMedications: false,
-      previousPsychologicalDiagnosis: false,
-      significantPhysicalIllness: false,
-      traumaticExperience: false,
-      familyPsychologicalHistory: false,
-      symptomSeverity: 3,
-      treatmentGoals: [],
+      consultationNotes: '',
       scriptGenerationPreferences: '',
+      previousTherapyExperience: false,
+      previousTherapyDetails: '',
+      currentMedications: false,
+      currentMedicationsDetails: '',
+      previousPsychologicalDiagnosis: false,
+      previousPsychologicalDiagnosisDetails: '',
+      significantPhysicalIllness: false,
+      significantPhysicalIllnessDetails: '',
+      traumaticExperience: false,
+      traumaticExperienceDetails: '',
+      familyPsychologicalHistory: false,
+      familyPsychologicalHistoryDetails: '',
+      primaryConcern: 'Assessment awal klien untuk evaluasi kondisi psikologis dan kebutuhan terapi.',
+      secondaryConcerns: [],
+      symptomSeverity: 3,
+      symptomDuration: '1-2 bulan',
+      emotionScale: undefined,
+      recentMoodState: undefined,
+      recentMoodStateDetails: '',
+      frequentEmotions: [],
+      selfHarmThoughts: undefined,
+      selfHarmDetails: '',
+      dailyStressFrequency: undefined,
+      treatmentGoals: ['Meningkatkan kesejahteraan psikologis klien'],
+      clientExpectations: '',
+      initialAssessment: '',
+      recommendedTreatmentPlan: '',
+      consentAgreement: false,
+      clientSignatureName: '',
+      clientSignatureDate: '',
+      therapistName: '',
+      registrationDate: '',
+      initialRecommendation: [],
     });
     setShowConsultationForm(true);
   }, [clientId, user?.id, consultationForm]);
@@ -259,10 +321,10 @@ export default function ClientTherapyPage() {
     }
   }, [clientConsultation, consultationForm]);
 
-  const handleConsultationSubmit = useCallback(async (data: ConsultationFormData) => {
+  const handleConsultationSubmit = useCallback(async (data: ConsultationFormSchemaType) => {
     setConsultationSubmitting(true);
     try {
-      console.log('Consultation Data:', data);
+      // console.log('Consultation Data:', data);
 
       // TODO: Call API to save consultation
       await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
@@ -341,8 +403,8 @@ export default function ClientTherapyPage() {
       duration: session.duration
     });
     setShowSessionSetup(true);
-    setGeneratingPredictions(false);
-    setAiPredictions(null);
+    // Loading state is handled by the hook
+    setPredictions(null);
     setSelectedIssues([]);
     setSelectedTechniques([]);
   }, [therapySessions]);
@@ -496,8 +558,11 @@ export default function ClientTherapyPage() {
     setExpandedSessions(prev => {
       const newSet = new Set(prev);
       if (newSet.has(sessionId)) {
+        // If clicking on already expanded session, collapse it
         newSet.delete(sessionId);
       } else {
+        // If clicking on collapsed session, expand it and collapse all others
+        newSet.clear();
         newSet.add(sessionId);
       }
       return newSet;
@@ -505,6 +570,69 @@ export default function ClientTherapyPage() {
   }, []);
 
   // Session setup handlers
+  const handleShowSaveConfirmation = useCallback(() => {
+    setShowSaveConfirmation(true);
+  }, []);
+
+  const handleConfirmSave = useCallback(async () => {
+    setSavingSession(true);
+    const isFirstSession = therapySessions.length === 0;
+
+    if (editingSession) {
+      // Update existing session
+      const success = await updateSession(editingSession, {
+        title: sessionFormData.title,
+        description: sessionFormData.description,
+        date: sessionFormData.date || '',
+        time: sessionFormData.time,
+        duration: sessionFormData.duration,
+      });
+
+      if (success) {
+        addToast({
+          type: 'success',
+          title: 'Sesi Diperbarui',
+          message: `Sesi "${sessionFormData.title}" berhasil diperbarui.`,
+        });
+        setShowSessionSetup(false);
+        setEditingSession(null);
+        setShowSaveConfirmation(false);
+      }
+    } else {
+      // Determine status based on date, time, and duration (all three must be filled)
+      const hasDateAndTimeAndDuration = sessionFormData.date && sessionFormData.time && sessionFormData.duration;
+      const status = hasDateAndTimeAndDuration ? TherapySessionStatusEnum.Scheduled : TherapySessionStatusEnum.Planned;
+
+      // Create new session
+      const success = await createSession({
+        clientId,
+        therapistId: user?.id || '',
+        title: sessionFormData.title,
+        description: sessionFormData.description,
+        date: sessionFormData.date || '',
+        time: sessionFormData.time,
+        ...(sessionFormData.duration && { duration: sessionFormData.duration }),
+        status,
+        ...(isFirstSession && {
+          issues: selectedIssues.map(i => i.name),
+          techniques: selectedTechniques.map(t => t.name)
+        })
+      });
+
+      if (success) {
+        addToast({
+          type: 'success',
+          title: 'Sesi Dijadwalkan',
+          message: `Sesi "${sessionFormData.title}" berhasil dijadwalkan untuk ${sessionFormData.date ? new Date(sessionFormData.date).toLocaleDateString('id-ID') : 'tanggal yang dipilih'} ${sessionFormData.time}.`,
+        });
+        setShowSessionSetup(false);
+        setEditingSession(null);
+        setShowSaveConfirmation(false);
+      }
+    }
+    setSavingSession(false);
+  }, [sessionFormData, selectedIssues, selectedTechniques, therapySessions, editingSession, clientId, user?.id, createSession, updateSession, addToast, setShowSaveConfirmation]);
+
   const handleSaveSession = useCallback(async () => {
     const isFirstSession = therapySessions.length === 0;
 
@@ -693,7 +821,7 @@ export default function ClientTherapyPage() {
                     <div className="flex items-center text-sm">
                       <span className="text-gray-600">Sesi Terakhir:</span>
                       <span className="ml-auto font-medium">
-                        {new Date(client.lastSessionDate || client.lastSession!).toLocaleDateString('id-ID')}
+                        {new Date(client.lastSessionDate || client.lastSession || '').toLocaleDateString('id-ID')}
                       </span>
                     </div>
                   )}
@@ -877,54 +1005,79 @@ export default function ClientTherapyPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockSessions.map((session) => (
-                      <div key={session.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                {session.type}
-                              </Badge>
-                              <span className="text-sm text-gray-600">
-                                {new Date(session.date).toLocaleDateString('id-ID')} • {session.time}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                {session.duration} menit
-                              </span>
-                            </div>
-                            <p className="text-gray-900 mb-2">{session.notes}</p>
-                            <div className="flex items-center gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-600">Teknik:</span>
-                                <span className="ml-1 font-medium">{session.techniques.join(', ')}</span>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Progress:</span>
-                                <span className="ml-1 font-medium">{session.progress}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <Badge
-                              variant="outline"
-                              className={`${session.progress === 'Sangat Baik' ? 'bg-green-50 text-green-700 border-green-200' :
-                                session.progress === 'Baik' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                  'bg-gray-50 text-gray-700 border-gray-200'
-                                }`}
-                            >
-                              {session.status === 'completed' ? 'Selesai' : 'Berlangsung'}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    {(() => {
+                      // Filter sessions: completed + next scheduled
+                      const clientSessions = mockTherapySessions.filter(session => session.clientId === clientId);
+                      const completedSessions = clientSessions.filter(session => session.status === TherapySessionStatusEnum.Completed);
+                      const nextScheduledSession = clientSessions
+                        .filter(session => session.status === TherapySessionStatusEnum.Scheduled)
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
-                    {mockSessions.length === 0 && (
-                      <div className="text-center py-8">
-                        <ClockIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-600">Belum ada riwayat sesi terapi</p>
-                      </div>
-                    )}
+                      const sessionsToShow = [...completedSessions];
+                      if (nextScheduledSession) {
+                        sessionsToShow.push(nextScheduledSession);
+                      }
+
+                      return sessionsToShow.length > 0 ? (
+                        sessionsToShow.map((session) => (
+                          <div key={session.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                    Sesi #{session.sessionNumber}
+                                  </Badge>
+                                  <span className="text-sm text-gray-600">
+                                    {new Date(session.date).toLocaleDateString('id-ID')} • {session.time}
+                                  </span>
+                                  <span className="text-sm text-gray-500">
+                                    {session.duration} menit
+                                  </span>
+                                </div>
+                                <h4 className="font-medium text-gray-900 mb-1">{session.title}</h4>
+                                {session.description && (
+                                  <p className="text-gray-700 text-sm mb-2">{session.description}</p>
+                                )}
+                                {session.notes && (
+                                  <p className="text-gray-600 text-sm mb-2 italic">{session.notes}</p>
+                                )}
+                                <div className="flex items-center gap-4 text-sm">
+                                  <div>
+                                    <span className="text-gray-600">Teknik:</span>
+                                    <span className="ml-1 font-medium">{session.techniques?.join(', ') || 'Tidak ada'}</span>
+                                  </div>
+                                  {session.progress && (
+                                    <div>
+                                      <span className="text-gray-600">Progress:</span>
+                                      <span className="ml-1 font-medium">{session.progress}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <Badge
+                                  variant="outline"
+                                  className={`${session.status === TherapySessionStatusEnum.Completed
+                                    ? 'bg-green-50 text-green-700 border-green-200'
+                                    : session.status === TherapySessionStatusEnum.Scheduled
+                                      ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                      : 'bg-gray-50 text-gray-700 border-gray-200'
+                                    }`}
+                                >
+                                  {session.status === TherapySessionStatusEnum.Completed ? 'Selesai' :
+                                    session.status === TherapySessionStatusEnum.Scheduled ? 'Dijadwalkan' : 'Berlangsung'}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <ClockIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                          <p className="text-gray-600">Belum ada riwayat sesi terapi</p>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -953,11 +1106,13 @@ export default function ClientTherapyPage() {
                                 <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
                                   {clientConsultation.formTypes.join(', ')} Assessment
                                 </Badge>
-                                <span className="text-sm text-gray-700 font-medium">
-                                  📅 {new Date(clientConsultation.sessionDate).toLocaleDateString('id-ID')}
+                                <span className="text-sm text-gray-700 font-medium flex items-center gap-1">
+                                  <CalendarIcon className="w-4 h-4" />
+                                  {new Date(clientConsultation.sessionDate).toLocaleDateString('id-ID')}
                                 </span>
-                                <span className="text-sm text-gray-600">
-                                  ⏱️ {clientConsultation.sessionDuration} menit
+                                <span className="text-sm text-gray-600 flex items-center gap-1">
+                                  <ClockIcon className="w-4 h-4" />
+                                  {clientConsultation.sessionDuration} menit
                                 </span>
                               </div>
                               <h3 className="text-lg font-semibold text-gray-900 mb-2">Base Assessment Summary</h3>
@@ -1003,7 +1158,10 @@ export default function ClientTherapyPage() {
 
                           {/* Primary Concern */}
                           <div className="bg-white p-4 rounded-lg border border-blue-200 mb-4">
-                            <h6 className="font-medium text-gray-900 mb-2">🎯 Keluhan Utama</h6>
+                            <h6 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                              <TagIcon className="w-4 h-4 text-red-500" />
+                              Keluhan Utama
+                            </h6>
                             <p className="text-gray-700 text-sm leading-relaxed">
                               {clientConsultation.primaryConcern}
                             </p>
@@ -1012,7 +1170,10 @@ export default function ClientTherapyPage() {
                           {/* AI Script Preferences */}
                           {clientConsultation.scriptGenerationPreferences && (
                             <div className="bg-white p-4 rounded-lg border border-blue-200 mb-4">
-                              <h6 className="font-medium text-gray-900 mb-2">🤖 AI Script Preferences</h6>
+                              <h6 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                                <CpuChipIcon className="w-4 h-4 text-blue-500" />
+                                AI Script Preferences
+                              </h6>
                               <p className="text-gray-600 text-sm italic bg-gray-50 p-3 rounded-lg">
                                 {clientConsultation.scriptGenerationPreferences}
                               </p>
@@ -1022,7 +1183,10 @@ export default function ClientTherapyPage() {
                           {/* Therapist Notes */}
                           {clientConsultation.consultationNotes && (
                             <div className="bg-white p-4 rounded-lg border border-blue-200">
-                              <h6 className="font-medium text-gray-900 mb-2">📝 Catatan Terapis</h6>
+                              <h6 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                                <DocumentTextIcon className="w-4 h-4 text-gray-500" />
+                                Catatan Terapis
+                              </h6>
                               <p className="text-gray-700 text-sm leading-relaxed">
                                 {clientConsultation.consultationNotes}
                               </p>
@@ -1033,7 +1197,10 @@ export default function ClientTherapyPage() {
                         {/* Treatment Plan Summary */}
                         {clientConsultation.recommendedTreatmentPlan && (
                           <div className="border rounded-lg p-6 bg-green-50">
-                            <h4 className="text-lg font-semibold text-green-900 mb-3">💡 Rencana Terapi</h4>
+                            <h4 className="text-lg font-semibold text-green-900 mb-3 flex items-center gap-2">
+                              <LightBulbIcon className="w-5 h-5 text-green-600" />
+                              Rencana Terapi
+                            </h4>
                             <p className="text-green-800 text-sm leading-relaxed">
                               {clientConsultation.recommendedTreatmentPlan}
                             </p>
@@ -1067,9 +1234,7 @@ export default function ClientTherapyPage() {
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                           <div className="flex">
                             <div className="flex-shrink-0">
-                              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                              </svg>
+                              <InformationCircleIcon className="h-5 w-5 text-blue-400" />
                             </div>
                             <div className="ml-3">
                               <h3 className="text-sm font-medium text-blue-800 mb-2">
@@ -1170,16 +1335,16 @@ export default function ClientTherapyPage() {
                                     <div className="flex items-start justify-between mb-4">
                                       <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
-                                          <div className="h-6 w-16 bg-gray-200 rounded"></div>
-                                          <div className="h-4 w-32 bg-gray-200 rounded"></div>
-                                          <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                                          <div className="h-6 w-16 bg-gray-200 rounded" />
+                                          <div className="h-4 w-32 bg-gray-200 rounded" />
+                                          <div className="h-4 w-20 bg-gray-200 rounded" />
                                         </div>
-                                        <div className="h-5 w-48 bg-gray-200 rounded mb-2"></div>
-                                        <div className="h-4 w-64 bg-gray-200 rounded"></div>
+                                                                                  <div className="h-5 w-48 bg-gray-200 rounded mb-2" />
+                                          <div className="h-4 w-64 bg-gray-200 rounded" />
                                       </div>
-                                      <div className="ml-6">
-                                        <div className="h-6 w-20 bg-gray-200 rounded"></div>
-                                      </div>
+                                                                              <div className="ml-6">
+                                          <div className="h-6 w-20 bg-gray-200 rounded" />
+                                        </div>
                                     </div>
                                   </div>
                                 ))}
@@ -1190,7 +1355,7 @@ export default function ClientTherapyPage() {
                                 return (
                                   <div key={session.id} className="border rounded-lg hover:bg-gray-50 transition-colors">
                                     {/* Collapsed Header */}
-                                    <div 
+                                    <div
                                       className="p-4 cursor-pointer"
                                       onClick={() => toggleSessionExpansion(session.id)}
                                     >
@@ -1220,8 +1385,8 @@ export default function ClientTherapyPage() {
                                           >
                                             {session.status === TherapySessionStatusEnum.Completed ? 'Selesai' :
                                               session.status === TherapySessionStatusEnum.Scheduled ? 'Dijadwalkan' :
-                                              session.status === TherapySessionStatusEnum.Planned ? 'Direncanakan' :
-                                              session.status === TherapySessionStatusEnum.Cancelled ? 'Dibatalkan' : 'Berlangsung'}
+                                                session.status === TherapySessionStatusEnum.Planned ? 'Direncanakan' :
+                                                  session.status === TherapySessionStatusEnum.Cancelled ? 'Dibatalkan' : 'Berlangsung'}
                                           </Badge>
                                         </div>
                                       </div>
@@ -1230,20 +1395,29 @@ export default function ClientTherapyPage() {
                                     {/* Expanded Content */}
                                     {isExpanded && (
                                       <div className="px-4 pb-4 border-t border-gray-100">
-                                                         <div className="pt-4 space-y-4">
-                   {/* Session Details */}
-                   <div className="flex items-center gap-4 text-sm text-gray-600">
-                     <span>📅 {new Date(session.date).toLocaleDateString('id-ID')}</span>
-                     <span>⏰ {session.time}</span>
-                     <span>⏱️ {session.duration} menit</span>
-                   </div>
-                   
-                   {session.description && (
-                     <div>
-                       <h6 className="font-medium text-gray-900 mb-2">Deskripsi Sesi</h6>
-                       <p className="text-gray-700 text-sm">{session.description}</p>
-                     </div>
-                   )}
+                                        <div className="pt-4 space-y-4">
+                                          {/* Session Details */}
+                                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                                            <span className="flex items-center gap-1">
+                                              <CalendarIcon className="w-4 h-4" />
+                                              {new Date(session.date).toLocaleDateString('id-ID')}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                              <ClockIcon className="w-4 h-4" />
+                                              {session.time}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                              <ClockIcon className="w-4 h-4" />
+                                              {session.duration} menit
+                                            </span>
+                                          </div>
+
+                                          {session.description && (
+                                            <div>
+                                              <h6 className="font-medium text-gray-900 mb-2">Deskripsi Sesi</h6>
+                                              <p className="text-gray-700 text-sm">{session.description}</p>
+                                            </div>
+                                          )}
 
                                           {session.techniques && (
                                             <div>
@@ -1411,7 +1585,10 @@ export default function ClientTherapyPage() {
           {generatingPredictions ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">🤖 AI Sedang Menganalisis...</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <CpuChipIcon className="w-5 h-5 text-blue-600" />
+                AI Sedang Menganalisis...
+              </h3>
               <p className="text-gray-600">
                 Sistem AI menganalisis data konsultasi klien untuk memprediksi masalah dan teknik terapi yang efektif.
               </p>
@@ -1535,7 +1712,10 @@ export default function ClientTherapyPage() {
                   {/* Client Issues Section */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-lg font-semibold text-gray-900">🎯 Masalah Klien</h4>
+                      <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <TagIcon className="w-5 h-5 text-red-500" />
+                        Masalah Klien
+                      </h4>
                       <Badge variant="outline" className="text-gray-600">
                         {selectedIssues.length} dipilih
                       </Badge>
@@ -1599,7 +1779,7 @@ export default function ClientTherapyPage() {
                           .map((issue) => (
                             <button
                               key={issue.id}
-                              onClick={() => handleAddPredictedIssue(issue)}
+                              onClick={() => handleAddPredictedIssue(issue as { id: string; name: string; confidence: number })}
                               className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-full border border-gray-300 transition-colors"
                             >
                               <span>{issue.name}</span>
@@ -1618,7 +1798,10 @@ export default function ClientTherapyPage() {
                   {/* Therapy Techniques Section */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-lg font-semibold text-gray-900">🔧 Teknik Terapi Efektif</h4>
+                      <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <WrenchScrewdriverIcon className="w-5 h-5 text-blue-500" />
+                        Teknik Terapi Efektif
+                      </h4>
                       <Badge variant="outline" className="text-gray-600">
                         {selectedTechniques.length} dipilih
                       </Badge>
@@ -1660,7 +1843,7 @@ export default function ClientTherapyPage() {
                           return (
                             <button
                               key={technique.id}
-                              onClick={() => handleToggleTechnique(technique)}
+                              onClick={() => handleToggleTechnique(technique as { id: string; name: string; effectiveness: number })}
                               className={`flex items-center justify-between p-3 rounded-lg border transition-all ${isSelected
                                 ? 'bg-green-100 border-green-300 text-green-800'
                                 : 'bg-gray-50 hover:bg-gray-100 border-gray-300 text-gray-800'
@@ -1699,8 +1882,8 @@ export default function ClientTherapyPage() {
                 </Button>
 
                 <Button
-                  onClick={handleSaveSession}
-                  disabled={!sessionFormData.title || !sessionFormData.date || !sessionFormData.time || (aiPredictions && (selectedIssues.length === 0 || selectedTechniques.length === 0))}
+                  onClick={handleShowSaveConfirmation}
+                  disabled={!sessionFormData.title || !sessionFormData.date || !sessionFormData.time || (aiPredictions && (selectedIssues.length === 0 || selectedTechniques.length === 0)) || !aiPredictions || !selectedIssues || !selectedTechniques}
                   className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
                 >
                   <HeartIcon className="w-4 h-4" />
@@ -1821,6 +2004,97 @@ export default function ClientTherapyPage() {
               className="bg-green-600 hover:bg-green-700"
             >
               Mulai Sesi
+            </Button>
+          </div>
+        </div>
+      </FormModal>
+
+      {/* Save Session Confirmation Dialog */}
+      <FormModal
+        open={showSaveConfirmation}
+        onOpenChange={setShowSaveConfirmation}
+        title={editingSession ? "Update Sesi Terapi" : "Simpan Sesi Terapi"}
+        description={`Apakah Anda yakin ingin ${editingSession ? 'memperbarui' : 'menyimpan'} sesi terapi ini?`}
+        size="md"
+        showCloseButton={true}
+        fitContent={true}
+      >
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <InformationCircleIcon className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">
+                  Detail Sesi Terapi:
+                </h4>
+                <div className="text-sm text-blue-800 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Judul:</span>
+                    <span>{sessionFormData.title}</span>
+                  </div>
+                  {sessionFormData.description && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">Deskripsi:</span>
+                      <span className="text-xs">{sessionFormData.description}</span>
+                    </div>
+                  )}
+                  {sessionFormData.date && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">Tanggal:</span>
+                      <span>{new Date(sessionFormData.date).toLocaleDateString('id-ID')}</span>
+                    </div>
+                  )}
+                  {sessionFormData.time && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">Waktu:</span>
+                      <span>{sessionFormData.time}</span>
+                    </div>
+                  )}
+                  {sessionFormData.duration && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">Durasi:</span>
+                      <span>{sessionFormData.duration} menit</span>
+                    </div>
+                  )}
+                  {!editingSession && aiPredictions && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Masalah:</span>
+                        <span>{selectedIssues.length} dipilih</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Teknik:</span>
+                        <span>{selectedTechniques.length} dipilih</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowSaveConfirmation(false)}
+              disabled={savingSession}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleConfirmSave}
+              disabled={savingSession}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {savingSession ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  {editingSession ? 'Memperbarui...' : 'Menyimpan...'}
+                </div>
+              ) : (
+                editingSession ? 'Update Sesi' : 'Simpan Sesi'
+              )}
             </Button>
           </div>
         </div>

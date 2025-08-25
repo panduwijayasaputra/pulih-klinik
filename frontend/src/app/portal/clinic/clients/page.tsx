@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import { ClientList } from '@/components/clients/ClientList';
 import { AssignTherapistModal } from '@/components/clients/AssignTherapistModal';
 import { StartOverModal } from '@/components/clients/StartOverModal';
@@ -80,7 +80,7 @@ export default function ClientsPage() {
 
   return (
     <RoleGuard allowedRoles={[UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]}>
-      <PortalPageWrapper
+      <PageWrapper
         title="Manajemen Klien"
         description="Kelola data klien, penugasan therapist, dan riwayat sesi"
       >
@@ -142,7 +142,7 @@ export default function ClientsPage() {
             }}
           />
         )}
-      </PortalPageWrapper>
+      </PageWrapper>
     </RoleGuard>
   );
 }

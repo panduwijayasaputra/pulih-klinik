@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PortalPageWrapper } from '@/components/layout/PortalPageWrapper';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'; 
 import { Label } from '@/components/ui/label';
@@ -107,7 +107,7 @@ function SettingsPageContent() {
   );
 
   return (
-    <PortalPageWrapper
+    <PageWrapper
       title="Pengaturan"
       description="Kelola preferensi dan konfigurasi sistem Anda"
       actions={headerActions}
@@ -416,7 +416,7 @@ function SettingsPageContent() {
           </Card>
         </TabsContent>
       </Tabs>
-    </PortalPageWrapper>
+    </PageWrapper>
   );
 }
 
