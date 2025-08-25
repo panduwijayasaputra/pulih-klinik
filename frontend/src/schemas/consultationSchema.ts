@@ -61,6 +61,7 @@ const baseConsultationSchema = z.object({
     .min(15, 'Durasi sesi minimal 15 menit')
     .max(180, 'Durasi sesi maksimal 180 menit'),
   consultationNotes: z.string().optional(),
+  scriptGenerationPreferences: z.string().optional(),
   
   // Client background information
   previousTherapyExperience: z.boolean(),
@@ -397,6 +398,9 @@ export const consultationSchema = baseConsultationSchema.extend({
   attentionDetails: z.string().optional(),
   behavioralConcerns: z.boolean().optional(),
   behavioralDetails: z.string().optional(),
+  
+  // Script generation preferences (added to comprehensive schema for consistency)
+  scriptGenerationPreferences: z.string().optional(),
 });
 
 // Create a base update schema

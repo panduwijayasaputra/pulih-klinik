@@ -248,7 +248,7 @@ export const TherapistList: React.FC = () => {
     const actionTitleId = newStatus === 'active' ? 'Aktifkan Akun Therapist' : 'Nonaktifkan Akun Therapist';
 
     openDialog({
-      variant: 'danger',
+      variant: newStatus === 'active' ? 'success' : 'danger',
       title: actionTitleId,
       description: `Yakin ingin ${actionTextId} akun ${therapist.fullName}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
       confirmText: actionTextId.charAt(0).toUpperCase() + actionTextId.slice(1),

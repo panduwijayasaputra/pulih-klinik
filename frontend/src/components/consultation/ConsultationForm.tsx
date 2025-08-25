@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,7 +35,6 @@ import {
 export interface ConsultationFormProps {
   form: UseFormReturn<ConsultationFormData>;
   onSubmit: (data: ConsultationFormData) => Promise<void>;
-  onSave: (status?: ConsultationStatusEnum) => Promise<void>;
   isSubmitting: boolean;
   isLoading: boolean;
   mode?: 'create' | 'edit';
@@ -47,7 +47,6 @@ export interface ConsultationFormProps {
 export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   form,
   onSubmit,
-  onSave,
   isSubmitting,
   isLoading,
   mode: _mode = 'create',
@@ -58,6 +57,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 }) => {
   const { user: _user } = useAuth();
   const { register, handleSubmit, watch, setValue, formState: { errors, isDirty, isValid } } = form;
+  
+  // Confirmation dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<ConsultationFormData | null>(null);
 
   const formTypes = watch('formTypes') || [];
   const previousTherapyExperience = watch('previousTherapyExperience');
@@ -66,20 +69,31 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const _significantPhysicalIllness = watch('significantPhysicalIllness');
   const _traumaticExperience = watch('traumaticExperience');
   const _familyPsychologicalHistory = watch('familyPsychologicalHistory');
+  
+  // Handle form submission with confirmation
+  const handleFormSubmit = (data: ConsultationFormData) => {
+    setPendingFormData(data);
+    setShowConfirmDialog(true);
+  };
+  
+  // Handle confirmed submission
+  const handleConfirmedSubmit = async () => {
+    if (pendingFormData) {
+      await onSubmit(pendingFormData);
+      setPendingFormData(null);
+    }
+  };
+  
+  // Handle dialog close
+  const handleDialogClose = () => {
+    setShowConfirmDialog(false);
+    setPendingFormData(null);
+  };
 
-  // Handle save as draft
-  const handleSaveDraft = useCallback(async () => {
-    await onSave(ConsultationStatusEnum.Draft);
-  }, [onSave]);
-
-  // Handle save as completed
-  const handleSaveCompleted = useCallback(async () => {
-    await onSave(ConsultationStatusEnum.Completed);
-  }, [onSave]);
 
   return (
     <div className={`space-y-8 ${readOnly ? 'pointer-events-none select-none opacity-80' : ''}`}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
         {/* 1. Consultation Information */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Jenis Konsultasi</h3>
@@ -1802,6 +1816,22 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
             </div>
 
             <div>
+              <Label htmlFor="scriptGenerationPreferences" className="text-base font-medium">Preferensi Generasi Script</Label>
+              <p className="text-gray-600 mb-2 text-sm">Catatan karakteristik klien yang dapat membantu AI menghasilkan script hipnoterapi yang personal</p>
+              <Textarea
+                id="scriptGenerationPreferences"
+                {...register('scriptGenerationPreferences')}
+                placeholder="Contoh: suka musik, generasi Z, hobi traveling, religius..."
+                rows={3}
+                className="mt-2"
+                disabled={readOnly}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Tips: Masukkan informasi seperti hobi, generasi, kepribadian, atau preferensi yang dapat membantu AI membuat script yang relevan dengan klien
+              </p>
+            </div>
+
+            <div>
               <Label htmlFor="initialAssessment" className="text-base font-medium">Penilaian Awal</Label>
               <Textarea
                 id="initialAssessment"
@@ -1840,25 +1870,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               </Button>
             )}
 
-            <div className="flex space-x-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSaveDraft}
-                disabled={isSubmitting || isLoading}
-              >
-                Simpan sebagai Draft
-              </Button>
-
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleSaveCompleted}
-                disabled={isSubmitting || isLoading || !isValid}
-              >
-                Simpan dan Selesaikan
-              </Button>
-
+            <div className="flex space-x-4 ml-auto">
               <Button
                 type="submit"
                 disabled={isSubmitting || isLoading || !isDirty || !isValid}
@@ -1870,6 +1882,46 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         )}
 
       </form>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showConfirmDialog}
+        onClose={handleDialogClose}
+        onConfirm={handleConfirmedSubmit}
+        title="Simpan Konsultasi"
+        description="Apakah Anda yakin ingin menyimpan data konsultasi ini?"
+        confirmText={isSubmitting ? 'Memproses...' : 'Ya, Simpan'}
+        cancelText="Batal"
+        variant="info"
+        confirmButtonProps={{ disabled: isSubmitting }}
+      >
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">
+              Sistem AI akan memproses data konsultasi ini untuk menghasilkan script hipnoterapi yang sesuai pada sesi terapi berikutnya:
+              </h4>
+              <div className="text-sm text-blue-800 space-y-2">
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li><strong>Menganalisis</strong> semua informasi yang telah diisi</li>
+                  <li><strong>Merangkum</strong> keluhan dan kondisi klien secara komprehensif</li>
+                  <li><strong>Memprediksi</strong> masalah utama yang dialami klien</li>
+                  <li><strong>Memberikan rekomendasi</strong> teknik hipnoterapi yang sesuai</li>
+                  <li><strong>Menyiapkan script</strong> hipnoterapi yang dipersonalisasi</li>
+                </ul>
+                <p className="font-medium mt-3">
+                  💡 Proses ini akan membantu Anda memberikan terapi yang lebih efektif dan terarah.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ConfirmationDialog>
     </div>
   );
 };
