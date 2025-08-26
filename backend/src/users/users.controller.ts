@@ -18,6 +18,7 @@ import {
   ApiParam,
   ApiBody,
   ApiConsumes,
+  ApiQuery,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -45,6 +46,41 @@ export class UsersController {
     summary: 'Get all users (admin only)',
     description:
       'Get paginated list of all users with optional filtering by search, role, and active status',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Number of items per page (1-100, default: 20)',
+    example: 20,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: 'string',
+    description: 'Search users by email or name',
+    example: 'john doe',
+  })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    enum: ['administrator', 'clinic_admin', 'therapist'],
+    description: 'Filter users by role',
+    example: 'therapist',
+  })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    type: 'boolean',
+    description: 'Filter users by active status',
+    example: true,
   })
   @ApiResponse({
     status: 200,

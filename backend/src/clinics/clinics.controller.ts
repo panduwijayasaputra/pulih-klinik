@@ -19,6 +19,7 @@ import {
   ApiParam,
   ApiBody,
   ApiConsumes,
+  ApiQuery,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -50,6 +51,41 @@ export class ClinicsController {
     summary: 'Get all clinics (admin only)',
     description:
       'Get paginated list of all clinics with optional filtering by search, status, and subscription tier',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number (default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Number of items per page (1-100, default: 20)',
+    example: 20,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: 'string',
+    description: 'Search clinics by name, email, or address',
+    example: 'wellness jakarta',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['active', 'inactive', 'suspended'],
+    description: 'Filter clinics by status',
+    example: 'active',
+  })
+  @ApiQuery({
+    name: 'subscriptionTier',
+    required: false,
+    enum: ['free', 'basic', 'premium', 'enterprise'],
+    description: 'Filter clinics by subscription tier',
+    example: 'premium',
   })
   @ApiResponse({
     status: 200,
