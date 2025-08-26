@@ -257,4 +257,85 @@ export class UsersService {
 
     return clinicIds;
   }
+
+  /**
+   * Get all users with pagination and filtering (admin only)
+   */
+  async getAllUsers(
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      role?: UserRoleType;
+      isActive?: boolean;
+    } = {},
+  ): Promise<{
+    users: UserProfileResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const { page = 1, limit = 20, search, role, isActive } = options;
+    const offset = (page - 1) * limit;
+
+    // Build filter conditions
+    const whereConditions: any = {};
+
+    if (isActive !== undefined) {
+      whereConditions.isActive = isActive;
+    }
+
+    if (search) {
+      whereConditions.$or = [
+        { email: { $ilike: `%${search}%` } },
+        { 'profile.name': { $ilike: `%${search}%` } },
+      ];
+    }
+
+    if (role) {
+      whereConditions.roles = { role };
+    }
+
+    const [users, total] = await this.em.findAndCount(User, whereConditions, {
+      populate: ['profile', 'roles', 'roles.clinic'],
+      orderBy: { createdAt: 'DESC' },
+      limit,
+      offset,
+    });
+
+    // Transform to response format
+    const userResponses: UserProfileResponse[] = users
+      .filter((user) => user.profile) // Only include users with profiles
+      .map((user) => ({
+        id: user.id,
+        email: user.email,
+        isActive: user.isActive,
+        profile: {
+          id: user.profile!.id,
+          name: user.profile!.name,
+          phone: user.profile!.phone,
+          address: user.profile!.address,
+          bio: user.profile!.bio,
+          avatarUrl: user.profile!.avatarUrl,
+          createdAt: user.profile!.createdAt,
+          updatedAt: user.profile!.updatedAt,
+        },
+        roles: user.roles.toArray().map((role) => ({
+          id: role.id,
+          role: role.role,
+          clinicId: role.clinicId,
+          clinicName: role.clinic?.name,
+          createdAt: role.createdAt,
+        })),
+      }));
+
+    return {
+      users: userResponses,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }

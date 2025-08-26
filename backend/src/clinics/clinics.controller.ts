@@ -6,8 +6,10 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +27,7 @@ import {
   CurrentUser,
   RequireClinicAccess,
   RequireAdminOrClinicAdmin,
+  RequireAdmin,
 } from '../auth/decorators';
 import { ParseUuidPipe } from '../common/pipes';
 import {
@@ -40,6 +43,116 @@ import type { AuthUser } from '../auth/jwt.strategy';
 @ApiBearerAuth()
 export class ClinicsController {
   constructor(private readonly clinicsService: ClinicsService) {}
+
+  @Get()
+  @RequireAdmin()
+  @ApiOperation({
+    summary: 'Get all clinics (admin only)',
+    description:
+      'Get paginated list of all clinics with optional filtering by search, status, and subscription tier',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Clinics retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          clinics: [
+            {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              name: 'Wellness Clinic Jakarta',
+              address: 'Jl. Sudirman No. 123, Jakarta Pusat',
+              phone: '+62-21-1234567',
+              email: 'info@wellnessclinic.id',
+              website: 'https://wellnessclinic.id',
+              description: 'Premium wellness and therapy clinic',
+              workingHours: 'Mon-Fri: 08:00-20:00, Sat: 09:00-17:00',
+              logoUrl: null,
+              primaryColor: '#3B82F6',
+              secondaryColor: '#F3F4F6',
+              fontFamily: 'Inter',
+              timezone: 'Asia/Jakarta',
+              language: 'id',
+              emailNotifications: true,
+              smsNotifications: false,
+              pushNotifications: true,
+              status: 'active',
+              subscriptionTier: 'premium',
+              subscriptionExpires: '2024-12-31T00:00:00.000Z',
+              createdAt: '2023-01-01T00:00:00.000Z',
+              updatedAt: '2023-01-15T00:00:00.000Z',
+            },
+          ],
+          total: 1,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+        },
+        message: 'Clinics retrieved successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - invalid query parameters',
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing JWT token' })
+  @ApiForbiddenResponse({ description: 'Administrator access required' })
+  async getAllClinics(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('subscriptionTier') subscriptionTier?: string,
+  ): Promise<{
+    success: boolean;
+    data: {
+      clinics: ClinicProfileResponse[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+    message: string;
+  }> {
+    // Parse and validate query parameters
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+
+    if (pageNum && (pageNum < 1 || isNaN(pageNum))) {
+      throw new BadRequestException('Page must be a positive integer');
+    }
+
+    if (limitNum && (limitNum < 1 || limitNum > 100 || isNaN(limitNum))) {
+      throw new BadRequestException('Limit must be between 1 and 100');
+    }
+
+    if (status && !['active', 'inactive', 'suspended'].includes(status)) {
+      throw new BadRequestException('Invalid status filter');
+    }
+
+    if (
+      subscriptionTier &&
+      !['free', 'basic', 'premium', 'enterprise'].includes(subscriptionTier)
+    ) {
+      throw new BadRequestException('Invalid subscription tier filter');
+    }
+
+    const result = await this.clinicsService.getAllClinics({
+      page: pageNum,
+      limit: limitNum,
+      search,
+      status,
+      subscriptionTier,
+    });
+
+    return {
+      success: true,
+      data: result,
+      message: 'Clinics retrieved successfully',
+    };
+  }
 
   @Get(':clinicId')
   @RequireClinicAccess()

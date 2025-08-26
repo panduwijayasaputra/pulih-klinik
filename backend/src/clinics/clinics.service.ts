@@ -312,4 +312,97 @@ export class ClinicsService {
       updatedAt: clinic.updatedAt,
     };
   }
+
+  /**
+   * Get all clinics with pagination and filtering (admin only)
+   */
+  async getAllClinics(
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      subscriptionTier?: string;
+    } = {},
+  ): Promise<{
+    clinics: ClinicProfileResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const { page = 1, limit = 20, search, status, subscriptionTier } = options;
+    const offset = (page - 1) * limit;
+
+    // Build filter conditions
+    const whereConditions: any = {};
+
+    if (status) {
+      whereConditions.status = status;
+    }
+
+    if (subscriptionTier) {
+      whereConditions.subscriptionTier = subscriptionTier;
+    }
+
+    if (search) {
+      whereConditions.$or = [
+        { name: { $ilike: `%${search}%` } },
+        { email: { $ilike: `%${search}%` } },
+        { address: { $ilike: `%${search}%` } },
+      ];
+    }
+
+    const [clinics, total] = await this.em.findAndCount(
+      Clinic,
+      whereConditions,
+      {
+        orderBy: { createdAt: 'DESC' },
+        limit,
+        offset,
+      },
+    );
+
+    // Transform to response format
+    const clinicResponses: ClinicProfileResponse[] = clinics.map((clinic) => ({
+      id: clinic.id,
+      name: clinic.name,
+      address: clinic.address,
+      phone: clinic.phone,
+      email: clinic.email,
+      website: clinic.website,
+      description: clinic.description,
+      workingHours: clinic.workingHours,
+
+      // Branding
+      logoUrl: clinic.logoUrl,
+      primaryColor: clinic.primaryColor,
+      secondaryColor: clinic.secondaryColor,
+      fontFamily: clinic.fontFamily,
+
+      // Settings
+      timezone: clinic.timezone,
+      language: clinic.language,
+      emailNotifications: clinic.emailNotifications,
+      smsNotifications: clinic.smsNotifications,
+      pushNotifications: clinic.pushNotifications,
+
+      // Status & Subscription
+      status: clinic.status,
+      subscriptionTier: clinic.subscriptionTier,
+      subscriptionExpires: clinic.subscriptionExpires,
+
+      // Timestamps
+      createdAt: clinic.createdAt,
+      updatedAt: clinic.updatedAt,
+    }));
+
+    return {
+      clinics: clinicResponses,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }
