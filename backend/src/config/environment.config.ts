@@ -16,7 +16,10 @@ const environmentSchema = z.object({
   DB_SSL: z.coerce.boolean().default(false),
 
   // JWT configuration
-  JWT_SECRET: z.string().min(32).optional(),
+  JWT_SECRET: z
+    .string()
+    .min(32)
+    .default('your_jwt_secret_here_minimum_32_characters_long'),
   JWT_EXPIRES_IN: z.string().default('24h'),
 
   // Rate limiting
