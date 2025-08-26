@@ -8,6 +8,7 @@ import { EntityManager } from '@mikro-orm/core';
 import { User } from '../database/entities/user.entity';
 import { AuthService } from '../auth/auth.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto';
+import { UserRole, UserRoleType } from '../common/enums';
 
 export interface UserProfileResponse {
   id: string;
@@ -155,7 +156,10 @@ export class UsersService {
   async validateClinicAccess(
     userId: string,
     clinicId: string,
-    requiredRoles: string[] = ['clinic_admin', 'administrator'],
+    requiredRoles: UserRoleType[] = [
+      UserRole.CLINIC_ADMIN,
+      UserRole.ADMINISTRATOR,
+    ],
   ): Promise<boolean> {
     const user = await this.em.findOne(
       User,
@@ -170,7 +174,7 @@ export class UsersService {
     // Administrator can access any clinic
     const isAdmin = user.roles
       .toArray()
-      .some((role) => role.role === 'administrator');
+      .some((role) => role.role === UserRole.ADMINISTRATOR);
     if (isAdmin) {
       return true;
     }
@@ -197,7 +201,7 @@ export class UsersService {
    */
   async validateUserRole(
     userId: string,
-    requiredRoles: string[],
+    requiredRoles: UserRoleType[],
   ): Promise<boolean> {
     const user = await this.em.findOne(
       User,
@@ -239,7 +243,7 @@ export class UsersService {
     // Administrator can access all clinics (return empty array to indicate "all")
     const isAdmin = user.roles
       .toArray()
-      .some((role) => role.role === 'administrator');
+      .some((role) => role.role === UserRole.ADMINISTRATOR);
     if (isAdmin) {
       return [];
     }

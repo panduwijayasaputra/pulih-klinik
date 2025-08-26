@@ -6,8 +6,9 @@ import {
 } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
 import { Clinic } from '../database/entities/clinic.entity';
-import { UserRole } from '../database/entities/user-role.entity';
+import { UserRole as UserRoleEntity } from '../database/entities/user-role.entity';
 import { UpdateClinicDto, UpdateBrandingDto, UpdateSettingsDto } from './dto';
+import { UserRole } from '../common/enums';
 
 export interface ClinicProfileResponse {
   id: string;
@@ -165,11 +166,11 @@ export class ClinicsService {
     clinicId: string,
   ): Promise<boolean> {
     // Check if user has clinic_admin role for this clinic or is system administrator
-    const userRole = await this.em.findOne(UserRole, {
+    const userRole = await this.em.findOne(UserRoleEntity, {
       userId,
       $or: [
-        { role: 'administrator' }, // System admin can access any clinic
-        { role: 'clinic_admin', clinicId }, // Clinic admin for specific clinic
+        { role: UserRole.ADMINISTRATOR }, // System admin can access any clinic
+        { role: UserRole.CLINIC_ADMIN, clinicId }, // Clinic admin for specific clinic
       ],
     });
 
@@ -186,10 +187,12 @@ export class ClinicsService {
    * Get clinics accessible by user (based on roles)
    */
   async getUserAccessibleClinics(userId: string): Promise<string[]> {
-    const userRoles = await this.em.find(UserRole, { userId });
+    const userRoles = await this.em.find(UserRoleEntity, { userId });
 
     // System administrator can access all clinics
-    const isAdmin = userRoles.some((role) => role.role === 'administrator');
+    const isAdmin = userRoles.some(
+      (role) => role.role === UserRole.ADMINISTRATOR,
+    );
     if (isAdmin) {
       const allClinics = await this.em.find(Clinic, {});
       return allClinics.map((clinic) => clinic.id);

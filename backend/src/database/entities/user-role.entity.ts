@@ -8,6 +8,7 @@ import {
 } from '@mikro-orm/core';
 import { User } from './user.entity';
 import { Clinic } from './clinic.entity';
+import type { UserRoleType } from '../../common/enums';
 
 @Entity({ tableName: 'user_roles' })
 @Index({ properties: ['userId'] })
@@ -20,7 +21,7 @@ export class UserRole {
   userId!: string;
 
   @Property({ type: 'varchar', length: 50 })
-  role!: 'administrator' | 'clinic_admin' | 'therapist';
+  role!: UserRoleType;
 
   @Property({ type: 'uuid', nullable: true })
   clinicId?: string;

@@ -5,6 +5,7 @@ import { UserProfile } from '../entities/user-profile.entity';
 import { UserRole } from '../entities/user-role.entity';
 import { Clinic } from '../entities/clinic.entity';
 import * as bcrypt from 'bcryptjs';
+import { UserRole as UserRoleEnum } from '../../common/enums';
 
 export class InitialAdminSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
@@ -44,7 +45,7 @@ export class InitialAdminSeeder extends Seeder {
     // Create admin role
     const adminRole = new UserRole();
     adminRole.userId = adminUser.id;
-    adminRole.role = 'administrator';
+    adminRole.role = UserRoleEnum.ADMINISTRATOR;
     adminRole.user = adminUser;
 
     await em.persistAndFlush(adminRole);
@@ -71,7 +72,7 @@ export class InitialAdminSeeder extends Seeder {
     // Create clinic admin role
     const clinicAdminRole = new UserRole();
     clinicAdminRole.userId = clinicAdminUser.id;
-    clinicAdminRole.role = 'clinic_admin';
+    clinicAdminRole.role = UserRoleEnum.CLINIC_ADMIN;
     clinicAdminRole.clinicId = clinic.id;
     clinicAdminRole.user = clinicAdminUser;
     clinicAdminRole.clinic = clinic;

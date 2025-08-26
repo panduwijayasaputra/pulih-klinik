@@ -29,6 +29,7 @@ import { ParseUuidPipe } from '../common/pipes';
 import { UsersService, UserProfileResponse } from './users.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto';
 import type { AuthUser } from '../auth/jwt.strategy';
+import { UserRole } from '../common/enums';
 
 @ApiTags('Users')
 @Controller('users')
@@ -96,7 +97,7 @@ export class UsersController {
     // Users can only access their own profile unless they're an admin
     if (
       currentUser.id !== userId &&
-      !currentUser.roles.some((role) => role.role === 'administrator')
+      !currentUser.roles.some((role) => role.role === UserRole.ADMINISTRATOR)
     ) {
       throw new ForbiddenException('You can only access your own profile');
     }
@@ -157,7 +158,7 @@ export class UsersController {
     // Users can only update their own profile unless they're an admin
     if (
       currentUser.id !== userId &&
-      !currentUser.roles.some((role) => role.role === 'administrator')
+      !currentUser.roles.some((role) => role.role === UserRole.ADMINISTRATOR)
     ) {
       throw new ForbiddenException('You can only update your own profile');
     }

@@ -5,6 +5,7 @@ import { UserProfile } from '../entities/user-profile.entity';
 import { UserRole } from '../entities/user-role.entity';
 import { Clinic } from '../entities/clinic.entity';
 import * as bcrypt from 'bcryptjs';
+import { UserRole as UserRoleEnum } from '../../common/enums';
 
 export class AdditionalUsersSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
@@ -41,7 +42,7 @@ export class AdditionalUsersSeeder extends Seeder {
     // Create therapist role
     const therapistRole = new UserRole();
     therapistRole.userId = therapistUser.id;
-    therapistRole.role = 'therapist';
+    therapistRole.role = UserRoleEnum.THERAPIST;
     therapistRole.clinicId = clinic.id;
     therapistRole.user = therapistUser;
     therapistRole.clinic = clinic;
@@ -71,7 +72,7 @@ export class AdditionalUsersSeeder extends Seeder {
     // Create clinic admin role for multi-role user
     const multiRoleClinicAdminRole = new UserRole();
     multiRoleClinicAdminRole.userId = multiRoleUser.id;
-    multiRoleClinicAdminRole.role = 'clinic_admin';
+    multiRoleClinicAdminRole.role = UserRoleEnum.CLINIC_ADMIN;
     multiRoleClinicAdminRole.clinicId = clinic.id;
     multiRoleClinicAdminRole.user = multiRoleUser;
     multiRoleClinicAdminRole.clinic = clinic;
@@ -81,7 +82,7 @@ export class AdditionalUsersSeeder extends Seeder {
     // Create therapist role for multi-role user
     const multiRoleTherapistRole = new UserRole();
     multiRoleTherapistRole.userId = multiRoleUser.id;
-    multiRoleTherapistRole.role = 'therapist';
+    multiRoleTherapistRole.role = UserRoleEnum.THERAPIST;
     multiRoleTherapistRole.clinicId = clinic.id;
     multiRoleTherapistRole.user = multiRoleUser;
     multiRoleTherapistRole.clinic = clinic;

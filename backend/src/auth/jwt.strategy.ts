@@ -4,13 +4,14 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { EntityManager } from '@mikro-orm/core';
 import { environmentConfig } from '../config/environment.config';
 import { User } from '../database/entities/user.entity';
+import { UserRoleType } from '../common/enums';
 
 export interface JwtPayload {
   sub: string; // user id
   email: string;
   roles: Array<{
     id: string;
-    role: string;
+    role: UserRoleType;
     clinicId?: string;
   }>;
   iat?: number;
@@ -23,7 +24,7 @@ export interface AuthUser {
   isActive: boolean;
   roles: Array<{
     id: string;
-    role: string;
+    role: UserRoleType;
     clinicId?: string;
     clinicName?: string;
   }>;

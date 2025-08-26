@@ -1,5 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import type { AuthUser } from '../../auth/jwt.strategy';
+import { UserRole } from '../enums';
 
 /**
  * Enhanced decorator to extract the current authenticated user from the request
@@ -51,7 +52,7 @@ export const CurrentUserClinicIds = createParamDecorator(
     }
 
     // Administrators can access all clinics, return empty array to indicate no restriction
-    if (user.roles.some((role) => role.role === 'administrator')) {
+    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
       return [];
     }
 
@@ -92,7 +93,7 @@ export const IsAdmin = createParamDecorator(
       return false;
     }
 
-    return user.roles.some((role) => role.role === 'administrator');
+    return user.roles.some((role) => role.role === UserRole.ADMINISTRATOR);
   },
 );
 
@@ -109,7 +110,7 @@ export const CanAccessClinic = createParamDecorator(
     }
 
     // Administrators can access all clinics
-    if (user.roles.some((role) => role.role === 'administrator')) {
+    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
       return true;
     }
 

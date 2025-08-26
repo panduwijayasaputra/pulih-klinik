@@ -7,9 +7,10 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthUser } from '../jwt.strategy';
+import { UserRole, UserRoleType } from '../../common/enums';
 
 export interface RequiredRole {
-  role: string;
+  role: UserRoleType;
   requireClinicScope?: boolean;
 }
 
@@ -51,7 +52,7 @@ export class RolesGuard implements CanActivate {
         const requestedClinicId = clinicIdFromParams || clinicIdFromQuery;
 
         // Administrator role can access all clinics
-        if (userRole.role === 'administrator') {
+        if (userRole.role === UserRole.ADMINISTRATOR) {
           return true;
         }
 

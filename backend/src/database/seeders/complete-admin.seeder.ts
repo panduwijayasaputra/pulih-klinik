@@ -5,6 +5,7 @@ import { UserProfile } from '../entities/user-profile.entity';
 import { UserRole } from '../entities/user-role.entity';
 import { Clinic } from '../entities/clinic.entity';
 import * as bcrypt from 'bcryptjs';
+import { UserRole as UserRoleEnum } from '../../common/enums';
 
 export class CompleteAdminSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
@@ -59,13 +60,13 @@ export class CompleteAdminSeeder extends Seeder {
     // Check if admin role exists
     const existingRole = await em.findOne(UserRole, {
       userId: existingAdmin.id,
-      role: 'administrator',
+      role: UserRoleEnum.ADMINISTRATOR,
     });
 
     if (!existingRole) {
       const adminRole = new UserRole();
       adminRole.userId = existingAdmin.id;
-      adminRole.role = 'administrator';
+      adminRole.role = UserRoleEnum.ADMINISTRATOR;
       adminRole.user = existingAdmin;
 
       await em.persistAndFlush(adminRole);
@@ -97,7 +98,7 @@ export class CompleteAdminSeeder extends Seeder {
 
       const clinicAdminRole = new UserRole();
       clinicAdminRole.userId = clinicAdminUser.id;
-      clinicAdminRole.role = 'clinic_admin';
+      clinicAdminRole.role = UserRoleEnum.CLINIC_ADMIN;
       clinicAdminRole.clinicId = clinic.id;
       clinicAdminRole.user = clinicAdminUser;
       clinicAdminRole.clinic = clinic;
