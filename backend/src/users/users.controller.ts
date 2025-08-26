@@ -5,10 +5,8 @@ import {
   Post,
   Param,
   Body,
-  UseGuards,
   HttpCode,
   HttpStatus,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import {
@@ -23,22 +21,24 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards';
-import { CurrentUser } from '../auth/decorators';
+import {
+  CurrentUser,
+  RequireSelfOrAdminAccess,
+  RequireSelfOnlyAccess,
+} from '../auth/decorators';
 import { ParseUuidPipe } from '../common/pipes';
 import { UsersService, UserProfileResponse } from './users.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto';
 import type { AuthUser } from '../auth/jwt.strategy';
-import { UserRole } from '../common/enums';
 
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get(':userId/profile')
+  @RequireSelfOrAdminAccess()
   @ApiOperation({
     summary: 'Get user profile',
     description:
@@ -88,20 +88,12 @@ export class UsersController {
   @ApiNotFoundResponse({ description: 'User or profile not found' })
   async getUserProfile(
     @Param('userId', ParseUuidPipe) userId: string,
-    @CurrentUser() currentUser: AuthUser,
+    @CurrentUser() _currentUser: AuthUser,
   ): Promise<{
     success: boolean;
     data: UserProfileResponse;
     message: string;
   }> {
-    // Users can only access their own profile unless they're an admin
-    if (
-      currentUser.id !== userId &&
-      !currentUser.roles.some((role) => role.role === UserRole.ADMINISTRATOR)
-    ) {
-      throw new ForbiddenException('You can only access your own profile');
-    }
-
     const profile = await this.usersService.getUserProfile(userId);
 
     return {
@@ -112,6 +104,7 @@ export class UsersController {
   }
 
   @Put(':userId/profile')
+  @RequireSelfOrAdminAccess()
   @ApiOperation({
     summary: 'Update user profile',
     description:
@@ -149,20 +142,12 @@ export class UsersController {
   async updateProfile(
     @Param('userId', ParseUuidPipe) userId: string,
     @Body() updateProfileDto: UpdateProfileDto,
-    @CurrentUser() currentUser: AuthUser,
+    @CurrentUser() _currentUser: AuthUser,
   ): Promise<{
     success: boolean;
     data: UserProfileResponse['profile'];
     message: string;
   }> {
-    // Users can only update their own profile unless they're an admin
-    if (
-      currentUser.id !== userId &&
-      !currentUser.roles.some((role) => role.role === UserRole.ADMINISTRATOR)
-    ) {
-      throw new ForbiddenException('You can only update your own profile');
-    }
-
     const result = await this.usersService.updateProfile(
       userId,
       updateProfileDto,
@@ -176,6 +161,7 @@ export class UsersController {
   }
 
   @Post(':userId/change-password')
+  @RequireSelfOnlyAccess()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Change password',
@@ -214,16 +200,11 @@ export class UsersController {
   async changePassword(
     @Param('userId', ParseUuidPipe) userId: string,
     @Body() changePasswordDto: ChangePasswordDto,
-    @CurrentUser() currentUser: AuthUser,
+    @CurrentUser() _currentUser: AuthUser,
   ): Promise<{
     success: boolean;
     message: string;
   }> {
-    // Users can only change their own password
-    if (currentUser.id !== userId) {
-      throw new ForbiddenException('You can only change your own password');
-    }
-
     const result = await this.usersService.changePassword(
       userId,
       changePasswordDto,
@@ -236,6 +217,7 @@ export class UsersController {
   }
 
   @Post(':userId/avatar')
+  @RequireSelfOrAdminAccess()
   @ApiOperation({
     summary: 'Upload avatar (placeholder)',
     description:
@@ -273,17 +255,12 @@ export class UsersController {
   @ApiUnauthorizedResponse({ description: 'Invalid or missing JWT token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   uploadAvatar(
-    @Param('userId', ParseUuidPipe) userId: string,
-    @CurrentUser() currentUser: AuthUser,
+    @Param('userId', ParseUuidPipe) _userId: string,
+    @CurrentUser() _currentUser: AuthUser,
   ): {
     success: boolean;
     message: string;
   } {
-    // Users can only upload their own avatar
-    if (currentUser.id !== userId) {
-      throw new ForbiddenException('You can only upload your own avatar');
-    }
-
     // Placeholder implementation
     throw new BadRequestException(
       'Avatar upload functionality is not yet implemented. Please update the avatarUrl field in your profile for now.',

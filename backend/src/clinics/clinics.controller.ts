@@ -6,7 +6,6 @@ import {
   Delete,
   Param,
   Body,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -22,8 +21,11 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards';
-import { CurrentUser } from '../auth/decorators';
+import {
+  CurrentUser,
+  RequireClinicAccess,
+  RequireAdminOrClinicAdmin,
+} from '../auth/decorators';
 import { ParseUuidPipe } from '../common/pipes';
 import {
   ClinicsService,
@@ -35,12 +37,12 @@ import type { AuthUser } from '../auth/jwt.strategy';
 
 @ApiTags('Clinics')
 @Controller('clinics')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ClinicsController {
   constructor(private readonly clinicsService: ClinicsService) {}
 
   @Get(':clinicId')
+  @RequireClinicAccess()
   @ApiOperation({
     summary: 'Get clinic profile',
     description:
@@ -114,6 +116,7 @@ export class ClinicsController {
   }
 
   @Put(':clinicId')
+  @RequireAdminOrClinicAdmin()
   @ApiOperation({
     summary: 'Update clinic profile',
     description:
@@ -177,6 +180,7 @@ export class ClinicsController {
   }
 
   @Put(':clinicId/branding')
+  @RequireAdminOrClinicAdmin()
   @ApiOperation({
     summary: 'Update clinic branding',
     description:
@@ -239,6 +243,7 @@ export class ClinicsController {
   }
 
   @Put(':clinicId/settings')
+  @RequireAdminOrClinicAdmin()
   @ApiOperation({
     summary: 'Update clinic settings',
     description:
@@ -302,6 +307,7 @@ export class ClinicsController {
   }
 
   @Get(':clinicId/documents')
+  @RequireClinicAccess()
   @ApiOperation({
     summary: 'Get clinic documents (placeholder)',
     description:
@@ -356,6 +362,7 @@ export class ClinicsController {
   }
 
   @Post(':clinicId/documents')
+  @RequireAdminOrClinicAdmin()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Upload clinic document (placeholder)',
@@ -439,6 +446,7 @@ export class ClinicsController {
   }
 
   @Delete(':clinicId/documents/:documentId')
+  @RequireAdminOrClinicAdmin()
   @ApiOperation({
     summary: 'Delete clinic document (placeholder)',
     description:
