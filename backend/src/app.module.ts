@@ -9,6 +9,10 @@ import { databaseConfig, environmentConfig } from './config';
 import { AuthModule } from './auth';
 import { UsersModule } from './users/users.module';
 import { ClinicsModule } from './clinics/clinics.module';
+import { TherapistsModule } from './therapists/therapists.module';
+import { ClientsModule } from './clients/clients.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { ConsultationsModule } from './consultations/consultations.module';
 import {
   ResponseInterceptor,
   HttpExceptionFilter,
@@ -31,6 +35,10 @@ import {
     AuthModule,
     UsersModule,
     ClinicsModule,
+    TherapistsModule,
+    ClientsModule,
+    SessionsModule,
+    ConsultationsModule,
   ],
   controllers: [AppController],
   providers: [
