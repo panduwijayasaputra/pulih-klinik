@@ -109,7 +109,7 @@ export class Therapist {
 
   @Property({
     type: 'json',
-    default: [1, 2, 3, 4, 5],
+    defaultRaw: "'[1,2,3,4,5]'",
     comment: 'Working days (1=Monday to 7=Sunday)',
   })
   workingDays: number[] = [1, 2, 3, 4, 5];
