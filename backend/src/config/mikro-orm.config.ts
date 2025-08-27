@@ -22,7 +22,7 @@ export default defineConfig({
   },
   driverOptions: {
     connection: {
-      ssl: environmentConfig.DB_SSL,
+      ssl: false,
     },
   },
 });
