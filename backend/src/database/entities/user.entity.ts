@@ -4,10 +4,12 @@ import {
   Property,
   OneToOne,
   OneToMany,
+  ManyToOne,
   Collection,
 } from '@mikro-orm/core';
 import { UserProfile } from './user-profile.entity';
 import { UserRole } from './user-role.entity';
+import { Clinic } from './clinic.entity';
 
 @Entity({ tableName: 'users' })
 export class User {
@@ -29,11 +31,17 @@ export class User {
   @Property({ type: 'timestamp', nullable: true })
   emailVerificationExpires?: Date;
 
+  @Property({ type: 'timestamp', nullable: true })
+  emailVerifiedAt?: Date;
+
   @Property({ type: 'varchar', length: 255, nullable: true })
   passwordResetToken?: string;
 
   @Property({ type: 'timestamp', nullable: true })
   passwordResetExpires?: Date;
+
+  @Property({ type: 'varchar', length: 500, nullable: true })
+  avatarUrl?: string;
 
   @Property({ type: 'timestamp', nullable: true })
   lastLogin?: Date;
@@ -53,6 +61,9 @@ export class User {
 
   @OneToOne(() => UserProfile, (profile) => profile.user)
   profile?: UserProfile;
+
+  @ManyToOne(() => Clinic, { nullable: true })
+  clinic?: Clinic;
 
   @OneToMany(() => UserRole, (role) => role.user)
   roles = new Collection<UserRole>(this);

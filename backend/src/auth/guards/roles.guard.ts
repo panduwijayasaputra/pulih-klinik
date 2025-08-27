@@ -57,12 +57,12 @@ export class RolesGuard implements CanActivate {
         }
 
         // For clinic_admin and therapist, they must have matching clinicId
-        if (requestedClinicId && userRole.clinicId !== requestedClinicId) {
+        if (requestedClinicId && user.clinicId !== requestedClinicId) {
           return false;
         }
 
         // If no specific clinic requested, user must have a clinic assigned
-        if (!requestedClinicId && !userRole.clinicId) {
+        if (!requestedClinicId && !user.clinicId) {
           return false;
         }
       }

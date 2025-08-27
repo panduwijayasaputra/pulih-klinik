@@ -56,12 +56,8 @@ export const CurrentUserClinicIds = createParamDecorator(
       return [];
     }
 
-    // Extract unique clinic IDs from user roles
-    const clinicIds = user.roles
-      .map((role) => role.clinicId)
-      .filter((id): id is string => id !== undefined);
-
-    return [...new Set(clinicIds)];
+    // Return user's clinic ID
+    return user.clinicId ? [user.clinicId] : [];
   },
 );
 
@@ -114,7 +110,7 @@ export const CanAccessClinic = createParamDecorator(
       return true;
     }
 
-    // Check if user has a role in the specific clinic
-    return user.roles.some((role) => role.clinicId === clinicId);
+    // Check if user has access to the specific clinic
+    return user.clinicId === clinicId;
   },
 );

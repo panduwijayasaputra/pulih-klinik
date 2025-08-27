@@ -12,8 +12,9 @@ export interface JwtPayload {
   roles: Array<{
     id: string;
     role: UserRoleType;
-    clinicId?: string;
   }>;
+  clinicId?: string;
+  clinicName?: string;
   iat?: number;
   exp?: number;
 }
@@ -25,9 +26,9 @@ export interface AuthUser {
   roles: Array<{
     id: string;
     role: UserRoleType;
-    clinicId?: string;
-    clinicName?: string;
   }>;
+  clinicId?: string;
+  clinicName?: string;
 }
 
 @Injectable()
@@ -52,7 +53,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.em.findOne(
       User,
       { id: userId, email, isActive: true },
-      { populate: ['roles', 'roles.clinic'] },
+      { populate: ['roles', 'clinic'] },
     );
 
     if (!user) {
@@ -77,9 +78,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       roles: user.roles.map((role) => ({
         id: role.id,
         role: role.role,
-        clinicId: role.clinicId,
-        clinicName: role.clinic?.name,
       })),
+      clinicId: user.clinic?.id,
+      clinicName: user.clinic?.name,
     };
 
     return authUser;

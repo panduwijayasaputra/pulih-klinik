@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
 import { Clinic } from '../database/entities/clinic.entity';
-import { UserRole as UserRoleEntity } from '../database/entities/user-role.entity';
+import { User } from '../database/entities/user.entity';
 import { UpdateClinicDto, UpdateBrandingDto, UpdateSettingsDto } from './dto';
 import { UserRole } from '../common/enums';
 
@@ -166,15 +166,36 @@ export class ClinicsService {
     clinicId: string,
   ): Promise<boolean> {
     // Check if user has clinic_admin role for this clinic or is system administrator
-    const userRole = await this.em.findOne(UserRoleEntity, {
-      userId,
-      $or: [
-        { role: UserRole.ADMINISTRATOR }, // System admin can access any clinic
-        { role: UserRole.CLINIC_ADMIN, clinicId }, // Clinic admin for specific clinic
-      ],
-    });
+    const user = await this.em.findOne(
+      User,
+      {
+        id: userId,
+        isActive: true,
+      },
+      { populate: ['roles', 'clinic'] },
+    );
 
-    if (!userRole) {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // System administrator can access any clinic
+    const isAdmin = user.roles
+      .toArray()
+      .some((role) => role.role === UserRole.ADMINISTRATOR);
+    if (isAdmin) {
+      return true;
+    }
+
+    // Clinic admin can only access their own clinic
+    const hasClinicAdminAccess = user.roles
+      .toArray()
+      .some(
+        (role) =>
+          role.role === UserRole.CLINIC_ADMIN && user.clinic?.id === clinicId,
+      );
+
+    if (!hasClinicAdminAccess) {
       throw new ForbiddenException(
         'You do not have permission to manage this clinic',
       );
@@ -187,24 +208,27 @@ export class ClinicsService {
    * Get clinics accessible by user (based on roles)
    */
   async getUserAccessibleClinics(userId: string): Promise<string[]> {
-    const userRoles = await this.em.find(UserRoleEntity, { userId });
+    const user = await this.em.findOne(
+      User,
+      { id: userId, isActive: true },
+      { populate: ['roles', 'clinic'] },
+    );
+
+    if (!user) {
+      return [];
+    }
 
     // System administrator can access all clinics
-    const isAdmin = userRoles.some(
-      (role) => role.role === UserRole.ADMINISTRATOR,
-    );
+    const isAdmin = user.roles
+      .toArray()
+      .some((role) => role.role === UserRole.ADMINISTRATOR);
     if (isAdmin) {
       const allClinics = await this.em.find(Clinic, {});
       return allClinics.map((clinic) => clinic.id);
     }
 
-    // Get clinic IDs for clinic_admin and therapist roles
-    const clinicIds = userRoles
-      .filter((role) => role.clinicId)
-      .map((role) => role.clinicId!)
-      .filter((id, index, array) => array.indexOf(id) === index); // Remove duplicates
-
-    return clinicIds;
+    // Return user's clinic ID
+    return user.clinic?.id ? [user.clinic.id] : [];
   }
 
   /**

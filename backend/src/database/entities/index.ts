@@ -10,6 +10,7 @@ import { TherapySession } from './therapy-session.entity';
 import { ClientTherapistAssignment } from './client-therapist-assignment.entity';
 import { ClientStatusTransition } from './client-status-transition.entity';
 import { AuditLog } from './audit-log.entity';
+import { Registration } from './registration.entity';
 
 // Re-export entities
 export { User } from './user.entity';
@@ -24,6 +25,7 @@ export { TherapySession } from './therapy-session.entity';
 export { ClientTherapistAssignment } from './client-therapist-assignment.entity';
 export { ClientStatusTransition } from './client-status-transition.entity';
 export { AuditLog } from './audit-log.entity';
+export { Registration } from './registration.entity';
 
 // Export all entities as an array for easy registration
 export const entities = [
@@ -39,4 +41,5 @@ export const entities = [
   ClientTherapistAssignment,
   ClientStatusTransition,
   AuditLog,
+  Registration,
 ];

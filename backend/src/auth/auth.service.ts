@@ -22,9 +22,9 @@ export interface LoginResult {
     roles: Array<{
       id: string;
       role: string;
-      clinicId?: string;
-      clinicName?: string;
     }>;
+    clinicId?: string;
+    clinicName?: string;
   };
 }
 
@@ -44,7 +44,7 @@ export class AuthService {
     const user = await this.em.findOne(
       User,
       { email, isActive: true },
-      { populate: ['roles', 'roles.clinic', 'profile'] },
+      { populate: ['roles', 'clinic', 'profile'] },
     );
 
     if (!user) {
@@ -72,8 +72,9 @@ export class AuthService {
       roles: user.roles.map((role) => ({
         id: role.id,
         role: role.role,
-        clinicId: role.clinicId,
       })),
+      clinicId: user.clinic?.id,
+      clinicName: user.clinic?.name,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -95,9 +96,9 @@ export class AuthService {
         roles: user.roles.map((role) => ({
           id: role.id,
           role: role.role,
-          clinicId: role.clinicId,
-          clinicName: role.clinic?.name,
         })),
+        clinicId: user.clinic?.id,
+        clinicName: user.clinic?.name,
       },
     };
   }
@@ -110,7 +111,7 @@ export class AuthService {
       const user = await this.em.findOne(
         User,
         { id: payload.sub, isActive: true },
-        { populate: ['roles'] },
+        { populate: ['roles', 'clinic'] },
       );
 
       if (!user) {
@@ -123,8 +124,9 @@ export class AuthService {
         roles: user.roles.map((role) => ({
           id: role.id,
           role: role.role,
-          clinicId: role.clinicId,
         })),
+        clinicId: user.clinic?.id,
+        clinicName: user.clinic?.name,
       };
 
       const newAccessToken = this.jwtService.sign(newPayload);
@@ -157,7 +159,7 @@ export class AuthService {
     return this.em.findOne(
       User,
       { id: userId, isActive: true },
-      { populate: ['roles', 'roles.clinic'] },
+      { populate: ['roles', 'clinic'] },
     );
   }
 

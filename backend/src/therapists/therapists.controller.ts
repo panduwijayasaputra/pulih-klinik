@@ -847,4 +847,333 @@ export class TherapistsController {
       clinicId,
     );
   }
+
+  // === THERAPIST PORTAL ENDPOINTS ===
+  // These endpoints provide dedicated views for therapists to manage their assigned clients
+
+  @Get(':id/clients')
+  @RequireAuth()
+  @ApiOperation({
+    summary: "Get therapist's assigned clients",
+    description:
+      'Get all clients assigned to a specific therapist with detailed information and progress.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Therapist ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['new', 'assigned', 'consultation', 'therapy', 'done'],
+    description: 'Filter by client status',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: 'string',
+    description: 'Search by client name or ID',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: 'number',
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: 'number',
+    description: 'Items per page',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Therapist clients retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          items: [
+            {
+              id: '12345678-1234-1234-1234-123456789abc',
+              fullName: 'John Doe',
+              status: 'therapy',
+              assignedDate: '2023-12-01T10:00:00.000Z',
+              lastSessionDate: '2023-12-15T14:30:00.000Z',
+              sessionCount: 5,
+              progress: 60,
+              notes: 'Good progress with anxiety management',
+            },
+          ],
+          total: 12,
+          page: 1,
+          limit: 10,
+          totalPages: 2,
+        },
+        message: 'Therapist clients retrieved successfully',
+      },
+    },
+  })
+  async getTherapistClients(
+    @Param('id', ParseUUIDPipe) therapistId: string,
+    @Request() req: any,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    const currentUser = req.user;
+
+    // Authorization: Only therapists can access their own clients, or clinic admins can access any therapist's clients
+    let clinicId: string | undefined;
+    if (!currentUser.isAdmin) {
+      const userRole = currentUser.roles.find((role: any) => role.clinicId);
+      if (!userRole?.clinicId) {
+        throw new Error('User not associated with any clinic');
+      }
+      clinicId = userRole.clinicId;
+
+      // If user is a therapist, they can only see their own clients
+      const therapistRole = currentUser.roles.find(
+        (role: any) => role.role === 'therapist',
+      );
+      if (therapistRole && currentUser.id !== therapistId) {
+        throw new Error('Therapists can only access their own clients');
+      }
+    }
+
+    return this.therapistsService.getTherapistClients(therapistId, {
+      status,
+      search,
+      page,
+      limit,
+      clinicId,
+    });
+  }
+
+  @Get(':therapistId/clients/:clientId')
+  @RequireAuth()
+  @ApiOperation({
+    summary: 'Get specific client for therapist',
+    description:
+      'Get detailed information about a specific client assigned to the therapist.',
+  })
+  @ApiParam({
+    name: 'therapistId',
+    description: 'Therapist ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiParam({
+    name: 'clientId',
+    description: 'Client ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Therapist client retrieved successfully',
+  })
+  async getTherapistClient(
+    @Param('therapistId', ParseUUIDPipe) therapistId: string,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+    @Request() req: any,
+  ) {
+    const currentUser = req.user;
+
+    // Authorization check
+    let clinicId: string | undefined;
+    if (!currentUser.isAdmin) {
+      const userRole = currentUser.roles.find((role: any) => role.clinicId);
+      if (!userRole?.clinicId) {
+        throw new Error('User not associated with any clinic');
+      }
+      clinicId = userRole.clinicId;
+
+      const therapistRole = currentUser.roles.find(
+        (role: any) => role.role === 'therapist',
+      );
+      if (therapistRole && currentUser.id !== therapistId) {
+        throw new Error('Therapists can only access their own clients');
+      }
+    }
+
+    return this.therapistsService.getTherapistClient(
+      therapistId,
+      clientId,
+      clinicId,
+    );
+  }
+
+  @Put(':therapistId/clients/:clientId/notes')
+  @RequireAuth()
+  @ApiOperation({
+    summary: 'Update client notes',
+    description: 'Update therapy notes for a specific client.',
+  })
+  @ApiParam({
+    name: 'therapistId',
+    description: 'Therapist ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiParam({
+    name: 'clientId',
+    description: 'Client ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Client notes updated successfully',
+  })
+  async updateClientNotes(
+    @Param('therapistId', ParseUUIDPipe) therapistId: string,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+    @Body() body: { notes: string },
+    @Request() req: any,
+  ) {
+    const currentUser = req.user;
+
+    // Authorization: Only the assigned therapist can update their client's notes
+    if (!currentUser.isAdmin) {
+      const therapistRole = currentUser.roles.find(
+        (role: any) => role.role === 'therapist',
+      );
+      if (therapistRole && currentUser.id !== therapistId) {
+        throw new Error("Therapists can only update their own clients' notes");
+      }
+    }
+
+    return this.therapistsService.updateClientNotes(
+      therapistId,
+      clientId,
+      body.notes,
+    );
+  }
+
+  @Get(':id/stats')
+  @RequireAuth()
+  @ApiOperation({
+    summary: 'Get therapist statistics',
+    description:
+      'Get comprehensive statistics for a therapist including client counts, session data, and performance metrics.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Therapist ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Therapist statistics retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          totalClients: 25,
+          activeClients: 18,
+          completedClients: 7,
+          totalSessions: 150,
+          thisWeekSessions: 12,
+          averageProgress: 65,
+          clientDistribution: {
+            new: 2,
+            consultation: 5,
+            therapy: 11,
+            done: 7,
+          },
+          monthlyStats: [
+            { month: 'Nov', sessions: 45, newClients: 8 },
+            { month: 'Dec', sessions: 52, newClients: 6 },
+          ],
+        },
+        message: 'Therapist statistics retrieved successfully',
+      },
+    },
+  })
+  async getTherapistStats(
+    @Param('id', ParseUUIDPipe) therapistId: string,
+    @Request() req: any,
+  ) {
+    const currentUser = req.user;
+
+    // Authorization
+    let clinicId: string | undefined;
+    if (!currentUser.isAdmin) {
+      const userRole = currentUser.roles.find((role: any) => role.clinicId);
+      if (!userRole?.clinicId) {
+        throw new Error('User not associated with any clinic');
+      }
+      clinicId = userRole.clinicId;
+
+      const therapistRole = currentUser.roles.find(
+        (role: any) => role.role === 'therapist',
+      );
+      if (therapistRole && currentUser.id !== therapistId) {
+        throw new Error('Therapists can only access their own statistics');
+      }
+    }
+
+    return this.therapistsService.getTherapistStats(therapistId, clinicId);
+  }
+
+  @Post(':therapistId/clients/:clientId/schedule')
+  @RequireAuth()
+  @ApiOperation({
+    summary: 'Schedule session for client',
+    description: 'Schedule a new therapy session for a specific client.',
+  })
+  @ApiParam({
+    name: 'therapistId',
+    description: 'Therapist ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiParam({
+    name: 'clientId',
+    description: 'Client ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Session scheduled successfully',
+  })
+  async scheduleSession(
+    @Param('therapistId', ParseUUIDPipe) therapistId: string,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+    @Body()
+    body: {
+      scheduledAt: string;
+      duration?: number;
+      notes?: string;
+    },
+    @Request() req: any,
+  ) {
+    const currentUser = req.user;
+
+    // Authorization
+    if (!currentUser.isAdmin) {
+      const therapistRole = currentUser.roles.find(
+        (role: any) => role.role === 'therapist',
+      );
+      if (therapistRole && currentUser.id !== therapistId) {
+        throw new Error(
+          'Therapists can only schedule sessions for their own clients',
+        );
+      }
+    }
+
+    return this.therapistsService.scheduleClientSession(
+      therapistId,
+      clientId,
+      new Date(body.scheduledAt),
+      body.duration,
+      body.notes,
+    );
+  }
 }

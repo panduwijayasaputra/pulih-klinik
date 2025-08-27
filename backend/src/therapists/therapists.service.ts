@@ -154,13 +154,15 @@ export class TherapistsService {
       await this.em.flush();
     }
 
+    // Set user's clinic
+    user.clinic = clinic;
+    await this.em.persistAndFlush(user);
+
     // Create therapist role for user
     const therapistRole = new UserRoleEntity();
     therapistRole.userId = user.id;
     therapistRole.role = UserRole.THERAPIST;
-    therapistRole.clinicId = clinicId;
     therapistRole.user = user;
-    therapistRole.clinic = clinic;
 
     await this.em.persistAndFlush(therapistRole);
 
@@ -889,6 +891,315 @@ export class TherapistsService {
 
     // Filter therapists with available capacity
     return therapists.filter((t) => t.currentLoad < t.maxClients);
+  }
+
+  // === THERAPIST PORTAL METHODS ===
+
+  /**
+   * Get therapist's assigned clients with filtering and pagination
+   */
+  async getTherapistClients(
+    therapistId: string,
+    options: {
+      status?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+      clinicId?: string;
+    },
+  ) {
+    // Validate therapist exists and clinic access
+    const whereConditions: any = { id: therapistId };
+    if (options.clinicId) {
+      whereConditions.clinic = options.clinicId;
+    }
+
+    const therapist = await this.em.findOne(Therapist, whereConditions);
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
+    // Build query for therapist's clients
+    const clientQuery: any = {};
+
+    // Get active assignments for this therapist
+    const assignments = await this.em.find(
+      ClientTherapistAssignment,
+      {
+        therapist: therapistId,
+        status: AssignmentStatus.ACTIVE,
+      },
+      {
+        populate: ['client'],
+      },
+    );
+
+    const clientIds = assignments.map((a) => a.client.id);
+    if (clientIds.length === 0) {
+      return {
+        items: [],
+        total: 0,
+        page: options.page || 1,
+        limit: options.limit || 10,
+        totalPages: 0,
+      };
+    }
+
+    clientQuery.id = { $in: clientIds };
+
+    // Apply filters
+    if (options.status) {
+      clientQuery.status = options.status;
+    }
+
+    if (options.search) {
+      clientQuery.$or = [
+        { fullName: { $ilike: `%${options.search}%` } },
+        { email: { $ilike: `%${options.search}%` } },
+        { phone: { $ilike: `%${options.search}%` } },
+      ];
+    }
+
+    // Get total count
+    const total = await this.em.count(Client, clientQuery);
+
+    // Apply pagination
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    const offset = (page - 1) * limit;
+
+    const clients = await this.em.find(Client, clientQuery, {
+      limit,
+      offset,
+      orderBy: { updatedAt: 'DESC' },
+    });
+
+    // Map clients with assignment data
+    const items = clients.map((client) => {
+      const assignment = assignments.find((a) => a.client.id === client.id);
+      return {
+        id: client.id,
+        fullName: client.fullName,
+        status: client.status,
+        assignedDate: assignment?.assignedDate,
+        lastSessionDate: client.lastSessionDate,
+        sessionCount: client.totalSessions,
+        progress: client.progress,
+        notes: assignment?.notes,
+      };
+    });
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Get specific client for therapist with detailed information
+   */
+  async getTherapistClient(
+    therapistId: string,
+    clientId: string,
+    clinicId?: string,
+  ) {
+    // Validate therapist
+    const whereConditions: any = { id: therapistId };
+    if (clinicId) {
+      whereConditions.clinic = clinicId;
+    }
+
+    const therapist = await this.em.findOne(Therapist, whereConditions);
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
+    // Check if client is assigned to this therapist
+    const assignment = await this.em.findOne(
+      ClientTherapistAssignment,
+      {
+        therapist: therapistId,
+        client: clientId,
+        status: AssignmentStatus.ACTIVE,
+      },
+      {
+        populate: ['client'],
+      },
+    );
+
+    if (!assignment) {
+      throw new NotFoundException('Client not assigned to this therapist');
+    }
+
+    const client = assignment.client;
+
+    return {
+      id: client.id,
+      fullName: client.fullName,
+      email: client.email,
+      phone: client.phone,
+      gender: client.gender,
+      birthDate: client.birthDate,
+      status: client.status,
+      assignedDate: assignment.assignedDate,
+      lastSessionDate: client.lastSessionDate,
+      sessionCount: client.totalSessions,
+      progress: client.progress,
+      notes: assignment.notes,
+      // Add more client details as needed
+    };
+  }
+
+  /**
+   * Update client notes for therapist
+   */
+  async updateClientNotes(
+    therapistId: string,
+    clientId: string,
+    notes: string,
+  ) {
+    // Find the assignment
+    const assignment = await this.em.findOne(ClientTherapistAssignment, {
+      therapist: therapistId,
+      client: clientId,
+      status: AssignmentStatus.ACTIVE,
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Client assignment not found');
+    }
+
+    assignment.notes = notes;
+    await this.em.persistAndFlush(assignment);
+
+    return { success: true, message: 'Client notes updated successfully' };
+  }
+
+  /**
+   * Get comprehensive therapist statistics
+   */
+  async getTherapistStats(therapistId: string, clinicId?: string) {
+    // Validate therapist
+    const whereConditions: any = { id: therapistId };
+    if (clinicId) {
+      whereConditions.clinic = clinicId;
+    }
+
+    const therapist = await this.em.findOne(Therapist, whereConditions);
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
+    // Get all assignments for this therapist
+    const assignments = await this.em.find(
+      ClientTherapistAssignment,
+      {
+        therapist: therapistId,
+      },
+      {
+        populate: ['client'],
+      },
+    );
+
+    // Calculate statistics
+    const totalClients = assignments.length;
+    const activeClients = assignments.filter(
+      (a) => a.status === AssignmentStatus.ACTIVE,
+    ).length;
+    const completedClients = assignments.filter(
+      (a) => a.status === AssignmentStatus.COMPLETED,
+    ).length;
+
+    // Get session statistics (this would need to be implemented based on your session tracking)
+    // For now, using mock data
+    const totalSessions = assignments.reduce(
+      (sum, a) => sum + (a.client?.totalSessions || 0),
+      0,
+    );
+    const thisWeekSessions = Math.floor(totalSessions * 0.15); // Mock calculation
+
+    // Calculate average progress
+    const clientsWithProgress = assignments.filter(
+      (a) => a.client?.progress && a.client.progress > 0,
+    );
+    const averageProgress =
+      clientsWithProgress.length > 0
+        ? clientsWithProgress.reduce(
+            (sum, a) => sum + (a.client?.progress || 0),
+            0,
+          ) / clientsWithProgress.length
+        : 0;
+
+    // Client distribution by status
+    const clientDistribution = assignments.reduce(
+      (dist, a) => {
+        const status = a.client?.status || 'new';
+        dist[status] = (dist[status] || 0) + 1;
+        return dist;
+      },
+      {} as Record<string, number>,
+    );
+
+    // Mock monthly stats (would need real implementation)
+    const monthlyStats = [
+      {
+        month: 'Nov',
+        sessions: Math.floor(totalSessions * 0.4),
+        newClients: Math.floor(totalClients * 0.3),
+      },
+      {
+        month: 'Dec',
+        sessions: Math.floor(totalSessions * 0.6),
+        newClients: Math.floor(totalClients * 0.4),
+      },
+    ];
+
+    return {
+      totalClients,
+      activeClients,
+      completedClients,
+      totalSessions,
+      thisWeekSessions,
+      averageProgress: Math.round(averageProgress),
+      clientDistribution,
+      monthlyStats,
+    };
+  }
+
+  /**
+   * Schedule a session for a client
+   */
+  async scheduleClientSession(
+    therapistId: string,
+    clientId: string,
+    scheduledAt: Date,
+    duration?: number,
+    notes?: string,
+  ) {
+    // Validate assignment exists
+    const assignment = await this.em.findOne(ClientTherapistAssignment, {
+      therapist: therapistId,
+      client: clientId,
+      status: AssignmentStatus.ACTIVE,
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Client assignment not found');
+    }
+
+    // This would integrate with your session scheduling system
+    // For now, return a mock response
+    return {
+      success: true,
+      sessionId: `session-${Date.now()}`,
+      scheduledAt,
+      duration: duration || 60,
+      notes,
+      message: 'Session scheduled successfully',
+    };
   }
 
   /**

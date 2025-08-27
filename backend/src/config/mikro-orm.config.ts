@@ -14,7 +14,7 @@ export default defineConfig({
   metadataProvider: TsMorphMetadataProvider,
   migrations: {
     path: './src/database/migrations',
-    tableName: 'mikro_orm_migrations',
+    tableName: 'migrations',
     transactional: true,
   },
   seeder: {

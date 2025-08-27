@@ -44,11 +44,7 @@ export const CurrentUserClinicIds = createParamDecorator(
       return [];
     }
 
-    // Extract unique clinic IDs from user roles
-    const clinicIds = user.roles
-      .map((role) => role.clinicId)
-      .filter((id): id is string => id !== undefined);
-
-    return [...new Set(clinicIds)];
+    // Return user's clinic ID
+    return user.clinicId ? [user.clinicId] : [];
   },
 );

@@ -64,6 +64,9 @@ export class Clinic {
   })
   status: 'active' | 'suspended' | 'pending' | 'inactive' = 'pending';
 
+  @Property({ type: 'boolean', default: true })
+  isActive: boolean = true;
+
   @Property({
     type: 'varchar',
     length: 20,

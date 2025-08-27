@@ -7,12 +7,11 @@ import {
   Unique,
 } from '@mikro-orm/core';
 import { User } from './user.entity';
-import { Clinic } from './clinic.entity';
 import type { UserRoleType } from '../../common/enums';
 
 @Entity({ tableName: 'user_roles' })
 @Index({ properties: ['userId'] })
-@Unique({ properties: ['userId', 'role', 'clinicId'] })
+@Unique({ properties: ['userId', 'role'] })
 export class UserRole {
   @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
   id!: string;
@@ -23,15 +22,9 @@ export class UserRole {
   @Property({ type: 'varchar', length: 50 })
   role!: UserRoleType;
 
-  @Property({ type: 'uuid', nullable: true })
-  clinicId?: string;
-
   @Property({ type: 'timestamp', defaultRaw: 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();
 
   @ManyToOne(() => User, { joinColumn: 'userId' })
   user!: User;
-
-  @ManyToOne(() => Clinic, { joinColumn: 'clinicId', nullable: true })
-  clinic?: Clinic;
 }
