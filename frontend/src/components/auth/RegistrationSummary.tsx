@@ -42,7 +42,7 @@ export const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
   const handleBackToClinic = () => {
     if (isCurrentEmailVerified) {
       // Skip verification step and go directly to clinic form
-      setStep(RegistrationStepEnum.Clinic);
+      setStep(RegistrationStepEnum.ClinicInfo);
     } else {
       // Go to previous step (verification)
       onEditClinic();

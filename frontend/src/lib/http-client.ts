@@ -52,6 +52,7 @@ const createHttpClient = (): AxiosInstance => {
 };
 
 export const httpClient = createHttpClient();
+export const apiClient = httpClient;
 
 // Helper function to handle API responses
 export const handleApiResponse = <T>(response: any): T => {

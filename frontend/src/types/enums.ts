@@ -15,6 +15,10 @@ export enum SubscriptionTierEnum {
   Theta = 'theta',
 }
 
+// Aliases for backward compatibility
+export const AuthSubscriptionTierEnum = SubscriptionTierEnum;
+export const ClinicSubscriptionTierEnum = SubscriptionTierEnum;
+
 // Client
 export enum ClientGenderEnum {
   Male = 'Male',
@@ -212,9 +216,10 @@ export enum SortOrderEnum {
 
 // Registration
 export enum RegistrationStepEnum {
-  Clinic = 'clinic',
-  Verification = 'verification',
-  Summary = 'summary',
+  UserForm = 'user_form',
+  EmailVerification = 'email_verification',
+  ClinicInfo = 'clinic_info',
+  Subscription = 'subscription',
   Payment = 'payment',
   Complete = 'complete',
 }
@@ -222,7 +227,13 @@ export enum RegistrationStepEnum {
 export enum PaymentMethodEnum {
   BankTransfer = 'bank_transfer',
   CreditCard = 'credit_card',
-  Ewallet = 'ewallet',
+  EWallet = 'e_wallet',
+  Crypto = 'crypto',
+}
+
+export enum BillingCycleEnum {
+  Monthly = 'monthly',
+  Yearly = 'yearly',
 }
 
 // Therapy
