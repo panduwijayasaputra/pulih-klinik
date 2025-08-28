@@ -4,43 +4,43 @@ import { Button } from '@/components/ui/button';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { useRegistrationStore } from '@/store/registration';
 
-// Mock subscription tiers
-const mockSubscriptionTiers = [
+// Subscription tiers matching backend data
+const subscriptionTiers = [
   {
-    id: 'basic',
-    name: 'Basic',
-    price: 99000,
+    id: 'beta',
+    name: 'Beta',
+    price: 50000,
+    yearlyPrice: 550000,
     therapists: 1,
-    clients: 25,
-    tokens: 10000,
-    features: ['1 Therapist', '25 Klien', '10,000 Token AI'],
+    clientsPerDay: 1,
+    features: ['1 Therapist', '1 Klien Baru/Hari'],
     recommended: false,
     period: 'bulan',
-    description: 'Paket dasar untuk klinik yang ingin memulai dengan fitur terbaik'
+    description: 'Paket dasar untuk klinik yang baru memulai dengan fitur terbaik'
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    price: 299000,
-    therapists: 5,
-    clients: 100,
-    tokens: 50000,
-    features: ['5 Therapist', '100 Klien', '50,000 Token AI'],
+    id: 'alpha',
+    name: 'Alpha',
+    price: 100000,
+    yearlyPrice: 1000000,
+    therapists: 3,
+    clientsPerDay: 3,
+    features: ['3 Therapist', '3 Klien Baru/Hari'],
     recommended: true,
     period: 'bulan',
     description: 'Paket terbaik untuk klinik yang ingin memiliki fitur lengkap'
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 999000,
-    therapists: 999,
-    clients: 999,
-    tokens: 999999,
-    features: ['Unlimited Therapist', 'Unlimited Klien', 'Unlimited Token AI'],
+    id: 'theta',
+    name: 'Theta',
+    price: 150000,
+    yearlyPrice: 1500000,
+    therapists: 5,
+    clientsPerDay: 5,
+    features: ['5 Therapist', '5 Klien Baru/Hari'],
     recommended: false,
     period: 'bulan',
-    description: 'Paket untuk klinik yang ingin memiliki fitur terbaik'
+    description: 'Paket untuk klinik yang ingin memiliki kapasitas maksimal'
   }
 ];
 
@@ -78,7 +78,7 @@ export const SubscriptionSelector: React.FC = () => {
 
       {/* Subscription Tiers */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {mockSubscriptionTiers.map((tier) => (
+        {subscriptionTiers.map((tier) => (
           <div
             key={tier.id}
             className={`relative rounded-lg border-2 p-6 cursor-pointer transition-all ${selectedTier === tier.id
@@ -160,8 +160,8 @@ export const SubscriptionSelector: React.FC = () => {
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
           <h4 className="font-medium text-blue-900 mb-1">Paket yang Dipilih:</h4>
           <p className="text-blue-800">
-            {mockSubscriptionTiers.find(t => t.id === selectedTier)?.name} - {' '}
-            {formatPrice(mockSubscriptionTiers.find(t => t.id === selectedTier)?.price || 0)} per bulan
+            {subscriptionTiers.find(t => t.id === selectedTier)?.name} - {' '}
+            {formatPrice(subscriptionTiers.find(t => t.id === selectedTier)?.price || 0)} per bulan
           </p>
         </div>
       )}

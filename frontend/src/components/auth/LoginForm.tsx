@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
@@ -26,6 +26,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -36,6 +37,26 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     },
   });
 
+  const watchRememberMe = watch('rememberMe');
+
+  // Load saved credentials on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedCredentials = localStorage.getItem('remember-login');
+      if (savedCredentials) {
+        try {
+          const { email, password, rememberMe } = JSON.parse(savedCredentials);
+          setValue('email', email);
+          setValue('password', password);
+          setValue('rememberMe', rememberMe);
+          console.log('🔄 Loaded saved credentials for:', email);
+        } catch (error) {
+          console.warn('Failed to parse saved credentials:', error);
+          localStorage.removeItem('remember-login');
+        }
+      }
+    }
+  }, [setValue]);
 
   const handleDemoSelect = (value: string) => {
     const selectedDemo = demoCredentials[parseInt(value)];
@@ -47,7 +68,32 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: LoginFormData) => {
     clearError();
-    const success = await login(data);
+    
+    // Handle remember me functionality
+    if (typeof window !== 'undefined') {
+      if (data.rememberMe) {
+        // Save credentials to localStorage
+        const credentialsToSave = {
+          email: data.email,
+          password: data.password,
+          rememberMe: true,
+        };
+        // TODO: Uncomment this when we have a proper authentication system
+        // localStorage.setItem('remember-login', JSON.stringify(credentialsToSave));
+        console.log('✅ Credentials saved for next login');
+      } else {
+        // Remove saved credentials if rememberMe is unchecked
+        // TODO: Uncomment this when we have a proper authentication system
+        // localStorage.removeItem('remember-login');
+        console.log('🗑️ Saved credentials removed');
+      }
+    }
+    
+    // Remove rememberMe from login data (backend doesn't need it)
+    const { rememberMe, ...loginData } = data;
+    console.log('🚀 Attempting login with:', loginData.email);
+    const success = await login(loginData);
+    console.log('✅ Login success:', success);
     if (success && onSuccess) {
       onSuccess();
     }

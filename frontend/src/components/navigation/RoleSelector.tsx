@@ -70,6 +70,13 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
 
   // Early return after all hooks are called
   if (!user?.roles || !isMultiRole) {
+    console.log('🔍 RoleSelector debug:', {
+      hasUser: !!user,
+      userRoles: user?.roles,
+      availableRoles,
+      isMultiRole,
+      userRolesLength: user?.roles?.length
+    });
     return null;
   }
 

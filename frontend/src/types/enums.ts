@@ -9,10 +9,10 @@ export enum UserRoleEnum {
   Therapist = 'therapist',
 }
 
-export enum AuthSubscriptionTierEnum {
-  Alpha = 'alpha',
+export enum SubscriptionTierEnum {
   Beta = 'beta',
-  Gamma = 'gamma',
+  Alpha = 'alpha',
+  Theta = 'theta',
 }
 
 // Client
@@ -151,12 +151,12 @@ export enum ClinicDocumentStatusEnum {
   Rejected = 'rejected',
 }
 
-export enum ClinicSubscriptionTierEnum {
-  Alpha = 'alpha',
-  Beta = 'beta',
-  Theta = 'theta',
-  Delta = 'delta',
-}
+// Subscription tier labels for display purposes
+export const SubscriptionTierLabels: Record<SubscriptionTierEnum, string> = {
+  [SubscriptionTierEnum.Beta]: 'Beta',
+  [SubscriptionTierEnum.Alpha]: 'Alpha',
+  [SubscriptionTierEnum.Theta]: 'Theta',
+};
 
 export enum ClinicLanguageEnum {
   Indonesian = 'id',

@@ -19,9 +19,9 @@ import {
   ClinicDataDto,
   PaymentDataDto,
   CompleteRegistrationDto,
+  PaymentMethod,
 } from './dto';
 import * as bcrypt from 'bcryptjs';
-import { v4 } from 'uuid';
 
 export interface RegistrationResponse {
   id: string;
@@ -167,7 +167,7 @@ export class RegistrationService {
 
     // TODO: Integrate with actual payment gateway
     // For now, simulate payment processing
-    if (paymentDataDto.paymentMethod === 'bank_transfer') {
+    if (paymentDataDto.paymentMethod === PaymentMethod.BANK_TRANSFER) {
       registration.paymentStatus = PaymentStatus.PENDING;
     } else {
       // Simulate immediate payment completion for other methods

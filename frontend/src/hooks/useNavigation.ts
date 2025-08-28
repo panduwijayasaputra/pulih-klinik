@@ -49,6 +49,8 @@ export const useNavigation = () => {
   const effectiveUserRoles = useMemo<UserRole[]>(() => {
     const roles = user?.roles ?? [];
 
+    console.log('🔍 useNavigation debug - user roles:', roles);
+
     const legacyToEnumMap: Record<string, UserRole> = {
       administrator: UserRoleEnum.Administrator,
       clinic_admin: UserRoleEnum.ClinicAdmin,
@@ -68,6 +70,8 @@ export const useNavigation = () => {
       seen.add(k);
       return true;
     });
+
+    console.log('🔍 useNavigation debug - effective roles:', unique);
 
     return unique;
   }, [user?.roles]);

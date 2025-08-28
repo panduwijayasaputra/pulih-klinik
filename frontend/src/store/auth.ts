@@ -1,111 +1,71 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AuthState, LoginFormData, User } from '@/types/auth';
-import { AuthAPI } from '@/lib/api/auth';
+import { AuthState, User } from '@/types/auth';
 
 interface AuthStore extends AuthState {
-  login: (credentials: LoginFormData) => Promise<boolean>;
-  logout: () => Promise<void>;
+  login: (data: { user: User; token?: string; refreshToken?: string }) => void;
+  logout: () => void;
   clearError: () => void;
-  checkAuth: () => Promise<void>;
+  updateTokens: (accessToken: string, refreshToken?: string) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set, _get) => ({
+    (set, get) => ({
       user: null,
       isLoading: false,
       error: null,
       isAuthenticated: false,
+      token: null,
+      refreshToken: null,
 
-      login: async (credentials: LoginFormData) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await AuthAPI.login(credentials);
-          
-          if (response.success && response.user) {
-            set({
-              user: response.user,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-            });
-            
-            return true;
-          } else {
-            set({
-              error: response.message || 'Login gagal',
-              isLoading: false,
-            });
-            return false;
-          }
-        } catch {
-          set({
-            error: 'Terjadi kesalahan saat login',
-            isLoading: false,
-          });
-          return false;
-        }
+      login: (data: { user: User; token?: string; refreshToken?: string }) => {
+        set({
+          user: data.user,
+          isAuthenticated: true,
+          token: data.token || null,
+          refreshToken: data.refreshToken || null,
+          error: null,
+        });
       },
 
-      logout: async () => {
-        set({ isLoading: true });
+      logout: () => {
+        set({
+          user: null,
+          isAuthenticated: false,
+          token: null,
+          refreshToken: null,
+          error: null,
+        });
         
-        try {
-          await AuthAPI.logout();
-          
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: null,
-          });
-          
-          // Redirect to landing page after logout
-          if (typeof window !== 'undefined') {
-            window.location.href = '/';
-          }
-        } catch {
-          set({ isLoading: false });
+        // Redirect to landing page after logout
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
         }
       },
 
       clearError: () => set({ error: null }),
 
-      checkAuth: async () => {
-        set({ isLoading: true });
-        
-        try {
-          const response = await AuthAPI.getCurrentUser();
-          
-          if (response.success && response.data) {
-            set({
-              user: response.data as User,
-              isAuthenticated: true,
-              isLoading: false,
-            });
-          } else {
-            set({
-              user: null,
-              isAuthenticated: false,
-              isLoading: false,
-            });
-          }
-        } catch {
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-          });
-        }
+      updateTokens: (accessToken: string, refreshToken?: string) => {
+        set({
+          token: accessToken,
+          refreshToken: refreshToken || get().refreshToken,
+        });
       },
+
+      setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+      setError: (error: string | null) => set({ error }),
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({ 
         user: state.user, 
-        isAuthenticated: state.isAuthenticated 
+        isAuthenticated: state.isAuthenticated,
+        token: state.token,
+        refreshToken: state.refreshToken
       }),
       onRehydrateStorage: () => (state) => {
         // After rehydration, make sure loading is false
