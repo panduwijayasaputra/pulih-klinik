@@ -17,21 +17,21 @@ export class DatabaseSeeder {
       await this.runSeeder('Subscription Tiers', () =>
         SubscriptionTierSeeder.run(this.em)
       );
-      await this.runSeeder('Users', function () {
-        return new UserSeeder().run(this.em);
-      });
-      await this.runSeeder('Therapists', function () {
-        return new TherapistSeeder().run(this.em);
-      });
-      await this.runSeeder('Clients', function () {
-        return new ClientSeeder().run(this.em);
-      });
-      await this.runSeeder('Consultations', function () {
-        return new ConsultationSeeder().run(this.em);
-      });
-      await this.runSeeder('Therapy Sessions', function () {
-        return new TherapySessionSeeder().run(this.em);
-      });
+      await this.runSeeder('Users', () =>
+        new UserSeeder().run(this.em)
+      );
+      await this.runSeeder('Therapists', () =>
+        new TherapistSeeder().run(this.em)
+      );
+      await this.runSeeder('Clients', () =>
+        new ClientSeeder().run(this.em)
+      );
+      await this.runSeeder('Consultations', () =>
+        new ConsultationSeeder().run(this.em)
+      );
+      await this.runSeeder('Therapy Sessions', () =>
+        new TherapySessionSeeder().run(this.em)
+      );
 
       console.log('\n✅ Database seeding completed successfully!');
     } catch (error) {
