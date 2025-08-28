@@ -9,18 +9,14 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   Request,
-  UploadedFiles,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
-import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   RegistrationService,
   RegistrationResponse,
@@ -28,6 +24,8 @@ import {
 import {
   StartRegistrationDto,
   ClinicDataDto,
+  VerifyEmailDto,
+  SubscriptionDataDto,
   PaymentDataDto,
   CompleteRegistrationDto,
 } from './dto';
@@ -41,7 +39,7 @@ export class RegistrationController {
   @Post('start')
   @ApiOperation({
     summary: 'Start registration process',
-    description: 'Initialize a new clinic registration with email verification',
+    description: 'Create a new clinic registration with admin user data and email verification',
   })
   @ApiBody({ type: StartRegistrationDto })
   @ApiResponse({
@@ -53,12 +51,12 @@ export class RegistrationController {
         data: {
           id: '12345678-1234-1234-1234-123456789abc',
           email: 'admin@clinic.com',
-          status: 'started',
-          currentStep: 'start',
-          completedSteps: ['start'],
+          status: 'user_created',
+          currentStep: 'user_form',
+          completedSteps: ['user_form'],
           createdAt: '2023-12-01T10:00:00.000Z',
           expiresAt: '2023-12-08T10:00:00.000Z',
-          paymentStatus: 'pending',
+          emailVerified: false,
         },
         message:
           'Registration started successfully. Please check your email for verification code.',
@@ -68,13 +66,6 @@ export class RegistrationController {
   @ApiResponse({
     status: HttpStatus.CONFLICT,
     description: 'Email already registered',
-    schema: {
-      example: {
-        statusCode: 409,
-        message: 'Email already registered',
-        error: 'Conflict',
-      },
-    },
   })
   async startRegistration(
     @Body() startRegistrationDto: StartRegistrationDto,
@@ -94,6 +85,53 @@ export class RegistrationController {
       result,
       'Registration started successfully. Please check your email for verification code.',
     );
+  }
+
+  @Post(':id/verify-email')
+  @ApiOperation({
+    summary: 'Verify email with code',
+    description: 'Verify email address using verification code',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Registration ID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiBody({ type: VerifyEmailDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Email verified successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: '12345678-1234-1234-1234-123456789abc',
+          email: 'admin@clinic.com',
+          status: 'email_verified',
+          currentStep: 'email_verification',
+          completedSteps: ['user_form', 'email_verification'],
+          emailVerified: true,
+          emailVerifiedAt: '2023-12-01T10:05:00.000Z',
+        },
+        message: 'Email verified successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid verification code or email already verified',
+  })
+  async verifyEmail(
+    @Param('id', ParseUUIDPipe) registrationId: string,
+    @Body() verifyEmailDto: VerifyEmailDto,
+  ): Promise<CustomApiResponse<RegistrationResponse>> {
+    const result = await this.registrationService.verifyEmail(
+      registrationId,
+      verifyEmailDto,
+    );
+
+    return CustomApiResponse.success(result, 'Email verified successfully');
   }
 
   @Put(':id/clinic-data')
@@ -117,28 +155,24 @@ export class RegistrationController {
         data: {
           id: '12345678-1234-1234-1234-123456789abc',
           email: 'admin@clinic.com',
-          status: 'clinic_data_submitted',
-          currentStep: 'clinic_data',
-          completedSteps: ['start', 'clinic_data'],
+          status: 'clinic_created',
+          currentStep: 'clinic_info',
+          completedSteps: ['user_form', 'email_verification', 'clinic_info'],
           clinicData: {
             name: 'Klinik Hipnoterapi Sehat',
             address: 'Jl. Sudirman No. 123',
             phone: '+628123456789',
             email: 'info@kliniksehat.com',
           },
-          paymentStatus: 'pending',
+          emailVerified: true,
         },
         message: 'Clinic data submitted successfully',
       },
     },
   })
   @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Registration not found',
-  })
-  @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Cannot proceed to clinic data step',
+    description: 'Email not verified or cannot proceed to clinic info step',
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
@@ -159,12 +193,10 @@ export class RegistrationController {
     );
   }
 
-  @Post(':id/documents')
-  @UseInterceptors(FilesInterceptor('documents', 10))
-  @ApiConsumes('multipart/form-data')
+  @Post(':id/subscription')
   @ApiOperation({
-    summary: 'Upload verification documents',
-    description: 'Upload required verification documents for registration',
+    summary: 'Select subscription plan',
+    description: 'Choose subscription tier and billing cycle',
   })
   @ApiParam({
     name: 'id',
@@ -172,60 +204,55 @@ export class RegistrationController {
     type: 'string',
     format: 'uuid',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        documents: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
-      },
-    },
-  })
+  @ApiBody({ type: SubscriptionDataDto })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Documents uploaded successfully',
+    description: 'Subscription selected successfully',
     schema: {
       example: {
         success: true,
         data: {
           id: '12345678-1234-1234-1234-123456789abc',
-          status: 'documents_uploaded',
-          currentStep: 'documents',
-          completedSteps: ['start', 'clinic_data', 'documents'],
-          paymentStatus: 'pending',
+          email: 'admin@clinic.com',
+          status: 'subscription_selected',
+          currentStep: 'subscription',
+          completedSteps: ['user_form', 'email_verification', 'clinic_info', 'subscription'],
+          subscriptionData: {
+            tierCode: 'alpha',
+            tierName: 'Alpha',
+            billingCycle: 'monthly',
+            amount: 100000,
+            currency: 'IDR',
+          },
+          emailVerified: true,
         },
-        message: 'Documents uploaded successfully',
+        message: 'Subscription selected successfully',
       },
     },
   })
-  async uploadDocuments(
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Cannot proceed to subscription step or invalid tier',
+  })
+  async selectSubscription(
     @Param('id', ParseUUIDPipe) registrationId: string,
-    @UploadedFiles() files: Express.Multer.File[],
+    @Body() subscriptionDataDto: SubscriptionDataDto,
   ): Promise<CustomApiResponse<RegistrationResponse>> {
-    // TODO: Implement file upload to cloud storage
-    const documents = files.map((file) => ({
-      fileName: file.originalname,
-      fileType: file.mimetype,
-      fileSize: file.size,
-    }));
-
-    const result = await this.registrationService.uploadDocuments(
+    const result = await this.registrationService.selectSubscription(
       registrationId,
-      documents,
+      subscriptionDataDto,
     );
 
-    return CustomApiResponse.success(result, 'Documents uploaded successfully');
+    return CustomApiResponse.success(
+      result,
+      'Subscription selected successfully',
+    );
   }
 
   @Post(':id/payment')
   @ApiOperation({
     summary: 'Process payment',
-    description: 'Process payment for registration',
+    description: 'Process payment for selected subscription',
   })
   @ApiParam({
     name: 'id',
@@ -242,14 +269,26 @@ export class RegistrationController {
         success: true,
         data: {
           id: '12345678-1234-1234-1234-123456789abc',
+          email: 'admin@clinic.com',
           status: 'payment_completed',
           currentStep: 'payment',
-          completedSteps: ['start', 'clinic_data', 'documents', 'payment'],
+          completedSteps: ['user_form', 'email_verification', 'clinic_info', 'subscription', 'payment'],
+          paymentData: {
+            paymentMethod: 'credit_card',
+            amount: 100000,
+            currency: 'IDR',
+            status: 'completed',
+          },
           paymentStatus: 'completed',
+          emailVerified: true,
         },
         message: 'Payment processed successfully',
       },
     },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Cannot proceed to payment step or amount mismatch',
   })
   async processPayment(
     @Param('id', ParseUUIDPipe) registrationId: string,
@@ -287,12 +326,14 @@ export class RegistrationController {
           status: 'completed',
           currentStep: 'complete',
           completedSteps: [
-            'start',
-            'clinic_data',
-            'documents',
+            'user_form',
+            'email_verification',
+            'clinic_info',
+            'subscription',
             'payment',
             'complete',
           ],
+          emailVerified: true,
           paymentStatus: 'completed',
         },
         message:
@@ -335,12 +376,12 @@ export class RegistrationController {
         data: {
           id: '12345678-1234-1234-1234-123456789abc',
           email: 'admin@clinic.com',
-          status: 'clinic_data_submitted',
-          currentStep: 'clinic_data',
-          completedSteps: ['start', 'clinic_data'],
+          status: 'email_verified',
+          currentStep: 'email_verification',
+          completedSteps: ['user_form', 'email_verification'],
           createdAt: '2023-12-01T10:00:00.000Z',
           expiresAt: '2023-12-08T10:00:00.000Z',
-          paymentStatus: 'pending',
+          emailVerified: true,
         },
         message: 'Registration status retrieved successfully',
       },
@@ -372,12 +413,6 @@ export class RegistrationController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Registration cancelled successfully',
-    schema: {
-      example: {
-        success: true,
-        message: 'Registration cancelled successfully',
-      },
-    },
   })
   async cancelRegistration(
     @Param('id', ParseUUIDPipe) registrationId: string,
@@ -388,45 +423,6 @@ export class RegistrationController {
       undefined,
       'Registration cancelled successfully',
     );
-  }
-
-  @Post(':id/verify-email')
-  @ApiOperation({
-    summary: 'Verify email with code',
-    description: 'Verify email address using verification code',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Registration ID',
-    type: 'string',
-    format: 'uuid',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        verificationCode: {
-          type: 'string',
-          example: 'ABC123',
-        },
-      },
-      required: ['verificationCode'],
-    },
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Email verified successfully',
-  })
-  async verifyEmail(
-    @Param('id', ParseUUIDPipe) registrationId: string,
-    @Body('verificationCode') verificationCode: string,
-  ): Promise<CustomApiResponse<RegistrationResponse>> {
-    const result = await this.registrationService.verifyEmail(
-      registrationId,
-      verificationCode,
-    );
-
-    return CustomApiResponse.success(result, 'Email verified successfully');
   }
 
   @Post('resend-verification')

@@ -9,9 +9,10 @@ import {
 import { v4 } from 'uuid';
 
 export enum RegistrationStatus {
-  STARTED = 'started',
-  CLINIC_DATA_SUBMITTED = 'clinic_data_submitted',
-  DOCUMENTS_UPLOADED = 'documents_uploaded',
+  USER_CREATED = 'user_created',
+  EMAIL_VERIFIED = 'email_verified',
+  CLINIC_CREATED = 'clinic_created',
+  SUBSCRIPTION_SELECTED = 'subscription_selected',
   PAYMENT_PENDING = 'payment_pending',
   PAYMENT_COMPLETED = 'payment_completed',
   COMPLETED = 'completed',
@@ -20,9 +21,10 @@ export enum RegistrationStatus {
 }
 
 export enum RegistrationStep {
-  START = 'start',
-  CLINIC_DATA = 'clinic_data',
-  DOCUMENTS = 'documents',
+  USER_FORM = 'user_form',
+  EMAIL_VERIFICATION = 'email_verification',
+  CLINIC_INFO = 'clinic_info',
+  SUBSCRIPTION = 'subscription',
   PAYMENT = 'payment',
   COMPLETE = 'complete',
 }
@@ -48,13 +50,21 @@ export class Registration {
   email!: string;
 
   @Enum(() => RegistrationStatus)
-  status: RegistrationStatus = RegistrationStatus.STARTED;
+  status: RegistrationStatus = RegistrationStatus.USER_CREATED;
 
   @Enum(() => RegistrationStep)
-  currentStep: RegistrationStep = RegistrationStep.START;
+  currentStep: RegistrationStep = RegistrationStep.USER_FORM;
 
   @Property({ type: JsonType, nullable: true })
   completedSteps?: RegistrationStep[];
+
+  // User data (clinic admin)
+  @Property({ type: JsonType, nullable: true })
+  userData?: {
+    name: string;
+    email: string;
+    passwordHash: string;
+  };
 
   // Clinic data
   @Property({ type: JsonType, nullable: true })
@@ -69,29 +79,30 @@ export class Registration {
     province?: string;
   };
 
+  // Subscription data
+  @Property({ type: JsonType, nullable: true })
+  subscriptionData?: {
+    tierCode: string;
+    tierName: string;
+    billingCycle: 'monthly' | 'yearly';
+    amount: number;
+    currency: string;
+  };
+
   // Payment data
   @Property({ type: JsonType, nullable: true })
   paymentData?: {
-    subscriptionTier: string;
     paymentMethod: string;
-    billingCycle: 'monthly' | 'yearly';
-    amount: number;
     paymentId?: string;
-    subscriptionId?: string;
+    transactionId?: string;
+    amount: number;
+    currency: string;
+    status: PaymentStatus;
+    processedAt?: Date;
   };
 
   @Enum(() => PaymentStatus)
   paymentStatus: PaymentStatus = PaymentStatus.PENDING;
-
-  // Document tracking
-  @Property({ type: JsonType, nullable: true })
-  documents?: Array<{
-    fileName: string;
-    fileType: string;
-    fileSize: number;
-    uploadedAt: Date;
-    verified: boolean;
-  }>;
 
   // Verification
   @Property({ nullable: true })
@@ -135,7 +146,7 @@ export class Registration {
   constructor() {
     // Set expiration to 7 days from creation
     this.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    this.completedSteps = [RegistrationStep.START];
+    this.completedSteps = [RegistrationStep.USER_FORM];
   }
 
   // Helper methods
@@ -147,19 +158,18 @@ export class Registration {
     if (!this.completedSteps) return false;
 
     switch (step) {
-      case RegistrationStep.START:
+      case RegistrationStep.USER_FORM:
         return true;
-      case RegistrationStep.CLINIC_DATA:
-        return this.completedSteps.includes(RegistrationStep.START);
-      case RegistrationStep.DOCUMENTS:
-        return this.completedSteps.includes(RegistrationStep.CLINIC_DATA);
+      case RegistrationStep.EMAIL_VERIFICATION:
+        return this.completedSteps.includes(RegistrationStep.USER_FORM);
+      case RegistrationStep.CLINIC_INFO:
+        return this.completedSteps.includes(RegistrationStep.EMAIL_VERIFICATION) && this.emailVerified;
+      case RegistrationStep.SUBSCRIPTION:
+        return this.completedSteps.includes(RegistrationStep.CLINIC_INFO);
       case RegistrationStep.PAYMENT:
-        return this.completedSteps.includes(RegistrationStep.DOCUMENTS);
+        return this.completedSteps.includes(RegistrationStep.SUBSCRIPTION);
       case RegistrationStep.COMPLETE:
-        return (
-          this.completedSteps.includes(RegistrationStep.PAYMENT) &&
-          this.paymentStatus === PaymentStatus.COMPLETED
-        );
+        return this.completedSteps.includes(RegistrationStep.PAYMENT) && this.paymentStatus === PaymentStatus.COMPLETED;
       default:
         return false;
     }
@@ -183,5 +193,34 @@ export class Registration {
     if (status === RegistrationStatus.COMPLETED) {
       this.completedAt = new Date();
     }
+  }
+
+  // Get current step based on registration state
+  getCurrentStep(): RegistrationStep {
+    if (!this.userData) {
+      return RegistrationStep.USER_FORM;
+    }
+    
+    if (!this.emailVerified) {
+      return RegistrationStep.EMAIL_VERIFICATION;
+    }
+    
+    if (!this.clinicData) {
+      return RegistrationStep.CLINIC_INFO;
+    }
+    
+    if (!this.subscriptionData) {
+      return RegistrationStep.SUBSCRIPTION;
+    }
+    
+    if (this.paymentStatus !== PaymentStatus.COMPLETED) {
+      return RegistrationStep.PAYMENT;
+    }
+    
+    if (this.status === RegistrationStatus.COMPLETED) {
+      return RegistrationStep.COMPLETE;
+    }
+    
+    return RegistrationStep.PAYMENT;
   }
 }

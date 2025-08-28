@@ -14,14 +14,18 @@ import {
 import { User } from '../database/entities/user.entity';
 import { Clinic } from '../database/entities/clinic.entity';
 import { UserRole } from '../database/entities/user-role.entity';
+import { SubscriptionTier } from '../database/entities/subscription-tier.entity';
 import {
   StartRegistrationDto,
   ClinicDataDto,
+  VerifyEmailDto,
+  SubscriptionDataDto,
   PaymentDataDto,
   CompleteRegistrationDto,
   PaymentMethod,
 } from './dto';
 import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 
 export interface RegistrationResponse {
   id: string;
@@ -31,7 +35,12 @@ export interface RegistrationResponse {
   completedSteps: RegistrationStep[];
   createdAt: Date;
   expiresAt?: Date;
+  userData?: any;
   clinicData?: any;
+  subscriptionData?: any;
+  paymentData?: any;
+  emailVerified: boolean;
+  emailVerifiedAt?: Date;
   paymentStatus: PaymentStatus;
 }
 
@@ -43,7 +52,7 @@ export class RegistrationService {
     startRegistrationDto: StartRegistrationDto,
     metadata?: { ipAddress?: string; userAgent?: string },
   ): Promise<RegistrationResponse> {
-    const { email, source, referrer } = startRegistrationDto;
+    const { email, name, password, source, referrer } = startRegistrationDto;
 
     // Check if email already exists as a user
     const existingUser = await this.em.findOne(User, { email });
@@ -68,9 +77,17 @@ export class RegistrationService {
       return this.mapToRegistrationResponse(existingRegistration);
     }
 
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
     // Create new registration
     const registration = new Registration();
     registration.email = email;
+    registration.userData = {
+      name,
+      email,
+      passwordHash,
+    };
     registration.metadata = {
       ipAddress: metadata?.ipAddress,
       userAgent: metadata?.userAgent,
@@ -78,18 +95,40 @@ export class RegistrationService {
       referrer,
     };
 
-    // Generate verification code
-    registration.verificationCode = Math.random()
-      .toString(36)
-      .substring(2, 8)
-      .toUpperCase();
+    // Generate verification code (static for development)
+    const verificationCode = this.generateVerificationCode();
+    registration.verificationCode = verificationCode;
 
     await this.em.persistAndFlush(registration);
 
-    // TODO: Send verification email
-    console.log(
-      `Verification code for ${email}: ${registration.verificationCode}`,
-    );
+    // Send verification email (static code for development)
+    await this.sendVerificationEmail(email, verificationCode);
+
+    return this.mapToRegistrationResponse(registration);
+  }
+
+  async verifyEmail(
+    registrationId: string,
+    verifyEmailDto: VerifyEmailDto,
+  ): Promise<RegistrationResponse> {
+    const registration = await this.getRegistrationById(registrationId);
+
+    if (registration.emailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    if (registration.verificationCode !== verifyEmailDto.verificationCode) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
+    // Mark email as verified
+    registration.emailVerified = true;
+    registration.emailVerifiedAt = new Date();
+    registration.verificationCode = undefined; // Clear the code after use
+    registration.addCompletedStep(RegistrationStep.EMAIL_VERIFICATION);
+    registration.updateStatus(RegistrationStatus.EMAIL_VERIFIED);
+
+    await this.em.persistAndFlush(registration);
 
     return this.mapToRegistrationResponse(registration);
   }
@@ -100,8 +139,14 @@ export class RegistrationService {
   ): Promise<RegistrationResponse> {
     const registration = await this.getRegistrationById(registrationId);
 
-    if (!registration.canProceedToStep(RegistrationStep.CLINIC_DATA)) {
-      throw new BadRequestException('Cannot proceed to clinic data step');
+    if (!registration.emailVerified) {
+      throw new BadRequestException(
+        'Email must be verified before submitting clinic data',
+      );
+    }
+
+    if (!registration.canProceedToStep(RegistrationStep.CLINIC_INFO)) {
+      throw new BadRequestException('Cannot proceed to clinic info step');
     }
 
     // Check for existing clinic with same name and email
@@ -117,33 +162,50 @@ export class RegistrationService {
 
     // Update registration with clinic data
     registration.clinicData = clinicDataDto;
-    registration.addCompletedStep(RegistrationStep.CLINIC_DATA);
-    registration.updateStatus(RegistrationStatus.CLINIC_DATA_SUBMITTED);
+    registration.addCompletedStep(RegistrationStep.CLINIC_INFO);
+    registration.updateStatus(RegistrationStatus.CLINIC_CREATED);
 
     await this.em.persistAndFlush(registration);
 
     return this.mapToRegistrationResponse(registration);
   }
 
-  async uploadDocuments(
+  async selectSubscription(
     registrationId: string,
-    documents: Array<{ fileName: string; fileType: string; fileSize: number }>,
+    subscriptionDataDto: SubscriptionDataDto,
   ): Promise<RegistrationResponse> {
     const registration = await this.getRegistrationById(registrationId);
 
-    if (!registration.canProceedToStep(RegistrationStep.DOCUMENTS)) {
-      throw new BadRequestException('Cannot proceed to documents step');
+    if (!registration.canProceedToStep(RegistrationStep.SUBSCRIPTION)) {
+      throw new BadRequestException('Cannot proceed to subscription step');
     }
 
-    // Update registration with document info
-    registration.documents = documents.map((doc) => ({
-      ...doc,
-      uploadedAt: new Date(),
-      verified: false, // Will be verified manually by admin
-    }));
+    // Validate subscription tier exists
+    const subscriptionTier = await this.em.findOne(SubscriptionTier, {
+      code: subscriptionDataDto.tierCode,
+      isActive: true,
+    });
 
-    registration.addCompletedStep(RegistrationStep.DOCUMENTS);
-    registration.updateStatus(RegistrationStatus.DOCUMENTS_UPLOADED);
+    if (!subscriptionTier) {
+      throw new BadRequestException('Invalid subscription tier');
+    }
+
+        // Calculate amount based on billing cycle
+    const amount =
+      subscriptionDataDto.billingCycle === 'yearly'
+        ? subscriptionTier.yearlyPrice
+        : subscriptionTier.monthlyPrice;
+
+    // Update registration with subscription data
+    registration.subscriptionData = {
+      tierCode: subscriptionDataDto.tierCode,
+      tierName: subscriptionTier.name,
+      billingCycle: subscriptionDataDto.billingCycle,
+      amount,
+      currency: subscriptionDataDto.currency,
+    };
+    registration.addCompletedStep(RegistrationStep.SUBSCRIPTION);
+    registration.updateStatus(RegistrationStatus.SUBSCRIPTION_SELECTED);
 
     await this.em.persistAndFlush(registration);
 
@@ -160,18 +222,37 @@ export class RegistrationService {
       throw new BadRequestException('Cannot proceed to payment step');
     }
 
+    if (!registration.subscriptionData) {
+      throw new BadRequestException('Subscription must be selected before payment');
+    }
+
+    // Validate payment amount matches subscription amount
+    if (paymentDataDto.amount !== registration.subscriptionData.amount) {
+      throw new BadRequestException('Payment amount does not match subscription amount');
+    }
+
     // Update registration with payment data
-    registration.paymentData = paymentDataDto;
-    registration.addCompletedStep(RegistrationStep.PAYMENT);
-    registration.updateStatus(RegistrationStatus.PAYMENT_PENDING);
+    registration.paymentData = {
+      paymentMethod: paymentDataDto.paymentMethod,
+      paymentId: paymentDataDto.paymentId,
+      transactionId: paymentDataDto.transactionId,
+      amount: paymentDataDto.amount,
+      currency: paymentDataDto.currency,
+      status: PaymentStatus.PROCESSING,
+      processedAt: new Date(),
+    };
+    registration.paymentStatus = PaymentStatus.PROCESSING;
 
     // TODO: Integrate with actual payment gateway
     // For now, simulate payment processing
     if (paymentDataDto.paymentMethod === PaymentMethod.BANK_TRANSFER) {
       registration.paymentStatus = PaymentStatus.PENDING;
+      registration.paymentData.status = PaymentStatus.PENDING;
     } else {
       // Simulate immediate payment completion for other methods
       registration.paymentStatus = PaymentStatus.COMPLETED;
+      registration.paymentData.status = PaymentStatus.COMPLETED;
+      registration.addCompletedStep(RegistrationStep.PAYMENT);
       registration.updateStatus(RegistrationStatus.PAYMENT_COMPLETED);
     }
 
@@ -182,7 +263,7 @@ export class RegistrationService {
 
   async completeRegistration(
     registrationId: string,
-    completeRegistrationDto: CompleteRegistrationDto,
+    _completeRegistrationDto: CompleteRegistrationDto,
   ): Promise<RegistrationResponse> {
     const registration = await this.getRegistrationById(registrationId);
 
@@ -190,13 +271,23 @@ export class RegistrationService {
       throw new BadRequestException('Cannot proceed to completion step');
     }
 
+    if (!registration.userData || !registration.clinicData || !registration.subscriptionData) {
+      throw new BadRequestException('User, clinic, and subscription data must be provided');
+    }
+
     if (registration.paymentStatus !== PaymentStatus.COMPLETED) {
-      throw new BadRequestException(
-        'Payment must be completed before registration completion',
-      );
+      throw new BadRequestException('Payment must be completed before registration completion');
     }
 
     await this.em.transactional(async (em) => {
+      // Get selected subscription tier
+      const subscriptionTier = await em.findOne(SubscriptionTier, {
+        code: registration.subscriptionData!.tierCode,
+      });
+      if (!subscriptionTier) {
+        throw new BadRequestException('Selected subscription tier not found');
+      }
+
       // Create clinic
       const clinic = new Clinic();
       clinic.name = registration.clinicData!.name;
@@ -207,16 +298,17 @@ export class RegistrationService {
       clinic.description = registration.clinicData!.description;
       clinic.workingHours = registration.clinicData!.workingHours;
       clinic.isActive = true;
+      clinic.subscriptionTier = subscriptionTier;
 
       em.persist(clinic);
 
       // Create admin user
       const user = new User();
       user.email = registration.email;
-      user.passwordHash = await bcrypt.hash(Math.random().toString(36), 10); // Temporary password
+      user.passwordHash = registration.userData!.passwordHash;
       user.isActive = true;
       user.emailVerified = true;
-      user.emailVerifiedAt = new Date();
+      user.emailVerifiedAt = registration.emailVerifiedAt;
 
       em.persist(user);
 
@@ -236,11 +328,6 @@ export class RegistrationService {
       registration.createdClinicId = clinic.id;
       registration.addCompletedStep(RegistrationStep.COMPLETE);
       registration.updateStatus(RegistrationStatus.COMPLETED);
-
-      if (registration.paymentData?.subscriptionId) {
-        registration.paymentData.subscriptionId =
-          completeRegistrationDto.subscriptionId;
-      }
 
       em.persist(registration);
     });
@@ -266,25 +353,6 @@ export class RegistrationService {
     await this.em.persistAndFlush(registration);
   }
 
-  async verifyEmail(
-    registrationId: string,
-    verificationCode: string,
-  ): Promise<RegistrationResponse> {
-    const registration = await this.getRegistrationById(registrationId);
-
-    if (registration.verificationCode !== verificationCode) {
-      throw new BadRequestException('Invalid verification code');
-    }
-
-    registration.emailVerified = true;
-    registration.emailVerifiedAt = new Date();
-    registration.verificationCode = undefined; // Clear the code after use
-
-    await this.em.persistAndFlush(registration);
-
-    return this.mapToRegistrationResponse(registration);
-  }
-
   async resendVerificationCode(email: string): Promise<void> {
     const registration = await this.em.findOne(Registration, {
       email,
@@ -306,16 +374,12 @@ export class RegistrationService {
     }
 
     // Generate new verification code
-    registration.verificationCode = Math.random()
-      .toString(36)
-      .substring(2, 8)
-      .toUpperCase();
+    const verificationCode = this.generateVerificationCode();
+    registration.verificationCode = verificationCode;
     await this.em.persistAndFlush(registration);
 
-    // TODO: Send verification email
-    console.log(
-      `New verification code for ${email}: ${registration.verificationCode}`,
-    );
+    // Send verification email
+    await this.sendVerificationEmail(email, verificationCode);
   }
 
   // Helper methods
@@ -335,6 +399,31 @@ export class RegistrationService {
     return registration;
   }
 
+  private generateVerificationCode(): string {
+    // In development, use static code for easier testing
+    if (process.env.NODE_ENV === 'development') {
+      return '123456';
+    }
+
+    // In production, generate random 6-digit code
+    return randomBytes(3).toString('hex').toUpperCase().substring(0, 6);
+  }
+
+  private async sendVerificationEmail(email: string, code: string): Promise<void> {
+    // In development, log the code
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📧 Verification code for ${email}: ${code}`);
+      console.log(
+        `🔗 Verification URL: http://localhost:3000/register/verify?code=${code}`,
+      );
+    } else {
+      // TODO: Implement real email sending service
+      console.log(
+        `📧 Sending verification email to ${email} with code: ${code}`,
+      );
+    }
+  }
+
   private mapToRegistrationResponse(
     registration: Registration,
   ): RegistrationResponse {
@@ -342,11 +431,16 @@ export class RegistrationService {
       id: registration.id,
       email: registration.email,
       status: registration.status,
-      currentStep: registration.currentStep,
+      currentStep: registration.getCurrentStep(),
       completedSteps: registration.completedSteps || [],
       createdAt: registration.createdAt,
       expiresAt: registration.expiresAt,
+      userData: registration.userData,
       clinicData: registration.clinicData,
+      subscriptionData: registration.subscriptionData,
+      paymentData: registration.paymentData,
+      emailVerified: registration.emailVerified,
+      emailVerifiedAt: registration.emailVerifiedAt,
       paymentStatus: registration.paymentStatus,
     };
   }
