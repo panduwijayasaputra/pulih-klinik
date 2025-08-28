@@ -328,7 +328,11 @@ export class ClinicsService {
 
       // Status & Subscription
       status: clinic.status,
-      subscriptionTier: clinic.subscriptionTier,
+      subscriptionTier: (clinic.subscriptionTier?.code || 'beta') as
+        | 'alpha'
+        | 'beta'
+        | 'theta'
+        | 'delta',
       subscriptionExpires: clinic.subscriptionExpires,
 
       // Timestamps
@@ -413,7 +417,11 @@ export class ClinicsService {
 
       // Status & Subscription
       status: clinic.status,
-      subscriptionTier: clinic.subscriptionTier,
+      subscriptionTier: (clinic.subscriptionTier?.code || 'beta') as
+        | 'alpha'
+        | 'beta'
+        | 'theta'
+        | 'delta',
       subscriptionExpires: clinic.subscriptionExpires,
 
       // Timestamps

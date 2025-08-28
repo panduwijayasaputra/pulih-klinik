@@ -4,6 +4,7 @@ import { TherapistSeeder } from './therapist.seeder';
 import { ClientSeeder } from './client.seeder';
 import { ConsultationSeeder } from './consultation.seeder';
 import { TherapySessionSeeder } from './therapy-session.seeder';
+import { SubscriptionTierSeeder } from './subscription-tier.seeder';
 
 export class DatabaseSeeder {
   constructor(private em: EntityManager) {}
@@ -13,6 +14,9 @@ export class DatabaseSeeder {
 
     try {
       // Run seeders in dependency order
+      await this.runSeeder('Subscription Tiers', () =>
+        SubscriptionTierSeeder.run(this.em)
+      );
       await this.runSeeder('Users', function () {
         return new UserSeeder().run(this.em);
       });
@@ -60,3 +64,4 @@ export { TherapistSeeder } from './therapist.seeder';
 export { ClientSeeder } from './client.seeder';
 export { ConsultationSeeder } from './consultation.seeder';
 export { TherapySessionSeeder } from './therapy-session.seeder';
+export { SubscriptionTierSeeder } from './subscription-tier.seeder';
