@@ -34,6 +34,12 @@ export const mockUsers: User[] = [
     clinicId: 'clinic-1',
     subscriptionTier: AuthSubscriptionTierEnum.Beta,
   },
+  {
+    id: '5',
+    email: 'newadmin@klinikbaru.com',
+    name: 'Admin Klinik Baru',
+    roles: [UserRoleEnum.ClinicAdmin],
+  },
 ];
 
 // Mock credentials mapping
@@ -42,6 +48,7 @@ export const mockCredentials = {
   'admin@kliniksehat.com': 'clinic123',
   'therapist@kliniksehat.com': 'therapist123',
   'dr.ahmad@kliniksehat.com': 'multi123',
+  'newadmin@klinikbaru.com': 'onboard123',
 };
 
 // Demo credentials for login form dropdown
@@ -65,5 +72,10 @@ export const demoCredentials = [
     label: 'Multi Role (Admin + Therapist)',
     email: 'dr.ahmad@kliniksehat.com',
     password: 'multi123'
+  },
+  {
+    label: 'Admin Baru (Perlu Onboarding)',
+    email: 'newadmin@klinikbaru.com',
+    password: 'onboard123'
   }
 ];

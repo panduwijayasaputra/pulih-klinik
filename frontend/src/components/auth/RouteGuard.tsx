@@ -31,6 +31,25 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         router.push(defaultRoute as any);
         return;
       }
+
+      // Check if user needs onboarding (has no clinic data)
+      const needsOnboarding = !user.clinicId && !user.clinicName;
+      const isOnboardingPage = pathname === '/onboarding';
+      
+      if (needsOnboarding && !isOnboardingPage) {
+        // User needs onboarding and isn't on onboarding page
+        const protectedRoutes = ['/portal'];
+        const isAccessingProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+        
+        if (isAccessingProtectedRoute) {
+          router.push('/onboarding');
+          return;
+        }
+      } else if (!needsOnboarding && isOnboardingPage) {
+        // User doesn't need onboarding but is on onboarding page - redirect to portal
+        router.push('/portal');
+        return;
+      }
     }
 
     // Handle redirects for unauthenticated users accessing landing page

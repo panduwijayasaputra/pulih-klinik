@@ -5,6 +5,7 @@ import { AuthState, User } from '@/types/auth';
 interface AuthStore extends AuthState {
   login: (data: { user: User; token?: string; refreshToken?: string }) => void;
   logout: () => void;
+  clearAuthState: () => void;
   clearError: () => void;
   updateTokens: (accessToken: string, refreshToken?: string) => void;
   setLoading: (loading: boolean) => void;
@@ -44,6 +45,16 @@ export const useAuthStore = create<AuthStore>()(
         if (typeof window !== 'undefined') {
           window.location.href = '/';
         }
+      },
+
+      clearAuthState: () => {
+        set({
+          user: null,
+          isAuthenticated: false,
+          token: null,
+          refreshToken: null,
+          error: null,
+        });
       },
 
       clearError: () => set({ error: null }),

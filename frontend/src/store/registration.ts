@@ -44,9 +44,6 @@ interface RegistrationStore extends RegistrationState {
 const stepOrder: RegistrationStep[] = [
   RegistrationStepEnum.UserForm,
   RegistrationStepEnum.EmailVerification,
-  RegistrationStepEnum.ClinicInfo,
-  RegistrationStepEnum.Subscription,
-  RegistrationStepEnum.Payment,
   RegistrationStepEnum.Complete,
 ];
 
@@ -302,7 +299,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
           const registrationStatus = response.data.data;
           set({
             isLoading: false,
-            currentStep: RegistrationStepEnum.ClinicInfo,
+            currentStep: RegistrationStepEnum.Complete,
             verificationData: {
               code: '',
               emailSent: false,

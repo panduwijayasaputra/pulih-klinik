@@ -1,91 +1,95 @@
 'use client';
 
-import { useRegistrationStore } from '@/store/registration';
-import { UserForm } from './UserForm';
-import { EmailVerification } from './EmailVerification';
+import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
+import { OnboardingClinicForm } from './OnboardingClinicForm';
+import { OnboardingSubscriptionForm } from './OnboardingSubscriptionForm';
+import { OnboardingPaymentForm } from './OnboardingPaymentForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { RegistrationStepEnum } from '@/types/enums';
+import { useRouter } from 'next/navigation';
 
-const stepDescriptions = {
-  [RegistrationStepEnum.UserForm]: 'Masukkan informasi admin klinik Anda',
-  [RegistrationStepEnum.EmailVerification]: 'Verifikasi email Anda untuk melanjutkan',
-  [RegistrationStepEnum.Complete]: 'Registrasi berhasil diselesaikan',
+const stepTitles = {
+  [OnboardingStepEnum.ClinicInfo]: 'Informasi Klinik',
+  [OnboardingStepEnum.Subscription]: 'Pilih Paket',
+  [OnboardingStepEnum.Payment]: 'Pembayaran',
+  [OnboardingStepEnum.Complete]: 'Setup Selesai',
 };
 
-export const RegisterFlow: React.FC = () => {
+const stepDescriptions = {
+  [OnboardingStepEnum.ClinicInfo]: 'Lengkapi informasi klinik Anda',
+  [OnboardingStepEnum.Subscription]: 'Pilih paket berlangganan yang sesuai',
+  [OnboardingStepEnum.Payment]: 'Lakukan pembayaran untuk mengaktifkan akun',
+  [OnboardingStepEnum.Complete]: 'Setup klinik berhasil diselesaikan',
+};
+
+export const OnboardingFlow: React.FC = () => {
+  const router = useRouter();
   const { 
     currentStep, 
     prevStep, 
     error, 
     clearError,
-    resetRegistration,
-    data,
-    registrationId,
-    isLoading
-  } = useRegistrationStore();
+    resetOnboarding,
+    isLoading,
+    completeOnboarding,
+  } = useOnboardingStore();
 
   const stepOrder = [
-    RegistrationStepEnum.UserForm,
-    RegistrationStepEnum.EmailVerification,
-    RegistrationStepEnum.Complete,
+    OnboardingStepEnum.ClinicInfo,
+    OnboardingStepEnum.Subscription,
+    OnboardingStepEnum.Payment,
+    OnboardingStepEnum.Complete,
   ];
 
   const getStepNumber = () => {
     return stepOrder.indexOf(currentStep) + 1;
   };
 
-  const canGoBack = currentStep !== RegistrationStepEnum.UserForm && 
-                    currentStep !== RegistrationStepEnum.Complete;
+  const canGoBack = currentStep !== OnboardingStepEnum.ClinicInfo && 
+                    currentStep !== OnboardingStepEnum.Complete;
 
   const handleBack = () => {
     clearError();
     prevStep();
   };
 
-  const handleStartOver = () => {
-    resetRegistration();
+  const handleGoToPortal = () => {
+    resetOnboarding();
+    router.push('/portal');
   };
 
-  const handleGoToLogin = () => {
-    resetRegistration();
-    window.location.href = '/login';
+  const handleCompleteOnboarding = async () => {
+    try {
+      await completeOnboarding();
+    } catch (error) {
+      console.error('Failed to complete onboarding:', error);
+    }
   };
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case RegistrationStepEnum.UserForm:
-        return <UserForm />;
-      case RegistrationStepEnum.EmailVerification:
-        return (
-          <EmailVerification
-            email={data.user?.email || ''}
-            registrationId={registrationId}
-          />
-        );
-      case RegistrationStepEnum.Complete:
+      case OnboardingStepEnum.ClinicInfo:
+        return <OnboardingClinicForm />;
+      case OnboardingStepEnum.Subscription:
+        return <OnboardingSubscriptionForm />;
+      case OnboardingStepEnum.Payment:
+        return <OnboardingPaymentForm />;
+      case OnboardingStepEnum.Complete:
         return (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckIcon className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Registrasi Berhasil!</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Setup Klinik Selesai!</h2>
             <p className="text-gray-600 mb-6">
-              Akun Anda telah berhasil dibuat. Silakan login untuk melengkapi setup klinik dan memulai menggunakan Smart Therapy.
+              Klinik Anda telah berhasil dikonfigurasi. Sekarang Anda dapat mulai menggunakan Smart Therapy untuk mengelola sesi hipnoterapi.
             </p>
             <div className="space-y-3">
               <Button
-                onClick={handleGoToLogin}
+                onClick={handleGoToPortal}
                 className="w-full"
               >
-                Masuk ke Akun
-              </Button>
-              <Button
-                onClick={handleStartOver}
-                variant="outline"
-                className="w-full"
-              >
-                Daftar Akun Lain
+                Mulai Menggunakan Smart Therapy
               </Button>
             </div>
           </div>
@@ -97,20 +101,20 @@ export const RegisterFlow: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Daftar Klinik
+            Setup Klinik
           </h1>
           <p className="text-gray-600">
-            {stepDescriptions[currentStep as keyof typeof stepDescriptions] || ''}
+            {stepDescriptions[currentStep]}
           </p>
         </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
         {/* Progress Steps */}
-        {currentStep !== RegistrationStepEnum.Complete && (
+        {currentStep !== OnboardingStepEnum.Complete && (
           <div className="mb-8">
             <div className="flex items-center justify-between">
               {stepOrder.slice(0, -1).map((step, index) => (
@@ -173,9 +177,9 @@ export const RegisterFlow: React.FC = () => {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
-            Sudah punya akun?{' '}
-            <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              Masuk di sini
+            Butuh bantuan?{' '}
+            <a href="/support" className="font-medium text-blue-600 hover:text-blue-500">
+              Hubungi Tim Support
             </a>
           </p>
         </div>

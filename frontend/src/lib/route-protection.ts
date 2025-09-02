@@ -10,6 +10,12 @@ export const routeConfigs: RouteConfig[] = [
   { path: '/register', allowPublic: true, requiredRoles: [] },
   { path: '/thankyou', allowPublic: true, requiredRoles: [] },
 
+  // Authenticated routes (require login but no specific role)
+  { 
+    path: '/onboarding', 
+    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
+  },
+
 
   // Portal routes - Clinic Admin only
   { 
