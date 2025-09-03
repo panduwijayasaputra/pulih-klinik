@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { getDefaultRouteForUser } from '@/lib/route-protection';
 
 interface RouteGuardProps {
@@ -14,6 +15,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
   children
 }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { needsOnboarding, isLoaded } = useOnboarding();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -24,7 +26,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
 
   // Handle redirects for authenticated users accessing auth pages
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
+    if (!isLoading && isAuthenticated && user && isLoaded) {
       const authPages = ['/login', '/register', '/thankyou'];
       if (authPages.includes(pathname)) {
         const defaultRoute = getDefaultRouteForUser(user);
@@ -32,22 +34,18 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         return;
       }
 
-      // Check if user needs onboarding (has no clinic data)
-      const needsOnboarding = !user.clinicId && !user.clinicName;
+      // Don't interfere with onboarding page - let OnboardingFlow handle its own logic
       const isOnboardingPage = pathname === '/onboarding';
+      if (isOnboardingPage) {
+        return;
+      }
+
+      // Check if user needs onboarding when accessing portal routes
+      // Use server-side status instead of client-side check to avoid conflicts
+      const isPortalRoute = pathname.startsWith('/portal');
       
-      if (needsOnboarding && !isOnboardingPage) {
-        // User needs onboarding and isn't on onboarding page
-        const protectedRoutes = ['/portal'];
-        const isAccessingProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-        
-        if (isAccessingProtectedRoute) {
-          router.push('/onboarding');
-          return;
-        }
-      } else if (!needsOnboarding && isOnboardingPage) {
-        // User doesn't need onboarding but is on onboarding page - redirect to portal
-        router.push('/portal');
+      if (isPortalRoute && needsOnboarding) {
+        router.push('/onboarding');
         return;
       }
     }
@@ -73,7 +71,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         return;
       }
     }
-  }, [isAuthenticated, isLoading, user, pathname, router]);
+  }, [isAuthenticated, isLoading, user, pathname, router, needsOnboarding, isLoaded]);
 
   // In development mode, allow client routes and edit routes without auth
   if (isDevelopment && (isClientRoute || isEditRoute)) {

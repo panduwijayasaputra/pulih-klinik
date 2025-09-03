@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { OnboardingClinicForm } from './OnboardingClinicForm';
 import { OnboardingSubscriptionForm } from './OnboardingSubscriptionForm';
 import { OnboardingPaymentForm } from './OnboardingPaymentForm';
@@ -24,15 +26,63 @@ const stepDescriptions = {
 
 export const OnboardingFlow: React.FC = () => {
   const router = useRouter();
+  const { userHasClinic, needsOnboarding, serverCurrentStep, isLoaded } = useOnboarding();
   const { 
     currentStep, 
+    setStep,
     prevStep, 
     error, 
     clearError,
     resetOnboarding,
     isLoading,
-    completeOnboarding,
   } = useOnboardingStore();
+
+  // Handle redirects and step synchronization
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    console.log('🔍 OnboardingFlow status check:', {
+      isLoaded,
+      needsOnboarding,
+      userHasClinic,
+      serverCurrentStep,
+      currentStep
+    });
+
+    // If user doesn't need onboarding anymore, redirect to portal
+    if (!needsOnboarding) {
+      console.log('✅ User completed onboarding, redirecting to portal');
+      router.push('/portal');
+      return;
+    }
+
+    // Sync current step with server status if provided
+    if (serverCurrentStep) {
+      const stepMap = {
+        'clinic_info': OnboardingStepEnum.ClinicInfo,
+        'subscription': OnboardingStepEnum.Subscription,
+        'payment': OnboardingStepEnum.Payment,
+        'complete': OnboardingStepEnum.Complete,
+      };
+      const targetStep = stepMap[serverCurrentStep as keyof typeof stepMap];
+      if (targetStep && targetStep !== currentStep) {
+        console.log(`🔄 Syncing step from ${currentStep} to ${targetStep}`);
+        setStep(targetStep);
+      }
+    }
+  }, [isLoaded, needsOnboarding, userHasClinic, serverCurrentStep, currentStep, router]);
+
+  // Show loading while checking status
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Memeriksa status onboarding...</p>
+        </div>
+      </div>
+    );
+  }
 
   const stepOrder = [
     OnboardingStepEnum.ClinicInfo,
@@ -46,6 +96,7 @@ export const OnboardingFlow: React.FC = () => {
   };
 
   const canGoBack = currentStep !== OnboardingStepEnum.ClinicInfo && 
+                    currentStep !== OnboardingStepEnum.Subscription &&
                     currentStep !== OnboardingStepEnum.Complete;
 
   const handleBack = () => {
@@ -58,13 +109,6 @@ export const OnboardingFlow: React.FC = () => {
     router.push('/portal');
   };
 
-  const handleCompleteOnboarding = async () => {
-    try {
-      await completeOnboarding();
-    } catch (error) {
-      console.error('Failed to complete onboarding:', error);
-    }
-  };
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -116,7 +160,7 @@ export const OnboardingFlow: React.FC = () => {
         {/* Progress Steps */}
         {currentStep !== OnboardingStepEnum.Complete && (
           <div className="mb-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center">
               {stepOrder.slice(0, -1).map((step, index) => (
                 <div key={step} className="flex items-center">
                   <div

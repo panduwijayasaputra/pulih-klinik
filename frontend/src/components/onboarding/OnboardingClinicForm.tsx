@@ -38,10 +38,12 @@ export const OnboardingClinicForm: React.FC = () => {
       setIsSubmitting(true);
       clearError();
       
-      await submitClinicData(formData);
+      console.log('🚀 Submitting clinic data:', formData);
+      const result = await submitClinicData(formData);
+      console.log('✅ Clinic submission successful:', result);
       updateClinicData(formData);
     } catch (error) {
-      console.error('Failed to submit clinic data:', error);
+      console.error('❌ Failed to submit clinic data:', error);
     } finally {
       setIsSubmitting(false);
     }

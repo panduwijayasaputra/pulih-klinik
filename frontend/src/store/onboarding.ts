@@ -120,14 +120,31 @@ export const useOnboardingStore = create<OnboardingStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          await apiClient.post('/onboarding/clinic', clinicData);
+          console.log('📤 Onboarding store: Sending clinic data to API');
+          const response = await apiClient.post('/onboarding/clinic', clinicData);
+          console.log('📥 Onboarding store: API response:', response.data);
+
+          // Update auth store with new user data that includes clinic
+          if (response.data?.data?.user) {
+            console.log('🔄 Updating auth store with new user data:', response.data.data.user);
+            const authStore = useAuthStore.getState();
+            authStore.login({
+              user: response.data.data.user,
+              token: authStore.token || '',
+              refreshToken: authStore.refreshToken || '',
+            });
+          } else {
+            console.warn('⚠️ No user data in API response');
+          }
 
           get().updateClinicData(clinicData);
+          console.log('➡️ Advancing to subscription step');
           set({
             isLoading: false,
             currentStep: OnboardingStepEnum.Subscription,
           });
         } catch (error: any) {
+          console.error('❌ Clinic submission error:', error);
           set({
             error: error.response?.data?.message || 'Failed to submit clinic data',
             isLoading: false,

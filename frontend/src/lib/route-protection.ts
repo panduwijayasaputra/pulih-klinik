@@ -208,7 +208,13 @@ export const getDefaultRouteForUser = (user: User | null): string => {
     return '/login';
   }
 
-  // All authenticated users now go to the unified portal page
+  // Check if user needs onboarding (no clinic assigned)
+  const needsOnboarding = !user.clinicId && !user.clinicName;
+  if (needsOnboarding) {
+    return '/onboarding';
+  }
+
+  // All authenticated users with clinics go to the unified portal page
   return '/portal';
 };
 
