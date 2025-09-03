@@ -137,7 +137,9 @@ export class OnboardingController {
   async submitSubscription(
     @CurrentUser() user: AuthUser,
     @Body() subscriptionData: SubscriptionOnboardingDto,
-  ): Promise<CustomApiResponse<{ success: boolean; message: string }>> {
+  ): Promise<
+    CustomApiResponse<{ success: boolean; message: string; user?: any }>
+  > {
     const result = await this.onboardingService.submitSubscription(
       user.id,
       subscriptionData,

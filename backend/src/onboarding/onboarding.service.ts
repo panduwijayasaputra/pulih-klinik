@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
-import { User, Clinic, UserProfile } from '../database/entities';
+import { User, Clinic, UserProfile, SubscriptionTier } from '../database/entities';
 import {
   ClinicOnboardingDto,
   SubscriptionOnboardingDto,
@@ -169,11 +169,11 @@ export class OnboardingService {
   async submitSubscription(
     userId: string,
     subscriptionData: SubscriptionOnboardingDto,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; message: string; user?: any }> {
     const user = await this.em.findOne(
       User,
       { id: userId, isActive: true },
-      { populate: ['clinic'] },
+      { populate: ['clinic', 'roles', 'profile'] },
     );
 
     if (!user) {
@@ -184,11 +184,13 @@ export class OnboardingService {
       throw new BadRequestException('Must complete clinic setup first');
     }
 
-    // In a real implementation, you would create subscription records
-    // For now, just validate the data and return success
+    // Find the subscription tier by code
+    const subscriptionTier = await this.em.findOne(SubscriptionTier, {
+      code: subscriptionData.tierCode,
+      isActive: true,
+    });
 
-    const validTiers = ['beta', 'alpha', 'theta'];
-    if (!validTiers.includes(subscriptionData.tierCode)) {
+    if (!subscriptionTier) {
       throw new BadRequestException('Invalid subscription tier');
     }
 
@@ -198,23 +200,60 @@ export class OnboardingService {
     }
 
     // Validate amount based on tier and cycle
-    const tierPrices = {
-      beta: { monthly: 50000, yearly: 550000 },
-      alpha: { monthly: 100000, yearly: 1000000 },
-      theta: { monthly: 150000, yearly: 1500000 },
-    };
-
     const expectedAmount =
-      tierPrices[subscriptionData.tierCode][subscriptionData.billingCycle];
+      subscriptionData.billingCycle === 'monthly'
+        ? subscriptionTier.monthlyPrice
+        : subscriptionTier.yearlyPrice;
+
     if (subscriptionData.amount !== expectedAmount) {
       throw new BadRequestException(
         `Invalid amount for selected tier and billing cycle. Expected: ${expectedAmount}`,
       );
     }
 
+    // Update clinic with subscription tier
+    user.clinic.subscriptionTier = subscriptionTier;
+
+    // Set subscription expiry based on billing cycle
+    const now = new Date();
+    const expiryDate = new Date(now);
+    if (subscriptionData.billingCycle === 'monthly') {
+      expiryDate.setMonth(expiryDate.getMonth() + 1);
+    } else {
+      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+    }
+    user.clinic.subscriptionExpires = expiryDate;
+
+    // Mark clinic as active
+    user.clinic.status = 'active';
+
+    await this.em.persistAndFlush(user.clinic);
+
+    // Return updated user data for auth store update
+    const updatedUser = await this.em.findOne(
+      User,
+      { id: userId },
+      { populate: ['clinic', 'clinic.subscriptionTier', 'roles', 'profile'] },
+    );
+
     return {
       success: true,
       message: 'Subscription selected successfully',
+      user: updatedUser
+        ? {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            name: updatedUser.profile?.name || updatedUser.email,
+            isActive: updatedUser.isActive,
+            roles: updatedUser.roles.map((role) => ({
+              id: role.id,
+              role: role.role,
+            })),
+            clinicId: updatedUser.clinic?.id,
+            clinicName: updatedUser.clinic?.name,
+            subscriptionTier: updatedUser.clinic?.subscriptionTier?.name,
+          }
+        : undefined,
     };
   }
 

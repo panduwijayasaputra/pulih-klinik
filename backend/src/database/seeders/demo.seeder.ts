@@ -11,15 +11,15 @@ import { UserRole as UserRoleEnum } from '../../common/enums/user-roles.enum';
 
 export class DemoSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
-    // Create subscription tiers first
-    const alphaSubscription = em.create(SubscriptionTier, {
-      name: 'Alpha (Unlimited)',
-      code: 'alpha',
-      description: 'Unlimited access to all features for alpha users',
-      monthlyPrice: 0, // Free for alpha
-      yearlyPrice: 0,
-      therapistLimit: -1, // Unlimited
-      newClientsPerDayLimit: -1, // Unlimited
+    // Create subscription tiers to match frontend pricing
+    const betaSubscription = em.create(SubscriptionTier, {
+      name: 'Beta',
+      code: 'beta',
+      description: 'Paket dasar untuk klinik yang baru memulai dengan fitur terbaik',
+      monthlyPrice: 50000, // 50k IDR
+      yearlyPrice: 550000, // 550k IDR
+      therapistLimit: 1,
+      newClientsPerDayLimit: 1,
       isRecommended: false,
       isActive: true,
       sortOrder: 1,
@@ -27,14 +27,14 @@ export class DemoSeeder extends Seeder {
       updatedAt: new Date(),
     });
 
-    const betaSubscription = em.create(SubscriptionTier, {
-      name: 'Beta (Pro)',
-      code: 'beta',
-      description: 'Professional features for established clinics',
-      monthlyPrice: 200000, // 200k IDR
-      yearlyPrice: 2000000, // 2M IDR (2 months free)
-      therapistLimit: 10,
-      newClientsPerDayLimit: 50,
+    const alphaSubscription = em.create(SubscriptionTier, {
+      name: 'Alpha',
+      code: 'alpha',
+      description: 'Paket terbaik untuk klinik yang ingin memiliki fitur lengkap',
+      monthlyPrice: 100000, // 100k IDR
+      yearlyPrice: 1000000, // 1M IDR
+      therapistLimit: 3,
+      newClientsPerDayLimit: 3,
       isRecommended: true,
       isActive: true,
       sortOrder: 2,
@@ -42,7 +42,22 @@ export class DemoSeeder extends Seeder {
       updatedAt: new Date(),
     });
 
-    await em.persistAndFlush([alphaSubscription, betaSubscription]);
+    const thetaSubscription = em.create(SubscriptionTier, {
+      name: 'Theta',
+      code: 'theta',
+      description: 'Paket untuk klinik yang ingin memiliki kapasitas maksimal',
+      monthlyPrice: 150000, // 150k IDR
+      yearlyPrice: 1500000, // 1.5M IDR
+      therapistLimit: 5,
+      newClientsPerDayLimit: 5,
+      isRecommended: false,
+      isActive: true,
+      sortOrder: 3,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await em.persistAndFlush([betaSubscription, alphaSubscription, thetaSubscription]);
 
     // Create clinic for kliniksehat users
     const klinikSehat = em.create(Clinic, {
@@ -54,7 +69,7 @@ export class DemoSeeder extends Seeder {
       description: 'Klinik hipnoterapi terpercaya di Jakarta Pusat',
       workingHours: 'Senin-Jumat: 08:00-17:00',
       status: 'active' as const,
-      subscriptionTier: betaSubscription,
+      subscriptionTier: alphaSubscription,
       subscriptionExpires: new Date('2025-01-01'),
       isActive: true,
       createdAt: new Date(),
