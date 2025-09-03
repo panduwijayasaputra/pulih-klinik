@@ -8,9 +8,6 @@ import { Client } from './client.entity';
 import { Consultation } from './consultation.entity';
 import { TherapySession } from './therapy-session.entity';
 import { ClientTherapistAssignment } from './client-therapist-assignment.entity';
-import { ClientStatusTransition } from './client-status-transition.entity';
-import { AuditLog } from './audit-log.entity';
-import { Registration } from './registration.entity';
 import { SubscriptionTier } from './subscription-tier.entity';
 
 // Re-export entities
@@ -24,9 +21,6 @@ export { Client } from './client.entity';
 export { Consultation } from './consultation.entity';
 export { TherapySession } from './therapy-session.entity';
 export { ClientTherapistAssignment } from './client-therapist-assignment.entity';
-export { ClientStatusTransition } from './client-status-transition.entity';
-export { AuditLog } from './audit-log.entity';
-export { Registration } from './registration.entity';
 export { SubscriptionTier } from './subscription-tier.entity';
 
 // Export all entities as an array for easy registration
@@ -41,8 +35,5 @@ export const entities = [
   Consultation,
   TherapySession,
   ClientTherapistAssignment,
-  ClientStatusTransition,
-  AuditLog,
-  Registration,
   SubscriptionTier,
 ];

@@ -33,7 +33,6 @@ import {
   RequireAdminOrClinicAdmin,
   RequireAuth,
 } from '../auth/decorators/require-role.decorator';
-import { ClientStatusTransition } from '../database/entities/client-status-transition.entity';
 
 @ApiTags('Clients')
 @ApiBearerAuth()
@@ -648,46 +647,4 @@ export class ClientsController {
     return this.clientsService.deleteClient(clientId, clinicId);
   }
 
-  @Get(':id/status-history')
-  @RequireAuth()
-  @ApiOperation({
-    summary: 'Get client status transition history',
-    description:
-      'Get the complete history of status changes for a client with timestamps and reasons.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Client ID',
-    type: 'string',
-    format: 'uuid',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Status history retrieved successfully',
-    type: [Object],
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Client not found',
-  })
-  async getClientStatusHistory(
-    @Param('id', ParseUUIDPipe) clientId: string,
-    @Request() req: any,
-  ): Promise<ClientStatusTransition[]> {
-    const currentUser = req.user;
-
-    // Determine clinic scope for access control
-    let clinicId: string | undefined;
-
-    if (!currentUser.isAdmin) {
-      // Non-admin users are restricted to their clinic
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
-      }
-      clinicId = userRole.clinicId;
-    }
-
-    return this.clientsService.getClientStatusHistory(clientId, clinicId);
-  }
 }

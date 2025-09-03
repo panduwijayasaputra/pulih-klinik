@@ -10,7 +10,6 @@ import {
   ClientStatus,
   MaritalStatus,
 } from '../database/entities/client.entity';
-import { ClientStatusTransition } from '../database/entities/client-status-transition.entity';
 import {
   ClientTherapistAssignment,
   AssignmentStatus,
@@ -515,28 +514,8 @@ export class ClientsService {
       throw new NotFoundException('Updating user not found');
     }
 
-    // Validate status transition
-    const validTransitions = this.getValidStatusTransitions(client.status);
-    if (!validTransitions.includes(updateStatusDto.status)) {
-      throw new BadRequestException(
-        `Invalid status transition from ${client.status} to ${updateStatusDto.status}. Valid transitions are: ${validTransitions.join(', ')}`,
-      );
-    }
-
+    // Simply update the status without transition tracking
     const oldStatus = client.status;
-
-    // Create status transition record
-    const transition = new ClientStatusTransition();
-    transition.client = client;
-    transition.fromStatus = oldStatus;
-    transition.toStatus = updateStatusDto.status;
-    transition.reason = updateStatusDto.reason;
-    transition.notes = updateStatusDto.notes;
-    transition.changedBy = updatedByUser;
-    transition.previousTherapistId = updateStatusDto.previousTherapistId;
-    transition.newTherapistId = updateStatusDto.newTherapistId;
-
-    await this.em.persistAndFlush(transition);
 
     // Update client status
     client.status = updateStatusDto.status;
@@ -632,54 +611,6 @@ export class ClientsService {
     return { message: 'Client successfully archived' };
   }
 
-  /**
-   * Get client's status transition history
-   */
-  async getClientStatusHistory(
-    clientId: string,
-    clinicId?: string,
-  ): Promise<ClientStatusTransition[]> {
-    // Validate client exists and clinic access
-    const whereConditions: any = { id: clientId };
-    if (clinicId) {
-      whereConditions.clinic = clinicId;
-    }
-
-    const client = await this.em.findOne(Client, whereConditions);
-    if (!client) {
-      throw new NotFoundException('Client not found');
-    }
-
-    return this.em.find(
-      ClientStatusTransition,
-      { client: clientId },
-      {
-        populate: ['changedBy'],
-        orderBy: { changedAt: 'DESC' },
-      },
-    );
-  }
-
-  /**
-   * Get valid status transitions based on current status
-   */
-  private getValidStatusTransitions(
-    currentStatus: ClientStatus,
-  ): ClientStatus[] {
-    const transitions: Record<ClientStatus, ClientStatus[]> = {
-      [ClientStatus.NEW]: [ClientStatus.ASSIGNED],
-      [ClientStatus.ASSIGNED]: [ClientStatus.CONSULTATION, ClientStatus.NEW],
-      [ClientStatus.CONSULTATION]: [
-        ClientStatus.THERAPY,
-        ClientStatus.DONE,
-        ClientStatus.ASSIGNED,
-      ],
-      [ClientStatus.THERAPY]: [ClientStatus.DONE, ClientStatus.ASSIGNED],
-      [ClientStatus.DONE]: [ClientStatus.THERAPY], // Allow reopening if needed
-    };
-
-    return transitions[currentStatus] || [];
-  }
 
   /**
    * Map Client entity to response format with current assignment
