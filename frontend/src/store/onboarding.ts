@@ -7,6 +7,7 @@ import {
 } from '@/types/registration';
 import { apiClient } from '@/lib/http-client';
 import { useAuthStore } from '@/store/auth';
+import { validateOnboardingState, isStepComplete, getNextStep, getPreviousStep, canSkipToStep, getOnboardingProgress, UserOnboardingState } from '@/lib/onboarding-validation';
 
 export enum OnboardingStepEnum {
   ClinicInfo = 'clinic_info',
@@ -33,19 +34,34 @@ interface OnboardingState {
 }
 
 interface OnboardingStore extends OnboardingState {
+  // Step management
   setStep: (step: OnboardingStep) => void;
   nextStep: () => void;
   prevStep: () => void;
+  
+  // Data management
   updateClinicData: (data: ClinicFormData) => void;
   updateSubscriptionData: (data: SubscriptionData) => void;
   updatePaymentData: (data: PaymentData) => void;
+  
+  // API actions
   submitClinicData: (data: ClinicFormData) => Promise<void>;
   submitSubscription: (data: SubscriptionData) => Promise<void>;
   submitPayment: (data: PaymentData) => Promise<void>;
   completeOnboarding: () => Promise<void>;
+  
+  // State management
   resetOnboarding: () => void;
   clearError: () => void;
   clearJustCompletedSubscription: () => void;
+  
+  // Validation helpers
+  canProceedToNextStep: () => boolean;
+  getCurrentStepData: () => any;
+  isStepComplete: (step: OnboardingStep) => boolean;
+  validateCurrentState: () => UserOnboardingState;
+  getProgressPercentage: () => number;
+  canSkipToStep: (step: OnboardingStep) => boolean;
 }
 
 const stepOrder: OnboardingStep[] = [
@@ -65,6 +81,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
       isComplete: false,
       justCompletedSubscription: false,
 
+      // Step management
       setStep: (step: OnboardingStep) => {
         set({ currentStep: step });
       },
@@ -89,6 +106,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
         }
       },
 
+      // Data management
       updateClinicData: (clinicData: ClinicFormData) => {
         const { data } = get();
         set({
@@ -119,6 +137,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
         });
       },
 
+      // API actions
       submitClinicData: async (clinicData: ClinicFormData) => {
         set({ isLoading: true, error: null });
 
@@ -128,12 +147,15 @@ export const useOnboardingStore = create<OnboardingStore>()(
           // Update auth store with new user data that includes clinic
           if (response.data?.data?.user) {
             const authStore = useAuthStore.getState();
-            authStore.login({
-              user: response.data.data.user,
-              accessToken: authStore.accessToken || '',
-              refreshToken: authStore.refreshToken || '',
-            });
-          } else {
+            authStore.setUser(response.data.data.user);
+            if (response.data.data.user.clinicId) {
+              authStore.setClinic({
+                id: response.data.data.user.clinicId,
+                name: response.data.data.user.clinicName || '',
+                isActive: true,
+                subscription: response.data.data.user.subscriptionTier,
+              });
+            }
           }
 
           get().updateClinicData(clinicData);
@@ -164,18 +186,20 @@ export const useOnboardingStore = create<OnboardingStore>()(
           // Update auth store with new user data that includes subscription
           if (response.data?.data?.user) {
             const authStore = useAuthStore.getState();
-            authStore.login({
-              user: response.data.data.user,
-              accessToken: authStore.accessToken || '',
-              refreshToken: authStore.refreshToken || '',
-            });
-          } else {
+            authStore.setUser(response.data.data.user);
+            if (response.data.data.user.clinicId) {
+              authStore.setClinic({
+                id: response.data.data.user.clinicId,
+                name: response.data.data.user.clinicName || '',
+                isActive: true,
+                subscription: response.data.data.user.subscriptionTier,
+              });
+            }
           }
 
           get().updateSubscriptionData(subscriptionData);
           
           // For demo purposes, skip payment and advance to complete step
-          // Don't call complete API yet - let user see thank you page first
           set({
             isLoading: false,
             currentStep: OnboardingStepEnum.Complete,
@@ -226,11 +250,15 @@ export const useOnboardingStore = create<OnboardingStore>()(
           // Update auth store with clinic data from response
           const authStore = useAuthStore.getState();
           if (response.data?.data?.user) {
-            authStore.login({
-              user: response.data.data.user,
-              accessToken: authStore.accessToken || '',
-              refreshToken: authStore.refreshToken || '',
-            });
+            authStore.setUser(response.data.data.user);
+            if (response.data.data.user.clinicId) {
+              authStore.setClinic({
+                id: response.data.data.user.clinicId,
+                name: response.data.data.user.clinicName || '',
+                isActive: true,
+                subscription: response.data.data.user.subscriptionTier,
+              });
+            }
           }
 
           set({
@@ -247,6 +275,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
         }
       },
 
+      // State management
       resetOnboarding: () => {
         set({
           currentStep: OnboardingStepEnum.ClinicInfo,
@@ -254,12 +283,81 @@ export const useOnboardingStore = create<OnboardingStore>()(
           isLoading: false,
           error: null,
           isComplete: false,
+          justCompletedSubscription: false,
         });
       },
 
       clearError: () => set({ error: null }),
 
       clearJustCompletedSubscription: () => set({ justCompletedSubscription: false }),
+
+      // Validation helpers
+      canProceedToNextStep: () => {
+        const { currentStep, data } = get();
+        
+        switch (currentStep) {
+          case OnboardingStepEnum.ClinicInfo:
+            return !!data.clinic;
+          case OnboardingStepEnum.Subscription:
+            return !!data.subscription;
+          case OnboardingStepEnum.Payment:
+            return !!data.payment;
+          case OnboardingStepEnum.Complete:
+            return true;
+          default:
+            return false;
+        }
+      },
+
+      getCurrentStepData: () => {
+        const { currentStep, data } = get();
+        
+        switch (currentStep) {
+          case OnboardingStepEnum.ClinicInfo:
+            return data.clinic;
+          case OnboardingStepEnum.Subscription:
+            return data.subscription;
+          case OnboardingStepEnum.Payment:
+            return data.payment;
+          default:
+            return null;
+        }
+      },
+
+      isStepComplete: (step: OnboardingStep) => {
+        const { data } = get();
+        const userState: UserOnboardingState = {
+          hasClinic: !!data.clinic,
+          hasSubscription: !!data.subscription,
+          hasPayment: !!data.payment,
+          ...(data.clinic && { clinicData: data.clinic }),
+          ...(data.subscription && { subscriptionData: data.subscription }),
+          ...(data.payment && { paymentData: data.payment }),
+        };
+        return isStepComplete(step, userState);
+      },
+
+      validateCurrentState: (): UserOnboardingState => {
+        const { data } = get();
+        return {
+          hasClinic: !!data.clinic,
+          hasSubscription: !!data.subscription,
+          hasPayment: !!data.payment,
+          ...(data.clinic && { clinicData: data.clinic }),
+          ...(data.subscription && { subscriptionData: data.subscription }),
+          ...(data.payment && { paymentData: data.payment }),
+        };
+      },
+
+      getProgressPercentage: (): number => {
+        const userState = get().validateCurrentState();
+        return getOnboardingProgress(userState);
+      },
+
+      canSkipToStep: (step: OnboardingStep): boolean => {
+        const userState = get().validateCurrentState();
+        return canSkipToStep(step, userState);
+      },
     }),
     {
       name: 'onboarding-storage',
@@ -267,6 +365,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
         currentStep: state.currentStep,
         data: state.data,
         isComplete: state.isComplete,
+        justCompletedSubscription: state.justCompletedSubscription,
       }),
     }
   )

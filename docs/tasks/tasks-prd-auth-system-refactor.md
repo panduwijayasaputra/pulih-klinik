@@ -100,23 +100,23 @@ Based on PRD: `prd-auth-system-refactor.md`
     - Add proper error handling and validation
     - Implement consistent response format across all auth endpoints
 
-- [ ] 4.0 Create Resumable Onboarding Flow
-  - [ ] 4.1 Refactor onboarding store
+- [x] 4.0 Create Resumable Onboarding Flow
+  - [x] 4.1 Refactor onboarding store
     - Simplify `frontend/src/store/onboarding.ts` to focus on essential data only
     - Implement step persistence with localStorage
     - Add resume functionality that checks current user state
     - Remove complex state management, keep only necessary data
-  - [ ] 4.2 Update onboarding flow component
+  - [x] 4.2 Update onboarding flow component
     - Refactor `frontend/src/components/onboarding/OnboardingFlow.tsx` for resumable flow
     - Implement step determination logic: clinic form → subscription → payment → thank you
     - Add automatic redirect to `/portal` if user has complete clinic and subscription data
     - Implement step validation and error handling
-  - [ ] 4.3 Create onboarding step components
+  - [x] 4.3 Create onboarding step components
     - Update clinic form component with proper validation and error handling
     - Update subscription selector with clear pricing and feature information
     - Update payment page with secure payment processing
     - Create thank you page with 5-second redirect timer to `/portal`
-  - [ ] 4.4 Implement onboarding state validation
+  - [x] 4.4 Implement onboarding state validation
     - Add logic to check if user has clinic data (show clinic form if missing)
     - Add logic to check if user has subscription (show subscription selector if missing)
     - Implement automatic step progression based on user state

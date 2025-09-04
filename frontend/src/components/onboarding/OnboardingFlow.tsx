@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useAuth } from '@/hooks/useAuth';
 import { OnboardingClinicForm } from './OnboardingClinicForm';
 import { OnboardingSubscriptionForm } from './OnboardingSubscriptionForm';
 import { OnboardingPaymentForm } from './OnboardingPaymentForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { useRouter } from 'next/navigation';
 
 const stepTitles = {
   [OnboardingStepEnum.ClinicInfo]: 'Informasi Klinik',
@@ -26,7 +27,16 @@ const stepDescriptions = {
 
 export const OnboardingFlow: React.FC = () => {
   const router = useRouter();
-  const { userHasClinic, needsOnboarding, serverCurrentStep, isLoaded } = useOnboarding();
+  const { user, isAuthenticated } = useAuth();
+  const { 
+    needsOnboarding, 
+    userHasClinic, 
+    hasActiveSubscription, 
+    isLoaded,
+    shouldRedirectToPortal,
+    getCurrentStep 
+  } = useOnboarding();
+  
   const { 
     currentStep, 
     setStep,
@@ -36,76 +46,100 @@ export const OnboardingFlow: React.FC = () => {
     isLoading,
     completeOnboarding,
     clearJustCompletedSubscription,
+    justCompletedSubscription,
   } = useOnboardingStore();
 
-  // Handle step synchronization with server status
+  // Redirect to portal if user has completed onboarding
   useEffect(() => {
-    if (!isLoaded) return;
+    if (isLoaded && shouldRedirectToPortal) {
+      router.push('/portal');
+    }
+  }, [isLoaded, shouldRedirectToPortal, router]);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (isLoaded && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isLoaded, isAuthenticated, router]);
 
-    // Sync current step with server status if provided
-    if (serverCurrentStep) {
-      const stepMap = {
-        'clinic_info': OnboardingStepEnum.ClinicInfo,
-        'subscription': OnboardingStepEnum.Subscription,
-        'payment': OnboardingStepEnum.Payment,
-        'complete': OnboardingStepEnum.Complete,
-      };
-      const targetStep = stepMap[serverCurrentStep as keyof typeof stepMap];
-      if (targetStep && targetStep !== currentStep) {
-        setStep(targetStep);
+  // Sync current step with user state
+  useEffect(() => {
+    if (isLoaded && needsOnboarding) {
+      const serverStep = getCurrentStep();
+      if (serverStep !== currentStep) {
+        setStep(serverStep);
       }
     }
-  }, [isLoaded, needsOnboarding, userHasClinic, serverCurrentStep, currentStep, setStep]);
+  }, [isLoaded, needsOnboarding, getCurrentStep, currentStep, setStep]);
 
-  // Show loading while checking status
+  // Handle complete onboarding redirect
+  useEffect(() => {
+    if (justCompletedSubscription) {
+      const timer = setTimeout(() => {
+        completeOnboarding();
+        clearJustCompletedSubscription();
+        router.push('/portal');
+      }, 5000); // 5 second delay
+
+      return () => clearTimeout(timer);
+    }
+    
+    return undefined;
+  }, [justCompletedSubscription, completeOnboarding, clearJustCompletedSubscription, router]);
+
+  // Show loading state
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Memeriksa status onboarding...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Memuat...</p>
         </div>
       </div>
     );
   }
 
-  const stepOrder = [
-    OnboardingStepEnum.ClinicInfo,
-    OnboardingStepEnum.Subscription,
-    OnboardingStepEnum.Payment,
-    OnboardingStepEnum.Complete,
-  ];
+  // Show redirect message if user should be redirected
+  if (shouldRedirectToPortal) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Mengarahkan ke portal...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const getStepNumber = () => {
-    return stepOrder.indexOf(currentStep) + 1;
-  };
+  // Show not authenticated message
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-muted-foreground">Anda perlu masuk terlebih dahulu</p>
+          <Button 
+            onClick={() => router.push('/login')}
+            className="mt-4"
+          >
+            Masuk
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  const canGoBack = currentStep !== OnboardingStepEnum.ClinicInfo && 
-                    currentStep !== OnboardingStepEnum.Subscription &&
-                    currentStep !== OnboardingStepEnum.Complete;
-
-  const handleBack = () => {
-    clearError();
-    prevStep();
-  };
-
-  const handleGoToPortal = async () => {
-    try {
-      // Complete onboarding first to notify server
-      await completeOnboarding();
-      // Clear the just completed flag
-      clearJustCompletedSubscription();
-      // Navigate to portal after completion
-      router.push('/portal');
-    } catch (error) {
-      // Clear the just completed flag
-      clearJustCompletedSubscription();
-      // Navigate anyway
-      router.push('/portal');
-    }
-  };
-
+  // If user doesn't need onboarding, redirect to portal
+  if (!needsOnboarding) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Mengarahkan ke portal...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -117,112 +151,120 @@ export const OnboardingFlow: React.FC = () => {
         return <OnboardingPaymentForm />;
       case OnboardingStepEnum.Complete:
         return (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckIcon className="w-8 h-8 text-green-600" />
+          <div className="max-w-md mx-auto text-center">
+            <div className="mb-8">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <CheckIcon className="h-8 w-8 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Setup Berhasil!
+              </h2>
+              <p className="text-gray-600">
+                Klinik Anda telah berhasil dikonfigurasi dan siap digunakan.
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Setup Klinik Selesai!</h2>
-            <p className="text-gray-600 mb-6">
-              Klinik Anda telah berhasil dikonfigurasi. Sekarang Anda dapat mulai menggunakan Smart Therapy untuk mengelola sesi hipnoterapi.
-            </p>
-            <div className="space-y-3">
-              <Button
-                onClick={handleGoToPortal}
-                className="w-full"
-              >
-                Mulai Menggunakan Smart Therapy
-              </Button>
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+              <h3 className="text-lg font-semibold text-green-800 mb-2">
+                Selamat!
+              </h3>
+              <p className="text-green-700 text-sm">
+                Anda akan diarahkan ke portal dalam beberapa detik...
+              </p>
             </div>
           </div>
         );
       default:
-        return null;
+        return <OnboardingClinicForm />;
     }
   };
 
+  const canGoBack = currentStep !== OnboardingStepEnum.ClinicInfo;
+  const showBackButton = canGoBack && currentStep !== OnboardingStepEnum.Complete;
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Setup Klinik
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {stepTitles[currentStep]}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {stepDescriptions[currentStep]}
           </p>
         </div>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
-        {/* Progress Steps */}
-        {currentStep !== OnboardingStepEnum.Complete && (
-          <div className="mb-8">
-            <div className="flex items-center justify-center">
-              {stepOrder.slice(0, -1).map((step, index) => (
+        {/* Progress Indicator */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-4">
+            {Object.values(OnboardingStepEnum).map((step, index) => {
+              const isActive = step === currentStep;
+              const isCompleted = index < Object.values(OnboardingStepEnum).indexOf(currentStep);
+              
+              return (
                 <div key={step} className="flex items-center">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      stepOrder.indexOf(currentStep) >= index
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-600'
+                      isCompleted
+                        ? 'bg-green-500 text-white'
+                        : isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    {index + 1}
+                    {isCompleted ? (
+                      <CheckIcon className="w-4 h-4" />
+                    ) : (
+                      index + 1
+                    )}
                   </div>
-                  {index < stepOrder.length - 2 && (
+                  {index < Object.values(OnboardingStepEnum).length - 1 && (
                     <div
                       className={`w-16 h-1 mx-2 ${
-                        stepOrder.indexOf(currentStep) > index
-                          ? 'bg-blue-600'
-                          : 'bg-gray-200'
+                        isCompleted ? 'bg-green-500' : 'bg-muted'
                       }`}
                     />
                   )}
                 </div>
-              ))}
-            </div>
-            <div className="mt-2 text-center">
-              <span className="text-sm text-gray-600">
-                Langkah {getStepNumber()} dari {stepOrder.length - 1}
-              </span>
-            </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Back Button */}
+        {showBackButton && (
+          <div className="mb-6">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={isLoading}
+              className="flex items-center"
+            >
+              <ArrowLeftIcon className="w-4 h-4 mr-2" />
+              Kembali
+            </Button>
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearError}
+              className="mt-2"
+            >
+              Tutup
+            </Button>
           </div>
         )}
 
         {/* Main Content */}
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
-
+        <div className="bg-card rounded-lg border p-6">
           {renderCurrentStep()}
-
-          {/* Back Button */}
-          {canGoBack && (
-            <div className="mt-6">
-              <Button
-                onClick={handleBack}
-                variant="outline"
-                className="w-full"
-                disabled={isLoading}
-              >
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Kembali
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
-            Butuh bantuan?{' '}
-            <a href="/support" className="font-medium text-blue-600 hover:text-blue-500">
-              Hubungi Tim Support
-            </a>
-          </p>
         </div>
       </div>
     </div>

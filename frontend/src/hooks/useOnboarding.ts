@@ -1,66 +1,77 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useOnboardingStore } from '@/store/onboarding';
-import { httpClient } from '@/lib/http-client';
+import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
+import { validateOnboardingState, UserOnboardingState } from '@/lib/onboarding-validation';
 
 export const useOnboarding = () => {
-  const { user, isAuthenticated } = useAuth();
-  const { isComplete } = useOnboardingStore();
-  const [serverStatus, setServerStatus] = useState<{ 
-    needsOnboarding?: boolean; 
-    hasClinic?: boolean; 
-    hasActiveSubscription?: boolean;
-    currentStep?: string;
-    loaded?: boolean 
-  }>({ loaded: false });
+  const { user, clinic, isAuthenticated } = useAuth();
+  const { currentStep, isComplete } = useOnboardingStore();
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Fetch onboarding status from server when user is authenticated or user data changes
+  // Determine onboarding status based on user and clinic data
   useEffect(() => {
     if (isAuthenticated && user) {
-      const checkServerStatus = async () => {
-        try {
-          const response = await httpClient.get('/onboarding/status');
-          if (response.data?.success) {
-            const statusData = {
-              needsOnboarding: response.data.data?.needsOnboarding,
-              hasClinic: response.data.data?.hasClinic,
-              hasActiveSubscription: response.data.data?.hasActiveSubscription,
-              currentStep: response.data.data?.currentStep,
-              loaded: true,
-            };
-            setServerStatus(statusData);
-          } else {
-            setServerStatus({ loaded: true });
-          }
-        } catch (error) {
-          setServerStatus({ loaded: true });
-        }
-      };
-      checkServerStatus();
+      setIsLoaded(true);
     } else {
-      setServerStatus({ loaded: true });
+      setIsLoaded(false);
     }
-  }, [isAuthenticated, user, user?.clinicId, user?.subscriptionTier]);
+  }, [isAuthenticated, user]);
 
-  // Client-side fallback check
-  const clientHasClinic = !!(user?.clinicId || user?.clinicName);
-  const clientNeedsOnboarding = isAuthenticated && user && (!user.clinicId && !user.clinicName) && !isComplete;
+  // Check if user needs onboarding
+  const needsOnboarding = isAuthenticated && user && !isComplete && (
+    !clinic || !clinic.subscription
+  );
 
-  // Use server status if loaded, otherwise use client-side check
-  const userHasClinic = serverStatus.loaded 
-    ? (serverStatus.hasClinic ?? clientHasClinic)
-    : clientHasClinic;
-    
-  const needsOnboarding = serverStatus.loaded
-    ? (serverStatus.needsOnboarding ?? clientNeedsOnboarding)
-    : clientNeedsOnboarding;
-  
+  // Check if user has clinic data
+  const userHasClinic = !!clinic;
+
+  // Check if user has active subscription
+  const hasActiveSubscription = !!clinic?.subscription;
+
+  // Create user state for validation
+  const getUserState = (): UserOnboardingState => {
+    return {
+      hasClinic: userHasClinic,
+      hasSubscription: hasActiveSubscription,
+      hasPayment: hasActiveSubscription, // For demo, payment is same as subscription
+      ...(clinic && {
+        clinicData: {
+          name: clinic.name,
+          address: '',
+          phone: '',
+          email: '',
+          website: '',
+          description: '',
+          workingHours: '',
+          province: '',
+        }
+      }),
+    };
+  };
+
+  // Determine current step based on user state using validation
+  const getCurrentStep = (): OnboardingStepEnum => {
+    const userState = getUserState();
+    const validation = validateOnboardingState(userState);
+    return validation.currentStep;
+  };
+
+  // Check if user should be redirected to portal
+  const shouldRedirectToPortal = isAuthenticated && user && userHasClinic && hasActiveSubscription;
+
   return {
-    needsOnboarding: !!needsOnboarding,
-    hasCompletedOnboarding: isComplete,
+    // Status flags
+    needsOnboarding,
     userHasClinic,
-    hasActiveSubscription: serverStatus.hasActiveSubscription,
-    serverCurrentStep: serverStatus.currentStep,
-    isLoaded: serverStatus.loaded,
+    hasActiveSubscription,
+    isLoaded,
+    shouldRedirectToPortal,
+    
+    // Current state
+    currentStep: getCurrentStep(),
+    isComplete,
+    
+    // Helper functions
+    getCurrentStep,
   };
 };
