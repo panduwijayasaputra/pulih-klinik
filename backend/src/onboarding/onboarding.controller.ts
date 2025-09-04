@@ -97,7 +97,9 @@ export class OnboardingController {
   async submitClinicData(
     @CurrentUser() user: AuthUser,
     @Body() clinicData: ClinicOnboardingDto,
-  ): Promise<CustomApiResponse<{ success: boolean; message: string; user?: any }>> {
+  ): Promise<
+    CustomApiResponse<{ success: boolean; message: string; user?: any }>
+  > {
     const result = await this.onboardingService.submitClinicData(
       user.id,
       clinicData,
@@ -178,7 +180,9 @@ export class OnboardingController {
   async submitPayment(
     @CurrentUser() user: AuthUser,
     @Body() paymentData: PaymentOnboardingDto,
-  ): Promise<CustomApiResponse<{ success: boolean; message: string }>> {
+  ): Promise<
+    CustomApiResponse<{ success: boolean; message: string; user?: any }>
+  > {
     const result = await this.onboardingService.submitPayment(
       user.id,
       paymentData,

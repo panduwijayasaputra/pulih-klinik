@@ -15,7 +15,8 @@ export class DemoSeeder extends Seeder {
     const betaSubscription = em.create(SubscriptionTier, {
       name: 'Beta',
       code: 'beta',
-      description: 'Paket dasar untuk klinik yang baru memulai dengan fitur terbaik',
+      description:
+        'Paket dasar untuk klinik yang baru memulai dengan fitur terbaik',
       monthlyPrice: 50000, // 50k IDR
       yearlyPrice: 550000, // 550k IDR
       therapistLimit: 1,
@@ -30,7 +31,8 @@ export class DemoSeeder extends Seeder {
     const alphaSubscription = em.create(SubscriptionTier, {
       name: 'Alpha',
       code: 'alpha',
-      description: 'Paket terbaik untuk klinik yang ingin memiliki fitur lengkap',
+      description:
+        'Paket terbaik untuk klinik yang ingin memiliki fitur lengkap',
       monthlyPrice: 100000, // 100k IDR
       yearlyPrice: 1000000, // 1M IDR
       therapistLimit: 3,
@@ -57,7 +59,11 @@ export class DemoSeeder extends Seeder {
       updatedAt: new Date(),
     });
 
-    await em.persistAndFlush([betaSubscription, alphaSubscription, thetaSubscription]);
+    await em.persistAndFlush([
+      betaSubscription,
+      alphaSubscription,
+      thetaSubscription,
+    ]);
 
     // Create clinic for kliniksehat users
     const klinikSehat = em.create(Clinic, {

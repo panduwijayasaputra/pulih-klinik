@@ -5,10 +5,16 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
-import { User, Clinic, UserProfile, SubscriptionTier } from '../database/entities';
+import {
+  User,
+  Clinic,
+  UserProfile,
+  SubscriptionTier,
+} from '../database/entities';
 import {
   ClinicOnboardingDto,
   SubscriptionOnboardingDto,
+  BillingCycleEnum,
   PaymentOnboardingDto,
 } from './dto';
 
@@ -56,7 +62,8 @@ export class OnboardingService {
     const hasActiveSubscription = !!user.clinic?.subscriptionTier;
 
     let needsOnboarding = false;
-    let currentStep: 'clinic_info' | 'subscription' | 'payment' | 'complete' = 'complete';
+    let currentStep: 'clinic_info' | 'subscription' | 'payment' | 'complete' =
+      'complete';
 
     if (!hasClinic) {
       needsOnboarding = true;
@@ -156,10 +163,7 @@ export class OnboardingService {
         email: updatedUser.email,
         name: updatedUser.profile?.name || updatedUser.email,
         isActive: updatedUser.isActive,
-        roles: updatedUser.roles.map((role) => ({
-          id: role.id,
-          role: role.role,
-        })),
+        roles: updatedUser.roles.map((role) => role.role),
         clinicId: updatedUser.clinic?.id,
         clinicName: updatedUser.clinic?.name,
       },
@@ -194,14 +198,14 @@ export class OnboardingService {
       throw new BadRequestException('Invalid subscription tier');
     }
 
-    const validCycles = ['monthly', 'yearly'];
+    const validCycles = [BillingCycleEnum.Monthly, BillingCycleEnum.Yearly];
     if (!validCycles.includes(subscriptionData.billingCycle)) {
       throw new BadRequestException('Invalid billing cycle');
     }
 
     // Validate amount based on tier and cycle
     const expectedAmount =
-      subscriptionData.billingCycle === 'monthly'
+      subscriptionData.billingCycle === BillingCycleEnum.Monthly
         ? subscriptionTier.monthlyPrice
         : subscriptionTier.yearlyPrice;
 
@@ -217,7 +221,7 @@ export class OnboardingService {
     // Set subscription expiry based on billing cycle
     const now = new Date();
     const expiryDate = new Date(now);
-    if (subscriptionData.billingCycle === 'monthly') {
+    if (subscriptionData.billingCycle === BillingCycleEnum.Monthly) {
       expiryDate.setMonth(expiryDate.getMonth() + 1);
     } else {
       expiryDate.setFullYear(expiryDate.getFullYear() + 1);
@@ -245,10 +249,7 @@ export class OnboardingService {
             email: updatedUser.email,
             name: updatedUser.profile?.name || updatedUser.email,
             isActive: updatedUser.isActive,
-            roles: updatedUser.roles.map((role) => ({
-              id: role.id,
-              role: role.role,
-            })),
+            roles: updatedUser.roles.map((role) => role.role),
             clinicId: updatedUser.clinic?.id,
             clinicName: updatedUser.clinic?.name,
             subscriptionTier: updatedUser.clinic?.subscriptionTier?.name,
