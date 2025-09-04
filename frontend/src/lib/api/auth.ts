@@ -92,38 +92,14 @@ export class AuthAPI {
         clinicName: data.data.clinicName,
       };
 
-      
-      
       return {
         success: true,
         data: mappedUser,
         message: data.message
       };
     } catch (error) {
-      // If API call fails, try to get user from localStorage
-      if (typeof window !== 'undefined') {
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          try {
-            const parsed = JSON.parse(authStorage);
-            if (parsed.state?.user && parsed.state?.isAuthenticated) {
-
-              return {
-                success: true,
-                data: parsed.state.user,
-                message: 'User found in local storage'
-              };
-            }
-          } catch (parseError) {
-            console.warn('Failed to parse auth storage:', parseError);
-          }
-        }
-      }
-      
-      return {
-        success: false,
-        message: 'User not found'
-      };
+      // Don't use localStorage fallback - let auth hooks handle the error
+      throw error;
     }
   }
 

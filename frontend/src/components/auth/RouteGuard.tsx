@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
 import { getDefaultRouteForUser } from '@/lib/route-protection';
+import { UserRoleEnum } from '@/types/enums';
 
 interface RouteGuardProps {
   children: React.ReactNode;
@@ -17,7 +18,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
 }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { needsOnboarding, isLoaded, hasActiveSubscription } = useOnboarding();
-  const { currentStep } = useOnboardingStore();
+  const { currentStep, justCompletedSubscription } = useOnboardingStore();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -40,6 +41,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
       // Determine user's clinic and subscription status from auth store directly
       const userHasClinic = !!(user?.clinicId || user?.clinicName);
       const userHasSubscription = !!user?.subscriptionTier || !!hasActiveSubscription;
+      const isSystemAdmin = user?.roles?.includes(UserRoleEnum.Administrator);
       
       const isOnboardingPage = pathname === '/onboarding';
       const isPortalRoute = pathname.startsWith('/portal');
@@ -47,6 +49,11 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
 
       // Handle portal access
       if (isPortalRoute) {
+        // System admins can access portal without clinic/subscription requirements
+        if (isSystemAdmin) {
+          return;
+        }
+        
         if (!userHasClinic) {
           // Rule 1: No clinic → redirect to onboarding clinic form
           router.push('/onboarding');
@@ -62,13 +69,24 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
 
       // Handle onboarding page access
       if (isOnboardingPage) {
-        if (userHasClinic && userHasSubscription && currentStep !== OnboardingStepEnum.Complete) {
-          // Rule 4: Has both clinic and subscription → block onboarding, redirect to portal
-          // BUT allow Complete step to be shown as thank you page
+        // System admins can always access onboarding for testing/management
+        if (isSystemAdmin) {
+          return;
+        }
+        
+        // If user has both clinic and subscription, they shouldn't access onboarding
+        if (userHasClinic && userHasSubscription) {
+          // Exception: Allow Complete step only if user just submitted subscription
+          if (currentStep === OnboardingStepEnum.Complete && justCompletedSubscription) {
+            return; // Allow thank you page
+          }
+          
+          // Otherwise, redirect completed users to portal
           router.push('/portal');
           return;
         }
-        // Allow onboarding access if user needs it or is on Complete step
+        
+        // Allow onboarding access if user needs it
         return;
       }
     }

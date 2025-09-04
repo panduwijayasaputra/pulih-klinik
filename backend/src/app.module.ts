@@ -14,6 +14,7 @@ import { ClientsModule } from './clients/clients.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { RegistrationModule } from './registration/registration.module';
 import { UploadModule } from './upload/upload.module';
 import {
   ResponseInterceptor,
@@ -42,6 +43,7 @@ import {
     SessionsModule,
     ConsultationsModule,
     OnboardingModule,
+    RegistrationModule,
     UploadModule,
   ],
   controllers: [AppController],

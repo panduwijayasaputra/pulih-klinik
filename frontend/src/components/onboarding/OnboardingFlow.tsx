@@ -35,6 +35,7 @@ export const OnboardingFlow: React.FC = () => {
     clearError,
     isLoading,
     completeOnboarding,
+    clearJustCompletedSubscription,
   } = useOnboardingStore();
 
   // Handle step synchronization with server status
@@ -93,9 +94,13 @@ export const OnboardingFlow: React.FC = () => {
     try {
       // Complete onboarding first to notify server
       await completeOnboarding();
+      // Clear the just completed flag
+      clearJustCompletedSubscription();
       // Navigate to portal after completion
       router.push('/portal');
     } catch (error) {
+      // Clear the just completed flag
+      clearJustCompletedSubscription();
       // Navigate anyway
       router.push('/portal');
     }

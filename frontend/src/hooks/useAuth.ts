@@ -78,6 +78,31 @@ export const useAuth = () => {
     setError
   ]);
 
+  // Auto-validate auth state on page focus/refresh
+  useEffect(() => {
+    const validateOnFocus = () => {
+      if (isAuthenticated && token) {
+        checkAuth();
+      }
+    };
+
+    // Check auth state when page becomes visible
+    window.addEventListener('focus', validateOnFocus);
+    window.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        validateOnFocus();
+      }
+    });
+
+    // Initial check on mount
+    validateOnFocus();
+
+    return () => {
+      window.removeEventListener('focus', validateOnFocus);
+      window.removeEventListener('visibilitychange', validateOnFocus);
+    };
+  }, [isAuthenticated, token]);
+
   // Wrapper functions that use React Query mutations
   const login = async (credentials: LoginApiData): Promise<boolean> => {
     try {
@@ -119,7 +144,39 @@ export const useAuth = () => {
   // Check auth status by refetching current user
   const checkAuth = async (): Promise<void> => {
     if (isAuthenticated && token) {
-      await currentUserQuery.refetch();
+      try {
+        const result = await currentUserQuery.refetch();
+        // If server returns user data, compare with stored data
+        if (result.data?.data?.user) {
+          const serverUser = result.data.data.user;
+          const storedUser = user;
+          
+          // Check if critical user data has changed (clinic removed, etc.)
+          const clinicChanged = storedUser?.clinicId && !serverUser.clinicId;
+          const subscriptionChanged = storedUser?.subscriptionTier && !serverUser.subscriptionTier;
+          
+          if (clinicChanged || subscriptionChanged) {
+            // Critical data removed from server, logout user
+            storeLogout();
+            return;
+          }
+          
+          // Update store with fresh server data
+          storeLogin({
+            user: serverUser,
+            token: token,
+            refreshToken: refreshToken || undefined,
+          });
+        } else if (result.data?.success === false) {
+          // Server says user is invalid, logout
+          storeLogout();
+        }
+      } catch (error: any) {
+        // If auth fails, logout user
+        if (error.response?.status === 401 || error.response?.status === 404) {
+          storeLogout();
+        }
+      }
     }
   };
 

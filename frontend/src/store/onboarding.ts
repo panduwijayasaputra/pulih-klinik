@@ -29,6 +29,7 @@ interface OnboardingState {
   isLoading: boolean;
   error: string | null;
   isComplete: boolean;
+  justCompletedSubscription: boolean;
 }
 
 interface OnboardingStore extends OnboardingState {
@@ -44,6 +45,7 @@ interface OnboardingStore extends OnboardingState {
   completeOnboarding: () => Promise<void>;
   resetOnboarding: () => void;
   clearError: () => void;
+  clearJustCompletedSubscription: () => void;
 }
 
 const stepOrder: OnboardingStep[] = [
@@ -61,6 +63,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
       isLoading: false,
       error: null,
       isComplete: false,
+      justCompletedSubscription: false,
 
       setStep: (step: OnboardingStep) => {
         set({ currentStep: step });
@@ -176,6 +179,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
           set({
             isLoading: false,
             currentStep: OnboardingStepEnum.Complete,
+            justCompletedSubscription: true,
           });
 
         } catch (error: any) {
@@ -254,6 +258,8 @@ export const useOnboardingStore = create<OnboardingStore>()(
       },
 
       clearError: () => set({ error: null }),
+
+      clearJustCompletedSubscription: () => set({ justCompletedSubscription: false }),
     }),
     {
       name: 'onboarding-storage',
