@@ -3,6 +3,8 @@ import { useAuthStore } from '@/store/auth';
 import { AuthAPI } from '@/lib/api/auth';
 import { LoginApiData, User, Clinic } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
+import { withRetry, classifyNetworkError, createUserFriendlyErrorMessage, setupNetworkStatusListener } from '@/lib/network-error-handler';
+import { createAuthDataSyncHandler } from '@/lib/data-sync';
 
 // Helper function to determine redirect path based on user role and state
 const getRedirectPath = (user: User, clinic: Clinic | undefined): string | null => {
@@ -65,6 +67,163 @@ export const useAuth = () => {
   const [isSendingForgotPassword, setIsSendingForgotPassword] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isRefreshingToken, setIsRefreshingToken] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Refresh auth token function with enhanced error handling
+  const refreshAuthToken = useCallback(async (): Promise<boolean> => {
+    try {
+      setIsRefreshingToken(true);
+      setError(null);
+      
+      console.log('🔄 Attempting to refresh auth token...');
+      const response = await AuthAPI.refreshToken();
+      
+      if (response.success && response.data) {
+        updateTokens(response.data.accessToken, response.data.refreshToken);
+        console.log('✅ Token refresh successful');
+        return true;
+      } else {
+        console.error('❌ Token refresh failed: Invalid response');
+        setError('Failed to refresh token');
+        return false;
+      }
+    } catch (error: any) {
+      console.error('❌ Token refresh failed:', error);
+      
+      // Handle different types of refresh token errors
+      if (error.response?.status === 401) {
+        // Refresh token is invalid or expired - logout user
+        console.warn('🚨 Refresh token invalid, logging out');
+        storeLogout();
+        setError('Session expired. Please log in again.');
+      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+        // Network error - don't logout, just show error
+        setError('Network error: Unable to refresh token');
+      } else {
+        // Other server errors
+        setError('Failed to refresh token');
+      }
+      return false;
+    } finally {
+      setIsRefreshingToken(false);
+    }
+  }, [updateTokens, setError, storeLogout]);
+
+  // Check auth status by fetching current user with enhanced retry logic and data sync
+  const checkAuth = useCallback(async (): Promise<void> => {
+    if (!isAuthenticated || !accessToken) return;
+
+    try {
+      setLoading(true);
+      
+      // Use retry logic for the API call
+      const response = await withRetry(
+        () => AuthAPI.getCurrentUser(),
+        { maxRetries: 3, baseDelay: 1000, maxDelay: 5000, backoffMultiplier: 2 },
+        (attempt, error) => {
+          console.log(`🔄 Auth validation retry ${attempt}: ${error.message}`);
+        }
+      );
+      
+      if (response.success && response.data) {
+        const serverUser = response.data;
+        const storedUser = user;
+        const storedClinic = clinic;
+        
+        // Create data sync handler
+        const syncHandler = createAuthDataSyncHandler(
+          (changes) => {
+            // Critical data change - logout user
+            console.warn('🚨 Critical data change detected, logging out:', changes);
+            storeLogout();
+          },
+          (changes) => {
+            // Regular data change - log for debugging
+            console.log('📊 User data updated:', changes);
+          }
+        );
+        
+        // Sync data and handle changes
+        const syncResult = syncHandler(storedUser, serverUser, storedClinic, null);
+        
+        if (!syncResult.success) {
+          console.error('❌ Data sync failed:', syncResult.error);
+          setError(syncResult.error || 'Failed to sync user data');
+          return;
+        }
+        
+        // Update user data
+        setUser(serverUser);
+        
+        // Update clinic data if available
+        if (serverUser.clinicId) {
+          const clinicData: Clinic = {
+            id: serverUser.clinicId,
+            name: serverUser.clinicName || '',
+            isActive: true,
+            ...(serverUser.subscriptionTier && { subscription: serverUser.subscriptionTier }),
+          };
+          setClinic(clinicData);
+        } else {
+          setClinic(null);
+        }
+        
+        setLastValidated(new Date());
+        console.log('✅ Auth validation and data sync successful');
+      } else {
+        // Server says user is invalid, logout
+        console.warn('🚨 Server says user is invalid, logging out');
+        storeLogout();
+      }
+    } catch (error: any) {
+      console.error('❌ Auth validation failed:', error);
+      
+      const networkError = classifyNetworkError(error);
+      const userMessage = createUserFriendlyErrorMessage(networkError);
+      
+      // Handle different types of errors
+      if (error.response?.status === 401 || error.response?.status === 404) {
+        // Unauthorized or not found - user is invalid
+        console.warn('🚨 User unauthorized, logging out');
+        storeLogout();
+      } else {
+        // Other errors - show user-friendly message
+        setError(userMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    isAuthenticated, 
+    accessToken, 
+    user, 
+    clinic,
+    storeLogout, 
+    setUser, 
+    setClinic, 
+    setLastValidated, 
+    setLoading, 
+    setError
+  ]);
+
+  // Network status monitoring
+  useEffect(() => {
+    const cleanup = setupNetworkStatusListener(
+      () => {
+        setIsOnline(true);
+        // Re-validate auth when coming back online
+        if (isAuthenticated && accessToken && isDataStale()) {
+          checkAuth();
+        }
+      },
+      () => {
+        setIsOnline(false);
+        setError('Tidak ada koneksi internet. Beberapa fitur mungkin tidak tersedia.');
+      }
+    );
+
+    return cleanup;
+  }, [isAuthenticated, accessToken, isDataStale, checkAuth, setError]);
 
   // Auto-validate auth state on page focus/refresh
   useEffect(() => {
@@ -89,7 +248,67 @@ export const useAuth = () => {
       window.removeEventListener('focus', validateOnFocus);
       window.removeEventListener('visibilitychange', validateOnFocus);
     };
-  }, [isAuthenticated, accessToken, isDataStale]);
+  }, [isAuthenticated, accessToken, isDataStale, checkAuth]);
+
+  // Auto-refresh token when it's about to expire
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) return;
+
+    // Parse JWT token to get expiration time
+    const parseJWT = (token: string) => {
+      try {
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+          console.error('Invalid JWT token format');
+          return null;
+        }
+        
+        const base64Url = parts[1];
+        if (!base64Url) {
+          console.error('JWT token missing payload');
+          return null;
+        }
+        
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch (error) {
+        console.error('Failed to parse JWT token:', error);
+        return null;
+      }
+    };
+
+    const tokenData = parseJWT(accessToken);
+    if (!tokenData || !tokenData.exp) return;
+
+    const expirationTime = tokenData.exp * 1000; // Convert to milliseconds
+    const currentTime = Date.now();
+    const timeUntilExpiry = expirationTime - currentTime;
+    
+    // Refresh token 5 minutes before expiry
+    const refreshTime = Math.max(timeUntilExpiry - 5 * 60 * 1000, 0);
+    
+    if (refreshTime > 0) {
+      console.log(`🕐 Token will be refreshed in ${Math.round(refreshTime / 1000 / 60)} minutes`);
+      
+      const refreshTimer = setTimeout(() => {
+        console.log('🔄 Auto-refreshing token before expiry...');
+        refreshAuthToken();
+      }, refreshTime);
+
+      return () => clearTimeout(refreshTimer);
+    } else {
+      // Token is already expired or about to expire, refresh immediately
+      console.log('🚨 Token expired or about to expire, refreshing immediately...');
+      refreshAuthToken();
+      return undefined;
+    }
+  }, [isAuthenticated, accessToken, refreshAuthToken]);
 
   // Login function with direct API call
   const login = useCallback(async (credentials: LoginApiData): Promise<boolean> => {
@@ -230,94 +449,6 @@ export const useAuth = () => {
     }
   }, [setError]);
 
-  // Refresh auth token function
-  const refreshAuthToken = useCallback(async (): Promise<boolean> => {
-    try {
-      setIsRefreshingToken(true);
-      setError(null);
-      
-      const response = await AuthAPI.refreshToken();
-      
-      if (response.success && response.data) {
-        updateTokens(response.data.accessToken, response.data.refreshToken);
-        return true;
-      } else {
-        setError('Failed to refresh token');
-        return false;
-      }
-    } catch (error: any) {
-      setError('Failed to refresh token');
-      return false;
-    } finally {
-      setIsRefreshingToken(false);
-    }
-  }, [updateTokens, setError]);
-
-  // Check auth status by fetching current user
-  const checkAuth = useCallback(async (): Promise<void> => {
-    if (!isAuthenticated || !accessToken) return;
-
-    try {
-      setLoading(true);
-      const response = await AuthAPI.getCurrentUser();
-      
-      if (response.success && response.data) {
-        const serverUser = response.data;
-        const storedUser = user;
-        
-        // Check if critical user data has changed (clinic removed, etc.)
-        const clinicChanged = storedUser?.clinicId && !serverUser.clinicId;
-        const subscriptionChanged = storedUser?.subscriptionTier && !serverUser.subscriptionTier;
-        
-        if (clinicChanged || subscriptionChanged) {
-          // Critical data removed from server, logout user
-          storeLogout();
-          return;
-        }
-        
-        // Update user data
-        setUser(serverUser);
-        
-        // Update clinic data if available
-        if (serverUser.clinicId) {
-          const clinicData: Clinic = {
-            id: serverUser.clinicId,
-            name: serverUser.clinicName || '',
-            isActive: true,
-            ...(serverUser.subscriptionTier && { subscription: serverUser.subscriptionTier }),
-          };
-          setClinic(clinicData);
-        } else {
-          setClinic(null);
-        }
-        
-        setLastValidated(new Date());
-      } else {
-        // Server says user is invalid, logout
-        storeLogout();
-      }
-    } catch (error: any) {
-      // If auth fails, logout user
-      if (error.response?.status === 401 || error.response?.status === 404) {
-        storeLogout();
-      } else {
-        setError('Failed to validate auth status');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    isAuthenticated, 
-    accessToken, 
-    user, 
-    storeLogout, 
-    setUser, 
-    setClinic, 
-    setLastValidated, 
-    setLoading, 
-    setError
-  ]);
-
   // Helper functions using store methods
   const hasRole = useCallback((role: string): boolean => {
     return storeHasRole(role);
@@ -355,6 +486,7 @@ export const useAuth = () => {
     isAuthenticated,
     accessToken,
     refreshToken,
+    isOnline,
     
     // Auth actions
     login,
