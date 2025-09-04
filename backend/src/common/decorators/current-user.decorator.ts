@@ -52,7 +52,7 @@ export const CurrentUserClinicIds = createParamDecorator(
     }
 
     // Administrators can access all clinics, return empty array to indicate no restriction
-    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
+    if (user.roles.some((role) => role === UserRole.ADMINISTRATOR)) {
       return [];
     }
 
@@ -73,7 +73,7 @@ export const HasRole = createParamDecorator(
       return false;
     }
 
-    return user.roles.some((role) => role.role === requiredRole);
+    return user.roles.some((role) => role === requiredRole);
   },
 );
 
@@ -89,7 +89,7 @@ export const IsAdmin = createParamDecorator(
       return false;
     }
 
-    return user.roles.some((role) => role.role === UserRole.ADMINISTRATOR);
+    return user.roles.some((role) => role === UserRole.ADMINISTRATOR);
   },
 );
 
@@ -106,7 +106,7 @@ export const CanAccessClinic = createParamDecorator(
     }
 
     // Administrators can access all clinics
-    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
+    if (user.roles.some((role) => role === UserRole.ADMINISTRATOR)) {
       return true;
     }
 

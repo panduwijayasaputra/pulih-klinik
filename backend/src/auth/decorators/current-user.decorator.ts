@@ -40,7 +40,7 @@ export const CurrentUserClinicIds = createParamDecorator(
     }
 
     // Administrators can access all clinics, return empty array to indicate no restriction
-    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
+    if (user.roles.some((role) => role === UserRole.ADMINISTRATOR)) {
       return [];
     }
 

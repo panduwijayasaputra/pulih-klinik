@@ -19,12 +19,10 @@ export interface LoginResult {
     email: string;
     name: string;
     isActive: boolean;
-    roles: Array<{
-      id: string;
-      role: string;
-    }>;
+    roles: string[];
     clinicId?: string;
     clinicName?: string;
+    subscriptionTier?: string;
   };
 }
 
@@ -69,12 +67,10 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      roles: user.roles.map((role) => ({
-        id: role.id,
-        role: role.role,
-      })),
+      roles: user.roles.map((role) => role.role),
       clinicId: user.clinic?.id,
       clinicName: user.clinic?.name,
+      subscriptionTier: user.clinic?.subscriptionTier?.code,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -93,12 +89,10 @@ export class AuthService {
         email: user.email,
         name: user.profile?.name || 'Unknown User',
         isActive: user.isActive,
-        roles: user.roles.map((role) => ({
-          id: role.id,
-          role: role.role,
-        })),
+        roles: user.roles.map((role) => role.role),
         clinicId: user.clinic?.id,
         clinicName: user.clinic?.name,
+        subscriptionTier: user.clinic?.subscriptionTier?.code,
       },
     };
   }
@@ -121,12 +115,10 @@ export class AuthService {
       const newPayload: JwtPayload = {
         sub: user.id,
         email: user.email,
-        roles: user.roles.map((role) => ({
-          id: role.id,
-          role: role.role,
-        })),
+        roles: user.roles.map((role) => role.role),
         clinicId: user.clinic?.id,
         clinicName: user.clinic?.name,
+        subscriptionTier: user.clinic?.subscriptionTier?.code,
       };
 
       const newAccessToken = this.jwtService.sign(newPayload);

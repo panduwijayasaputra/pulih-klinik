@@ -38,7 +38,7 @@ export class RolesGuard implements CanActivate {
     // Check if user has any of the required roles
     const hasRequiredRole = requiredRoles.some((requiredRole) => {
       const userRole = user.roles.find(
-        (role) => role.role === requiredRole.role,
+        (role) => role === requiredRole.role,
       );
 
       if (!userRole) {
@@ -52,7 +52,7 @@ export class RolesGuard implements CanActivate {
         const requestedClinicId = clinicIdFromParams || clinicIdFromQuery;
 
         // Administrator role can access all clinics
-        if (userRole.role === UserRole.ADMINISTRATOR) {
+        if (userRole === UserRole.ADMINISTRATOR) {
           return true;
         }
 

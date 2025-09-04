@@ -2,6 +2,34 @@ import { useEffect, useCallback, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { AuthAPI } from '@/lib/api/auth';
 import { LoginApiData, User, Clinic } from '@/types/auth';
+import { UserRoleEnum } from '@/types/enums';
+
+// Helper function to determine redirect path based on user role and state
+const getRedirectPath = (user: User, clinic: Clinic | undefined): string | null => {
+  // System Admin users → redirect to /portal
+  if (user.roles.includes(UserRoleEnum.Administrator)) {
+    return '/portal';
+  }
+  
+  // Therapist users → redirect to /portal
+  if (user.roles.includes(UserRoleEnum.Therapist)) {
+    return '/portal';
+  }
+  
+  // Clinic Admin users
+  if (user.roles.includes(UserRoleEnum.ClinicAdmin)) {
+    // If user doesn't have clinic data or subscription → redirect to onboarding
+    if (!clinic || !clinic.subscription) {
+      return '/onboarding';
+    }
+    
+    // If user has complete clinic and subscription data → redirect to /portal
+    return '/portal';
+  }
+  
+  // Default fallback
+  return '/portal';
+};
 
 export const useAuth = () => {
   const {
@@ -77,15 +105,24 @@ export const useAuth = () => {
           id: response.user.clinicId,
           name: response.user.clinicName || '',
           isActive: true,
-          subscription: response.user.subscriptionTier,
+          ...(response.user.subscriptionTier && { subscription: response.user.subscriptionTier }),
         } : undefined;
 
         storeLogin({
           user: response.user,
-          clinic: clinicData,
+          ...(clinicData && { clinic: clinicData }),
           accessToken: response.accessToken,
           refreshToken: response.refreshToken,
         });
+        
+        // Smart redirect logic based on user role and state
+        const redirectPath = getRedirectPath(response.user, clinicData);
+        if (redirectPath) {
+          // Use setTimeout to ensure the login state is updated before redirect
+          setTimeout(() => {
+            window.location.href = redirectPath;
+          }, 100);
+        }
         
         return true;
       } else {
@@ -129,10 +166,10 @@ export const useAuth = () => {
       const response = await AuthAPI.changePassword(currentPassword, newPassword, confirmPassword);
       
       if (response.success) {
-        return { success: true, message: response.message };
+        return { success: true, message: response.message || 'Password changed successfully' };
       } else {
         setError(response.message || 'Password change failed');
-        return { success: false, message: response.message };
+        return { success: false, message: response.message || 'Password change failed' };
       }
     } catch (error: any) {
       const errorMessage = error.message || 'Password change failed';
@@ -152,10 +189,10 @@ export const useAuth = () => {
       const response = await AuthAPI.forgotPassword(email);
       
       if (response.success) {
-        return { success: true, message: response.message };
+        return { success: true, message: response.message || 'Reset email sent successfully' };
       } else {
         setError(response.message || 'Failed to send reset email');
-        return { success: false, message: response.message };
+        return { success: false, message: response.message || 'Failed to send reset email' };
       }
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to send reset email';
@@ -179,10 +216,10 @@ export const useAuth = () => {
       const response = await AuthAPI.resetPassword(token, password, confirmPassword);
       
       if (response.success) {
-        return { success: true, message: response.message };
+        return { success: true, message: response.message || 'Password reset successfully' };
       } else {
         setError(response.message || 'Password reset failed');
-        return { success: false, message: response.message };
+        return { success: false, message: response.message || 'Password reset failed' };
       }
     } catch (error: any) {
       const errorMessage = error.message || 'Password reset failed';
@@ -247,7 +284,7 @@ export const useAuth = () => {
             id: serverUser.clinicId,
             name: serverUser.clinicName || '',
             isActive: true,
-            subscription: serverUser.subscriptionTier,
+            ...(serverUser.subscriptionTier && { subscription: serverUser.subscriptionTier }),
           };
           setClinic(clinicData);
         } else {

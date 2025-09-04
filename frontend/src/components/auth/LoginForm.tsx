@@ -8,11 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoginFormData } from '@/types/auth';
 import { loginSchema } from '@/schemas/authSchema';
 import { useAuth } from '@/hooks/useAuth';
-import { demoCredentials } from '@/lib/mocks/auth';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -45,11 +43,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       const savedCredentials = localStorage.getItem('remember-login');
       if (savedCredentials) {
         try {
-          const { email, password, rememberMe } = JSON.parse(savedCredentials);
+          const { email, rememberMe } = JSON.parse(savedCredentials);
           setValue('email', email);
-          setValue('password', password);
           setValue('rememberMe', rememberMe);
-          console.log('🔄 Loaded saved credentials for:', email);
+          console.log('🔄 Loaded saved email for:', email);
         } catch (error) {
           console.warn('Failed to parse saved credentials:', error);
           localStorage.removeItem('remember-login');
@@ -58,13 +55,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     }
   }, [setValue]);
 
-  const handleDemoSelect = (value: string) => {
-    const selectedDemo = demoCredentials[parseInt(value)];
-    if (selectedDemo) {
-      setValue('email', selectedDemo.email);
-      setValue('password', selectedDemo.password);
-    }
-  };
 
   const onSubmit = async (data: LoginFormData) => {
     clearError();
@@ -72,19 +62,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     // Handle remember me functionality
     if (typeof window !== 'undefined') {
       if (data.rememberMe) {
-        // Save credentials to localStorage
+        // Save credentials to localStorage (only email for security)
         const credentialsToSave = {
           email: data.email,
-          password: data.password,
           rememberMe: true,
         };
-        // TODO: Uncomment this when we have a proper authentication system
-        // localStorage.setItem('remember-login', JSON.stringify(credentialsToSave));
-        console.log('✅ Credentials saved for next login');
+        localStorage.setItem('remember-login', JSON.stringify(credentialsToSave));
+        console.log('✅ Email saved for next login');
       } else {
         // Remove saved credentials if rememberMe is unchecked
-        // TODO: Uncomment this when we have a proper authentication system
-        // localStorage.removeItem('remember-login');
+        localStorage.removeItem('remember-login');
         console.log('🗑️ Saved credentials removed');
       }
     }
@@ -92,10 +79,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     // Remove rememberMe from login data (backend doesn't need it)
     const { rememberMe, ...loginData } = data;
     console.log('🚀 Attempting login with:', loginData.email);
-    const success = await login(loginData);
-    console.log('✅ Login success:', success);
-    if (success && onSuccess) {
-      onSuccess();
+    
+    try {
+      const success = await login(loginData);
+      console.log('✅ Login success:', success);
+      if (success && onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('❌ Login failed:', error);
+      // Error is handled by the auth hook
     }
   };
 
@@ -188,24 +181,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           </p>
         </div>
 
-        {/* Demo credentials selector */}
-        <div className="mt-6 space-y-2">
-          <Label htmlFor="demo-select" className="text-sm font-medium text-foreground">
-            Demo Login:
-          </Label>
-          <Select onValueChange={handleDemoSelect}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Pilih akun demo untuk login cepat" />
-            </SelectTrigger>
-            <SelectContent>
-              {demoCredentials.map((credential, index) => (
-                <SelectItem key={index} value={index.toString()}>
-                  {credential.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </CardContent>
     </Card>
   );

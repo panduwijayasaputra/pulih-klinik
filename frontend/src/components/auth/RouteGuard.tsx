@@ -3,9 +3,6 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useOnboarding } from '@/hooks/useOnboarding';
-import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
-import { getDefaultRouteForUser } from '@/lib/route-protection';
 import { UserRoleEnum } from '@/types/enums';
 
 interface RouteGuardProps {
@@ -14,120 +11,109 @@ interface RouteGuardProps {
 }
 
 export const RouteGuard: React.FC<RouteGuardProps> = ({ 
-  children
+  children,
+  fallback
 }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const { needsOnboarding, isLoaded, hasActiveSubscription } = useOnboarding();
-  const { currentStep, justCompletedSubscription } = useOnboardingStore();
+  const { user, clinic, isAuthenticated, isLoading, error } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Development mode - bypass auth for client management and edit routes
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const isClientRoute = pathname.startsWith('/portal/clients');
-  const isEditRoute = pathname.startsWith('/portal/therapists/edit');
-
-  // Handle redirects for authenticated users accessing auth pages
+  // Handle route protection and redirects
   useEffect(() => {
+    if (isLoading) {
+      return; // Still loading, don't redirect yet
+    }
 
-    if (!isLoading && isAuthenticated && user && isLoaded) {
-      const authPages = ['/login', '/register', '/thankyou'];
-      if (authPages.includes(pathname)) {
-        const defaultRoute = getDefaultRouteForUser(user);
-        router.push(defaultRoute as any);
-        return;
-      }
+    // Define public routes that don't require authentication
+    const publicRoutes = ['/', '/login', '/register'];
+    const isPublicRoute = publicRoutes.includes(pathname);
 
-      // Determine user's clinic and subscription status from auth store directly
-      const userHasClinic = !!(user?.clinicId || user?.clinicName);
-      const userHasSubscription = !!user?.subscriptionTier || !!hasActiveSubscription;
-      const isSystemAdmin = user?.roles?.includes(UserRoleEnum.Administrator);
+    // If user is not authenticated and trying to access protected route
+    if (!isAuthenticated && !isPublicRoute) {
+      router.push('/login');
+      return;
+    }
+
+    // If user is authenticated and trying to access auth pages
+    if (isAuthenticated && user && (pathname === '/login' || pathname === '/register')) {
+      // Use smart redirect logic based on user role and state
+      const redirectPath = getRedirectPath(user, clinic);
+      router.push(redirectPath || '/portal' as any);
+      return;
+    }
+
+    // Handle authenticated user route access
+    if (isAuthenticated && user) {
+      const isSystemAdmin = user.roles.includes(UserRoleEnum.Administrator);
+      const isTherapist = user.roles.includes(UserRoleEnum.Therapist);
+      const isClinicAdmin = user.roles.includes(UserRoleEnum.ClinicAdmin);
       
-      const isOnboardingPage = pathname === '/onboarding';
       const isPortalRoute = pathname.startsWith('/portal');
+      const isOnboardingRoute = pathname.startsWith('/onboarding');
 
-
-      // Handle portal access
-      if (isPortalRoute) {
-        // System admins can access portal without clinic/subscription requirements
-        if (isSystemAdmin) {
-          return;
-        }
-        
-        if (!userHasClinic) {
-          // Rule 1: No clinic → redirect to onboarding clinic form
-          router.push('/onboarding');
-          return;
-        } else if (!userHasSubscription) {
-          // Rule 2: Has clinic but no subscription → redirect to onboarding subscription step
-          router.push('/onboarding');
-          return;
-        }
-        // Rule 3: Has both clinic and subscription → allow portal access
-        return;
+      // System admins and therapists can access portal directly
+      if ((isSystemAdmin || isTherapist) && isPortalRoute) {
+        return; // Allow access
       }
 
-      // Handle onboarding page access
-      if (isOnboardingPage) {
-        // System admins can always access onboarding for testing/management
-        if (isSystemAdmin) {
-          return;
-        }
-        
-        // If user has both clinic and subscription, they shouldn't access onboarding
-        if (userHasClinic && userHasSubscription) {
-          // Exception: Allow Complete step only if user just submitted subscription
-          if (currentStep === OnboardingStepEnum.Complete && justCompletedSubscription) {
-            return; // Allow thank you page
+      // Clinic admins need to complete onboarding first
+      if (isClinicAdmin) {
+        const hasClinic = !!clinic;
+        const hasSubscription = clinic?.subscription;
+
+        if (isPortalRoute) {
+          // If trying to access portal but doesn't have clinic/subscription
+          if (!hasClinic || !hasSubscription) {
+            router.push('/onboarding');
+            return;
           }
-          
-          // Otherwise, redirect completed users to portal
-          router.push('/portal');
+          // Has both clinic and subscription, allow portal access
           return;
         }
-        
-        // Allow onboarding access if user needs it
-        return;
+
+        if (isOnboardingRoute) {
+          // If has both clinic and subscription, redirect to portal
+          if (hasClinic && hasSubscription) {
+            router.push('/portal');
+            return;
+          }
+          // Needs onboarding, allow access
+          return;
+        }
       }
     }
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
-    // Handle redirects for unauthenticated users accessing landing page
-    if (!isLoading && !isAuthenticated) {
-      if (pathname === '/') {
-        // Stay on landing page if not authenticated
-        return;
-      }
-      
-      // In development, allow direct access to client routes and edit routes
-      if (isDevelopment && (isClientRoute || isEditRoute)) {
-        return;
-      }
-      
-      // Redirect to landing page for onboarding if not authenticated
-      if (pathname === '/onboarding') {
-        router.push('/');
-        return;
-      }
-      
-      // Redirect to login for other protected routes
-      const protectedRoutes = ['/portal'];
-      const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-      
-      if (isProtectedRoute) {
-        router.push('/login');
-        return;
-      }
+  // Helper function to determine redirect path (same as in useAuth)
+  const getRedirectPath = (user: any, clinic: any): string | null => {
+    // System Admin users → redirect to /portal
+    if (user.roles.includes(UserRoleEnum.Administrator)) {
+      return '/portal';
     }
-  }, [isAuthenticated, isLoading, user, pathname, router, needsOnboarding, isLoaded, currentStep]);
-
-  // In development mode, allow client routes and edit routes without auth
-  if (isDevelopment && (isClientRoute || isEditRoute)) {
-    return <>{children}</>;
-  }
+    
+    // Therapist users → redirect to /portal
+    if (user.roles.includes(UserRoleEnum.Therapist)) {
+      return '/portal';
+    }
+    
+    // Clinic Admin users
+    if (user.roles.includes(UserRoleEnum.ClinicAdmin)) {
+      // If user doesn't have clinic data or subscription → redirect to onboarding
+      if (!clinic || !clinic.subscription) {
+        return '/onboarding';
+      }
+      
+      // If user has complete clinic and subscription data → redirect to /portal
+      return '/portal';
+    }
+    
+    // Default fallback
+    return '/portal';
+  };
 
   // Show loading state while checking permissions
   if (isLoading) {
-    return (
+    return fallback || (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
@@ -137,6 +123,22 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
     );
   }
 
+  // Show error state if there's an authentication error
+  if (error && !isAuthenticated) {
+    return fallback || (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-destructive">Terjadi kesalahan autentikasi</p>
+          <button 
+            onClick={() => router.push('/login')}
+            className="mt-2 text-primary hover:underline"
+          >
+            Kembali ke halaman login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // User has access, render children
   return <>{children}</>;
@@ -156,6 +158,5 @@ export const withRouteGuard = <P extends object>(
   };
 
   WrappedComponent.displayName = `withRouteGuard(${Component.displayName || Component.name})`;
-  
   return WrappedComponent;
 };

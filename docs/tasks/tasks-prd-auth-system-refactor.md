@@ -76,25 +76,25 @@ Based on PRD: `prd-auth-system-refactor.md`
     - Add `/registration/admin-verify` endpoint for manual verification
     - Create `frontend/src/lib/api/registration.ts` client for registration API calls
 
-- [ ] 3.0 Implement Smart Login Flow with Role-Based Redirects
-  - [ ] 3.1 Update login form component
+- [x] 3.0 Implement Smart Login Flow with Role-Based Redirects
+  - [x] 3.1 Update login form component
     - Update or create `frontend/src/components/auth/LoginForm.tsx` with email and password fields
     - Implement form validation and error handling
     - Add loading states and success feedback
     - Style consistently with registration form
-  - [ ] 3.2 Implement smart redirect logic
+  - [x] 3.2 Implement smart redirect logic
     - Update `frontend/src/hooks/useAuth.ts` with redirect logic after successful login
     - System admin users → redirect to `/portal`
     - Clinic admin users without clinic/subscription → redirect to `/onboarding`
     - Clinic admin users with complete data → redirect to `/portal`
     - Therapist users → redirect to `/portal`
     - Add loading states during redirect determination
-  - [ ] 3.3 Update route guard component
+  - [x] 3.3 Update route guard component
     - Refactor `frontend/src/components/auth/RouteGuard.tsx` to use simplified auth state
     - Implement proper loading states during auth validation
     - Add automatic redirect logic based on user state
     - Handle edge cases: expired tokens, invalid users, network errors
-  - [ ] 3.4 Streamline backend login response
+  - [x] 3.4 Streamline backend login response
     - Update `backend/src/auth/auth.service.ts` to return simplified user data structure
     - Ensure response includes all required fields: user info, clinic info, roles, tokens
     - Add proper error handling and validation

@@ -9,12 +9,10 @@ import { UserRoleType } from '../common/enums';
 export interface JwtPayload {
   sub: string; // user id
   email: string;
-  roles: Array<{
-    id: string;
-    role: UserRoleType;
-  }>;
+  roles: string[];
   clinicId?: string;
   clinicName?: string;
+  subscriptionTier?: string;
   iat?: number;
   exp?: number;
 }
@@ -22,13 +20,12 @@ export interface JwtPayload {
 export interface AuthUser {
   id: string;
   email: string;
+  name: string;
   isActive: boolean;
-  roles: Array<{
-    id: string;
-    role: UserRoleType;
-  }>;
+  roles: string[];
   clinicId?: string;
   clinicName?: string;
+  subscriptionTier?: string;
 }
 
 @Injectable()
@@ -61,10 +58,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Validate that JWT roles still match current database roles
-    const currentRoleIds = user.roles.map((role) => role.id).sort();
-    const jwtRoleIds = roles.map((role) => role.id).sort();
+    const currentRoles = user.roles.map((role) => role.role).sort();
+    const jwtRoles = roles.sort();
 
-    if (JSON.stringify(currentRoleIds) !== JSON.stringify(jwtRoleIds)) {
+    if (JSON.stringify(currentRoles) !== JSON.stringify(jwtRoles)) {
       throw new UnauthorizedException(
         'User roles have changed, please re-login',
       );
@@ -74,13 +71,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const authUser: AuthUser = {
       id: user.id,
       email: user.email,
+      name: user.profile?.name || 'Unknown User',
       isActive: user.isActive,
-      roles: user.roles.map((role) => ({
-        id: role.id,
-        role: role.role,
-      })),
+      roles: user.roles.map((role) => role.role),
       clinicId: user.clinic?.id,
       clinicName: user.clinic?.name,
+      subscriptionTier: user.clinic?.subscriptionTier?.code,
     };
 
     return authUser;
