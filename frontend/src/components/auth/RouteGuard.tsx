@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
 import { getDefaultRouteForUser } from '@/lib/route-protection';
 
 interface RouteGuardProps {
@@ -15,7 +16,8 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
   children
 }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { needsOnboarding, isLoaded } = useOnboarding();
+  const { needsOnboarding, isLoaded, hasActiveSubscription } = useOnboarding();
+  const { currentStep } = useOnboardingStore();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -26,6 +28,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
 
   // Handle redirects for authenticated users accessing auth pages
   useEffect(() => {
+
     if (!isLoading && isAuthenticated && user && isLoaded) {
       const authPages = ['/login', '/register', '/thankyou'];
       if (authPages.includes(pathname)) {
@@ -34,18 +37,38 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         return;
       }
 
-      // Don't interfere with onboarding page - let OnboardingFlow handle its own logic
+      // Determine user's clinic and subscription status from auth store directly
+      const userHasClinic = !!(user?.clinicId || user?.clinicName);
+      const userHasSubscription = !!user?.subscriptionTier || !!hasActiveSubscription;
+      
       const isOnboardingPage = pathname === '/onboarding';
-      if (isOnboardingPage) {
+      const isPortalRoute = pathname.startsWith('/portal');
+
+
+      // Handle portal access
+      if (isPortalRoute) {
+        if (!userHasClinic) {
+          // Rule 1: No clinic → redirect to onboarding clinic form
+          router.push('/onboarding');
+          return;
+        } else if (!userHasSubscription) {
+          // Rule 2: Has clinic but no subscription → redirect to onboarding subscription step
+          router.push('/onboarding');
+          return;
+        }
+        // Rule 3: Has both clinic and subscription → allow portal access
         return;
       }
 
-      // Check if user needs onboarding when accessing portal routes
-      // Use server-side status instead of client-side check to avoid conflicts
-      const isPortalRoute = pathname.startsWith('/portal');
-      
-      if (isPortalRoute && needsOnboarding) {
-        router.push('/onboarding');
+      // Handle onboarding page access
+      if (isOnboardingPage) {
+        if (userHasClinic && userHasSubscription && currentStep !== OnboardingStepEnum.Complete) {
+          // Rule 4: Has both clinic and subscription → block onboarding, redirect to portal
+          // BUT allow Complete step to be shown as thank you page
+          router.push('/portal');
+          return;
+        }
+        // Allow onboarding access if user needs it or is on Complete step
         return;
       }
     }
@@ -62,7 +85,13 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         return;
       }
       
-      // Redirect to login for protected routes
+      // Redirect to landing page for onboarding if not authenticated
+      if (pathname === '/onboarding') {
+        router.push('/');
+        return;
+      }
+      
+      // Redirect to login for other protected routes
       const protectedRoutes = ['/portal'];
       const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
       
@@ -71,7 +100,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         return;
       }
     }
-  }, [isAuthenticated, isLoading, user, pathname, router, needsOnboarding, isLoaded]);
+  }, [isAuthenticated, isLoading, user, pathname, router, needsOnboarding, isLoaded, currentStep]);
 
   // In development mode, allow client routes and edit routes without auth
   if (isDevelopment && (isClientRoute || isEditRoute)) {

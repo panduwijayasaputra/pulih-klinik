@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigation } from '@/hooks/useNavigation';
 import { UserRoleEnum } from '@/types/enums';
@@ -11,40 +11,36 @@ export default function PortalPage() {
   const { user } = useAuth();
   const { activeRole } = useNavigation();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+
     if (!user) {
-      console.log('🚫 Portal: No user found, RouteGuard will handle');
-      return; // RouteGuard will handle this
+      return; // RouteGuard will handle authentication
     }   
 
-    // Use active role if set, otherwise fall back to primary role
-    const currentRole = activeRole || user.roles[0];
-    console.log('🎭 Portal: User roles:', user.roles);
-    console.log('🎭 Portal: Active role:', activeRole);
-    console.log('🎭 Portal: Current role:', currentRole);
-    console.log('🎭 Portal: Administrator enum:', UserRoleEnum.Administrator);
-
-    // Redirect to role-specific dashboard
-    switch (currentRole) {
-      case UserRoleEnum.Administrator:
-        console.log('🔀 Portal: Redirecting to /portal/admin');
-        router.replace('/portal/admin');
-        break;
-      case UserRoleEnum.ClinicAdmin:
-        console.log('🔀 Portal: Redirecting to /portal/clinic');
-        router.replace('/portal/clinic');
-        break;
-      case UserRoleEnum.Therapist:
-        console.log('🔀 Portal: Redirecting to /portal/therapist');
-        router.replace('/portal/therapist');
-        break;
-      default:
-        console.log('🔀 Portal: Unknown role, redirecting to /portal/clinic (fallback)');
-        router.replace('/portal/clinic'); // Default fallback
-        break;
+    // Only redirect if we're exactly on /portal path
+    if (pathname === '/portal') {
+      const currentRole = activeRole || user.roles[0];
+      
+      // Redirect to role-specific dashboard based on role string
+      switch (currentRole) {
+        case UserRoleEnum.Administrator:
+          router.replace('/portal/admin');
+          break;
+        case UserRoleEnum.ClinicAdmin:
+          router.replace('/portal/clinic');
+          break;
+        case UserRoleEnum.Therapist:
+          router.replace('/portal/therapist');
+          break;
+        default:
+          router.replace('/portal/clinic');
+          break;
+      }
+    } else {
     }
-  }, [user, activeRole, router]);
+  }, [user, activeRole, router, pathname]);
 
   // Show loading state while redirecting
   return (

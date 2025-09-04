@@ -26,18 +26,7 @@ export const ClinicInfo: React.FC<ClinicInfoProps> = ({
     role.clinicId && role.clinicName
   );
 
-  console.log('🔍 ClinicInfo debug:', {
-    userRoles: user.roles,
-    roleDetails: user.roleDetails,
-    currentRole,
-    clinicRole,
-    hasRoleDetails: !!user.roleDetails,
-    roleDetailsLength: user.roleDetails?.length,
-    userObject: user
-  });
-
   if (!clinicRole || !clinicRole.clinicName) {
-    console.log('❌ No clinic info found');
     // Show a placeholder to indicate the component is working
     return (
       <div className={`${className}`}>
@@ -62,7 +51,7 @@ export const ClinicInfo: React.FC<ClinicInfoProps> = ({
         <BuildingOfficeIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-muted-foreground truncate">
-            {clinicRole.clinicName}
+            {typeof clinicRole.clinicName === 'string' ? clinicRole.clinicName : 'Clinic Name'}
           </p>
           <p className="text-xs text-muted-foreground/70 truncate">
             Klinik

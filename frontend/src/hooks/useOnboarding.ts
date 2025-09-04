@@ -14,13 +14,12 @@ export const useOnboarding = () => {
     loaded?: boolean 
   }>({ loaded: false });
 
-  // Fetch onboarding status from server when user is authenticated
+  // Fetch onboarding status from server when user is authenticated or user data changes
   useEffect(() => {
     if (isAuthenticated && user) {
       const checkServerStatus = async () => {
         try {
           const response = await httpClient.get('/onboarding/status');
-          console.log('🌐 Onboarding status API response:', response.data);
           if (response.data?.success) {
             const statusData = {
               needsOnboarding: response.data.data?.needsOnboarding,
@@ -29,14 +28,11 @@ export const useOnboarding = () => {
               currentStep: response.data.data?.currentStep,
               loaded: true,
             };
-            console.log('📊 Setting server status:', statusData);
             setServerStatus(statusData);
           } else {
-            console.warn('⚠️ API response not successful');
             setServerStatus({ loaded: true });
           }
         } catch (error) {
-          console.warn('Failed to fetch onboarding status:', error);
           setServerStatus({ loaded: true });
         }
       };
@@ -44,7 +40,7 @@ export const useOnboarding = () => {
     } else {
       setServerStatus({ loaded: true });
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, user?.clinicId, user?.subscriptionTier]);
 
   // Client-side fallback check
   const clientHasClinic = !!(user?.clinicId || user?.clinicName);

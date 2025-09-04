@@ -33,28 +33,14 @@ export const OnboardingFlow: React.FC = () => {
     prevStep, 
     error, 
     clearError,
-    resetOnboarding,
     isLoading,
+    completeOnboarding,
   } = useOnboardingStore();
 
-  // Handle redirects and step synchronization
+  // Handle step synchronization with server status
   useEffect(() => {
     if (!isLoaded) return;
 
-    console.log('🔍 OnboardingFlow status check:', {
-      isLoaded,
-      needsOnboarding,
-      userHasClinic,
-      serverCurrentStep,
-      currentStep
-    });
-
-    // If user doesn't need onboarding anymore, redirect to portal
-    if (!needsOnboarding) {
-      console.log('✅ User completed onboarding, redirecting to portal');
-      router.push('/portal');
-      return;
-    }
 
     // Sync current step with server status if provided
     if (serverCurrentStep) {
@@ -66,11 +52,10 @@ export const OnboardingFlow: React.FC = () => {
       };
       const targetStep = stepMap[serverCurrentStep as keyof typeof stepMap];
       if (targetStep && targetStep !== currentStep) {
-        console.log(`🔄 Syncing step from ${currentStep} to ${targetStep}`);
         setStep(targetStep);
       }
     }
-  }, [isLoaded, needsOnboarding, userHasClinic, serverCurrentStep, currentStep, router]);
+  }, [isLoaded, needsOnboarding, userHasClinic, serverCurrentStep, currentStep, setStep]);
 
   // Show loading while checking status
   if (!isLoaded) {
@@ -104,9 +89,16 @@ export const OnboardingFlow: React.FC = () => {
     prevStep();
   };
 
-  const handleGoToPortal = () => {
-    resetOnboarding();
-    router.push('/portal');
+  const handleGoToPortal = async () => {
+    try {
+      // Complete onboarding first to notify server
+      await completeOnboarding();
+      // Navigate to portal after completion
+      router.push('/portal');
+    } catch (error) {
+      // Navigate anyway
+      router.push('/portal');
+    }
   };
 
 
