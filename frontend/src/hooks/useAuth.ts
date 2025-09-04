@@ -1,87 +1,47 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { getPrimaryRole, hasAnyRole, hasRole } from '@/lib/api/auth';
-import { 
-  useCurrentUserQuery,
-  useLoginMutation,
-  useLogoutMutation,
-  useChangePasswordMutation,
-  useForgotPasswordMutation,
-  useResetPasswordMutation,
-  useRefreshTokenMutation 
-} from './queries/useAuthQueries';
-import { LoginApiData } from '@/types/auth';
+import { AuthAPI } from '@/lib/api/auth';
+import { LoginApiData, User, Clinic } from '@/types/auth';
 
 export const useAuth = () => {
   const {
     user,
+    clinic,
     error,
     isAuthenticated,
-    token,
+    accessToken,
     refreshToken,
+    isLoading,
     login: storeLogin,
     logout: storeLogout,
     clearError,
     setLoading,
     setError,
+    setUser,
+    setClinic,
+    setTokens,
+    updateTokens,
+    isDataStale,
+    setLastValidated,
+    hasRole: storeHasRole,
+    isAdmin: storeIsAdmin,
+    isClinicAdmin: storeIsClinicAdmin,
+    isTherapist: storeIsTherapist,
+    needsOnboarding: storeNeedsOnboarding,
   } = useAuthStore();
 
-  // React Query hooks
-  const loginMutation = useLoginMutation();
-  const logoutMutation = useLogoutMutation();
-  const changePasswordMutation = useChangePasswordMutation();
-  const forgotPasswordMutation = useForgotPasswordMutation();
-  const resetPasswordMutation = useResetPasswordMutation();
-  const refreshTokenMutation = useRefreshTokenMutation();
-  
-  // Current user query - only enabled if we have a token and are authenticated
-  const currentUserQuery = useCurrentUserQuery({
-    enabled: isAuthenticated && !!token,
-  });
-
-  // Sync React Query loading state with Zustand store
-  useEffect(() => {
-    const isLoading = loginMutation.isPending || 
-                     logoutMutation.isPending || 
-                     currentUserQuery.isLoading ||
-                     refreshTokenMutation.isPending;
-    setLoading(isLoading);
-  }, [
-    loginMutation.isPending, 
-    logoutMutation.isPending,
-    currentUserQuery.isLoading,
-    refreshTokenMutation.isPending,
-    setLoading
-  ]);
-
-  // Sync React Query errors with Zustand store
-  useEffect(() => {
-    const queryError = loginMutation.error || 
-                      logoutMutation.error || 
-                      currentUserQuery.error ||
-                      changePasswordMutation.error ||
-                      forgotPasswordMutation.error ||
-                      resetPasswordMutation.error ||
-                      refreshTokenMutation.error;
-    
-    if (queryError) {
-      setError(queryError.message);
-    }
-  }, [
-    loginMutation.error,
-    logoutMutation.error,
-    currentUserQuery.error,
-    changePasswordMutation.error,
-    forgotPasswordMutation.error,
-    resetPasswordMutation.error,
-    refreshTokenMutation.error,
-    setError
-  ]);
+  // Local loading states for specific operations
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSendingForgotPassword, setIsSendingForgotPassword] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [isRefreshingToken, setIsRefreshingToken] = useState(false);
 
   // Auto-validate auth state on page focus/refresh
   useEffect(() => {
-    const validateOnFocus = () => {
-      if (isAuthenticated && token) {
+    const validateOnFocus = (): void => {
+      if (isAuthenticated && accessToken && isDataStale()) {
         checkAuth();
       }
     };
@@ -101,95 +61,262 @@ export const useAuth = () => {
       window.removeEventListener('focus', validateOnFocus);
       window.removeEventListener('visibilitychange', validateOnFocus);
     };
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, accessToken, isDataStale]);
 
-  // Wrapper functions that use React Query mutations
-  const login = async (credentials: LoginApiData): Promise<boolean> => {
+  // Login function with direct API call
+  const login = useCallback(async (credentials: LoginApiData): Promise<boolean> => {
     try {
-      await loginMutation.mutateAsync(credentials);
-      return true;
-    } catch (error) {
+      setIsLoggingIn(true);
+      setError(null);
+      
+      const response = await AuthAPI.login(credentials);
+      
+      if (response.success && response.user && response.accessToken && response.refreshToken) {
+        // Extract clinic data from user if available
+        const clinicData: Clinic | undefined = response.user.clinicId ? {
+          id: response.user.clinicId,
+          name: response.user.clinicName || '',
+          isActive: true,
+          subscription: response.user.subscriptionTier,
+        } : undefined;
+
+        storeLogin({
+          user: response.user,
+          clinic: clinicData,
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+        });
+        
+        return true;
+      } else {
+        setError(response.message || 'Login failed');
+        return false;
+      }
+    } catch (error: any) {
+      setError(error.message || 'Login failed');
       return false;
+    } finally {
+      setIsLoggingIn(false);
     }
-  };
+  }, [storeLogin, setError]);
 
-  const logout = async (): Promise<void> => {
-    await logoutMutation.mutateAsync();
-  };
+  // Logout function with direct API call
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      setIsLoggingOut(true);
+      setError(null);
+      
+      await AuthAPI.logout();
+    } catch (error: any) {
+      // Even if API call fails, we should still logout locally
+      console.warn('Logout API call failed:', error);
+    } finally {
+      storeLogout();
+      setIsLoggingOut(false);
+    }
+  }, [storeLogout, setError]);
 
-  const changePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => {
-    return changePasswordMutation.mutateAsync({
-      currentPassword,
-      newPassword,
-      confirmPassword
-    });
-  };
+  // Change password function
+  const changePassword = useCallback(async (
+    currentPassword: string, 
+    newPassword: string, 
+    confirmPassword: string
+  ): Promise<{ success: boolean; message?: string }> => {
+    try {
+      setIsChangingPassword(true);
+      setError(null);
+      
+      const response = await AuthAPI.changePassword(currentPassword, newPassword, confirmPassword);
+      
+      if (response.success) {
+        return { success: true, message: response.message };
+      } else {
+        setError(response.message || 'Password change failed');
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Password change failed';
+      setError(errorMessage);
+      return { success: false, message: errorMessage };
+    } finally {
+      setIsChangingPassword(false);
+    }
+  }, [setError]);
 
-  const forgotPassword = async (email: string) => {
-    return forgotPasswordMutation.mutateAsync(email);
-  };
+  // Forgot password function
+  const forgotPassword = useCallback(async (email: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      setIsSendingForgotPassword(true);
+      setError(null);
+      
+      const response = await AuthAPI.forgotPassword(email);
+      
+      if (response.success) {
+        return { success: true, message: response.message };
+      } else {
+        setError(response.message || 'Failed to send reset email');
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to send reset email';
+      setError(errorMessage);
+      return { success: false, message: errorMessage };
+    } finally {
+      setIsSendingForgotPassword(false);
+    }
+  }, [setError]);
 
-  const resetPassword = async (token: string, password: string, confirmPassword: string) => {
-    return resetPasswordMutation.mutateAsync({
-      token,
-      password,
-      confirmPassword
-    });
-  };
+  // Reset password function
+  const resetPassword = useCallback(async (
+    token: string, 
+    password: string, 
+    confirmPassword: string
+  ): Promise<{ success: boolean; message?: string }> => {
+    try {
+      setIsResettingPassword(true);
+      setError(null);
+      
+      const response = await AuthAPI.resetPassword(token, password, confirmPassword);
+      
+      if (response.success) {
+        return { success: true, message: response.message };
+      } else {
+        setError(response.message || 'Password reset failed');
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Password reset failed';
+      setError(errorMessage);
+      return { success: false, message: errorMessage };
+    } finally {
+      setIsResettingPassword(false);
+    }
+  }, [setError]);
 
-  const refreshAuthToken = async () => {
-    return refreshTokenMutation.mutateAsync();
-  };
+  // Refresh auth token function
+  const refreshAuthToken = useCallback(async (): Promise<boolean> => {
+    try {
+      setIsRefreshingToken(true);
+      setError(null);
+      
+      const response = await AuthAPI.refreshToken();
+      
+      if (response.success && response.data) {
+        updateTokens(response.data.accessToken, response.data.refreshToken);
+        return true;
+      } else {
+        setError('Failed to refresh token');
+        return false;
+      }
+    } catch (error: any) {
+      setError('Failed to refresh token');
+      return false;
+    } finally {
+      setIsRefreshingToken(false);
+    }
+  }, [updateTokens, setError]);
 
-  // Check auth status by refetching current user
-  const checkAuth = async (): Promise<void> => {
-    if (isAuthenticated && token) {
-      try {
-        const result = await currentUserQuery.refetch();
-        // If server returns user data, compare with stored data
-        if (result.data?.data?.user) {
-          const serverUser = result.data.data.user;
-          const storedUser = user;
-          
-          // Check if critical user data has changed (clinic removed, etc.)
-          const clinicChanged = storedUser?.clinicId && !serverUser.clinicId;
-          const subscriptionChanged = storedUser?.subscriptionTier && !serverUser.subscriptionTier;
-          
-          if (clinicChanged || subscriptionChanged) {
-            // Critical data removed from server, logout user
-            storeLogout();
-            return;
-          }
-          
-          // Update store with fresh server data
-          storeLogin({
-            user: serverUser,
-            token: token,
-            refreshToken: refreshToken || undefined,
-          });
-        } else if (result.data?.success === false) {
-          // Server says user is invalid, logout
+  // Check auth status by fetching current user
+  const checkAuth = useCallback(async (): Promise<void> => {
+    if (!isAuthenticated || !accessToken) return;
+
+    try {
+      setLoading(true);
+      const response = await AuthAPI.getCurrentUser();
+      
+      if (response.success && response.data) {
+        const serverUser = response.data;
+        const storedUser = user;
+        
+        // Check if critical user data has changed (clinic removed, etc.)
+        const clinicChanged = storedUser?.clinicId && !serverUser.clinicId;
+        const subscriptionChanged = storedUser?.subscriptionTier && !serverUser.subscriptionTier;
+        
+        if (clinicChanged || subscriptionChanged) {
+          // Critical data removed from server, logout user
           storeLogout();
+          return;
         }
-      } catch (error: any) {
-        // If auth fails, logout user
-        if (error.response?.status === 401 || error.response?.status === 404) {
-          storeLogout();
+        
+        // Update user data
+        setUser(serverUser);
+        
+        // Update clinic data if available
+        if (serverUser.clinicId) {
+          const clinicData: Clinic = {
+            id: serverUser.clinicId,
+            name: serverUser.clinicName || '',
+            isActive: true,
+            subscription: serverUser.subscriptionTier,
+          };
+          setClinic(clinicData);
+        } else {
+          setClinic(null);
         }
+        
+        setLastValidated(new Date());
+      } else {
+        // Server says user is invalid, logout
+        storeLogout();
+      }
+    } catch (error: any) {
+      // If auth fails, logout user
+      if (error.response?.status === 401 || error.response?.status === 404) {
+        storeLogout();
+      } else {
+        setError('Failed to validate auth status');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    isAuthenticated, 
+    accessToken, 
+    user, 
+    storeLogout, 
+    setUser, 
+    setClinic, 
+    setLastValidated, 
+    setLoading, 
+    setError
+  ]);
+
+  // Helper functions using store methods
+  const hasRole = useCallback((role: string): boolean => {
+    return storeHasRole(role);
+  }, [storeHasRole]);
+
+  const hasAnyRole = useCallback((roles: string[]): boolean => {
+    return roles.some(role => storeHasRole(role));
+  }, [storeHasRole]);
+
+  const getPrimaryRole = useCallback((): string | null => {
+    if (!user?.roles || user.roles.length === 0) return null;
+    
+    // Priority order: Administrator > ClinicAdmin > Therapist
+    const rolePriority = ['administrator', 'clinic_admin', 'therapist'];
+    
+    for (const priorityRole of rolePriority) {
+      if (user.roles.includes(priorityRole as any)) {
+        return priorityRole;
       }
     }
-  };
+    
+    return user.roles[0] || null;
+  }, [user]);
+
+  const isMultiRole = useCallback((): boolean => {
+    return (user?.roles.length ?? 0) > 1;
+  }, [user]);
 
   return {
     // Auth state
     user,
-    isLoading: loginMutation.isPending || 
-               logoutMutation.isPending || 
-               currentUserQuery.isLoading ||
-               refreshTokenMutation.isPending,
+    clinic,
+    isLoading: isLoading || isLoggingIn || isLoggingOut || isRefreshingToken,
     error,
     isAuthenticated,
-    token,
+    accessToken,
     refreshToken,
     
     // Auth actions
@@ -202,21 +329,22 @@ export const useAuth = () => {
     resetPassword,
     refreshAuthToken,
     
-    // Mutation states for specific operations
-    isLoggingIn: loginMutation.isPending,
-    isLoggingOut: logoutMutation.isPending,
-    isChangingPassword: changePasswordMutation.isPending,
-    isSendingForgotPassword: forgotPasswordMutation.isPending,
-    isResettingPassword: resetPasswordMutation.isPending,
-    isRefreshingToken: refreshTokenMutation.isPending,
+    // Loading states for specific operations
+    isLoggingIn,
+    isLoggingOut,
+    isChangingPassword,
+    isSendingForgotPassword,
+    isResettingPassword,
+    isRefreshingToken,
     
     // Helper functions
-    hasRole: (role: string) => hasRole(user, role),
-    hasAnyRole: (roles: string[]) => hasAnyRole(user, roles),
-    getPrimaryRole: () => getPrimaryRole(user),
-    isAdmin: () => hasRole(user, 'administrator'),
-    isClinicAdmin: () => hasRole(user, 'clinic_admin'),
-    isTherapist: () => hasRole(user, 'therapist'),
-    isMultiRole: () => (user?.roles.length ?? 0) > 1,
+    hasRole,
+    hasAnyRole,
+    getPrimaryRole,
+    isAdmin: storeIsAdmin,
+    isClinicAdmin: storeIsClinicAdmin,
+    isTherapist: storeIsTherapist,
+    isMultiRole,
+    needsOnboarding: storeNeedsOnboarding,
   };
 };

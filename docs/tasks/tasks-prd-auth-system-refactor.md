@@ -30,18 +30,18 @@ Based on PRD: `prd-auth-system-refactor.md`
 ## Tasks
 
 - [ ] 1.0 Refactor Authentication Data Structure and State Management
-  - [ ] 1.1 Simplify auth types and interfaces
+  - [x] 1.1 Simplify auth types and interfaces
     - Update `frontend/src/types/auth.ts` to include only essential fields: user info (id, email, name, isActive), clinic info (id, name, isActive, subscription), roles, access token, refresh token
     - Remove complex nested structures and unnecessary fields
     - Create simplified `AuthState` interface with clear, minimal properties
     - Update `User` interface to match backend response structure exactly
-  - [ ] 1.2 Refactor auth store for centralized state management
+  - [x] 1.2 Refactor auth store for centralized state management
     - Create or update `frontend/src/store/auth.ts` with simplified Zustand store
     - Implement clear actions: login, logout, setUser, setClinic, setTokens, clearError
     - Add loading states for different auth operations
     - Implement token management with automatic refresh logic
     - Add data validation timestamps for cache management
-  - [ ] 1.3 Update auth hook for simplified usage
+  - [x] 1.3 Update auth hook for simplified usage
     - Refactor `frontend/src/hooks/useAuth.ts` to use simplified store
     - Remove complex React Query integration, use direct API calls with proper error handling
     - Implement automatic token refresh on API calls

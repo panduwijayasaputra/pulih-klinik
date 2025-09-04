@@ -42,7 +42,7 @@ export class AuthAPI {
         return {
           success: true,
           user: mappedUser,
-          token: data.data.accessToken,
+          accessToken: data.data.accessToken,
           refreshToken: data.data.refreshToken,
           message: data.message || 'Login berhasil'
         };

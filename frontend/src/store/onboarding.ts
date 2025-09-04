@@ -130,7 +130,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
             const authStore = useAuthStore.getState();
             authStore.login({
               user: response.data.data.user,
-              token: authStore.token || '',
+              accessToken: authStore.accessToken || '',
               refreshToken: authStore.refreshToken || '',
             });
           } else {
@@ -166,7 +166,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
             const authStore = useAuthStore.getState();
             authStore.login({
               user: response.data.data.user,
-              token: authStore.token || '',
+              accessToken: authStore.accessToken || '',
               refreshToken: authStore.refreshToken || '',
             });
           } else {
@@ -228,7 +228,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
           if (response.data?.data?.user) {
             authStore.login({
               user: response.data.data.user,
-              token: authStore.token || '',
+              accessToken: authStore.accessToken || '',
               refreshToken: authStore.refreshToken || '',
             });
           }

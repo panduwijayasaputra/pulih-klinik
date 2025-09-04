@@ -1,33 +1,60 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AuthState, User } from '@/types/auth';
+import { AuthState, User, Clinic } from '@/types/auth';
 
 interface AuthStore extends AuthState {
-  login: (data: { user: User; token?: string; refreshToken?: string }) => void;
+  // Core auth actions
+  login: (data: { user: User; clinic?: Clinic; accessToken: string; refreshToken: string }) => void;
   logout: () => void;
-  clearAuthState: () => void;
   clearError: () => void;
-  updateTokens: (accessToken: string, refreshToken?: string) => void;
+  
+  // User and clinic management
+  setUser: (user: User | null) => void;
+  setClinic: (clinic: Clinic | null) => void;
+  setTokens: (accessToken: string, refreshToken: string) => void;
+  
+  // Loading and error states
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  
+  // Token management
+  updateTokens: (accessToken: string, refreshToken?: string) => void;
+  refreshTokens: () => Promise<boolean>;
+  
+  // Data validation
+  setLastValidated: (date: Date) => void;
+  isDataStale: () => boolean;
+  
+  // Helper methods
+  hasRole: (role: string) => boolean;
+  isAdmin: () => boolean;
+  isClinicAdmin: () => boolean;
+  isTherapist: () => boolean;
+  needsOnboarding: () => boolean;
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
+      // Initial state
       user: null,
+      clinic: null,
       isLoading: false,
       error: null,
       isAuthenticated: false,
-      token: null,
+      accessToken: null,
       refreshToken: null,
+      lastValidated: new Date(),
 
-      login: (data: { user: User; token?: string; refreshToken?: string }) => {
+      // Core auth actions
+      login: (data: { user: User; clinic?: Clinic; accessToken: string; refreshToken: string }) => {
         set({
           user: data.user,
+          clinic: data.clinic || null,
           isAuthenticated: true,
-          token: data.token || null,
-          refreshToken: data.refreshToken || null,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          lastValidated: new Date(),
           error: null,
         });
       },
@@ -35,9 +62,11 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => {
         set({
           user: null,
+          clinic: null,
           isAuthenticated: false,
-          token: null,
+          accessToken: null,
           refreshToken: null,
+          lastValidated: new Date(),
           error: null,
         });
         
@@ -47,36 +76,105 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      clearAuthState: () => {
-        set({
-          user: null,
-          isAuthenticated: false,
-          token: null,
-          refreshToken: null,
-          error: null,
-        });
-      },
-
       clearError: () => set({ error: null }),
 
-      updateTokens: (accessToken: string, refreshToken?: string) => {
-        set({
-          token: accessToken,
-          refreshToken: refreshToken || get().refreshToken,
+      // User and clinic management
+      setUser: (user: User | null) => {
+        set({ user });
+        if (user) {
+          set({ lastValidated: new Date() });
+        }
+      },
+
+      setClinic: (clinic: Clinic | null) => {
+        set({ clinic });
+        if (clinic) {
+          set({ lastValidated: new Date() });
+        }
+      },
+
+      setTokens: (accessToken: string, refreshToken: string) => {
+        set({ 
+          accessToken, 
+          refreshToken,
+          lastValidated: new Date()
         });
       },
 
+      // Loading and error states
       setLoading: (loading: boolean) => set({ isLoading: loading }),
-
       setError: (error: string | null) => set({ error }),
+
+      // Token management
+      updateTokens: (accessToken: string, refreshToken?: string) => {
+        set({
+          accessToken,
+          refreshToken: refreshToken || get().refreshToken,
+          lastValidated: new Date(),
+        });
+      },
+
+      refreshTokens: async (): Promise<boolean> => {
+        const { refreshToken } = get();
+        if (!refreshToken) return false;
+
+        try {
+          // This will be implemented in the auth hook
+          // For now, just return false to indicate no refresh happened
+          return false;
+        } catch (error) {
+          set({ error: 'Failed to refresh tokens' });
+          return false;
+        }
+      },
+
+      // Data validation
+      setLastValidated: (date: Date) => set({ lastValidated: date }),
+      
+      isDataStale: (): boolean => {
+        const { lastValidated } = get();
+        if (!lastValidated) return true;
+        
+        // Consider data stale after 5 minutes
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        return lastValidated < fiveMinutesAgo;
+      },
+
+      // Helper methods
+      hasRole: (role: string): boolean => {
+        const { user } = get();
+        return user?.roles.includes(role as any) || false;
+      },
+
+      isAdmin: (): boolean => {
+        return get().hasRole('administrator');
+      },
+
+      isClinicAdmin: (): boolean => {
+        return get().hasRole('clinic_admin');
+      },
+
+      isTherapist: (): boolean => {
+        return get().hasRole('therapist');
+      },
+
+      needsOnboarding: (): boolean => {
+        const { user, clinic } = get();
+        if (!user || !get().isClinicAdmin()) return false;
+        
+        // Clinic admin needs onboarding if no clinic or no subscription
+        return !clinic || !clinic.subscription;
+      },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({ 
-        user: state.user, 
+        user: state.user,
+        clinic: state.clinic,
         isAuthenticated: state.isAuthenticated,
-        token: state.token,
-        refreshToken: state.refreshToken
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        lastValidated: state.lastValidated,
       }),
       onRehydrateStorage: () => (state) => {
         // After rehydration, make sure loading is false

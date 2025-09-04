@@ -1,4 +1,4 @@
-import { AuthSubscriptionTierEnum, UserRoleEnum } from './enums';
+import { SubscriptionTierEnum, UserRoleEnum } from './enums';
 
 type EnumValue<T> = T[keyof T];
 
@@ -14,37 +14,58 @@ export interface LoginApiData {
   password: string;
 }
 
-// User interface
+// Simplified User interface - matches backend response structure exactly
 export interface User {
   id: string;
   email: string;
   name: string;
+  isActive: boolean;
   roles: UserRole[];
-  roleDetails?: Array<{
-    id: string;
-    role: string;
-  }>;
   clinicId?: string;
   clinicName?: string;
-  subscriptionTier?: EnumValue<typeof AuthSubscriptionTierEnum>;
+  subscriptionTier?: EnumValue<typeof SubscriptionTierEnum>;
 }
 
-// Authentication state
+// Simplified Clinic interface
+export interface Clinic {
+  id: string;
+  name: string;
+  isActive: boolean;
+  subscription?: EnumValue<typeof SubscriptionTierEnum>;
+}
+
+// Simplified Authentication state - only essential fields
 export interface AuthState {
   user: User | null;
+  clinic: Clinic | null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  token: string | null;
+  accessToken: string | null;
   refreshToken: string | null;
+  lastValidated?: Date; // For cache management
 }
 
 // API response types
 export interface LoginResponse {
   success: boolean;
   user?: User;
-  token?: string;
+  clinic?: Clinic;
+  accessToken?: string;
   refreshToken?: string;
   message?: string;
+}
+
+// Registration types
+export interface RegistrationData {
+  name: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
+}
+
+export interface EmailVerificationData {
+  email: string;
+  code: string;
 }
 

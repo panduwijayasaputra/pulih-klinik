@@ -9,12 +9,12 @@ import { getDefaultRouteForUser } from '@/lib/route-protection';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { clearAuthState } = useAuthStore();
+  const { logout } = useAuthStore();
 
   // Clear any existing auth state when visiting login page (without redirect)
   useEffect(() => {
-    clearAuthState();
-  }, [clearAuthState]);
+    logout();
+  }, [logout]);
 
   const handleLoginSuccess = () => {
     // Use a small delay to ensure auth state is updated
