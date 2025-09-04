@@ -290,8 +290,8 @@ export const useAuth = () => {
     const currentTime = Date.now();
     const timeUntilExpiry = expirationTime - currentTime;
     
-    // Refresh token 5 minutes before expiry
-    const refreshTime = Math.max(timeUntilExpiry - 5 * 60 * 1000, 0);
+    // Refresh token 2 minutes before expiry (more efficient)
+    const refreshTime = Math.max(timeUntilExpiry - 2 * 60 * 1000, 0);
     
     if (refreshTime > 0) {
       console.log(`🕐 Token will be refreshed in ${Math.round(refreshTime / 1000 / 60)} minutes`);
@@ -319,6 +319,13 @@ export const useAuth = () => {
       const response = await AuthAPI.login(credentials);
       
       if (response.success && response.user && response.accessToken && response.refreshToken) {
+        console.log('🔍 Login Debug - API Response:', {
+          user: response.user,
+          userRoles: response.user.roles,
+          userRolesType: typeof response.user.roles,
+          userRolesLength: response.user.roles?.length,
+        });
+
         // Extract clinic data from user if available
         const clinicData: Clinic | undefined = response.user.clinicId ? {
           id: response.user.clinicId,
@@ -334,14 +341,8 @@ export const useAuth = () => {
           refreshToken: response.refreshToken,
         });
         
-        // Smart redirect logic based on user role and state
-        const redirectPath = getRedirectPath(response.user, clinicData);
-        if (redirectPath) {
-          // Use setTimeout to ensure the login state is updated before redirect
-          setTimeout(() => {
-            window.location.href = redirectPath;
-          }, 100);
-        }
+        // Let RouteGuard handle the redirect logic
+        // No manual redirect here to avoid conflicts
         
         return true;
       } else {

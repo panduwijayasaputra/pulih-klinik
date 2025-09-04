@@ -1,6 +1,9 @@
 import { OnboardingStepEnum } from '@/store/onboarding';
 import { ClinicFormData, SubscriptionData, PaymentData } from '@/types/registration';
 
+// Cache for validation results to avoid repeated computations
+const validationCache = new Map<string, OnboardingValidationResult>();
+
 export interface OnboardingValidationResult {
   isValid: boolean;
   currentStep: OnboardingStepEnum;
@@ -21,6 +24,14 @@ export interface UserOnboardingState {
  * Validates the current onboarding state and determines the appropriate step
  */
 export const validateOnboardingState = (userState: UserOnboardingState): OnboardingValidationResult => {
+  // Create cache key from user state
+  const cacheKey = `${userState.hasClinic}-${userState.hasSubscription}-${userState.hasPayment}-${!!userState.clinicData}-${!!userState.subscriptionData}-${!!userState.paymentData}`;
+  
+  // Return cached result if available
+  if (validationCache.has(cacheKey)) {
+    return validationCache.get(cacheKey)!;
+  }
+  
   const { hasClinic, hasSubscription, hasPayment, clinicData, subscriptionData, paymentData } = userState;
   
   // Determine current step based on what's missing
@@ -46,12 +57,17 @@ export const validateOnboardingState = (userState: UserOnboardingState): Onboard
     canProceed = true;
   }
 
-  return {
+  const result = {
     isValid: missingFields.length === 0,
     currentStep,
     missingFields,
     canProceed,
   };
+  
+  // Cache the result
+  validationCache.set(cacheKey, result);
+  
+  return result;
 };
 
 /**
@@ -86,9 +102,10 @@ export const getNextStep = (currentStep: OnboardingStepEnum): OnboardingStepEnum
   ];
 
   const currentIndex = stepOrder.indexOf(currentStep);
-  const nextIndex = currentIndex + 1;
+  if (currentIndex === -1) return null;
   
-  return nextIndex < stepOrder.length ? stepOrder[nextIndex] : null;
+  const nextIndex = currentIndex + 1;
+  return nextIndex < stepOrder.length ? (stepOrder[nextIndex] as OnboardingStepEnum) : null;
 };
 
 /**
@@ -103,9 +120,10 @@ export const getPreviousStep = (currentStep: OnboardingStepEnum): OnboardingStep
   ];
 
   const currentIndex = stepOrder.indexOf(currentStep);
-  const prevIndex = currentIndex - 1;
+  if (currentIndex === -1) return null;
   
-  return prevIndex >= 0 ? stepOrder[prevIndex] : null;
+  const prevIndex = currentIndex - 1;
+  return prevIndex >= 0 ? (stepOrder[prevIndex] as OnboardingStepEnum) : null;
 };
 
 /**
@@ -140,4 +158,11 @@ export const getOnboardingProgress = (userState: UserOnboardingState): number =>
   if (hasPayment) completedSteps++;
   
   return (completedSteps / 3) * 100; // 3 main steps before complete
+};
+
+/**
+ * Clears the validation cache (useful for testing or when state changes significantly)
+ */
+export const clearValidationCache = (): void => {
+  validationCache.clear();
 };

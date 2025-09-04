@@ -1,39 +1,27 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { AuthPageWrapper } from '@/components/layout/AuthPageWrapper';
 import { useAuthStore } from '@/store/auth';
-import { getDefaultRouteForUser } from '@/lib/route-protection';
+import { RouteGuard } from '@/components/auth/RouteGuard';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { logout } = useAuthStore();
+  const { clearError } = useAuthStore();
 
-  // Clear any existing auth state when visiting login page (without redirect)
+  // Clear any error state when visiting login page
   useEffect(() => {
-    logout();
-  }, [logout]);
-
-  const handleLoginSuccess = () => {
-    // Use a small delay to ensure auth state is updated
-    setTimeout(() => {
-      const { user: currentUser } = useAuthStore.getState();
-      if (currentUser) {
-        const defaultRoute = getDefaultRouteForUser(currentUser);
-        router.push(defaultRoute as any);
-      }
-    }, 100);
-  };
-
+    clearError();
+  }, [clearError]);
 
   return (
-    <AuthPageWrapper
-      title="Terapintar"
-      description="Sistem AI Hipnoterapi Indonesia"
-    >
-      <LoginForm onSuccess={handleLoginSuccess} />
-    </AuthPageWrapper>
+    <RouteGuard>
+      <AuthPageWrapper
+        title="Terapintar"
+        description="Sistem AI Hipnoterapi Indonesia"
+      >
+        <LoginForm />
+      </AuthPageWrapper>
+    </RouteGuard>
   );
 }

@@ -18,6 +18,7 @@ export const mockUsers: User[] = [
     isActive: true,
     roles: [UserRoleEnum.ClinicAdmin],
     clinicId: 'clinic-1',
+    clinicName: 'Klinik Sehat',
     subscriptionTier: AuthSubscriptionTierEnum.Beta,
   },
   {
@@ -27,6 +28,7 @@ export const mockUsers: User[] = [
     isActive: true,
     roles: [UserRoleEnum.Therapist],
     clinicId: 'clinic-1',
+    clinicName: 'Klinik Sehat',
     subscriptionTier: AuthSubscriptionTierEnum.Beta,
   },
   {
@@ -36,6 +38,7 @@ export const mockUsers: User[] = [
     isActive: true,
     roles: [UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist],
     clinicId: 'clinic-1',
+    clinicName: 'Klinik Sehat',
     subscriptionTier: AuthSubscriptionTierEnum.Beta,
   },
   {

@@ -2,8 +2,8 @@ import { SubscriptionTierEnum, UserRoleEnum } from './enums';
 
 type EnumValue<T> = T[keyof T];
 
-// User roles
-export type UserRole = EnumValue<typeof UserRoleEnum>;
+// User roles - simplified to string array for consistency with backend
+export type UserRole = string;
 
 // Login form data type (schema is now in /schemas/authSchema.ts)
 export type { LoginFormData } from '@/schemas/authSchema';
@@ -20,7 +20,7 @@ export interface User {
   email: string;
   name: string;
   isActive: boolean;
-  roles: UserRole[];
+  roles: string[]; // Simplified to string array
   clinicId?: string;
   clinicName?: string;
   subscriptionTier?: EnumValue<typeof SubscriptionTierEnum>;

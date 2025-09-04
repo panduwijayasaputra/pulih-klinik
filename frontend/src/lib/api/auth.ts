@@ -2,6 +2,14 @@ import { LoginApiData, LoginResponse, User } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
 import { ItemResponse } from './types';
 import { httpClient, handleApiResponse, handleApiError } from '@/lib/http-client';
+import { 
+  LoginApiResponse, 
+  RefreshTokenApiResponse, 
+  CurrentUserApiResponse,
+  ChangePasswordApiResponse,
+  ForgotPasswordApiResponse,
+  ResetPasswordApiResponse
+} from './auth-types';
 
 // Store token in a way that's accessible to the http client
 let authToken: string | null = null;
@@ -10,7 +18,14 @@ export class AuthAPI {
   static async login(credentials: LoginApiData): Promise<LoginResponse> {
     try {
       const response = await httpClient.post('/auth/login', credentials);
-      const data = handleApiResponse(response);
+      const data = handleApiResponse<LoginApiResponse>(response);
+      
+      console.log('🔍 Auth API Debug - Raw backend response:', {
+        data: data.data,
+        user: data.data?.user,
+        userRoles: data.data?.user?.roles,
+        userRolesType: typeof data.data?.user?.roles,
+      });
       
       // Store the token
       if (data.success && data.data?.accessToken) {
@@ -29,15 +44,30 @@ export class AuthAPI {
         }
         
         // Map the user data to match frontend interface
-        const mappedUser = {
+        const mappedUser: User = {
           ...data.data.user,
-          roles: data.data.user.roles.map((roleObj: any) => roleObj.role), // Extract role string from role objects
-          roleDetails: data.data.user.roles, // Keep full role details
-          clinicId: data.data.user.clinicId,
-          clinicName: data.data.user.clinicName,
+          roles: Array.isArray(data.data.user.roles) 
+            ? data.data.user.roles.map((role: any) => {
+                // Handle both string roles and role objects
+                if (typeof role === 'string') {
+                  return role;
+                } else if (role && typeof role === 'object' && role.role) {
+                  return role.role;
+                } else if (role && typeof role === 'object' && role.name) {
+                  return role.name;
+                }
+                return String(role);
+              })
+            : [],
+          ...(data.data.user.clinicId && { clinicId: data.data.user.clinicId }),
+          ...(data.data.user.clinicName && { clinicName: data.data.user.clinicName }),
         };
 
-
+        console.log('🔍 Auth API Debug - Mapped user:', {
+          mappedUser,
+          mappedUserRoles: mappedUser.roles,
+          mappedUserRolesType: typeof mappedUser.roles,
+        });
 
         return {
           success: true,
@@ -54,6 +84,8 @@ export class AuthAPI {
       };
     } catch (error) {
       handleApiError(error);
+      // This line will never be reached due to handleApiError throwing
+      return { success: false, message: 'Login failed' };
     }
   }
 
@@ -81,21 +113,20 @@ export class AuthAPI {
   static async getCurrentUser(): Promise<ItemResponse<User>> {
     try {
       const response = await httpClient.get('/auth/me');
-      const data = handleApiResponse<{ success: boolean; data: any; message: string }>(response);
+      const data = handleApiResponse<CurrentUserApiResponse>(response);
       
       // Map the user data to match frontend interface  
-      const mappedUser = {
+      const mappedUser: User = {
         ...data.data,
         roles: data.data.roles?.map((roleObj: any) => roleObj.role) || [],
-        roleDetails: data.data.roles || [], // Keep full role details
-        clinicId: data.data.clinicId,
-        clinicName: data.data.clinicName,
+        ...(data.data.clinicId && { clinicId: data.data.clinicId }),
+        ...(data.data.clinicName && { clinicName: data.data.clinicName }),
       };
 
       return {
         success: true,
         data: mappedUser,
-        message: data.message
+        message: data.message || 'User data retrieved successfully'
       };
     } catch (error) {
       // Don't use localStorage fallback - let auth hooks handle the error
@@ -114,7 +145,7 @@ export class AuthAPI {
           
           if (refreshToken) {
             const response = await httpClient.post('/auth/refresh', { refreshToken });
-            const data = handleApiResponse(response);
+            const data = handleApiResponse<RefreshTokenApiResponse>(response);
             
             if (data.success && data.data) {
               // Update stored tokens
@@ -158,30 +189,34 @@ export class AuthAPI {
         newPassword,
         confirmPassword
       });
-      const data = handleApiResponse(response);
+      const data = handleApiResponse<ChangePasswordApiResponse>(response);
       
       return {
         success: true,
-        data: data.data,
-        message: data.message
+        data: data.data || { message: 'Password changed successfully' },
+        message: data.message || 'Password changed successfully'
       };
     } catch (error) {
       handleApiError(error);
+      // This line will never be reached due to handleApiError throwing
+      return { success: false, data: { message: 'Password change failed' }, message: 'Password change failed' };
     }
   }
 
   static async forgotPassword(email: string): Promise<ItemResponse<{ message: string }>> {
     try {
       const response = await httpClient.post('/auth/forgot-password', { email });
-      const data = handleApiResponse(response);
+      const data = handleApiResponse<ForgotPasswordApiResponse>(response);
       
       return {
         success: true,
-        data: data.data,
-        message: data.message
+        data: data.data || { message: 'Password reset email sent' },
+        message: data.message || 'Password reset email sent'
       };
     } catch (error) {
       handleApiError(error);
+      // This line will never be reached due to handleApiError throwing
+      return { success: false, data: { message: 'Forgot password failed' }, message: 'Forgot password failed' };
     }
   }
 
@@ -192,30 +227,34 @@ export class AuthAPI {
         password,
         confirmPassword
       });
-      const data = handleApiResponse(response);
+      const data = handleApiResponse<ResetPasswordApiResponse>(response);
       
       return {
         success: true,
-        data: data.data,
-        message: data.message
+        data: data.data || { message: 'Password reset successfully' },
+        message: data.message || 'Password reset successfully'
       };
     } catch (error) {
       handleApiError(error);
+      // This line will never be reached due to handleApiError throwing
+      return { success: false, data: { message: 'Password reset failed' }, message: 'Password reset failed' };
     }
   }
 
   static async verifyResetToken(token: string): Promise<ItemResponse<{ valid: boolean; email?: string }>> {
     try {
       const response = await httpClient.post('/auth/verify-reset-token', { token });
-      const data = handleApiResponse(response);
+      const data = handleApiResponse<{ success: boolean; data: { valid: boolean; email?: string }; message?: string }>(response);
       
       return {
         success: true,
-        data: data.data,
-        message: data.message
+        data: data.data || { valid: false },
+        message: data.message || 'Token verification completed'
       };
     } catch (error) {
       handleApiError(error);
+      // This line will never be reached due to handleApiError throwing
+      return { success: false, data: { valid: false }, message: 'Token verification failed' };
     }
   }
 

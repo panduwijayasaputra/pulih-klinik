@@ -34,10 +34,17 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
       return;
     }
 
-    // If user is authenticated and trying to access auth pages
-    if (isAuthenticated && user && (pathname === '/login' || pathname === '/register')) {
+    // If user is authenticated and trying to access auth pages or landing page
+    if (isAuthenticated && user && (pathname === '/login' || pathname === '/register' || pathname === '/')) {
+      console.log('🔍 RouteGuard Debug - Redirecting authenticated user:', {
+        pathname,
+        user: user ? { id: user.id, email: user.email, roles: user.roles } : null,
+        clinic: clinic ? { id: clinic.id, name: clinic.name, subscription: clinic.subscription } : null,
+      });
+      
       // Use smart redirect logic based on user role and state
       const redirectPath = getRedirectPath(user, clinic);
+      console.log('🚀 RouteGuard redirect path:', redirectPath);
       router.push(redirectPath || '/portal' as any);
       return;
     }
@@ -59,7 +66,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
       // Clinic admins need to complete onboarding first
       if (isClinicAdmin) {
         const hasClinic = !!clinic;
-        const hasSubscription = clinic?.subscription;
+        const hasSubscription = !!clinic?.subscription;
 
         if (isPortalRoute) {
           // If trying to access portal but doesn't have clinic/subscription
@@ -82,18 +89,18 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         }
       }
     }
-  }, [isLoading, isAuthenticated, user, pathname, router]);
+  }, [isLoading, isAuthenticated, user, clinic, pathname, router]);
 
   // Helper function to determine redirect path (same as in useAuth)
   const getRedirectPath = (user: any, clinic: any): string | null => {
-    // System Admin users → redirect to /portal
+    // System Admin users → redirect to /portal/admin
     if (user.roles.includes(UserRoleEnum.Administrator)) {
-      return '/portal';
+      return '/portal/admin';
     }
     
-    // Therapist users → redirect to /portal
+    // Therapist users → redirect to /portal/therapist
     if (user.roles.includes(UserRoleEnum.Therapist)) {
-      return '/portal';
+      return '/portal/therapist';
     }
     
     // Clinic Admin users
@@ -103,8 +110,8 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         return '/onboarding';
       }
       
-      // If user has complete clinic and subscription data → redirect to /portal
-      return '/portal';
+      // If user has complete clinic and subscription data → redirect to /portal/clinic
+      return '/portal/clinic';
     }
     
     // Default fallback
@@ -142,21 +149,4 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
 
   // User has access, render children
   return <>{children}</>;
-};
-
-// HOC for protecting specific routes
-export const withRouteGuard = <P extends object>(
-  Component: React.ComponentType<P>,
-  fallback?: React.ReactNode
-) => {
-  const WrappedComponent: React.FC<P> = (props) => {
-    return (
-      <RouteGuard fallback={fallback}>
-        <Component {...props} />
-      </RouteGuard>
-    );
-  };
-
-  WrappedComponent.displayName = `withRouteGuard(${Component.displayName || Component.name})`;
-  return WrappedComponent;
 };

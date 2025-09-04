@@ -13,7 +13,7 @@ import { FormModal } from '@/components/ui/form-modal';
 import ConfirmationDialog, { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
 
-import { createClientSchema } from '@/schemas/clientSchema';
+import { createClientSchema, type ClientCreateData } from '@/schemas/clientSchema';
 import type { ClientFormData } from '@/types/client';
 import { useClient } from '@/hooks/useClient';
 import { ClientAPI } from '@/lib/api/client';
@@ -65,17 +65,17 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
     watch,
     formState: { errors, isSubmitting, isDirty, isValid },
     reset,
-  } = useForm<ClientFormData>({
+  } = useForm<ClientCreateData>({
     resolver: zodResolver(createClientSchema),
     mode: mode === 'edit' ? 'onSubmit' : 'onChange',
     defaultValues: {
       fullName: '',
-      gender: ClientGenderEnum.Male,
+      gender: 'Male' as const,
       birthPlace: '',
       birthDate: '',
-      religion: ClientReligionEnum.Islam,
+      religion: 'Islam' as const,
       occupation: '',
-      education: ClientEducationEnum.Bachelor,
+      education: 'Bachelor' as const,
       educationMajor: '',
       address: '',
       phone: '',
@@ -122,12 +122,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               // Reset with fetched client data
               reset({
                 fullName: clientData.fullName || clientData.name || '',
-                gender: clientData.gender || ClientGenderEnum.Male,
+                gender: clientData.gender || 'Male' as const,
                 birthPlace: clientData.birthPlace || '',
                 birthDate: clientData.birthDate || '',
-                religion: clientData.religion || ClientReligionEnum.Islam,
+                religion: clientData.religion || 'Islam' as const,
                 occupation: clientData.occupation || '',
-                education: clientData.education || ClientEducationEnum.Bachelor,
+                education: clientData.education || 'Bachelor' as const,
                 educationMajor: clientData.educationMajor || '',
                 address: clientData.address || '',
                 phone: clientData.phone || '',
@@ -159,12 +159,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               // Fallback to default values if API fails
               reset({
                 fullName: '',
-                gender: ClientGenderEnum.Male,
+                gender: 'Male' as const,
                 birthPlace: '',
                 birthDate: '',
-                religion: ClientReligionEnum.Islam,
+                religion: 'Islam' as const,
                 occupation: '',
-                education: ClientEducationEnum.Bachelor,
+                education: 'Bachelor' as const,
                 educationMajor: '',
                 address: '',
                 phone: '',
@@ -199,12 +199,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             // Fallback to default values on error
             reset({
               fullName: '',
-              gender: ClientGenderEnum.Male,
+              gender: 'Male' as const,
               birthPlace: '',
               birthDate: '',
-              religion: ClientReligionEnum.Islam,
+              religion: 'Islam' as const,
               occupation: '',
-              education: ClientEducationEnum.Bachelor,
+              education: 'Bachelor' as const,
               educationMajor: '',
               address: '',
               phone: '',
@@ -243,12 +243,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
         // Reset form for create mode
         reset({
           fullName: '',
-          gender: ClientGenderEnum.Male,
+          gender: 'Male' as const,
           birthPlace: '',
           birthDate: '',
-          religion: ClientReligionEnum.Islam,
+          religion: 'Islam' as const,
           occupation: '',
-          education: ClientEducationEnum.Bachelor,
+          education: 'Bachelor' as const,
           educationMajor: '',
           address: '',
           phone: '',

@@ -135,9 +135,9 @@ export const useAuthStore = create<AuthStore>()(
         const { lastValidated } = get();
         if (!lastValidated) return true;
         
-        // Consider data stale after 5 minutes
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        return lastValidated < fiveMinutesAgo;
+        // Consider data stale after 10 minutes (reduced API calls)
+        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+        return lastValidated < tenMinutesAgo;
       },
 
       // Helper methods

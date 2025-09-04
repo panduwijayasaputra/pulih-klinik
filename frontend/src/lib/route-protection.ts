@@ -1,4 +1,4 @@
-import { User, UserRole } from '@/types/auth';
+import { User } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
 import { RouteConfig } from '@/types/navigation';
 
@@ -124,20 +124,20 @@ export const routeConfigs: RouteConfig[] = [
 ];
 
 // Check if user has required role
-export const hasRequiredRole = (user: User | null, requiredRoles: UserRole[]): boolean => {
+export const hasRequiredRole = (user: User | null, requiredRoles: string[]): boolean => {
   if (!user || !user.roles) return false;
   if (requiredRoles.length === 0) return true; // No roles required
 
   // Normalize legacy roles in case persisted data uses old strings
-  const legacyToEnumMap: Record<string, UserRole> = {
+  const legacyToEnumMap: Record<string, string> = {
     administrator: UserRoleEnum.Administrator,
     clinic_admin: UserRoleEnum.ClinicAdmin,
     therapist: UserRoleEnum.Therapist,
-  } as const as Record<string, UserRole>;
+  };
 
-  const normalizedUserRoles: UserRole[] = user.roles.map((role) => {
+  const normalizedUserRoles: string[] = user.roles.map((role) => {
     const key = String(role).toLowerCase();
-    return legacyToEnumMap[key] ?? (role as UserRole);
+    return legacyToEnumMap[key] ?? role;
   });
 
   // Check if user has any of the required roles

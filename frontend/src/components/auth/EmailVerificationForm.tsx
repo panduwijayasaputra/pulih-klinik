@@ -51,6 +51,7 @@ export const EmailVerificationForm: React.FC<EmailVerificationFormProps> = ({
       const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [cooldown]);
 
   const handleFormSubmit = async (data: EmailVerificationFormData) => {

@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoginFormData } from '@/types/auth';
 import { loginSchema } from '@/schemas/authSchema';
 import { useAuth } from '@/hooks/useAuth';
+import { demoCredentials } from '@/lib/mocks/auth';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -54,6 +56,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       }
     }
   }, [setValue]);
+
+  // Handle demo user selection
+  const handleDemoUserSelect = (selectedUser: string) => {
+    if (selectedUser === '') return;
+    
+    const demoUser = demoCredentials.find(cred => cred.label === selectedUser);
+    if (demoUser) {
+      setValue('email', demoUser.email);
+      setValue('password', demoUser.password);
+      console.log('🎭 Demo user selected:', demoUser.label);
+    }
+  };
 
 
   const onSubmit = async (data: LoginFormData) => {
@@ -109,6 +123,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               {error}
             </div>
           )}
+
+          {/* Demo User Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="demoUser" className="text-foreground">Demo User (Pilih untuk testing)</Label>
+            <Select onValueChange={handleDemoUserSelect}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih demo user..." />
+              </SelectTrigger>
+              <SelectContent>
+                {demoCredentials.map((cred) => (
+                  <SelectItem key={cred.label} value={cred.label}>
+                    {cred.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground">Atau</span>
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="email" className="text-foreground">Email</Label>

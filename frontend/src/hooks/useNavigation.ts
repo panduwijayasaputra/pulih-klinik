@@ -49,8 +49,12 @@ export const useNavigation = () => {
   const effectiveUserRoles = useMemo<UserRole[]>(() => {
     const roles = user?.roles ?? [];
 
-    console.log('🔍 useNavigation debug - user roles:', roles);
+    // If roles are already enum values, use them directly
+    if (roles.length > 0 && Object.values(UserRoleEnum).includes(roles[0] as UserRole)) {
+      return roles as UserRole[];
+    }
 
+    // Legacy normalization for old role formats
     const legacyToEnumMap: Record<string, UserRole> = {
       administrator: UserRoleEnum.Administrator,
       clinic_admin: UserRoleEnum.ClinicAdmin,
@@ -70,8 +74,6 @@ export const useNavigation = () => {
       seen.add(k);
       return true;
     });
-
-    console.log('🔍 useNavigation debug - effective roles:', unique);
 
     return unique;
   }, [user?.roles]);

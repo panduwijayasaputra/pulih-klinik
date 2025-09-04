@@ -4,7 +4,12 @@ import type { Metadata } from 'next';
 import { ToastProvider } from '@/components/ui/toast';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
-// import { AuthDebug } from '@/components/debug/AuthDebug';
+import { disableConsoleInProduction } from '@/lib/security-utils';
+
+// Disable console logs in production for security
+if (typeof window !== 'undefined') {
+  disableConsoleInProduction();
+}
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -84,7 +89,6 @@ export default function RootLayout({
             <ToastProvider>
               <div className='relative flex min-h-screen flex-col'>
                 <div className='flex-1'>{children}</div>
-                {/* <AuthDebug /> */}
               </div>
             </ToastProvider>
           </AuthProvider>

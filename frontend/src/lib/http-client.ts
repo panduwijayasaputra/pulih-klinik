@@ -1,5 +1,10 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
+// Cache for auth token to reduce localStorage access (moved to module scope)
+let cachedToken: string | null = null;
+let tokenCacheTime = 0;
+const TOKEN_CACHE_DURATION = 30000; // 30 seconds
+
 // Create axios instance with base configuration
 const createHttpClient = (): AxiosInstance => {
   const client = axios.create({
@@ -13,18 +18,31 @@ const createHttpClient = (): AxiosInstance => {
   // Request interceptor to add auth token
   client.interceptors.request.use(
     (config) => {
-      // Get token from localStorage
+      // Get token from cache or localStorage
       if (typeof window !== 'undefined') {
+        const now = Date.now();
+        
+        // Use cached token if it's still valid
+        if (cachedToken && (now - tokenCacheTime) < TOKEN_CACHE_DURATION) {
+          config.headers.Authorization = `Bearer ${cachedToken}`;
+          return config;
+        }
+
+        // Fetch fresh token from localStorage
         const authStorage = localStorage.getItem('auth-storage');
         if (authStorage) {
           try {
             const parsed = JSON.parse(authStorage);
-            const token = parsed.state?.token;
+            const token = parsed.state?.accessToken || parsed.state?.token;
             if (token) {
+              cachedToken = token;
+              tokenCacheTime = now;
               config.headers.Authorization = `Bearer ${token}`;
             }
           } catch (error) {
             console.warn('Failed to parse auth storage:', error);
+            cachedToken = null;
+            tokenCacheTime = 0;
           }
         }
       }
@@ -55,6 +73,14 @@ const createHttpClient = (): AxiosInstance => {
 };
 
 export const httpClient = createHttpClient();
+
+// Function to clear token cache (useful for logout)
+export const clearTokenCache = () => {
+  if (typeof window !== 'undefined') {
+    cachedToken = null;
+    tokenCacheTime = 0;
+  }
+};
 export const apiClient = httpClient;
 
 // Helper function to handle API responses

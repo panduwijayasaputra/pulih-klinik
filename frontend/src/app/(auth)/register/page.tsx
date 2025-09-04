@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RegisterFlow } from '@/components/auth/RegisterFlow';
 import { useRegistrationStore } from '@/store/registration';
+import { RouteGuard } from '@/components/auth/RouteGuard';
 
 export default function RegisterPage() {
   const searchParams = useSearchParams();
@@ -30,5 +31,9 @@ export default function RegisterPage() {
     }
   }, [searchParams, registrationId, getRegistrationStatus, setStep]);
 
-  return <RegisterFlow />;
+  return (
+    <RouteGuard>
+      <RegisterFlow />
+    </RouteGuard>
+  );
 }
