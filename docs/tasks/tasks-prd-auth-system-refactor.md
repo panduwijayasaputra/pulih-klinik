@@ -29,7 +29,7 @@ Based on PRD: `prd-auth-system-refactor.md`
 
 ## Tasks
 
-- [ ] 1.0 Refactor Authentication Data Structure and State Management
+- [x] 1.0 Refactor Authentication Data Structure and State Management
   - [x] 1.1 Simplify auth types and interfaces
     - Update `frontend/src/types/auth.ts` to include only essential fields: user info (id, email, name, isActive), clinic info (id, name, isActive, subscription), roles, access token, refresh token
     - Remove complex nested structures and unnecessary fields
@@ -48,28 +48,28 @@ Based on PRD: `prd-auth-system-refactor.md`
     - Add helper functions: hasRole, isAdmin, isClinicAdmin, isTherapist
     - Implement page reload validation with database sync
 
-- [ ] 2.0 Implement Streamlined Registration Flow
-  - [ ] 2.1 Create registration form component
+- [x] 2.0 Implement Streamlined Registration Flow
+  - [x] 2.1 Create registration form component
     - Create `frontend/src/components/auth/RegistrationForm.tsx` with fields: name, email, password, password confirmation
     - Implement form validation using Zod schema in `frontend/src/schemas/authSchema.ts`
     - Add password strength validation and email format validation
     - Include loading states and error handling
     - Style with existing design system components
-  - [ ] 2.2 Create email verification component
+  - [x] 2.2 Create email verification component
     - Create `frontend/src/components/auth/EmailVerificationForm.tsx` for verification code input
     - Add "Resend code" functionality with cooldown timer
     - Implement code validation and error states
     - Add admin manual verification option (if user has admin role)
-  - [ ] 2.3 Create registration success page
+  - [x] 2.3 Create registration success page
     - Create `frontend/src/components/auth/RegistrationSuccess.tsx` with success message
     - Include login button that redirects to login page
     - Add brief explanation of next steps
-  - [ ] 2.4 Implement backend registration with email verification
+  - [x] 2.4 Implement backend registration with email verification
     - Update `backend/src/registration/registration.service.ts` to generate email verification tokens
     - Add email sending functionality for verification codes
     - Implement token expiration and validation logic
     - Add admin manual verification endpoint
-  - [ ] 2.5 Add registration API endpoints
+  - [x] 2.5 Add registration API endpoints
     - Update `backend/src/registration/registration.controller.ts` with email verification endpoints
     - Add `/registration/verify-email` endpoint for code verification
     - Add `/registration/resend-code` endpoint for code resending

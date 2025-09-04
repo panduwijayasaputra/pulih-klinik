@@ -11,8 +11,8 @@ import {
   ApiResponse,
   ApiBody,
 } from '@nestjs/swagger';
-import { RegistrationService, RegistrationResult } from './registration.service';
-import { StartRegistrationDto } from './dto';
+import { RegistrationService, RegistrationResult, EmailVerificationResult, ResendCodeResult } from './registration.service';
+import { StartRegistrationDto, VerifyEmailDto, ResendCodeDto, AdminVerifyDto } from './dto';
 
 @ApiTags('Registration')
 @Controller('registration')
@@ -75,6 +75,130 @@ export class RegistrationController {
       success: true,
       data: result,
       message: 'Registration completed successfully',
+    };
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verify email with verification code',
+    description: 'Verify user email using the 6-digit code sent to their email',
+  })
+  @ApiBody({ type: VerifyEmailDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verified successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          verified: true,
+          message: 'Email verified successfully. You can now login to your account.',
+        },
+        message: 'Email verification completed',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired verification code',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto): Promise<{
+    success: boolean;
+    data: EmailVerificationResult;
+    message: string;
+  }> {
+    const result = await this.registrationService.verifyEmail(verifyEmailDto);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Email verification completed',
+    };
+  }
+
+  @Post('resend-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Resend verification code',
+    description: 'Resend email verification code to user',
+  })
+  @ApiBody({ type: ResendCodeDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification code sent successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          message: 'Verification code sent successfully. Please check your email.',
+        },
+        message: 'Code sent successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Email already verified or rate limit exceeded',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async resendCode(@Body() resendCodeDto: ResendCodeDto): Promise<{
+    success: boolean;
+    data: ResendCodeResult;
+    message: string;
+  }> {
+    const result = await this.registrationService.resendVerificationCode(resendCodeDto);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Code sent successfully',
+    };
+  }
+
+  @Post('admin-verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Admin verify email',
+    description: 'Manually verify user email by admin (requires admin role)',
+  })
+  @ApiBody({ type: AdminVerifyDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verified by admin successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          verified: true,
+          message: 'Email verified by admin successfully.',
+        },
+        message: 'Admin verification completed',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async adminVerify(@Body() adminVerifyDto: AdminVerifyDto): Promise<{
+    success: boolean;
+    data: EmailVerificationResult;
+    message: string;
+  }> {
+    const result = await this.registrationService.adminVerifyEmail(adminVerifyDto);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Admin verification completed',
     };
   }
 }
