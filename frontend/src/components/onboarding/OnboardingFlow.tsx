@@ -112,6 +112,69 @@ export const OnboardingFlow: React.FC = () => {
     }
   }, [isLoaded, isAuthenticated]); // Removed currentStep dependency
 
+  // Enhanced stale data validation with periodic checks
+  useEffect(() => {
+    if (!isLoaded || !isAuthenticated) return;
+
+    // Set up periodic stale data validation every 2 minutes
+    const staleDataCheckInterval = setInterval(() => {
+      const authState = useAuthStore.getState();
+      const isDataStale = authState.isDataStale();
+      const isValidating = authState.isValidating;
+      
+      if (isDataStale && !isValidating) {
+        console.log('🔄 Periodic stale data validation triggered');
+        if ((window as any).forceAuthValidation) {
+          (window as any).forceAuthValidation();
+        }
+      }
+    }, 2 * 60 * 1000); // Check every 2 minutes
+
+    return () => clearInterval(staleDataCheckInterval);
+  }, [isLoaded, isAuthenticated]);
+
+  // Smart validation trigger for subscription step entry
+  useEffect(() => {
+    if (isLoaded && isAuthenticated && currentStep === OnboardingStepEnum.Subscription) {
+      console.log('🔄 Subscription step entered - checking if validation needed...');
+      
+      const authState = useAuthStore.getState();
+      const isValidating = authState.isValidating;
+      
+      // Validate when entering subscription step to ensure clinic data is current
+      // This helps detect if clinic was deleted while user was on previous step
+      if (!isValidating) {
+        console.log('🔄 Smart validation triggered - subscription step entry');
+        if ((window as any).forceAuthValidation) {
+          (window as any).forceAuthValidation();
+        }
+      } else {
+        console.log('✅ Validation already in progress, skipping');
+      }
+    }
+  }, [isLoaded, isAuthenticated, currentStep]);
+
+  // Smart validation trigger for payment step entry
+  useEffect(() => {
+    if (isLoaded && isAuthenticated && currentStep === OnboardingStepEnum.Payment) {
+      console.log('🔄 Payment step entered - checking if validation needed...');
+      
+      const authState = useAuthStore.getState();
+      const isValidating = authState.isValidating;
+      
+      // Validate when entering payment step to ensure subscription data is current
+      // This helps detect if subscription was deleted while user was on previous step
+      if (!isValidating) {
+        console.log('🔄 Smart validation triggered - payment step entry');
+        if ((window as any).forceAuthValidation) {
+          (window as any).forceAuthValidation();
+        }
+      } else {
+        console.log('✅ Validation already in progress, skipping');
+      }
+    }
+  }, [isLoaded, isAuthenticated, currentStep]);
+
   // Handle complete onboarding redirect
   useEffect(() => {
     if (justCompletedSubscription) {

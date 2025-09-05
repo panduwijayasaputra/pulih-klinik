@@ -38,16 +38,16 @@ Based on PRD: `prd-onboarding-data-sync-fix.md`
     - Ensure validation only runs when not already in progress
     - Add proper error handling for validation failures
 
-- [ ] 2.0 Implement Smart Validation Triggers for Critical Steps
-  - [ ] 2.1 Add validation trigger for subscription step entry
+- [x] 2.0 Implement Smart Validation Triggers for Critical Steps
+  - [x] 2.1 Add validation trigger for subscription step entry
     - Create useEffect in OnboardingSubscriptionForm that validates on component mount
     - Ensure validation only runs once per session to prevent loops
     - Add proper loading states during validation
-  - [ ] 2.2 Add validation trigger for payment step entry
+  - [x] 2.2 Add validation trigger for payment step entry
     - Create useEffect in OnboardingPaymentForm that validates on component mount
     - Implement same pattern as subscription step validation
     - Ensure consistent validation behavior across critical steps
-  - [ ] 2.3 Implement stale data validation
+  - [x] 2.3 Implement stale data validation
     - Add validation trigger when data is older than 5 minutes
     - Ensure stale data validation doesn't conflict with step-based validation
     - Add proper caching mechanisms to prevent unnecessary API calls
