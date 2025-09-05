@@ -83,7 +83,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang='id' className={poppins.variable}>
-      <body className='min-h-screen bg-background font-sans antialiased'>
+      <body className='min-h-screen bg-background font-sans antialiased' suppressHydrationWarning={true}>
         <QueryProvider>
           <AuthProvider>
             <ToastProvider>

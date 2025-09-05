@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
-import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth';
+import { getOnboardingStep } from '@/lib/routing-logic';
 import { OnboardingClinicForm } from './OnboardingClinicForm';
 import { OnboardingSubscriptionForm } from './OnboardingSubscriptionForm';
 import { OnboardingPaymentForm } from './OnboardingPaymentForm';
@@ -31,15 +31,13 @@ const stepDescriptions = {
 
 export const OnboardingFlow: React.FC = () => {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
-  const { 
-    needsOnboarding, 
-    userHasClinic, 
-    hasActiveSubscription, 
-    isLoaded,
-    shouldRedirectToPortal,
-    getCurrentStep 
-  } = useOnboarding();
+  const searchParams = useSearchParams();
+  const { user, isAuthenticated, clinic } = useAuth();
+  // Get onboarding state directly from auth store
+  const authState = useAuthStore();
+  const needsOnboarding = authState.isAuthenticated && authState.user && !authState.clinic?.subscription;
+  const isLoaded = authState.isAuthenticated && authState.user;
+  const shouldRedirectToPortal = authState.isAuthenticated && authState.user && authState.clinic && authState.clinic.subscription;
   
   const { 
     currentStep, 
@@ -53,6 +51,17 @@ export const OnboardingFlow: React.FC = () => {
     justCompletedSubscription,
     resetOnboarding,
   } = useOnboardingStore();
+
+  // Memoize computed values for performance - MUST be at the top before any early returns
+  const canGoBack = useMemo(() => currentStep !== OnboardingStepEnum.ClinicInfo, [currentStep]);
+  const showBackButton = useMemo(() => canGoBack && currentStep !== OnboardingStepEnum.Complete, [canGoBack, currentStep]);
+
+  // Memoize refresh handler - MUST be at the top before any early returns
+  const handleRefresh = useCallback(() => {
+    if (typeof window !== 'undefined' && (window as any).forceAuthValidation) {
+      (window as any).forceAuthValidation();
+    }
+  }, []);
 
   // Redirect to portal if user has completed onboarding
   useEffect(() => {
@@ -68,79 +77,71 @@ export const OnboardingFlow: React.FC = () => {
     }
   }, [isLoaded, isAuthenticated, router]);
 
-  // Sync current step with user state
+  // Initialize onboarding step based on URL parameter or user state
   useEffect(() => {
     if (isLoaded && needsOnboarding) {
-      const serverStep = getCurrentStep(); // Call function directly, don't include in dependencies
+      // Check if there's a step parameter in the URL
+      const urlStep = searchParams.get('step');
       
-      // Debug: Onboarding flow sync (can be removed in production)
-      console.log('🔍 OnboardingFlow sync:', {
-        currentStep,
-        serverStep,
-        userHasClinic,
-        hasActiveSubscription,
-      });
-      
-      // If current step is complete but user needs onboarding, reset the store
-      if (currentStep === OnboardingStepEnum.Complete && serverStep !== OnboardingStepEnum.Complete) {
-        console.log('🔄 Resetting onboarding store');
-        resetOnboarding();
-        setStep(serverStep);
-      } else if (serverStep !== currentStep) {
-        console.log('🔄 Updating step from', currentStep, 'to', serverStep);
-        setStep(serverStep);
+      if (urlStep) {
+        // Use the step from URL (set by RouteGuard)
+        const stepMap: Record<string, OnboardingStepEnum> = {
+          'clinic_info': OnboardingStepEnum.ClinicInfo,
+          'subscription': OnboardingStepEnum.Subscription,
+          'payment': OnboardingStepEnum.Payment,
+          'complete': OnboardingStepEnum.Complete,
+        };
+        
+        const targetStep = stepMap[urlStep];
+        if (targetStep && targetStep !== currentStep) {
+          setStep(targetStep);
+        }
+      } else {
+        // No URL parameter, determine step from user state
+        const userState = {
+          isAuthenticated,
+          user,
+          clinic,
+          isLoading: false
+        };
+        
+        const correctStepName = getOnboardingStep(userState);
+        const stepMap: Record<string, OnboardingStepEnum> = {
+          'clinic_info': OnboardingStepEnum.ClinicInfo,
+          'subscription': OnboardingStepEnum.Subscription,
+          'payment': OnboardingStepEnum.Payment,
+          'complete': OnboardingStepEnum.Complete,
+        };
+        
+        const correctStep = stepMap[correctStepName];
+        if (correctStep && correctStep !== currentStep) {
+          setStep(correctStep);
+        }
       }
     }
-  }, [isLoaded, needsOnboarding, currentStep, setStep, resetOnboarding, userHasClinic, hasActiveSubscription]); // Removed getCurrentStep dependency
+  }, [isLoaded, needsOnboarding, searchParams, currentStep, setStep, isAuthenticated, user, clinic]);
 
   // Smart validation trigger for clinic deletion detection - only on page load
   useEffect(() => {
     if (isLoaded && isAuthenticated) {
-      console.log('🔄 Onboarding page loaded - checking if validation needed...');
-      
       const authState = useAuthStore.getState();
       const isDataStale = authState.isDataStale();
       const isValidating = authState.isValidating;
       
       // Only validate if data is stale and not already validating
-      // Remove the currentStep dependency to prevent infinite loops
       if (isDataStale && !isValidating) {
-        console.log('🔄 Smart validation triggered - data is stale');
         if ((window as any).forceAuthValidation) {
           (window as any).forceAuthValidation();
         }
-      } else {
-        console.log('✅ No validation needed');
       }
     }
-  }, [isLoaded, isAuthenticated]); // Removed currentStep dependency
-
-  // Enhanced stale data validation with periodic checks
-  useEffect(() => {
-    if (!isLoaded || !isAuthenticated) return;
-
-    // Set up periodic stale data validation every 2 minutes
-    const staleDataCheckInterval = setInterval(() => {
-      const authState = useAuthStore.getState();
-      const isDataStale = authState.isDataStale();
-      const isValidating = authState.isValidating;
-      
-      if (isDataStale && !isValidating) {
-        console.log('🔄 Periodic stale data validation triggered');
-        if ((window as any).forceAuthValidation) {
-          (window as any).forceAuthValidation();
-        }
-      }
-    }, 2 * 60 * 1000); // Check every 2 minutes
-
-    return () => clearInterval(staleDataCheckInterval);
   }, [isLoaded, isAuthenticated]);
+
 
   // Set up global redirection handler for clinic deletion
   useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as any).triggerOnboardingRedirect = (step: string) => {
-        console.log('🔄 Global onboarding redirect triggered to step:', step);
         if (step === 'clinic_info') {
           setStep(OnboardingStepEnum.ClinicInfo);
         } else if (step === 'subscription') {
@@ -163,62 +164,21 @@ export const OnboardingFlow: React.FC = () => {
     if (isLoaded && isAuthenticated && needsOnboarding) {
       const authState = useAuthStore.getState();
       const { clinic } = authState;
+      const { currentStep: storeCurrentStep } = useOnboardingStore.getState();
       
       // If user is on subscription or payment step but has no clinic, redirect to clinic form
-      if ((currentStep === OnboardingStepEnum.Subscription || currentStep === OnboardingStepEnum.Payment) && !clinic) {
-        console.log('🔄 Auto-redirect: No clinic data, redirecting to clinic form');
+      if ((storeCurrentStep === OnboardingStepEnum.Subscription || storeCurrentStep === OnboardingStepEnum.Payment) && !clinic) {
         setStep(OnboardingStepEnum.ClinicInfo);
       }
       
       // If user is on payment step but has no subscription, redirect to subscription step
-      if (currentStep === OnboardingStepEnum.Payment && clinic && !clinic.subscription) {
-        console.log('🔄 Auto-redirect: No subscription data, redirecting to subscription step');
+      if (storeCurrentStep === OnboardingStepEnum.Payment && clinic && !clinic.subscription) {
         setStep(OnboardingStepEnum.Subscription);
       }
     }
-  }, [isLoaded, isAuthenticated, needsOnboarding, currentStep, setStep]);
+  }, [isLoaded, isAuthenticated, needsOnboarding, setStep]);
 
-  // Smart validation trigger for subscription step entry
-  useEffect(() => {
-    if (isLoaded && isAuthenticated && currentStep === OnboardingStepEnum.Subscription) {
-      console.log('🔄 Subscription step entered - checking if validation needed...');
-      
-      const authState = useAuthStore.getState();
-      const isValidating = authState.isValidating;
-      
-      // Validate when entering subscription step to ensure clinic data is current
-      // This helps detect if clinic was deleted while user was on previous step
-      if (!isValidating) {
-        console.log('🔄 Smart validation triggered - subscription step entry');
-        if ((window as any).forceAuthValidation) {
-          (window as any).forceAuthValidation();
-        }
-      } else {
-        console.log('✅ Validation already in progress, skipping');
-      }
-    }
-  }, [isLoaded, isAuthenticated, currentStep]);
 
-  // Smart validation trigger for payment step entry
-  useEffect(() => {
-    if (isLoaded && isAuthenticated && currentStep === OnboardingStepEnum.Payment) {
-      console.log('🔄 Payment step entered - checking if validation needed...');
-      
-      const authState = useAuthStore.getState();
-      const isValidating = authState.isValidating;
-      
-      // Validate when entering payment step to ensure subscription data is current
-      // This helps detect if subscription was deleted while user was on previous step
-      if (!isValidating) {
-        console.log('🔄 Smart validation triggered - payment step entry');
-        if ((window as any).forceAuthValidation) {
-          (window as any).forceAuthValidation();
-        }
-      } else {
-        console.log('✅ Validation already in progress, skipping');
-      }
-    }
-  }, [isLoaded, isAuthenticated, currentStep]);
 
   // Handle complete onboarding redirect
   useEffect(() => {
@@ -326,16 +286,6 @@ export const OnboardingFlow: React.FC = () => {
     }
   };
 
-  // Memoize computed values for performance
-  const canGoBack = useMemo(() => currentStep !== OnboardingStepEnum.ClinicInfo, [currentStep]);
-  const showBackButton = useMemo(() => canGoBack && currentStep !== OnboardingStepEnum.Complete, [canGoBack, currentStep]);
-
-  // Memoize refresh handler
-  const handleRefresh = useCallback(() => {
-    if (typeof window !== 'undefined' && (window as any).forceAuthValidation) {
-      (window as any).forceAuthValidation();
-    }
-  }, []);
 
   return (
     <OnboardingErrorBoundary>

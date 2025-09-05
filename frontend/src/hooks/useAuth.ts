@@ -255,7 +255,7 @@ export const useAuth = () => {
     );
 
     return cleanup;
-  }, [isAuthenticated, accessToken, isDataStale, checkAuth, setError]);
+  }, [isAuthenticated, accessToken]); // Removed checkAuth and isDataStale to prevent infinite loop
 
   // Auto-validate auth state on page focus/refresh
   useEffect(() => {
