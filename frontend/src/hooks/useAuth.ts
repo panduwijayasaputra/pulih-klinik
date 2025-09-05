@@ -209,7 +209,7 @@ export const useAuth = () => {
       console.error('❌ Auth validation failed:', error);
       
       const networkError = classifyNetworkError(error);
-      const userMessage = createUserFriendlyErrorMessage(networkError);
+      const userMessage = createUserFriendlyErrorMessage(networkError, 'validation');
       
       // Handle different types of errors
       if (error.response?.status === 401 || error.response?.status === 404) {

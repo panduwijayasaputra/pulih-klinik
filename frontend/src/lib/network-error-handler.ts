@@ -175,7 +175,34 @@ export const setupNetworkStatusListener = (
 /**
  * Creates a network error message for display to users
  */
-export const createUserFriendlyErrorMessage = (error: NetworkError): string => {
+export const createUserFriendlyErrorMessage = (error: NetworkError, context?: string): string => {
+  // Add context-specific error messages
+  if (context === 'validation') {
+    switch (error.code) {
+      case 'NETWORK_ERROR':
+        return 'Tidak dapat memvalidasi data. Periksa koneksi internet Anda.';
+      case 'SERVER_ERROR':
+        return 'Server sedang mengalami masalah. Validasi data gagal.';
+      case 'TIMEOUT':
+        return 'Validasi data terlalu lama. Silakan coba lagi.';
+      case 'CLIENT_ERROR':
+        if (error.status === 401) {
+          return 'Sesi Anda telah berakhir. Silakan masuk kembali untuk melanjutkan.';
+        }
+        if (error.status === 404) {
+          return 'Data pengguna tidak ditemukan. Silakan masuk kembali.';
+        }
+        return 'Validasi data gagal. Silakan coba lagi.';
+      default:
+        return 'Terjadi kesalahan saat memvalidasi data. Silakan coba lagi.';
+    }
+  }
+
+  if (context === 'clinic_deletion') {
+    return 'Data klinik telah dihapus. Anda akan diarahkan ke form pendaftaran klinik.';
+  }
+
+  // Default error messages
   switch (error.code) {
     case 'NETWORK_ERROR':
       return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -10,6 +10,7 @@ import { OnboardingClinicForm } from './OnboardingClinicForm';
 import { OnboardingSubscriptionForm } from './OnboardingSubscriptionForm';
 import { OnboardingPaymentForm } from './OnboardingPaymentForm';
 import { ValidationStatus } from './ValidationStatus';
+import { OnboardingErrorBoundary } from './OnboardingErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { RefreshCw } from 'lucide-react';
@@ -325,24 +326,29 @@ export const OnboardingFlow: React.FC = () => {
     }
   };
 
-  const canGoBack = currentStep !== OnboardingStepEnum.ClinicInfo;
-  const showBackButton = canGoBack && currentStep !== OnboardingStepEnum.Complete;
+  // Memoize computed values for performance
+  const canGoBack = useMemo(() => currentStep !== OnboardingStepEnum.ClinicInfo, [currentStep]);
+  const showBackButton = useMemo(() => canGoBack && currentStep !== OnboardingStepEnum.Complete, [canGoBack, currentStep]);
+
+  // Memoize refresh handler
+  const handleRefresh = useCallback(() => {
+    if (typeof window !== 'undefined' && (window as any).forceAuthValidation) {
+      (window as any).forceAuthValidation();
+    }
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <ValidationStatus />
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <OnboardingErrorBoundary>
+      <div className="min-h-screen bg-background">
+        <ValidationStatus />
+        <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8 relative">
           <div className="absolute top-0 right-0">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                if (typeof window !== 'undefined' && (window as any).forceAuthValidation) {
-                  (window as any).forceAuthValidation();
-                }
-              }}
+              onClick={handleRefresh}
               className="text-muted-foreground hover:text-foreground"
               title="Refresh data"
             >
@@ -428,7 +434,8 @@ export const OnboardingFlow: React.FC = () => {
         <div className="bg-card rounded-lg border p-6">
           {renderCurrentStep()}
         </div>
+        </div>
       </div>
-    </div>
+    </OnboardingErrorBoundary>
   );
 };

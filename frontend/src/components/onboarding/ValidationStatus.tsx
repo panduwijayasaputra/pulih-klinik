@@ -1,22 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { RefreshCw, CheckCircle, AlertCircle, Clock, XCircle } from 'lucide-react';
 
 interface ValidationStatusProps {
   className?: string;
 }
 
 export const ValidationStatus: React.FC<ValidationStatusProps> = ({ className = '' }) => {
-  const { isValidating, lastValidated, isDataStale } = useAuthStore();
+  const { isValidating, lastValidated, isDataStale, error } = useAuthStore();
   const [showStatus, setShowStatus] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  // Show status when validation is in progress or data is stale
+  // Show status when validation is in progress, data is stale, or there's an error
   useEffect(() => {
-    if (isValidating || isDataStale()) {
+    if (isValidating || isDataStale() || error) {
       setShowStatus(true);
     } else {
       // Hide status after 3 seconds if validation is complete
@@ -25,46 +25,44 @@ export const ValidationStatus: React.FC<ValidationStatusProps> = ({ className = 
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [isValidating, lastValidated]);
+  }, [isValidating, lastValidated, error]);
 
-  const handleManualRefresh = () => {
+  const handleManualRefresh = useCallback(() => {
     if (typeof window !== 'undefined' && (window as any).forceAuthValidation) {
       setLastRefresh(new Date());
       (window as any).forceAuthValidation();
     }
-  };
+  }, []);
 
-  const getStatusIcon = () => {
-    if (isValidating) {
-      return <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />;
+  const statusConfig = useMemo(() => {
+    if (error) {
+      return {
+        icon: <XCircle className="h-4 w-4 text-red-500" />,
+        text: error,
+        color: 'bg-red-50 border-red-200 text-red-800',
+      };
+    } else if (isValidating) {
+      return {
+        icon: <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />,
+        text: 'Validating data...',
+        color: 'bg-blue-50 border-blue-200 text-blue-800',
+      };
     } else if (isDataStale()) {
-      return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      return {
+        icon: <AlertCircle className="h-4 w-4 text-yellow-500" />,
+        text: 'Data may be outdated',
+        color: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+      };
     } else {
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
+      return {
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+        text: 'Data is current',
+        color: 'bg-green-50 border-green-200 text-green-800',
+      };
     }
-  };
+  }, [error, isValidating, isDataStale]);
 
-  const getStatusText = () => {
-    if (isValidating) {
-      return 'Validating data...';
-    } else if (isDataStale()) {
-      return 'Data may be outdated';
-    } else {
-      return 'Data is current';
-    }
-  };
-
-  const getStatusColor = () => {
-    if (isValidating) {
-      return 'bg-blue-50 border-blue-200 text-blue-800';
-    } else if (isDataStale()) {
-      return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-    } else {
-      return 'bg-green-50 border-green-200 text-green-800';
-    }
-  };
-
-  const formatLastValidated = (date: Date) => {
+  const formatLastValidated = useCallback((date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
@@ -77,7 +75,7 @@ export const ValidationStatus: React.FC<ValidationStatusProps> = ({ className = 
       const hours = Math.floor(minutes / 60);
       return `${hours}h ago`;
     }
-  };
+  }, []);
 
   if (!showStatus) {
     return null;
@@ -85,10 +83,10 @@ export const ValidationStatus: React.FC<ValidationStatusProps> = ({ className = 
 
   return (
     <div className={`fixed top-4 right-4 z-50 ${className}`}>
-      <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border shadow-lg ${getStatusColor()}`}>
+      <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border shadow-lg ${statusConfig.color}`}>
         <div className="flex items-center gap-2">
-          {getStatusIcon()}
-          <span className="text-sm font-medium">{getStatusText()}</span>
+          {statusConfig.icon}
+          <span className="text-sm font-medium">{statusConfig.text}</span>
         </div>
         
         <div className="flex items-center gap-2">
