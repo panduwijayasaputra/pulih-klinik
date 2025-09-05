@@ -46,19 +46,37 @@ export class AuthAPI {
         // Map the user data to match frontend interface
         const mappedUser: User = {
           ...data.data.user,
-          roles: Array.isArray(data.data.user.roles) 
-            ? data.data.user.roles.map((role: any) => {
-                // Handle both string roles and role objects
-                if (typeof role === 'string') {
-                  return role;
-                } else if (role && typeof role === 'object' && role.role) {
-                  return role.role;
-                } else if (role && typeof role === 'object' && role.name) {
-                  return role.name;
-                }
-                return String(role);
-              })
-            : [],
+          roles: (() => {
+            const validRoles = Array.isArray(data.data.user.roles) 
+              ? data.data.user.roles
+                  .map((role: any) => {
+                    // Handle both string roles and role objects
+                    if (typeof role === 'string') {
+                      return role;
+                    } else if (role && typeof role === 'object' && role.role) {
+                      return role.role;
+                    } else if (role && typeof role === 'object' && role.name) {
+                      return role.name;
+                    }
+                    return null; // Return null for invalid roles
+                  })
+                  .filter((role: any) => role !== null) // Filter out null values
+              : [];
+            
+            // Fallback: if no valid roles found, try to determine from user data
+            if (validRoles.length === 0) {
+              // If user has clinicId, they're likely a clinic admin
+              if (data.data.user.clinicId) {
+                return ['clinic_admin'];
+              }
+              // If user email contains 'admin', they might be a system admin
+              if (data.data.user.email && data.data.user.email.includes('admin')) {
+                return ['administrator'];
+              }
+            }
+            
+            return validRoles;
+          })(),
           ...(data.data.user.clinicId && { clinicId: data.data.user.clinicId }),
           ...(data.data.user.clinicName && { clinicName: data.data.user.clinicName }),
         };
@@ -118,7 +136,37 @@ export class AuthAPI {
       // Map the user data to match frontend interface  
       const mappedUser: User = {
         ...data.data,
-        roles: data.data.roles?.map((roleObj: any) => roleObj.role) || [],
+        roles: (() => {
+          const validRoles = Array.isArray(data.data.roles) 
+            ? data.data.roles
+                .map((role: any) => {
+                  // Handle both string roles and role objects
+                  if (typeof role === 'string') {
+                    return role;
+                  } else if (role && typeof role === 'object' && role.role) {
+                    return role.role;
+                  } else if (role && typeof role === 'object' && role.name) {
+                    return role.name;
+                  }
+                  return null; // Return null for invalid roles
+                })
+                .filter((role: any) => role !== null) // Filter out null values
+            : [];
+          
+          // Fallback: if no valid roles found, try to determine from user data
+          if (validRoles.length === 0) {
+            // If user has clinicId, they're likely a clinic admin
+            if (data.data.clinicId) {
+              return ['clinic_admin'];
+            }
+            // If user email contains 'admin', they might be a system admin
+            if (data.data.email && data.data.email.includes('admin')) {
+              return ['administrator'];
+            }
+          }
+          
+          return validRoles;
+        })(),
         ...(data.data.clinicId && { clinicId: data.data.clinicId }),
         ...(data.data.clinicName && { clinicName: data.data.clinicName }),
       };

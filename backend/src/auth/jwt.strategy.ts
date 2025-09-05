@@ -4,7 +4,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { EntityManager } from '@mikro-orm/core';
 import { environmentConfig } from '../config/environment.config';
 import { User } from '../database/entities/user.entity';
-import { UserRoleType } from '../common/enums';
 
 export interface JwtPayload {
   sub: string; // user id
@@ -50,7 +49,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.em.findOne(
       User,
       { id: userId, email, isActive: true },
-      { populate: ['roles', 'clinic'] },
+      { populate: ['roles', 'clinic', 'profile'] },
     );
 
     if (!user) {
@@ -71,7 +70,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const authUser: AuthUser = {
       id: user.id,
       email: user.email,
-      name: user.profile?.name || 'Unknown User',
+      name: user.profile?.name || user.email.split('@')[0] || 'User',
       isActive: user.isActive,
       roles: user.roles.map((role) => role.role),
       clinicId: user.clinic?.id,

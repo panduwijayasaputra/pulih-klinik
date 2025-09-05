@@ -1,37 +1,9 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { AuthAPI } from '@/lib/api/auth';
-import { LoginApiData, User, Clinic } from '@/types/auth';
-import { UserRoleEnum } from '@/types/enums';
+import { LoginApiData, Clinic } from '@/types/auth';
 import { withRetry, classifyNetworkError, createUserFriendlyErrorMessage, setupNetworkStatusListener } from '@/lib/network-error-handler';
 import { createAuthDataSyncHandler } from '@/lib/data-sync';
-
-// Helper function to determine redirect path based on user role and state
-const getRedirectPath = (user: User, clinic: Clinic | undefined): string | null => {
-  // System Admin users → redirect to /portal
-  if (user.roles.includes(UserRoleEnum.Administrator)) {
-    return '/portal';
-  }
-  
-  // Therapist users → redirect to /portal
-  if (user.roles.includes(UserRoleEnum.Therapist)) {
-    return '/portal';
-  }
-  
-  // Clinic Admin users
-  if (user.roles.includes(UserRoleEnum.ClinicAdmin)) {
-    // If user doesn't have clinic data or subscription → redirect to onboarding
-    if (!clinic || !clinic.subscription) {
-      return '/onboarding';
-    }
-    
-    // If user has complete clinic and subscription data → redirect to /portal
-    return '/portal';
-  }
-  
-  // Default fallback
-  return '/portal';
-};
 
 export const useAuth = () => {
   const {
@@ -53,6 +25,8 @@ export const useAuth = () => {
     updateTokens,
     isDataStale,
     setLastValidated,
+    isValidating,
+    setValidating,
     hasRole: storeHasRole,
     isAdmin: storeIsAdmin,
     isClinicAdmin: storeIsClinicAdmin,
@@ -113,8 +87,20 @@ export const useAuth = () => {
   const checkAuth = useCallback(async (): Promise<void> => {
     if (!isAuthenticated || !accessToken) return;
 
+    // Prevent multiple simultaneous calls
+    if (isLoading) {
+      return;
+    }
+
+    // Prevent validation during form submissions or if already validating
+    if (isLoading || isValidating) {
+      console.log('🔄 Skipping validation - already in progress');
+      return;
+    }
+
     try {
       setLoading(true);
+      setValidating(true);
       
       // Use retry logic for the API call
       const response = await withRetry(
@@ -130,12 +116,42 @@ export const useAuth = () => {
         const storedUser = user;
         const storedClinic = clinic;
         
-        // Create data sync handler
+        // Debug: Server response (can be removed in production)
+        console.log('🔍 Server response:', {
+          serverUser: {
+            id: serverUser.id,
+            name: serverUser.name,
+            email: serverUser.email,
+            roles: serverUser.roles,
+            clinicId: serverUser.clinicId,
+            clinicName: serverUser.clinicName,
+          },
+          storedUser: {
+            id: storedUser?.id,
+            name: storedUser?.name,
+            email: storedUser?.email,
+          },
+          storedClinic: storedClinic ? { id: storedClinic.id, name: storedClinic.name } : null,
+        });
+        
+        // Check for critical data changes first
+        const hasClinicRemoved = storedClinic && !serverUser.clinicId;
+        
+        if (hasClinicRemoved) {
+          console.warn('🚨 Clinic was removed from server, clearing clinic data');
+          console.log('🔄 Clearing clinic data...');
+          setClinic(null);
+          console.log('✅ Clinic data cleared');
+        }
+        
+        // Create data sync handler for regular changes
         const syncHandler = createAuthDataSyncHandler(
           (changes) => {
-            // Critical data change - logout user
-            console.warn('🚨 Critical data change detected, logging out:', changes);
-            storeLogout();
+            // Critical data change - clear clinic data instead of logging out
+            console.warn('🚨 Critical data change detected, clearing clinic data:', changes);
+            console.log('🔄 Clearing clinic data...');
+            setClinic(null);
+            console.log('✅ Clinic data cleared');
           },
           (changes) => {
             // Regular data change - log for debugging
@@ -143,20 +159,22 @@ export const useAuth = () => {
           }
         );
         
-        // Sync data and handle changes
-        const syncResult = syncHandler(storedUser, serverUser, storedClinic, null);
-        
-        if (!syncResult.success) {
-          console.error('❌ Data sync failed:', syncResult.error);
-          setError(syncResult.error || 'Failed to sync user data');
-          return;
+        // Sync data and handle changes (only if no critical changes)
+        if (!hasClinicRemoved) {
+          const syncResult = syncHandler(storedUser, serverUser, storedClinic, null);
+          
+          if (!syncResult.success) {
+            console.error('❌ Data sync failed:', syncResult.error);
+            setError(syncResult.error || 'Failed to sync user data');
+            return;
+          }
         }
         
         // Update user data
         setUser(serverUser);
         
-        // Update clinic data if available
-        if (serverUser.clinicId) {
+        // Update clinic data if available (only if not already cleared above)
+        if (serverUser.clinicId && !hasClinicRemoved) {
           const clinicData: Clinic = {
             id: serverUser.clinicId,
             name: serverUser.clinicName || '',
@@ -164,7 +182,7 @@ export const useAuth = () => {
             ...(serverUser.subscriptionTier && { subscription: serverUser.subscriptionTier }),
           };
           setClinic(clinicData);
-        } else {
+        } else if (!hasClinicRemoved) {
           setClinic(null);
         }
         
@@ -192,6 +210,7 @@ export const useAuth = () => {
       }
     } finally {
       setLoading(false);
+      setValidating(false);
     }
   }, [
     isAuthenticated, 
@@ -203,7 +222,8 @@ export const useAuth = () => {
     setClinic, 
     setLastValidated, 
     setLoading, 
-    setError
+    setError,
+    setValidating
   ]);
 
   // Network status monitoring
@@ -228,7 +248,9 @@ export const useAuth = () => {
   // Auto-validate auth state on page focus/refresh
   useEffect(() => {
     const validateOnFocus = (): void => {
-      if (isAuthenticated && accessToken && isDataStale()) {
+      const authState = useAuthStore.getState();
+      
+      if (authState.isAuthenticated && authState.accessToken && authState.isDataStale()) {
         checkAuth();
       }
     };
@@ -243,12 +265,31 @@ export const useAuth = () => {
 
     // Initial check on mount
     validateOnFocus();
+    
+    // For testing: add a manual trigger to force validation
+    // You can call this from browser console: window.forceAuthValidation()
+    (window as any).forceAuthValidation = () => {
+      console.log('🔄 Manual auth validation triggered');
+      checkAuth();
+    };
+    
+    // For testing: add a trigger to check current state
+    (window as any).checkAuthState = () => {
+      const authState = useAuthStore.getState();
+      console.log('🔍 Current auth state:', {
+        user: authState.user,
+        clinic: authState.clinic,
+        isAuthenticated: authState.isAuthenticated,
+        lastValidated: authState.lastValidated,
+        isDataStale: authState.isDataStale(),
+      });
+    };
 
     return () => {
       window.removeEventListener('focus', validateOnFocus);
       window.removeEventListener('visibilitychange', validateOnFocus);
     };
-  }, [isAuthenticated, accessToken, isDataStale, checkAuth]);
+  }, []); // Empty dependency array to prevent infinite loops
 
   // Auto-refresh token when it's about to expire
   useEffect(() => {

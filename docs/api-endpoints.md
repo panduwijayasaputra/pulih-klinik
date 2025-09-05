@@ -10,10 +10,29 @@ https://api.smarttherapy.com/v1
 ```
 
 ## Authentication
+
+The API uses a simplified JWT-based authentication system with automatic token refresh capabilities.
+
+### Authentication Flow
+1. **Login**: User provides email/password, receives access and refresh tokens
+2. **Token Refresh**: Access tokens are automatically refreshed before expiration
+3. **Logout**: Tokens are invalidated and user is logged out
+
+### Token Management
+- **Access Token**: Short-lived (15 minutes), used for API requests
+- **Refresh Token**: Long-lived (7 days), used to refresh access tokens
+- **Automatic Refresh**: Tokens are refreshed 5 minutes before expiration
+
+### Headers
 All endpoints (except public ones) require JWT authentication via Bearer token:
 ```
-Authorization: Bearer <jwt_token>
+Authorization: Bearer <access_token>
 ```
+
+### Error Handling
+- **401 Unauthorized**: Token expired or invalid, client should refresh
+- **403 Forbidden**: Valid token but insufficient permissions
+- **Network Errors**: Retry with exponential backoff
 
 ## Response Format
 All API responses follow this standard format:

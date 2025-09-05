@@ -31,7 +31,8 @@ import {
 } from '../auth/decorators';
 import { ParseUuidPipe } from '../common/pipes';
 import { UsersService, UserProfileResponse } from './users.service';
-import { UpdateProfileDto, ChangePasswordDto } from './dto';
+import { UpdateProfileDto } from './dto';
+import { ChangePasswordDto } from '../common/dto';
 import type { AuthUser } from '../auth/jwt.strategy';
 
 @ApiTags('Users')

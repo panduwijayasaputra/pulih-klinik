@@ -7,7 +7,8 @@ import {
 import { EntityManager } from '@mikro-orm/core';
 import { User } from '../database/entities/user.entity';
 import { AuthService } from '../auth/auth.service';
-import { UpdateProfileDto, ChangePasswordDto } from './dto';
+import { UpdateProfileDto } from './dto';
+import { ChangePasswordDto } from '../common/dto';
 import { UserRole, UserRoleType } from '../common/enums';
 
 export interface UserProfileResponse {

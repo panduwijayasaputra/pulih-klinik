@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useOnboardingStore, OnboardingStepEnum } from '@/store/onboarding';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/auth';
 import { OnboardingClinicForm } from './OnboardingClinicForm';
 import { OnboardingSubscriptionForm } from './OnboardingSubscriptionForm';
 import { OnboardingPaymentForm } from './OnboardingPaymentForm';
@@ -47,6 +48,7 @@ export const OnboardingFlow: React.FC = () => {
     completeOnboarding,
     clearJustCompletedSubscription,
     justCompletedSubscription,
+    resetOnboarding,
   } = useOnboardingStore();
 
   // Redirect to portal if user has completed onboarding
@@ -66,12 +68,49 @@ export const OnboardingFlow: React.FC = () => {
   // Sync current step with user state
   useEffect(() => {
     if (isLoaded && needsOnboarding) {
-      const serverStep = getCurrentStep();
-      if (serverStep !== currentStep) {
+      const serverStep = getCurrentStep(); // Call function directly, don't include in dependencies
+      
+      // Debug: Onboarding flow sync (can be removed in production)
+      console.log('🔍 OnboardingFlow sync:', {
+        currentStep,
+        serverStep,
+        userHasClinic,
+        hasActiveSubscription,
+      });
+      
+      // If current step is complete but user needs onboarding, reset the store
+      if (currentStep === OnboardingStepEnum.Complete && serverStep !== OnboardingStepEnum.Complete) {
+        console.log('🔄 Resetting onboarding store');
+        resetOnboarding();
+        setStep(serverStep);
+      } else if (serverStep !== currentStep) {
+        console.log('🔄 Updating step from', currentStep, 'to', serverStep);
         setStep(serverStep);
       }
     }
-  }, [isLoaded, needsOnboarding, getCurrentStep, currentStep, setStep]);
+  }, [isLoaded, needsOnboarding, currentStep, setStep, resetOnboarding, userHasClinic, hasActiveSubscription]); // Removed getCurrentStep dependency
+
+  // Smart validation trigger for clinic deletion detection - only on page load
+  useEffect(() => {
+    if (isLoaded && isAuthenticated) {
+      console.log('🔄 Onboarding page loaded - checking if validation needed...');
+      
+      const authState = useAuthStore.getState();
+      const isDataStale = authState.isDataStale();
+      const isValidating = authState.isValidating;
+      
+      // Only validate if data is stale and not already validating
+      // Remove the currentStep dependency to prevent infinite loops
+      if (isDataStale && !isValidating) {
+        console.log('🔄 Smart validation triggered - data is stale');
+        if ((window as any).forceAuthValidation) {
+          (window as any).forceAuthValidation();
+        }
+      } else {
+        console.log('✅ No validation needed');
+      }
+    }
+  }, [isLoaded, isAuthenticated]); // Removed currentStep dependency
 
   // Handle complete onboarding redirect
   useEffect(() => {

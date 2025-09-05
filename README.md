@@ -19,6 +19,15 @@ The Indonesian Hypnotherapy AI System provides:
 - **AI**: OpenAI API + Custom TypeScript algorithms
 - **Infrastructure**: Docker, Vercel (Frontend), Railway/AWS (Backend)
 
+### Authentication System
+The application features a simplified, production-ready authentication system:
+- **Streamlined Auth Flow**: Simplified registration, login, and onboarding processes
+- **Role-Based Access Control**: System Admin, Clinic Admin, and Therapist roles
+- **Real-time Data Validation**: Automatic sync with database on page reload
+- **Network Error Handling**: Retry logic with exponential backoff
+- **Automatic Token Refresh**: Seamless token renewal before expiration
+- **Data Synchronization**: Critical data change detection and cleanup
+
 ### Project Structure
 ```
 smart-therapy/

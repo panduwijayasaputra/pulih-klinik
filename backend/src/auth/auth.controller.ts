@@ -7,6 +7,7 @@ import {
   UseGuards,
   Get,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -22,8 +23,8 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
   VerifyResetTokenDto,
-  ChangePasswordDto,
 } from './dto';
+import { ChangePasswordDto } from '../common/dto';
 import { JwtAuthGuard } from './guards';
 import { CurrentUser } from './decorators';
 import type { AuthUser } from './jwt.strategy';
@@ -35,6 +36,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
   @ApiOperation({
     summary: 'User login',
     description:
@@ -98,6 +100,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 refresh attempts per minute
   @ApiOperation({
     summary: 'Refresh JWT tokens',
     description: 'Exchange refresh token for new access and refresh tokens',

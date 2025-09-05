@@ -24,6 +24,8 @@ interface AuthStore extends AuthState {
   // Data validation
   setLastValidated: (date: Date) => void;
   isDataStale: () => boolean;
+  isValidating: boolean;
+  setValidating: (validating: boolean) => void;
   
   // Helper methods
   hasRole: (role: string) => boolean;
@@ -37,14 +39,15 @@ export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       // Initial state
-      user: null,
-      clinic: null,
-      isLoading: false,
-      error: null,
-      isAuthenticated: false,
-      accessToken: null,
-      refreshToken: null,
-      lastValidated: new Date(),
+              user: null,
+        clinic: null,
+        isLoading: false,
+        error: null,
+        isAuthenticated: false,
+        accessToken: null,
+        refreshToken: null,
+        lastValidated: new Date(),
+        isValidating: false,
 
       // Core auth actions
       login: (data: { user: User; clinic?: Clinic; accessToken: string; refreshToken: string }) => {
@@ -130,14 +133,15 @@ export const useAuthStore = create<AuthStore>()(
 
       // Data validation
       setLastValidated: (date: Date) => set({ lastValidated: date }),
+      setValidating: (validating: boolean) => set({ isValidating: validating }),
       
       isDataStale: (): boolean => {
         const { lastValidated } = get();
         if (!lastValidated) return true;
         
-        // Consider data stale after 10 minutes (reduced API calls)
-        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-        return lastValidated < tenMinutesAgo;
+        // Consider data stale after 5 minutes
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        return lastValidated < fiveMinutesAgo;
       },
 
       // Helper methods

@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -17,10 +18,11 @@ import { StartRegistrationDto, VerifyEmailDto, ResendCodeDto, AdminVerifyDto } f
 @ApiTags('Registration')
 @Controller('registration')
 export class RegistrationController {
-  constructor(private readonly registrationService: RegistrationService) {}
+  constructor(private readonly registrationService: RegistrationService) { }
 
   @Post('start')
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 registration attempts per minute
   @ApiOperation({
     summary: 'Start user registration process',
     description: 'Create a new user account and begin the clinic onboarding process',
@@ -123,6 +125,7 @@ export class RegistrationController {
 
   @Post('resend-code')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 resend attempts per 5 minutes
   @ApiOperation({
     summary: 'Resend verification code',
     description: 'Resend email verification code to user',
