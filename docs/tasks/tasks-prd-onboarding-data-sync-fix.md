@@ -66,16 +66,16 @@ Based on PRD: `prd-onboarding-data-sync-fix.md`
     - Update step synchronization logic to handle clinic deletion
     - Add proper error handling for invalid step states
 
-- [ ] 4.0 Create Validation Status Indicators and Manual Refresh
-  - [ ] 4.1 Create ValidationStatus component
+- [x] 4.0 Create Validation Status Indicators and Manual Refresh
+  - [x] 4.1 Create ValidationStatus component
     - Create new component to show validation status (idle, validating, success, error)
     - Add loading indicators and error messages
     - Implement non-intrusive status display
-  - [ ] 4.2 Add manual refresh functionality
+  - [x] 4.2 Add manual refresh functionality
     - Add refresh button to onboarding header
     - Implement manual validation trigger
     - Add proper loading states during manual refresh
-  - [ ] 4.3 Integrate ValidationStatus with OnboardingFlow
+  - [x] 4.3 Integrate ValidationStatus with OnboardingFlow
     - Add ValidationStatus component to OnboardingFlow
     - Connect validation status to auth store state
     - Ensure proper positioning and styling

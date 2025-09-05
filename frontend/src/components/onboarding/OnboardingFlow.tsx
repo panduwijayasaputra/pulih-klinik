@@ -9,8 +9,10 @@ import { useAuthStore } from '@/store/auth';
 import { OnboardingClinicForm } from './OnboardingClinicForm';
 import { OnboardingSubscriptionForm } from './OnboardingSubscriptionForm';
 import { OnboardingPaymentForm } from './OnboardingPaymentForm';
+import { ValidationStatus } from './ValidationStatus';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { RefreshCw } from 'lucide-react';
 
 const stepTitles = {
   [OnboardingStepEnum.ClinicInfo]: 'Informasi Klinik',
@@ -328,9 +330,25 @@ export const OnboardingFlow: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <ValidationStatus />
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
+          <div className="absolute top-0 right-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (typeof window !== 'undefined' && (window as any).forceAuthValidation) {
+                  (window as any).forceAuthValidation();
+                }
+              }}
+              className="text-muted-foreground hover:text-foreground"
+              title="Refresh data"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">
             {stepTitles[currentStep]}
           </h1>
