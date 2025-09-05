@@ -60,34 +60,36 @@ export const getRoutingDecision = (
   const isTherapist = user.roles?.includes(UserRoleEnum.Therapist);
   const isClinicAdmin = user.roles?.includes(UserRoleEnum.ClinicAdmin);
 
-  // Debug logging to understand the issue
-  console.log('🔍 Routing Logic Debug:', {
-    pathname,
-    user: user ? { id: user.id, email: user.email, roles: user.roles } : null,
-    clinic: clinic ? { id: clinic.id, name: clinic.name, subscription: clinic.subscription } : null,
-    hasClinic,
-    hasSubscription,
-    isSystemAdmin,
-    isTherapist,
-    isClinicAdmin,
-  });
 
   // System Admin and Therapist logic
   if (isSystemAdmin || isTherapist) {
+    const roleBasedPortal = isSystemAdmin ? '/portal/admin' : '/portal/therapist';
+    
     if (pathname.startsWith('/portal')) {
-      return {
-        shouldRedirect: false,
-        redirectPath: null,
-        allowAccess: true,
-        reason: 'System admin or therapist accessing portal'
-      };
+      // Check if they're on the correct role-based portal
+      if (pathname === roleBasedPortal || pathname.startsWith(roleBasedPortal + '/')) {
+        return {
+          shouldRedirect: false,
+          redirectPath: null,
+          allowAccess: true,
+          reason: `${isSystemAdmin ? 'System admin' : 'Therapist'} accessing correct portal`
+        };
+      } else {
+        // Redirect to their role-specific portal
+        return {
+          shouldRedirect: true,
+          redirectPath: roleBasedPortal,
+          allowAccess: false,
+          reason: `Redirecting ${isSystemAdmin ? 'system admin' : 'therapist'} to role-specific portal`
+        };
+      }
     }
     if (pathname.startsWith('/onboarding')) {
       return {
         shouldRedirect: true,
-        redirectPath: isSystemAdmin ? '/portal/admin' : '/portal/therapist',
+        redirectPath: roleBasedPortal,
         allowAccess: false,
-        reason: 'System admin or therapist should not be in onboarding'
+        reason: `${isSystemAdmin ? 'System admin' : 'Therapist'} should not be in onboarding`
       };
     }
   }
@@ -106,13 +108,26 @@ export const getRoutingDecision = (
 
     // Portal access logic
     if (pathname.startsWith('/portal')) {
+      const clinicPortalPath = '/portal/clinic';
+      
       if (targetStep === 'complete') {
-        return {
-          shouldRedirect: false,
-          redirectPath: null,
-          allowAccess: true,
-          reason: 'Clinic admin with complete data accessing portal'
-        };
+        // Check if they're on the correct clinic portal
+        if (pathname === clinicPortalPath || pathname.startsWith(clinicPortalPath + '/')) {
+          return {
+            shouldRedirect: false,
+            redirectPath: null,
+            allowAccess: true,
+            reason: 'Clinic admin with complete data accessing correct portal'
+          };
+        } else {
+          // Redirect to clinic portal
+          return {
+            shouldRedirect: true,
+            redirectPath: clinicPortalPath,
+            allowAccess: false,
+            reason: 'Redirecting clinic admin to clinic portal'
+          };
+        }
       } else {
         return {
           shouldRedirect: true,
@@ -130,7 +145,7 @@ export const getRoutingDecision = (
           shouldRedirect: true,
           redirectPath: '/portal/clinic',
           allowAccess: false,
-          reason: 'Clinic admin with complete data should be in portal'
+          reason: 'Clinic admin with complete data should be in clinic portal'
         };
       } else {
         // Check if they're on the right step
@@ -157,12 +172,16 @@ export const getRoutingDecision = (
     }
   }
 
-  // Default fallback
+  // Default fallback - redirect based on role
+  const roleBasedPortal = isSystemAdmin ? '/portal/admin' : 
+                         isTherapist ? '/portal/therapist' : 
+                         isClinicAdmin ? '/portal/clinic' : '/portal';
+  
   return {
     shouldRedirect: true,
-    redirectPath: '/portal',
+    redirectPath: roleBasedPortal,
     allowAccess: false,
-    reason: 'Default redirect to portal'
+    reason: `Default redirect to ${roleBasedPortal}`
   };
 };
 
