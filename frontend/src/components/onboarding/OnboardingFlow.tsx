@@ -133,6 +133,48 @@ export const OnboardingFlow: React.FC = () => {
     return () => clearInterval(staleDataCheckInterval);
   }, [isLoaded, isAuthenticated]);
 
+  // Set up global redirection handler for clinic deletion
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).triggerOnboardingRedirect = (step: string) => {
+        console.log('🔄 Global onboarding redirect triggered to step:', step);
+        if (step === 'clinic_info') {
+          setStep(OnboardingStepEnum.ClinicInfo);
+        } else if (step === 'subscription') {
+          setStep(OnboardingStepEnum.Subscription);
+        } else if (step === 'payment') {
+          setStep(OnboardingStepEnum.Payment);
+        }
+      };
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).triggerOnboardingRedirect;
+      }
+    };
+  }, [setStep]);
+
+  // Automatic redirection logic for clinic deletion scenarios
+  useEffect(() => {
+    if (isLoaded && isAuthenticated && needsOnboarding) {
+      const authState = useAuthStore.getState();
+      const { clinic } = authState;
+      
+      // If user is on subscription or payment step but has no clinic, redirect to clinic form
+      if ((currentStep === OnboardingStepEnum.Subscription || currentStep === OnboardingStepEnum.Payment) && !clinic) {
+        console.log('🔄 Auto-redirect: No clinic data, redirecting to clinic form');
+        setStep(OnboardingStepEnum.ClinicInfo);
+      }
+      
+      // If user is on payment step but has no subscription, redirect to subscription step
+      if (currentStep === OnboardingStepEnum.Payment && clinic && !clinic.subscription) {
+        console.log('🔄 Auto-redirect: No subscription data, redirecting to subscription step');
+        setStep(OnboardingStepEnum.Subscription);
+      }
+    }
+  }, [isLoaded, isAuthenticated, needsOnboarding, currentStep, setStep]);
+
   // Smart validation trigger for subscription step entry
   useEffect(() => {
     if (isLoaded && isAuthenticated && currentStep === OnboardingStepEnum.Subscription) {

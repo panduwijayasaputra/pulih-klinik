@@ -52,16 +52,16 @@ Based on PRD: `prd-onboarding-data-sync-fix.md`
     - Ensure stale data validation doesn't conflict with step-based validation
     - Add proper caching mechanisms to prevent unnecessary API calls
 
-- [ ] 3.0 Add Clinic Deletion Detection and Automatic Redirection
-  - [ ] 3.1 Enhance data sync handler for clinic deletion
+- [x] 3.0 Add Clinic Deletion Detection and Automatic Redirection
+  - [x] 3.1 Enhance data sync handler for clinic deletion
     - Update createAuthDataSyncHandler to properly detect clinic deletion
     - Ensure clinic data is cleared when deletion is detected
     - Add proper logging for clinic deletion events
-  - [ ] 3.2 Implement automatic redirection logic
+  - [x] 3.2 Implement automatic redirection logic
     - Add logic to redirect users to clinic form when clinic is deleted
     - Ensure redirection happens after clinic data is cleared
     - Add proper state management for redirection flow
-  - [ ] 3.3 Update onboarding step validation
+  - [x] 3.3 Update onboarding step validation
     - Ensure getCurrentStep returns correct step when clinic is deleted
     - Update step synchronization logic to handle clinic deletion
     - Add proper error handling for invalid step states

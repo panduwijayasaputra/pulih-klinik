@@ -43,6 +43,13 @@ export const validateOnboardingState = (userState: UserOnboardingState): Onboard
     currentStep = OnboardingStepEnum.ClinicInfo;
     missingFields = ['clinic'];
     canProceed = false;
+    
+    // Log clinic deletion scenario for debugging
+    if (hasClinic && !clinicData) {
+      console.log('🔍 Onboarding validation: Clinic data missing, redirecting to clinic form');
+    } else if (!hasClinic) {
+      console.log('🔍 Onboarding validation: No clinic, redirecting to clinic form');
+    }
   } else if (!hasSubscription || !subscriptionData) {
     currentStep = OnboardingStepEnum.Subscription;
     missingFields = ['subscription'];
