@@ -4,6 +4,7 @@ import { BreadcrumbItem, NavigationState } from '@/types/navigation';
 import { UserRole } from '@/types/auth';
 
 interface NavigationStore extends NavigationState {
+  isRoleSwitching: boolean;
   setActiveRole: (role: UserRole | null) => void;
   setAvailableRoles: (roles: UserRole[]) => void;
   toggleMenu: () => void;
@@ -12,6 +13,7 @@ interface NavigationStore extends NavigationState {
   addBreadcrumb: (breadcrumb: BreadcrumbItem) => void;
   clearBreadcrumbs: () => void;
   resetNavigation: () => void;
+  setRoleSwitching: (switching: boolean) => void;
 }
 
 export const useNavigationStore = create<NavigationStore>()(
@@ -21,6 +23,7 @@ export const useNavigationStore = create<NavigationStore>()(
       availableRoles: [],
       menuCollapsed: false,
       breadcrumbs: [],
+      isRoleSwitching: false,
 
       setActiveRole: (role: UserRole | null) => {
         const { availableRoles } = get();
@@ -81,7 +84,12 @@ export const useNavigationStore = create<NavigationStore>()(
           availableRoles: [],
           menuCollapsed: false,
           breadcrumbs: [],
+          isRoleSwitching: false,
         });
+      },
+
+      setRoleSwitching: (switching: boolean) => {
+        set({ isRoleSwitching: switching });
       },
     }),
     {

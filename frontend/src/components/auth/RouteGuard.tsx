@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigation } from '@/hooks/useNavigation';
 import { getRoutingDecision } from '@/lib/routing-logic';
 
 interface RouteGuardProps {
@@ -15,6 +16,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
   fallback
 }) => {
   const { user, clinic, isAuthenticated, isLoading, error } = useAuth();
+  const { activeRole } = useNavigation();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -25,7 +27,8 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
       isAuthenticated,
       user,
       clinic,
-      isLoading
+      isLoading,
+      activeRole
     };
 
     const decision = getRoutingDecision(pathname, userState);
@@ -33,7 +36,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
     if (decision.shouldRedirect && decision.redirectPath) {
       router.push(decision.redirectPath as any);
     }
-  }, [isLoading, isAuthenticated, user, clinic, pathname, router]);
+  }, [isLoading, isAuthenticated, user, clinic, pathname, router, activeRole]);
 
   // Show loading state while checking permissions
   if (isLoading) {

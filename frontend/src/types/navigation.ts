@@ -39,6 +39,7 @@ export interface NavigationState {
   availableRoles: UserRole[];
   menuCollapsed: boolean;
   breadcrumbs: BreadcrumbItem[];
+  isRoleSwitching: boolean;
 }
 
 // Breadcrumb item

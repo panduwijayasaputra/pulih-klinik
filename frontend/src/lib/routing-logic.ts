@@ -5,6 +5,7 @@ export interface UserState {
   user: any;
   clinic: any;
   isLoading: boolean;
+  activeRole?: string | null; // Add active role to user state
 }
 
 export interface RoutingDecision {
@@ -22,7 +23,7 @@ export const getRoutingDecision = (
   pathname: string,
   userState: UserState
 ): RoutingDecision => {
-  const { isAuthenticated, user, clinic, isLoading } = userState;
+  const { isAuthenticated, user, clinic, isLoading, activeRole } = userState;
 
   // Still loading, don't make decisions yet
   if (isLoading) {
@@ -60,10 +61,15 @@ export const getRoutingDecision = (
   const isTherapist = user.roles?.includes(UserRoleEnum.Therapist);
   const isClinicAdmin = user.roles?.includes(UserRoleEnum.ClinicAdmin);
 
+  // Use active role if available, otherwise fall back to role detection
+  const currentRole = activeRole || 
+    (isSystemAdmin ? UserRoleEnum.Administrator : 
+     isTherapist ? UserRoleEnum.Therapist : 
+     isClinicAdmin ? UserRoleEnum.ClinicAdmin : null);
 
   // System Admin and Therapist logic
-  if (isSystemAdmin || isTherapist) {
-    const roleBasedPortal = isSystemAdmin ? '/portal/admin' : '/portal/therapist';
+  if (currentRole === UserRoleEnum.Administrator || currentRole === UserRoleEnum.Therapist) {
+    const roleBasedPortal = currentRole === UserRoleEnum.Administrator ? '/portal/admin' : '/portal/therapist';
     
     if (pathname.startsWith('/portal')) {
       // Check if they're on the correct role-based portal
@@ -72,7 +78,7 @@ export const getRoutingDecision = (
           shouldRedirect: false,
           redirectPath: null,
           allowAccess: true,
-          reason: `${isSystemAdmin ? 'System admin' : 'Therapist'} accessing correct portal`
+          reason: `${currentRole === UserRoleEnum.Administrator ? 'System admin' : 'Therapist'} accessing correct portal`
         };
       } else {
         // Redirect to their role-specific portal
@@ -80,7 +86,7 @@ export const getRoutingDecision = (
           shouldRedirect: true,
           redirectPath: roleBasedPortal,
           allowAccess: false,
-          reason: `Redirecting ${isSystemAdmin ? 'system admin' : 'therapist'} to role-specific portal`
+          reason: `Redirecting ${currentRole === UserRoleEnum.Administrator ? 'system admin' : 'therapist'} to role-specific portal`
         };
       }
     }
@@ -89,13 +95,13 @@ export const getRoutingDecision = (
         shouldRedirect: true,
         redirectPath: roleBasedPortal,
         allowAccess: false,
-        reason: `${isSystemAdmin ? 'System admin' : 'Therapist'} should not be in onboarding`
+        reason: `${currentRole === UserRoleEnum.Administrator ? 'System admin' : 'Therapist'} should not be in onboarding`
       };
     }
   }
 
   // Clinic Admin logic - this is where the main logic lives
-  if (isClinicAdmin) {
+  if (currentRole === UserRoleEnum.ClinicAdmin) {
     // Determine what step they should be on
     let targetStep: string;
     if (!hasClinic) {
@@ -172,10 +178,10 @@ export const getRoutingDecision = (
     }
   }
 
-  // Default fallback - redirect based on role
-  const roleBasedPortal = isSystemAdmin ? '/portal/admin' : 
-                         isTherapist ? '/portal/therapist' : 
-                         isClinicAdmin ? '/portal/clinic' : '/portal';
+  // Default fallback - redirect based on current role
+  const roleBasedPortal = currentRole === UserRoleEnum.Administrator ? '/portal/admin' : 
+                         currentRole === UserRoleEnum.Therapist ? '/portal/therapist' : 
+                         currentRole === UserRoleEnum.ClinicAdmin ? '/portal/clinic' : '/portal';
   
   return {
     shouldRedirect: true,
