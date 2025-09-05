@@ -191,8 +191,22 @@ export const useAuth = () => {
             id: serverUser.clinicId,
             name: serverUser.clinicName || '',
             isActive: true,
-            ...(serverUser.subscriptionTier && { subscription: serverUser.subscriptionTier }),
+            ...(serverUser.subscriptionTier != null ? { subscription: serverUser.subscriptionTier } : {}),
           };
+          
+          // Debug logging for subscription data
+          console.log('🔍 Clinic Data Debug:', {
+            serverUserSubscriptionTier: serverUser.subscriptionTier,
+            clinicDataSubscription: clinicData.subscription,
+            serverUser: {
+              id: serverUser.id,
+              email: serverUser.email,
+              clinicId: serverUser.clinicId,
+              clinicName: serverUser.clinicName,
+              subscriptionTier: serverUser.subscriptionTier,
+            }
+          });
+          
           setClinic(clinicData);
         } else if (!hasClinicRemoved) {
           setClinic(null);
