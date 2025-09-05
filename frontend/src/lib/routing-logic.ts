@@ -60,6 +60,18 @@ export const getRoutingDecision = (
   const isTherapist = user.roles?.includes(UserRoleEnum.Therapist);
   const isClinicAdmin = user.roles?.includes(UserRoleEnum.ClinicAdmin);
 
+  // Debug logging to understand the issue
+  console.log('🔍 Routing Logic Debug:', {
+    pathname,
+    user: user ? { id: user.id, email: user.email, roles: user.roles } : null,
+    clinic: clinic ? { id: clinic.id, name: clinic.name, subscription: clinic.subscription } : null,
+    hasClinic,
+    hasSubscription,
+    isSystemAdmin,
+    isTherapist,
+    isClinicAdmin,
+  });
+
   // System Admin and Therapist logic
   if (isSystemAdmin || isTherapist) {
     if (pathname.startsWith('/portal')) {

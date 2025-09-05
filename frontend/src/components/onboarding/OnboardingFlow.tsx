@@ -38,6 +38,16 @@ export const OnboardingFlow: React.FC = () => {
   const needsOnboarding = authState.isAuthenticated && authState.user && !authState.clinic?.subscription;
   const isLoaded = authState.isAuthenticated && authState.user;
   const shouldRedirectToPortal = authState.isAuthenticated && authState.user && authState.clinic && authState.clinic.subscription;
+
+  // Debug logging to understand the issue
+  console.log('🔍 OnboardingFlow Debug:', {
+    isAuthenticated: authState.isAuthenticated,
+    user: authState.user ? { id: authState.user.id, email: authState.user.email, roles: authState.user.roles } : null,
+    clinic: authState.clinic ? { id: authState.clinic.id, name: authState.clinic.name, subscription: authState.clinic.subscription } : null,
+    needsOnboarding,
+    isLoaded,
+    shouldRedirectToPortal,
+  });
   
   const { 
     currentStep, 
