@@ -47,7 +47,7 @@ export interface ClinicProfileResponse {
 
   // Status & Subscription
   status: 'active' | 'suspended' | 'pending' | 'inactive';
-  subscriptionTier: 'alpha' | 'beta' | 'theta' | 'delta';
+  subscriptionTier: 'alpha' | 'beta' | 'theta' | 'delta' | undefined;
   subscriptionExpires?: Date;
 
   // Timestamps
@@ -431,11 +431,12 @@ export class ClinicsService {
 
       // Status & Subscription
       status: clinic.status,
-      subscriptionTier: (clinic.subscriptionTier?.code || 'beta') as
+      subscriptionTier: clinic.subscriptionTier?.code as
         | 'alpha'
         | 'beta'
         | 'theta'
-        | 'delta',
+        | 'delta'
+        | undefined,
       subscriptionExpires: clinic.subscriptionExpires,
 
       // Timestamps
@@ -520,11 +521,12 @@ export class ClinicsService {
 
       // Status & Subscription
       status: clinic.status,
-      subscriptionTier: (clinic.subscriptionTier?.code || 'beta') as
+      subscriptionTier: clinic.subscriptionTier?.code as
         | 'alpha'
         | 'beta'
         | 'theta'
-        | 'delta',
+        | 'delta'
+        | undefined,
       subscriptionExpires: clinic.subscriptionExpires,
 
       // Timestamps

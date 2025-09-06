@@ -31,7 +31,7 @@ export interface Clinic {
   id: string;
   name: string;
   isActive: boolean;
-  subscription?: EnumValue<typeof SubscriptionTierEnum>;
+  subscriptionTier?: EnumValue<typeof SubscriptionTierEnum>;
 }
 
 // Simplified Authentication state - only essential fields

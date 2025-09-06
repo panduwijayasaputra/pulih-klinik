@@ -22,7 +22,7 @@ export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private em: EntityManager,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<RequiredRole[]>(

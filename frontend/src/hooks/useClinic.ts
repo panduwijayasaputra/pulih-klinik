@@ -150,7 +150,7 @@ export const useClinic = () => {
             id: response.data.id,
             name: response.data.name,
             isActive: true, // New clinics are active by default
-            subscription: response.data.subscriptionTier
+            subscriptionTier: response.data.subscriptionTier as any
           });
         }
         
@@ -415,13 +415,13 @@ export const useClinic = () => {
         if (user) {
           setUser({
             ...user,
-            subscriptionTier: response.data.subscriptionTier as any
+            subscriptionTier: response.data.subscriptionTier as any as any
           });
           // Also update the clinic data in the auth store
           if (state.clinic) {
             setClinic({
               ...state.clinic,
-              subscription: response.data.subscriptionTier as any,
+              subscriptionTier: response.data.subscriptionTier as any as any,
               isActive: true
             });
           }

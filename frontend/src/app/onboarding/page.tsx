@@ -18,7 +18,7 @@ function OnboardingPageContent() {
   // Check if user has clinic data and subscription
   const hasClinic = !!clinic;
   const hasClinicFromUser = !!(user?.clinicId || user?.clinicName);
-  const hasSubscription = !!(clinic?.subscription && clinic.subscription.toString().trim() !== '');
+  const hasSubscription = !!(clinic?.subscriptionTier && clinic.subscriptionTier.trim() !== '');
   const hasSubscriptionFromUser = !!(user?.subscriptionTier && user.subscriptionTier.trim() !== '');
 
   // Redirect if not authenticated or not a clinic admin

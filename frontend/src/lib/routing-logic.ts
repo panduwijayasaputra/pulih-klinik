@@ -55,7 +55,7 @@ export const getRoutingDecision = (
 
   // User is authenticated, determine their state
   const hasClinic = !!clinic;
-  const hasSubscription = !!(clinic?.subscription && clinic.subscription.toString().trim() !== '');
+  const hasSubscription = !!(clinic?.subscriptionTier && clinic.subscriptionTier.trim() !== '');
   const isSystemAdmin = user.roles?.includes(UserRoleEnum.Administrator);
   const isTherapist = user.roles?.includes(UserRoleEnum.Therapist);
   const isClinicAdmin = user.roles?.includes(UserRoleEnum.ClinicAdmin);
