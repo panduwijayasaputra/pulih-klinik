@@ -218,6 +218,12 @@ export class ClinicsService {
     userId: string,
     clinicId: string,
   ): Promise<boolean> {
+    // First check if the clinic exists
+    const clinic = await this.em.findOne(Clinic, { id: clinicId });
+    if (!clinic) {
+      throw new NotFoundException('Clinic not found');
+    }
+
     // Check if user has clinic_admin role for this clinic or is system administrator
     const user = await this.em.findOne(
       User,

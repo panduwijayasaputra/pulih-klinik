@@ -4,10 +4,13 @@ import {
   ExecutionContext,
   ForbiddenException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthUser } from '../jwt.strategy';
 import { UserRole, UserRoleType } from '../../common/enums';
+import { EntityManager } from '@mikro-orm/core';
+import { Clinic } from '../../database/entities';
 
 export interface RequiredRole {
   role: UserRoleType;
@@ -16,9 +19,12 @@ export interface RequiredRole {
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private em: EntityManager,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<RequiredRole[]>(
       'roles',
       [context.getHandler(), context.getClass()],
@@ -36,13 +42,14 @@ export class RolesGuard implements CanActivate {
     }
 
     // Check if user has any of the required roles
-    const hasRequiredRole = requiredRoles.some((requiredRole) => {
+    let hasRequiredRole = false;
+    for (const requiredRole of requiredRoles) {
       const userRole = user.roles.find(
         (role) => role === requiredRole.role,
       );
 
       if (!userRole) {
-        return false;
+        continue;
       }
 
       // If clinic scope is required, check if user has clinic access
@@ -53,22 +60,32 @@ export class RolesGuard implements CanActivate {
 
         // Administrator role can access all clinics
         if (userRole === UserRole.ADMINISTRATOR) {
-          return true;
+          hasRequiredRole = true;
+          break;
         }
 
         // For clinic_admin and therapist, they must have matching clinicId
         if (requestedClinicId && user.clinicId !== requestedClinicId) {
-          return false;
+          continue;
         }
 
         // If no specific clinic requested, user must have a clinic assigned
         if (!requestedClinicId && !user.clinicId) {
-          return false;
+          continue;
+        }
+
+        // Check if the clinic actually exists in the database
+        if (requestedClinicId) {
+          const clinic = await this.em.findOne(Clinic, { id: requestedClinicId });
+          if (!clinic) {
+            throw new NotFoundException('Clinic not found');
+          }
         }
       }
 
-      return true;
-    });
+      hasRequiredRole = true;
+      break;
+    }
 
     if (!hasRequiredRole) {
       throw new ForbiddenException(

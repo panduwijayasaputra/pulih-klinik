@@ -70,13 +70,25 @@ export const useClinic = () => {
       } else {
         updateState({ error: response.message || 'Gagal mengambil data klinik' });
       }
-    } catch (error) {
-      const errorMessage = handleError(error, 'Gagal mengambil data klinik');
-      updateState({ error: errorMessage });
+    } catch (error: any) {
+      // Check if it's a 404 error (clinic not found)
+      if (error?.response?.status === 404 || error?.message?.includes('Clinic not found')) {
+        // Clear clinic data from auth store when clinic is not found
+        const { setUser, setClinic } = useAuthStore.getState();
+        if (user) {
+          const { clinicId: _, clinicName: __, ...userWithoutClinic } = user;
+          setUser(userWithoutClinic);
+          setClinic(null);
+        }
+        updateState({ clinic: null, error: 'Clinic not found. Please create a new clinic.' });
+      } else {
+        const errorMessage = handleError(error, 'Gagal mengambil data klinik');
+        updateState({ error: errorMessage });
+      }
     } finally {
       updateState({ isLoading: false });
     }
-  }, [clinicId, updateState, handleError]);
+  }, [clinicId, updateState, handleError, user]);
 
   // Fetch clinic statistics
   const fetchStats = useCallback(async () => {
@@ -94,9 +106,15 @@ export const useClinic = () => {
       } else {
         updateState({ statsError: response.message || 'Gagal mengambil statistik klinik' });
       }
-    } catch (error) {
-      const errorMessage = handleError(error, 'Gagal mengambil statistik klinik');
-      updateState({ statsError: errorMessage });
+    } catch (error: any) {
+      // Check if it's a 404 error (clinic not found)
+      if (error?.response?.status === 404 || error?.message?.includes('Clinic not found')) {
+        // Don't clear auth store here as fetchClinic will handle it
+        updateState({ stats: null, statsError: 'Clinic not found' });
+      } else {
+        const errorMessage = handleError(error, 'Gagal mengambil statistik klinik');
+        updateState({ statsError: errorMessage });
+      }
     } finally {
       updateState({ isStatsLoading: false });
     }

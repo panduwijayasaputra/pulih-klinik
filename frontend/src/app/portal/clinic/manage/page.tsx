@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageTabs from '@/components/ui/page-tabs';
 import { useClinic } from '@/hooks/useClinic';
+import { useAuthStore } from '@/store/auth';
 import {
   BuildingOfficeIcon,
   DocumentArrowUpIcon,
@@ -20,6 +21,7 @@ import {
 function ClinicManagePageContent() {
   const router = useRouter();
   const { clinic, stats, isLoading, isStatsLoading, fetchClinic, fetchStats } = useClinic();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -35,10 +37,11 @@ function ClinicManagePageContent() {
 
   // Redirect to onboarding if no clinic data exists
   React.useEffect(() => {
-    if (!isLoading && !clinic) {
+    // Only redirect if we're not loading and both clinic data and user clinicId are missing
+    if (!isLoading && !clinic && !user?.clinicId) {
       router.push('/onboarding');
     }
-  }, [clinic, isLoading, router]);
+  }, [clinic, isLoading, user?.clinicId, router]);
 
   // Refresh data when profile tab becomes active
   const handleTabChange = (tab: string) => {
@@ -52,7 +55,8 @@ function ClinicManagePageContent() {
   };
 
   // Show loading state while checking clinic data or redirecting
-  if (isLoading || !clinic) {
+  // Show loading if: still loading OR (user has clinicId but clinic data not loaded yet)
+  if (isLoading || (user?.clinicId && !clinic)) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
