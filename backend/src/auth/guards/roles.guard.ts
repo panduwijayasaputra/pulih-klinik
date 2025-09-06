@@ -64,6 +64,14 @@ export class RolesGuard implements CanActivate {
           break;
         }
 
+        // Check if the clinic actually exists in the database first
+        if (requestedClinicId) {
+          const clinic = await this.em.findOne(Clinic, { id: requestedClinicId });
+          if (!clinic) {
+            throw new NotFoundException('Clinic not found');
+          }
+        }
+
         // For clinic_admin and therapist, they must have matching clinicId
         if (requestedClinicId && user.clinicId !== requestedClinicId) {
           continue;
@@ -72,14 +80,6 @@ export class RolesGuard implements CanActivate {
         // If no specific clinic requested, user must have a clinic assigned
         if (!requestedClinicId && !user.clinicId) {
           continue;
-        }
-
-        // Check if the clinic actually exists in the database
-        if (requestedClinicId) {
-          const clinic = await this.em.findOne(Clinic, { id: requestedClinicId });
-          if (!clinic) {
-            throw new NotFoundException('Clinic not found');
-          }
         }
       }
 
