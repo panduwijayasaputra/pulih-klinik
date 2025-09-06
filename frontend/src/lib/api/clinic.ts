@@ -6,47 +6,37 @@ import {
   ClinicSettings 
 } from '@/types/clinic';
 import { ItemResponse, ListResponse, StatusResponse } from './types';
-import { mockClinicProfile, mockClinicStats } from '@/lib/mocks/clinic';
+import { httpClient, handleApiResponse, handleApiError } from '@/lib/http-client';
 
 export class ClinicAPI {
   static async getClinicProfile(clinicId: string): Promise<ItemResponse<ClinicProfile>> {
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return {
-      success: true,
-      message: 'Clinic profile retrieved successfully',
-      data: mockClinicProfile
-    };
+    try {
+      const response = await httpClient.get(`/clinics/${clinicId}`);
+      const result = handleApiResponse(response) as { data: ClinicProfile; message?: string };
+      return {
+        success: true,
+        message: result.message || 'Clinic profile retrieved successfully',
+        data: result.data
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
   }
 
   static async updateClinicProfile(clinicId: string, data: ClinicProfileFormData): Promise<ItemResponse<ClinicProfile>> {
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Update the mock data with form data
-    const updatedClinic: ClinicProfile = {
-      ...mockClinicProfile,
-      name: data.name,
-      address: data.address,
-      phone: data.phone,
-      email: data.email,
-      website: data.website || '',
-      description: data.description || '',
-      workingHours: data.workingHours || '',
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Update the mock data for subsequent calls
-    Object.assign(mockClinicProfile, updatedClinic);
-    
-    return {
-      success: true,
-      message: 'Clinic profile updated successfully',
-      data: updatedClinic
-    };
+    try {
+      const response = await httpClient.put(`/clinics/${clinicId}`, data);
+      const result = handleApiResponse(response) as { data: ClinicProfile; message?: string };
+      return {
+        success: true,
+        message: result.message || 'Clinic profile updated successfully',
+        data: result.data
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
   }
 
   static async uploadDocument(
@@ -75,11 +65,7 @@ export class ClinicAPI {
     
     // Simulate random upload failure (10% chance)
     if (Math.random() < 0.1) {
-      return {
-        success: false,
-        message: 'Upload gagal. Silakan coba lagi.',
-        data: undefined
-      };
+      throw new Error('Upload gagal. Silakan coba lagi.');
     }
     
     // Create mock document response
@@ -115,78 +101,122 @@ export class ClinicAPI {
   }
 
   static async getClinicDocuments(clinicId: string): Promise<ListResponse<ClinicDocument>> {
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return {
-      success: true,
-      message: 'Documents retrieved successfully',
-      data: mockClinicProfile.documents || []
-    };
+    try {
+      const response = await httpClient.get(`/clinics/${clinicId}/documents`);
+      const result = handleApiResponse(response) as { data: ClinicDocument[]; message?: string };
+      return {
+        success: true,
+        message: result.message || 'Documents retrieved successfully',
+        data: result.data
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
   }
 
   static async deleteDocument(clinicId: string, documentId: string): Promise<StatusResponse> {
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return {
-      success: true,
-      message: 'Document deleted successfully'
-    };
+    try {
+      const response = await httpClient.delete(`/clinics/${clinicId}/documents/${documentId}`);
+      const result = handleApiResponse(response) as { message?: string };
+      return {
+        success: true,
+        message: result.message || 'Document deleted successfully'
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
   }
 
   static async updateClinicBranding(clinicId: string, branding: ClinicBranding): Promise<ItemResponse<ClinicProfile>> {
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const updatedClinic: ClinicProfile = {
-      ...mockClinicProfile,
-      branding,
-      updatedAt: new Date().toISOString()
-    };
-    
-    Object.assign(mockClinicProfile, updatedClinic);
-    
-    return {
-      success: true,
-      message: 'Clinic branding updated successfully',
-      data: updatedClinic
-    };
+    try {
+      const response = await httpClient.put(`/clinics/${clinicId}/branding`, branding);
+      const result = handleApiResponse(response) as { data: ClinicProfile; message?: string };
+      return {
+        success: true,
+        message: result.message || 'Clinic branding updated successfully',
+        data: result.data
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
   }
 
   static async updateClinicSettings(clinicId: string, settings: ClinicSettings): Promise<ItemResponse<ClinicProfile>> {
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    const updatedClinic: ClinicProfile = {
-      ...mockClinicProfile,
-      settings,
-      updatedAt: new Date().toISOString()
-    };
-    
-    Object.assign(mockClinicProfile, updatedClinic);
-    
-    return {
-      success: true,
-      message: 'Clinic settings updated successfully',
-      data: updatedClinic
-    };
+    try {
+      const response = await httpClient.put(`/clinics/${clinicId}/settings`, settings);
+      const result = handleApiResponse(response) as { data: ClinicProfile; message?: string };
+      return {
+        success: true,
+        message: result.message || 'Clinic settings updated successfully',
+        data: result.data
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
+  }
+
+  // Upload clinic logo
+  static async uploadLogo(clinicId: string, file: File): Promise<ItemResponse<{ logoUrl: string }>> {
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+      
+      const response = await httpClient.post(`/clinics/${clinicId}/logo`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      const result = handleApiResponse(response) as { data: { logoUrl: string }; message?: string };
+      return {
+        success: true,
+        message: result.message || 'Logo uploaded successfully',
+        data: result.data
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
   }
 
   // Get clinic statistics
-  static async getClinicStats(clinicId: string): Promise<ItemResponse<typeof mockClinicStats>> {
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    return {
-      success: true,
-      message: 'Clinic statistics retrieved successfully',
-      data: mockClinicStats
-    };
+  static async getClinicStats(clinicId: string): Promise<ItemResponse<{
+    therapists: number;
+    clients: number;
+    sessions: number;
+    documents: number;
+    activeTherapists: number;
+    activeClients: number;
+    thisMonthSessions: number;
+    thisMonthDocuments: number;
+  }>> {
+    try {
+      const response = await httpClient.get(`/clinics/${clinicId}/stats`);
+      const result = handleApiResponse(response) as { 
+        data: {
+          therapists: number;
+          clients: number;
+          sessions: number;
+          documents: number;
+          activeTherapists: number;
+          activeClients: number;
+          thisMonthSessions: number;
+          thisMonthDocuments: number;
+        }; 
+        message?: string 
+      };
+      return {
+        success: true,
+        message: result.message || 'Clinic statistics retrieved successfully',
+        data: result.data
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
   }
 }

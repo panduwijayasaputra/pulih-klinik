@@ -437,4 +437,102 @@ export class ClinicsService {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  /**
+   * Get clinic statistics
+   */
+  async getClinicStats(clinicId: string): Promise<{
+    therapists: number;
+    clients: number;
+    sessions: number;
+    documents: number;
+    activeTherapists: number;
+    activeClients: number;
+    thisMonthSessions: number;
+    thisMonthDocuments: number;
+  }> {
+    // Verify clinic exists
+    const clinicExists = await this.clinicExists(clinicId);
+    if (!clinicExists) {
+      throw new NotFoundException('Clinic not found');
+    }
+
+    // Get current date for this month calculations
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    // Get therapists count
+    const [totalTherapists, activeTherapists] = await Promise.all([
+      this.em.count('Therapist', { clinic: clinicId }),
+      this.em.count('Therapist', { clinic: clinicId, isActive: true }),
+    ]);
+
+    // Get clients count
+    const [totalClients, activeClients] = await Promise.all([
+      this.em.count('Client', { clinic: clinicId }),
+      this.em.count('Client', { clinic: clinicId, isActive: true }),
+    ]);
+
+    // Get sessions count
+    const [totalSessions, thisMonthSessions] = await Promise.all([
+      this.em.count('TherapySession', { clinic: clinicId }),
+      this.em.count('TherapySession', {
+        clinic: clinicId,
+        createdAt: {
+          $gte: startOfMonth,
+          $lte: endOfMonth,
+        },
+      }),
+    ]);
+
+    // Get documents count (placeholder - will be implemented when document system is ready)
+    const [totalDocuments, thisMonthDocuments] = await Promise.all([
+      // TODO: Implement when document system is ready
+      Promise.resolve(0),
+      Promise.resolve(0),
+    ]);
+
+    return {
+      therapists: totalTherapists,
+      clients: totalClients,
+      sessions: totalSessions,
+      documents: totalDocuments,
+      activeTherapists,
+      activeClients,
+      thisMonthSessions,
+      thisMonthDocuments,
+    };
+  }
+
+  /**
+   * Upload clinic logo
+   */
+  async uploadClinicLogo(
+    clinicId: string,
+    _logoFile: any,
+  ): Promise<{ logoUrl: string }> {
+    // Verify clinic exists
+    const clinicExists = await this.clinicExists(clinicId);
+    if (!clinicExists) {
+      throw new NotFoundException('Clinic not found');
+    }
+
+    // TODO: Implement actual file upload logic
+    // For now, return a placeholder URL
+    const logoUrl = `https://example.com/uploads/logos/clinic-${clinicId}-logo.png`;
+
+    // Update clinic with new logo URL
+    await this.em.nativeUpdate('Clinic', { id: clinicId }, { logoUrl });
+
+    return { logoUrl };
+  }
 }

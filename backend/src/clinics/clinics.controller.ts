@@ -190,6 +190,75 @@ export class ClinicsController {
     };
   }
 
+  @Get(':clinicId/stats')
+  @RequireClinicAccess()
+  @ApiOperation({
+    summary: 'Get clinic statistics',
+    description:
+      'Get clinic statistics including therapists, clients, sessions, and documents count',
+  })
+  @ApiParam({
+    name: 'clinicId',
+    description: 'Clinic ID (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Clinic statistics retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          therapists: 5,
+          clients: 120,
+          sessions: 450,
+          documents: 8,
+          activeTherapists: 4,
+          activeClients: 95,
+          thisMonthSessions: 45,
+          thisMonthDocuments: 2,
+        },
+        message: 'Clinic statistics retrieved successfully',
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing JWT token' })
+  @ApiForbiddenResponse({
+    description: 'Insufficient permissions to access this clinic',
+  })
+  @ApiNotFoundResponse({ description: 'Clinic not found' })
+  async getClinicStats(
+    @Param('clinicId', ParseUuidPipe) clinicId: string,
+    @CurrentUser() currentUser: AuthUser,
+  ): Promise<{
+    success: boolean;
+    data: {
+      therapists: number;
+      clients: number;
+      sessions: number;
+      documents: number;
+      activeTherapists: number;
+      activeClients: number;
+      thisMonthSessions: number;
+      thisMonthDocuments: number;
+    };
+    message: string;
+  }> {
+    // Validate user has access to this clinic
+    await this.clinicsService.validateClinicAdminAccess(
+      currentUser.id,
+      clinicId,
+    );
+
+    const stats = await this.clinicsService.getClinicStats(clinicId);
+
+    return {
+      success: true,
+      data: stats,
+      message: 'Clinic statistics retrieved successfully',
+    };
+  }
+
   @Get(':clinicId')
   @RequireClinicAccess()
   @ApiOperation({
@@ -508,6 +577,77 @@ export class ClinicsController {
         message: (error as Error).message,
       };
     }
+  }
+
+  @Post(':clinicId/logo')
+  @RequireClinicAccess()
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Upload clinic logo',
+    description: 'Upload or update clinic logo image',
+  })
+  @ApiParam({
+    name: 'clinicId',
+    description: 'Clinic ID (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({
+    description: 'Logo file upload',
+    schema: {
+      type: 'object',
+      properties: {
+        logo: {
+          type: 'string',
+          format: 'binary',
+          description: 'Logo image file (PNG, JPG, JPEG, max 5MB)',
+        },
+      },
+      required: ['logo'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Logo uploaded successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          logoUrl: 'https://example.com/uploads/logos/clinic-123-logo.png',
+        },
+        message: 'Logo uploaded successfully',
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing JWT token' })
+  @ApiForbiddenResponse({
+    description: 'Insufficient permissions to access this clinic',
+  })
+  @ApiNotFoundResponse({ description: 'Clinic not found' })
+  async uploadClinicLogo(
+    @Param('clinicId', ParseUuidPipe) clinicId: string,
+    @CurrentUser() currentUser: AuthUser,
+    @Body() body: { logo: any },
+  ): Promise<{
+    success: boolean;
+    data: { logoUrl: string };
+    message: string;
+  }> {
+    // Validate user has access to this clinic
+    await this.clinicsService.validateClinicAdminAccess(
+      currentUser.id,
+      clinicId,
+    );
+
+    const result = await this.clinicsService.uploadClinicLogo(
+      clinicId,
+      body.logo,
+    );
+
+    return {
+      success: true,
+      data: { logoUrl: result.logoUrl },
+      message: 'Logo uploaded successfully',
+    };
   }
 
   @Post(':clinicId/documents')

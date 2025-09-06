@@ -114,18 +114,18 @@ export const useClinic = () => {
     updateState({ isLoading: true, error: null });
 
     try {
-      const response = await ClinicAPI.uploadDocument('clinic-001', file, 'logo');
+      const response = await ClinicAPI.uploadLogo('clinic-001', file);
       if (response.success && response.data) {
         // Update the clinic data with new logo URL
         if (state.clinic) {
           const updatedClinic: ClinicProfile = {
             ...state.clinic,
-            logo: response.data.url,
+            logo: response.data.logoUrl,
             updatedAt: new Date().toISOString()
           };
           updateState({ clinic: updatedClinic });
         }
-        return response.data.url;
+        return response.data.logoUrl;
       } else {
         updateState({ error: response.message || 'Gagal mengunggah logo' });
         return null;
