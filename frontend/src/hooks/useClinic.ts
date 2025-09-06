@@ -7,6 +7,7 @@ import {
   ClinicSettings 
 } from '@/types/clinic';
 import { ClinicAPI } from '@/lib/api/clinic';
+import { useAuthStore } from '@/store/auth';
 
 interface UseClinicState {
   clinic: ClinicProfile | null;
@@ -26,6 +27,7 @@ interface UseClinicState {
 }
 
 export const useClinic = () => {
+  const { user } = useAuthStore();
   const [state, setState] = useState<UseClinicState>({
     clinic: null,
     documents: [],
@@ -37,6 +39,9 @@ export const useClinic = () => {
     documentsError: null,
     statsError: null
   });
+
+  // Get the clinic ID from the authenticated user
+  const clinicId = user?.clinicId;
 
   const updateState = useCallback((updates: Partial<UseClinicState>) => {
     setState(prev => ({ ...prev, ...updates }));
@@ -51,10 +56,15 @@ export const useClinic = () => {
 
   // Fetch clinic profile
   const fetchClinic = useCallback(async () => {
+    if (!clinicId) {
+      updateState({ error: 'Clinic ID not found. Please log in again.' });
+      return;
+    }
+
     updateState({ isLoading: true, error: null });
     
     try {
-      const response = await ClinicAPI.getClinicProfile('clinic-001');
+      const response = await ClinicAPI.getClinicProfile(clinicId);
       if (response.success && response.data) {
         updateState({ clinic: response.data });
       } else {
@@ -66,14 +76,19 @@ export const useClinic = () => {
     } finally {
       updateState({ isLoading: false });
     }
-  }, [updateState, handleError]);
+  }, [clinicId, updateState, handleError]);
 
   // Fetch clinic statistics
   const fetchStats = useCallback(async () => {
+    if (!clinicId) {
+      updateState({ statsError: 'Clinic ID not found. Please log in again.' });
+      return;
+    }
+
     updateState({ isStatsLoading: true, statsError: null });
     
     try {
-      const response = await ClinicAPI.getClinicStats('clinic-001');
+      const response = await ClinicAPI.getClinicStats(clinicId);
       if (response.success && response.data) {
         updateState({ stats: response.data });
       } else {
@@ -85,14 +100,19 @@ export const useClinic = () => {
     } finally {
       updateState({ isStatsLoading: false });
     }
-  }, [updateState, handleError]);
+  }, [clinicId, updateState, handleError]);
 
   // Update clinic profile
   const updateClinic = useCallback(async (formData: ClinicProfileFormData) => {
+    if (!clinicId) {
+      updateState({ error: 'Clinic ID not found. Please log in again.' });
+      return false;
+    }
+
     updateState({ isLoading: true, error: null });
 
     try {
-      const response = await ClinicAPI.updateClinicProfile('clinic-001', formData);
+      const response = await ClinicAPI.updateClinicProfile(clinicId, formData);
       if (response.success && response.data) {
         updateState({ clinic: response.data });
         return true;
@@ -107,14 +127,19 @@ export const useClinic = () => {
     } finally {
       updateState({ isLoading: false });
     }
-  }, [updateState, handleError]);
+  }, [clinicId, updateState, handleError]);
 
   // Upload clinic logo
   const uploadLogo = useCallback(async (file: File) => {
+    if (!clinicId) {
+      updateState({ error: 'Clinic ID not found. Please log in again.' });
+      return null;
+    }
+
     updateState({ isLoading: true, error: null });
 
     try {
-      const response = await ClinicAPI.uploadLogo('clinic-001', file);
+      const response = await ClinicAPI.uploadLogo(clinicId, file);
       if (response.success && response.data) {
         // Update the clinic data with new logo URL
         if (state.clinic) {
@@ -137,14 +162,19 @@ export const useClinic = () => {
     } finally {
       updateState({ isLoading: false });
     }
-  }, [state.clinic, updateState, handleError]);
+  }, [clinicId, state.clinic, updateState, handleError]);
 
   // Update clinic branding
   const updateBranding = useCallback(async (branding: ClinicBranding) => {
+    if (!clinicId) {
+      updateState({ error: 'Clinic ID not found. Please log in again.' });
+      return false;
+    }
+
     updateState({ isLoading: true, error: null });
 
     try {
-      const response = await ClinicAPI.updateClinicBranding('clinic-001', branding);
+      const response = await ClinicAPI.updateClinicBranding(clinicId, branding);
       if (response.success && response.data) {
         updateState({ clinic: response.data });
         return true;
@@ -159,14 +189,19 @@ export const useClinic = () => {
     } finally {
       updateState({ isLoading: false });
     }
-  }, [updateState, handleError]);
+  }, [clinicId, updateState, handleError]);
 
   // Update clinic settings
   const updateSettings = useCallback(async (settings: ClinicSettings) => {
+    if (!clinicId) {
+      updateState({ error: 'Clinic ID not found. Please log in again.' });
+      return false;
+    }
+
     updateState({ isLoading: true, error: null });
 
     try {
-      const response = await ClinicAPI.updateClinicSettings('clinic-001', settings);
+      const response = await ClinicAPI.updateClinicSettings(clinicId, settings);
       if (response.success && response.data) {
         updateState({ clinic: response.data });
         return true;
@@ -181,14 +216,19 @@ export const useClinic = () => {
     } finally {
       updateState({ isLoading: false });
     }
-  }, [updateState, handleError]);
+  }, [clinicId, updateState, handleError]);
 
   // Fetch clinic documents
   const fetchDocuments = useCallback(async () => {
+    if (!clinicId) {
+      updateState({ documentsError: 'Clinic ID not found. Please log in again.' });
+      return;
+    }
+
     updateState({ isDocumentsLoading: true, documentsError: null });
     
     try {
-      const response = await ClinicAPI.getClinicDocuments('clinic-001');
+      const response = await ClinicAPI.getClinicDocuments(clinicId);
       if (response.success && response.data) {
         updateState({ documents: response.data });
       } else {
@@ -200,7 +240,7 @@ export const useClinic = () => {
     } finally {
       updateState({ isDocumentsLoading: false });
     }
-  }, [updateState, handleError]);
+  }, [clinicId, updateState, handleError]);
 
   // Upload document
   const uploadDocument = useCallback(async (
@@ -212,10 +252,15 @@ export const useClinic = () => {
       onProgress?: (progress: number) => void;
     }
   ) => {
+    if (!clinicId) {
+      updateState({ documentsError: 'Clinic ID not found. Please log in again.' });
+      return null;
+    }
+
     updateState({ isDocumentsLoading: true, documentsError: null });
 
     try {
-      const response = await ClinicAPI.uploadDocument('clinic-001', file, documentType, options);
+      const response = await ClinicAPI.uploadDocument(clinicId, file, documentType, options);
       if (response.success && response.data) {
         updateState({ 
           documents: [...state.documents, response.data]
@@ -236,10 +281,15 @@ export const useClinic = () => {
 
   // Delete document
   const deleteDocument = useCallback(async (documentId: string) => {
+    if (!clinicId) {
+      updateState({ documentsError: 'Clinic ID not found. Please log in again.' });
+      return false;
+    }
+
     updateState({ isDocumentsLoading: true, documentsError: null });
 
     try {
-      const response = await ClinicAPI.deleteDocument('clinic-001', documentId);
+      const response = await ClinicAPI.deleteDocument(clinicId, documentId);
       if (response.success) {
         const updatedDocuments = state.documents.filter(doc => doc.id !== documentId);
         updateState({ documents: updatedDocuments });
@@ -255,7 +305,7 @@ export const useClinic = () => {
     } finally {
       updateState({ isDocumentsLoading: false });
     }
-  }, [state.documents, updateState, handleError]);
+  }, [clinicId, state.documents, updateState, handleError]);
 
   // Download document
   const downloadDocument = useCallback(async (documentId: string, fileName: string) => {
@@ -267,7 +317,7 @@ export const useClinic = () => {
       updateState({ documentsError: errorMessage });
       return false;
     }
-  }, [updateState, handleError]);
+  }, [clinicId, state.documents, updateState, handleError]);
 
   // Clear errors
   const clearError = useCallback(() => {
