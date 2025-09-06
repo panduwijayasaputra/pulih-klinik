@@ -268,25 +268,32 @@ export class ClinicsService {
    * Get all available subscription tiers
    */
   async getSubscriptionTiers(): Promise<any[]> {
-    const tiers = await this.em.find(
-      SubscriptionTier,
-      { isActive: true },
-      { orderBy: { sortOrder: 'ASC' } },
-    );
+    try {
+      console.log('Fetching subscription tiers...');
+      const tiers = await this.em.find(
+        SubscriptionTier,
+        { isActive: true },
+        { orderBy: { sortOrder: 'ASC' } },
+      );
 
-    return tiers.map((tier) => ({
-      id: tier.id,
-      name: tier.name,
-      code: tier.code,
-      description: tier.description,
-      monthlyPrice: tier.monthlyPrice,
-      yearlyPrice: tier.yearlyPrice,
-      therapistLimit: tier.therapistLimit,
-      newClientsPerDayLimit: tier.newClientsPerDayLimit,
-      isRecommended: tier.isRecommended,
-      isActive: tier.isActive,
-      sortOrder: tier.sortOrder,
-    }));
+      console.log('Found tiers:', tiers.length);
+      return tiers.map((tier) => ({
+        id: tier.id,
+        name: tier.name,
+        code: tier.code,
+        description: tier.description,
+        monthlyPrice: tier.monthlyPrice,
+        yearlyPrice: tier.yearlyPrice,
+        therapistLimit: tier.therapistLimit,
+        newClientsPerDayLimit: tier.newClientsPerDayLimit,
+        isRecommended: tier.isRecommended,
+        isActive: tier.isActive,
+        sortOrder: tier.sortOrder,
+      }));
+    } catch (error) {
+      console.error('Error fetching subscription tiers:', error);
+      throw error;
+    }
   }
 
   /**

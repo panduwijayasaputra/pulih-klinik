@@ -865,7 +865,6 @@ export class ClinicsController {
   }
 
   @Get('subscription-tiers')
-  @RequireAdminOrClinicAdmin()
   @ApiOperation({
     summary: 'Get available subscription tiers',
     description: 'Get all available subscription tiers for clinic selection',
@@ -900,13 +899,20 @@ export class ClinicsController {
     data: any[];
     message: string;
   }> {
-    const tiers = await this.clinicsService.getSubscriptionTiers();
+    try {
+      console.log('Controller: Getting subscription tiers...');
+      const tiers = await this.clinicsService.getSubscriptionTiers();
+      console.log('Controller: Retrieved tiers:', tiers.length);
 
-    return {
-      success: true,
-      data: tiers,
-      message: 'Subscription tiers retrieved successfully',
-    };
+      return {
+        success: true,
+        data: tiers,
+        message: 'Subscription tiers retrieved successfully',
+      };
+    } catch (error) {
+      console.error('Controller: Error getting subscription tiers:', error);
+      throw error;
+    }
   }
 
   @Put(':clinicId/subscription')
