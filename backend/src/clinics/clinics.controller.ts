@@ -863,4 +863,77 @@ export class ClinicsController {
       };
     }
   }
+
+  @Put(':clinicId/subscription')
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Update clinic subscription',
+    description: 'Update the subscription tier for a clinic',
+  })
+  @ApiParam({
+    name: 'clinicId',
+    description: 'Clinic ID (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({
+    description: 'Subscription update data',
+    schema: {
+      type: 'object',
+      properties: {
+        subscriptionTier: {
+          type: 'string',
+          enum: ['beta', 'alpha', 'theta'],
+          description: 'Subscription tier',
+        },
+      },
+      required: ['subscriptionTier'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription updated successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          subscriptionTier: 'alpha',
+          subscriptionExpires: '2024-12-31T23:59:59.000Z',
+        },
+        message: 'Subscription updated successfully',
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing JWT token' })
+  @ApiForbiddenResponse({
+    description:
+      'Insufficient permissions to update subscription for this clinic',
+  })
+  @ApiNotFoundResponse({ description: 'Clinic not found' })
+  async updateClinicSubscription(
+    @Param('clinicId', ParseUuidPipe) clinicId: string,
+    @Body() updateData: { subscriptionTier: string },
+    @CurrentUser() currentUser: AuthUser,
+  ): Promise<{
+    success: boolean;
+    data: { id: string; subscriptionTier: string; subscriptionExpires: string };
+    message: string;
+  }> {
+    // Validate user has access to this clinic
+    await this.clinicsService.validateClinicAdminAccess(
+      currentUser.id,
+      clinicId,
+    );
+
+    const result = await this.clinicsService.updateClinicSubscription(
+      clinicId,
+      updateData.subscriptionTier,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: 'Subscription updated successfully',
+    };
+  }
 }

@@ -398,6 +398,52 @@ export const useClinic = () => {
     updateState({ statsError: null });
   }, [updateState]);
 
+  // Update clinic subscription
+  const updateSubscription = useCallback(async (subscriptionTier: string) => {
+    if (!clinicId) {
+      updateState({ error: 'Clinic ID not found. Please log in again.' });
+      return false;
+    }
+
+    updateState({ isLoading: true, error: null });
+    
+    try {
+      const response = await ClinicAPI.updateSubscription(clinicId, subscriptionTier);
+      if (response.success && response.data) {
+        // Update auth store with new subscription information
+        const { setUser, setClinic } = useAuthStore.getState();
+        if (user) {
+          setUser({
+            ...user,
+            subscriptionTier: response.data.subscriptionTier as any
+          });
+          // Also update the clinic data in the auth store
+          if (state.clinic) {
+            setClinic({
+              ...state.clinic,
+              subscription: response.data.subscriptionTier as any,
+              isActive: true
+            });
+          }
+        }
+        
+        // Refresh clinic data
+        await fetchClinic();
+        
+        return true;
+      } else {
+        updateState({ error: response.message || 'Gagal memperbarui subscription' });
+        return false;
+      }
+    } catch (error) {
+      const errorMessage = handleError(error, 'Gagal memperbarui subscription');
+      updateState({ error: errorMessage });
+      return false;
+    } finally {
+      updateState({ isLoading: false });
+    }
+  }, [clinicId, updateState, handleError, user, state.clinic, fetchClinic]);
+
   // Auto-fetch clinic data and stats on mount
   useEffect(() => {
     fetchClinic();
@@ -428,6 +474,7 @@ export const useClinic = () => {
     uploadLogo,
     updateBranding,
     updateSettings,
+    updateSubscription,
     
     // Document actions
     fetchDocuments,

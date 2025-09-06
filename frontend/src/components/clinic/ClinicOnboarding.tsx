@@ -2,25 +2,60 @@
 
 import React, { useState } from 'react';
 import { ClinicProfileForm } from './ClinicProfileForm';
+import { SubscriptionSelector } from '@/components/auth/SubscriptionSelector';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BuildingOfficeIcon, CheckCircleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { BuildingOfficeIcon, CheckCircleIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { useClinic } from '@/hooks/useClinic';
+import { useToast } from '@/components/ui/toast';
 
 interface ClinicOnboardingProps {
   onComplete: () => void;
+  hasClinic?: boolean;
+  hasSubscription?: boolean;
 }
 
-type OnboardingStep = 'clinic-info' | 'verification' | 'complete';
+type OnboardingStep = 'clinic-info' | 'subscription' | 'complete';
 
-export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({ onComplete }) => {
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>('clinic-info');
+export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({ 
+  onComplete, 
+  hasClinic = false, 
+  hasSubscription = false 
+}) => {
+  const { updateSubscription, isLoading } = useClinic();
+  const { addToast } = useToast();
 
-  const handleClinicCreated = () => {
-    setCurrentStep('verification');
+  // Determine initial step based on what's missing
+  const getInitialStep = (): OnboardingStep => {
+    if (!hasClinic) return 'clinic-info';
+    if (!hasSubscription) return 'subscription';
+    return 'complete';
   };
 
-  const handleVerificationComplete = () => {
-    setCurrentStep('complete');
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(getInitialStep());
+
+  const handleClinicCreated = () => {
+    setCurrentStep('subscription');
+  };
+
+  const handleSubscriptionSelected = async (subscriptionTier: string) => {
+    const success = await updateSubscription(subscriptionTier);
+    if (success) {
+      addToast({
+        type: 'success',
+        title: 'Subscription Berhasil Dipilih',
+        message: `Paket ${subscriptionTier} telah berhasil dipilih dan akan aktif segera.`,
+        duration: 5000,
+      });
+      setCurrentStep('complete');
+    } else {
+      addToast({
+        type: 'error',
+        title: 'Gagal Memilih Subscription',
+        message: 'Terjadi kesalahan saat memilih paket subscription. Silakan coba lagi.',
+        duration: 5000,
+      });
+    }
   };
 
   const handleFinalComplete = () => {
@@ -30,7 +65,7 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({ onComplete }
   const getStepNumber = (step: OnboardingStep): number => {
     switch (step) {
       case 'clinic-info': return 1;
-      case 'verification': return 2;
+      case 'subscription': return 2;
       case 'complete': return 3;
       default: return 1;
     }
@@ -54,13 +89,16 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({ onComplete }
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
             <BuildingOfficeIcon className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Selamat Datang di Smart Therapy
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Mari kita mulai dengan membuat profil klinik Anda. Informasi ini akan membantu 
-            kami memberikan pengalaman terbaik untuk Anda dan pasien.
-          </p>
+                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                   {currentStep === 'clinic-info' && 'Selamat Datang di Smart Therapy'}
+                   {currentStep === 'subscription' && 'Pilih Paket Subscription'}
+                   {currentStep === 'complete' && 'Onboarding Selesai!'}
+                 </h1>
+                 <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                   {currentStep === 'clinic-info' && 'Mari kita mulai dengan membuat profil klinik Anda. Informasi ini akan membantu kami memberikan pengalaman terbaik untuk Anda dan pasien.'}
+                   {currentStep === 'subscription' && 'Pilih paket subscription yang sesuai dengan kebutuhan klinik Anda. Anda dapat mengubah paket kapan saja.'}
+                   {currentStep === 'complete' && 'Proses onboarding telah selesai. Anda sekarang dapat mengakses semua fitur Smart Therapy.'}
+                 </p>
         </div>
 
         {/* Progress Indicator */}
@@ -88,31 +126,31 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({ onComplete }
               }`}>Informasi Klinik</span>
             </div>
             
-            <div className={`w-8 h-0.5 ${
-              isStepCompleted('verification') || isStepActive('verification') ? 'bg-blue-600' : 'bg-gray-300'
-            }`}></div>
-            
-            {/* Step 2: Verifikasi */}
-            <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                isStepCompleted('verification') 
-                  ? 'bg-green-600' 
-                  : isStepActive('verification') 
-                    ? 'bg-blue-600' 
-                    : 'bg-gray-300'
-              }`}>
-                {isStepCompleted('verification') ? (
-                  <CheckCircleIcon className="w-4 h-4 text-white" />
-                ) : (
-                  <span className={`text-sm font-medium ${
-                    isStepActive('verification') ? 'text-white' : 'text-gray-500'
-                  }`}>2</span>
-                )}
-              </div>
-              <span className={`ml-2 text-sm font-medium ${
-                isStepActive('verification') ? 'text-gray-900' : 'text-gray-500'
-              }`}>Verifikasi</span>
-            </div>
+                   <div className={`w-8 h-0.5 ${
+                     isStepCompleted('subscription') || isStepActive('subscription') ? 'bg-blue-600' : 'bg-gray-300'
+                   }`}></div>
+                   
+                   {/* Step 2: Subscription */}
+                   <div className="flex items-center">
+                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                       isStepCompleted('subscription') 
+                         ? 'bg-green-600' 
+                         : isStepActive('subscription') 
+                           ? 'bg-blue-600' 
+                           : 'bg-gray-300'
+                     }`}>
+                       {isStepCompleted('subscription') ? (
+                         <CheckCircleIcon className="w-4 h-4 text-white" />
+                       ) : (
+                         <span className={`text-sm font-medium ${
+                           isStepActive('subscription') ? 'text-white' : 'text-gray-500'
+                         }`}>2</span>
+                       )}
+                     </div>
+                     <span className={`ml-2 text-sm font-medium ${
+                       isStepActive('subscription') ? 'text-gray-900' : 'text-gray-500'
+                     }`}>Subscription</span>
+                   </div>
             
             <div className={`w-8 h-0.5 ${
               isStepCompleted('complete') || isStepActive('complete') ? 'bg-blue-600' : 'bg-gray-300'
@@ -145,16 +183,16 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({ onComplete }
         {/* Main Content */}
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              {currentStep === 'clinic-info' && 'Informasi Dasar Klinik'}
-              {currentStep === 'verification' && 'Verifikasi Klinik'}
-              {currentStep === 'complete' && 'Selamat! Klinik Anda Siap'}
-            </CardTitle>
-            <CardDescription className="text-gray-600 text-base">
-              {currentStep === 'clinic-info' && 'Lengkapi informasi berikut untuk memulai menggunakan Smart Therapy. Semua informasi dapat diubah nanti di pengaturan.'}
-              {currentStep === 'verification' && 'Klinik Anda telah dibuat! Tim kami akan memverifikasi informasi klinik Anda dalam 1-2 hari kerja.'}
-              {currentStep === 'complete' && 'Proses onboarding telah selesai. Anda sekarang dapat mengakses semua fitur Smart Therapy.'}
-            </CardDescription>
+                 <CardTitle className="text-2xl font-bold text-gray-900">
+                   {currentStep === 'clinic-info' && 'Informasi Dasar Klinik'}
+                   {currentStep === 'subscription' && 'Pilih Paket Subscription'}
+                   {currentStep === 'complete' && 'Selamat! Klinik Anda Siap'}
+                 </CardTitle>
+                 <CardDescription className="text-gray-600 text-base">
+                   {currentStep === 'clinic-info' && 'Lengkapi informasi berikut untuk memulai menggunakan Smart Therapy. Semua informasi dapat diubah nanti di pengaturan.'}
+                   {currentStep === 'subscription' && 'Pilih paket subscription yang sesuai dengan kebutuhan klinik Anda. Anda dapat mengubah paket kapan saja.'}
+                   {currentStep === 'complete' && 'Proses onboarding telah selesai. Anda sekarang dapat mengakses semua fitur Smart Therapy.'}
+                 </CardDescription>
           </CardHeader>
           <CardContent>
             {currentStep === 'clinic-info' && (
@@ -164,30 +202,25 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({ onComplete }
               />
             )}
             
-            {currentStep === 'verification' && (
-              <div className="text-center py-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-6">
-                  <ShieldCheckIcon className="w-8 h-8 text-yellow-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  Verifikasi Sedang Berlangsung
-                </h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Tim kami akan memverifikasi informasi klinik Anda dalam 1-2 hari kerja. 
-                  Anda akan menerima notifikasi email setelah verifikasi selesai.
-                </p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <p className="text-blue-800 text-sm">
-                    <strong>Catatan:</strong> Anda dapat mulai menggunakan Smart Therapy sekarang, 
-                    tetapi beberapa fitur mungkin terbatas hingga verifikasi selesai.
+            {currentStep === 'subscription' && (
+              <div className="py-8">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6">
+                    <CreditCardIcon className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                    Pilih Paket Subscription
+                  </h3>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Pilih paket yang sesuai dengan kebutuhan klinik Anda. 
+                    Semua paket termasuk fitur dasar Smart Therapy.
                   </p>
                 </div>
-                <Button 
-                  onClick={handleVerificationComplete}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Lanjutkan ke Dashboard
-                </Button>
+                
+                <SubscriptionSelector 
+                  onSubscriptionSelected={handleSubscriptionSelected}
+                  isLoading={isLoading}
+                />
               </div>
             )}
             

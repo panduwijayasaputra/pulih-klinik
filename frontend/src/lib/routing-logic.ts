@@ -74,24 +74,32 @@ export const getRoutingDecision = (
 
   // System Admin, Therapist, and Clinic Admin logic
   if (currentRole === UserRoleEnum.Administrator || currentRole === UserRoleEnum.Therapist || currentRole === UserRoleEnum.ClinicAdmin) {
-    // Special handling for clinic admins without clinic data
-    if (currentRole === UserRoleEnum.ClinicAdmin && !hasClinic && !hasClinicFromUser) {
-      // If they're already on onboarding page, allow access
-      if (pathname === '/onboarding') {
+    // Special handling for clinic admins without clinic data or subscription
+    if (currentRole === UserRoleEnum.ClinicAdmin) {
+      const hasNoClinic = !hasClinic && !hasClinicFromUser;
+      const hasNoSubscription = !hasSubscription && !hasSubscriptionFromUser;
+      
+      // If they don't have clinic data OR don't have subscription, redirect to onboarding
+      if (hasNoClinic || hasNoSubscription) {
+        // If they're already on onboarding page, allow access
+        if (pathname === '/onboarding') {
+          return {
+            shouldRedirect: false,
+            redirectPath: null,
+            allowAccess: true,
+            reason: 'Clinic admin on onboarding page'
+          };
+        }
+        // Otherwise redirect to onboarding
         return {
-          shouldRedirect: false,
-          redirectPath: null,
-          allowAccess: true,
-          reason: 'Clinic admin on onboarding page'
+          shouldRedirect: true,
+          redirectPath: '/onboarding',
+          allowAccess: false,
+          reason: hasNoClinic 
+            ? 'Clinic admin without clinic data, redirecting to onboarding'
+            : 'Clinic admin without subscription, redirecting to onboarding'
         };
       }
-      // Otherwise redirect to onboarding
-      return {
-        shouldRedirect: true,
-        redirectPath: '/onboarding',
-        allowAccess: false,
-        reason: 'Clinic admin without clinic data, redirecting to onboarding'
-      };
     }
 
     const roleBasedPortal = currentRole === UserRoleEnum.Administrator ? '/portal/admin' : 

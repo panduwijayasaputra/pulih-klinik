@@ -15,6 +15,12 @@ function OnboardingPageContent() {
   // Check if user is authenticated and is a clinic admin
   const isClinicAdmin = user?.roles?.includes(UserRoleEnum.ClinicAdmin);
 
+  // Check if user has clinic data and subscription
+  const hasClinic = !!clinic;
+  const hasClinicFromUser = !!(user?.clinicId || user?.clinicName);
+  const hasSubscription = !!(clinic?.subscription && clinic.subscription.toString().trim() !== '');
+  const hasSubscriptionFromUser = !!(user?.subscriptionTier && user.subscriptionTier.trim() !== '');
+
   // Redirect if not authenticated or not a clinic admin
   React.useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -29,16 +35,16 @@ function OnboardingPageContent() {
   }, [isAuthenticated, user, isClinicAdmin, router]);
 
   const handleOnboardingComplete = () => {
-    // Redirect to clinic management page after successful creation
+    // Redirect to clinic management page after successful completion
     router.push('/portal/clinic/manage');
   };
 
-  // If clinic already exists, redirect to manage page
+  // If clinic exists and has subscription, redirect to manage page
   React.useEffect(() => {
-    if (!isLoading && clinic) {
+    if (!isLoading && hasClinic && hasSubscription) {
       router.push('/portal/clinic/manage');
     }
-  }, [clinic, isLoading, router]);
+  }, [hasClinic, hasSubscription, isLoading, router]);
 
   // Show loading state while checking authentication and clinic data
   if (!isAuthenticated || !user || !isClinicAdmin || isLoading) {
@@ -52,12 +58,18 @@ function OnboardingPageContent() {
     );
   }
 
-  // If clinic exists, don't render anything (redirect will happen)
-  if (clinic) {
+  // If clinic exists and has subscription, don't render anything (redirect will happen)
+  if (hasClinic && hasSubscription) {
     return null;
   }
 
-  return <ClinicOnboarding onComplete={handleOnboardingComplete} />;
+  return (
+    <ClinicOnboarding 
+      onComplete={handleOnboardingComplete}
+      hasClinic={hasClinic || hasClinicFromUser}
+      hasSubscription={hasSubscription || hasSubscriptionFromUser}
+    />
+  );
 }
 
 export default function OnboardingPage() {

@@ -44,16 +44,20 @@ const subscriptionTiers = [
   }
 ];
 
-export const SubscriptionSelector: React.FC = () => {
-  const { nextStep, clearError } = useRegistrationStore();
+interface SubscriptionSelectorProps {
+  onSubscriptionSelected?: (subscriptionTier: string) => void;
+  isLoading?: boolean;
+}
+
+export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({ 
+  onSubscriptionSelected,
+  isLoading = false 
+}) => {
   const [selectedTier, setSelectedTier] = useState<string>('');
 
   const onSubmit = () => {
     if (!selectedTier) return;
-    clearError();
-    // Store the selected tier in the registration store
-    // For now, we'll just proceed to the next step
-    nextStep();
+    onSubscriptionSelected?.(selectedTier);
   };
 
   const formatPrice = (price: number) => {
@@ -171,9 +175,9 @@ export const SubscriptionSelector: React.FC = () => {
         <Button
           onClick={onSubmit}
           className="px-8"
-          disabled={!selectedTier}
+          disabled={!selectedTier || isLoading}
         >
-          Lanjutkan ke Pembayaran
+          {isLoading ? 'Memproses...' : 'Pilih Paket'}
         </Button>
       </div>
     </div>

@@ -234,4 +234,25 @@ export class ClinicAPI {
       throw error;
     }
   }
+
+  /**
+   * Update clinic subscription
+   */
+  static async updateSubscription(
+    clinicId: string, 
+    subscriptionTier: string
+  ): Promise<{
+    success: boolean;
+    data: { id: string; subscriptionTier: string; subscriptionExpires: string };
+    message: string;
+  }> {
+    try {
+      const response = await httpClient.put(`/clinics/${clinicId}/subscription`, {
+        subscriptionTier
+      });
+      return handleApiResponse(response);
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
 }

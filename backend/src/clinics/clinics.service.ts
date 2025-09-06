@@ -7,6 +7,7 @@ import {
 import { EntityManager } from '@mikro-orm/core';
 import { Clinic } from '../database/entities/clinic.entity';
 import { User } from '../database/entities/user.entity';
+import { SubscriptionTier } from '../database/entities/subscription-tier.entity';
 import {
   Therapist,
   TherapistStatus,
@@ -261,6 +262,49 @@ export class ClinicsService {
     }
 
     return true;
+  }
+
+  /**
+   * Update clinic subscription tier
+   */
+  async updateClinicSubscription(
+    clinicId: string,
+    subscriptionTierCode: string,
+  ): Promise<{
+    id: string;
+    subscriptionTier: string;
+    subscriptionExpires: string;
+  }> {
+    const clinic = await this.em.findOne(Clinic, { id: clinicId });
+
+    if (!clinic) {
+      throw new NotFoundException('Clinic not found');
+    }
+
+    // Find the subscription tier by code
+    const subscriptionTier = await this.em.findOne(SubscriptionTier, {
+      code: subscriptionTierCode,
+    });
+
+    if (!subscriptionTier) {
+      throw new NotFoundException('Subscription tier not found');
+    }
+
+    // Update subscription tier
+    clinic.subscriptionTier = subscriptionTier;
+
+    // Set subscription expiration to 1 year from now
+    const expirationDate = new Date();
+    expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+    clinic.subscriptionExpires = expirationDate;
+
+    await this.em.persistAndFlush(clinic);
+
+    return {
+      id: clinic.id,
+      subscriptionTier: subscriptionTier.code,
+      subscriptionExpires: clinic.subscriptionExpires.toISOString(),
+    };
   }
 
   /**
