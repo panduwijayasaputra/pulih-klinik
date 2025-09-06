@@ -42,6 +42,10 @@ export const useClinic = () => {
 
   // Get the clinic ID from the authenticated user
   const clinicId = user?.clinicId;
+  
+  // Debug logging
+  console.log('useClinic hook - user:', user);
+  console.log('useClinic hook - clinicId:', clinicId);
 
   const updateState = useCallback((updates: Partial<UseClinicState>) => {
     setState(prev => ({ ...prev, ...updates }));
@@ -139,19 +143,30 @@ export const useClinic = () => {
         
         // Update auth store with new clinic information
         const { setUser, setClinic } = useAuthStore.getState();
+        console.log('createClinic - updating user with clinic data:', { 
+          userId: user?.id, 
+          clinicId: response.data.id, 
+          clinicName: response.data.name 
+        });
+        
         if (user) {
-          setUser({
+          const updatedUser = {
             ...user,
             clinicId: response.data.id,
             clinicName: response.data.name
-          });
+          };
+          console.log('createClinic - setting updated user:', updatedUser);
+          setUser(updatedUser);
+          
           // Also set the clinic data in the auth store
-          setClinic({
+          const clinicData = {
             id: response.data.id,
             name: response.data.name,
             isActive: true, // New clinics are active by default
             ...(response.data.subscriptionTier && { subscriptionTier: response.data.subscriptionTier })
-          });
+          };
+          console.log('createClinic - setting clinic data:', clinicData);
+          setClinic(clinicData);
         }
         
         return true;
