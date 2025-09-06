@@ -456,8 +456,17 @@ export const useClinic = () => {
 
   // Validate stored clinic data against database
   const validateStoredClinicData = useCallback(async () => {
+    console.log('validateStoredClinicData called:', { 
+      isValidating: state.isValidating, 
+      hasValidated: state.hasValidated,
+      hasClinic: !!state.clinic,
+      clinicId: clinicId,
+      userSubscriptionTier: user?.subscriptionTier
+    });
+    
     // Prevent multiple validations from running simultaneously or if already validated
     if (state.isValidating || state.hasValidated) {
+      console.log('Validation skipped - already validating or validated');
       return;
     }
 
@@ -478,9 +487,19 @@ export const useClinic = () => {
           // Clear stale data from both useClinic state and auth store
           const { setUser, setClinic } = useAuthStore.getState();
           if (user) {
+            console.log('Clearing user data - before:', { 
+              clinicId: user.clinicId, 
+              clinicName: user.clinicName, 
+              subscriptionTier: user.subscriptionTier 
+            });
             const { clinicId: _, clinicName: __, subscriptionTier: ___, ...userWithoutClinic } = user;
             setUser(userWithoutClinic);
             setClinic(null);
+            console.log('Clearing user data - after:', { 
+              clinicId: userWithoutClinic.clinicId, 
+              clinicName: userWithoutClinic.clinicName, 
+              subscriptionTier: userWithoutClinic.subscriptionTier 
+            });
           }
           updateState({ clinic: null, hasValidated: true });
         } else {
@@ -493,9 +512,19 @@ export const useClinic = () => {
           // Clear stale data from both useClinic state and auth store
           const { setUser, setClinic } = useAuthStore.getState();
           if (user) {
+            console.log('Clearing user data (404) - before:', { 
+              clinicId: user.clinicId, 
+              clinicName: user.clinicName, 
+              subscriptionTier: user.subscriptionTier 
+            });
             const { clinicId: _, clinicName: __, subscriptionTier: ___, ...userWithoutClinic } = user;
             setUser(userWithoutClinic);
             setClinic(null);
+            console.log('Clearing user data (404) - after:', { 
+              clinicId: userWithoutClinic.clinicId, 
+              clinicName: userWithoutClinic.clinicName, 
+              subscriptionTier: userWithoutClinic.subscriptionTier 
+            });
           }
           updateState({ clinic: null, hasValidated: true });
         } else {
@@ -523,7 +552,13 @@ export const useClinic = () => {
   // Validate stored clinic data on onboarding page (only once)
   useEffect(() => {
     const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
+    console.log('Validation useEffect triggered:', { 
+      isOnOnboardingPage, 
+      hasValidated: state.hasValidated,
+      pathname: typeof window !== 'undefined' ? window.location.pathname : 'undefined'
+    });
     if (isOnOnboardingPage && !state.hasValidated) {
+      console.log('Calling validateStoredClinicData from useEffect');
       validateStoredClinicData();
     }
   }, [state.hasValidated, validateStoredClinicData]);
