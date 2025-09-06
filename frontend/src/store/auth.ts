@@ -32,7 +32,6 @@ interface AuthStore extends AuthState {
   isAdmin: () => boolean;
   isClinicAdmin: () => boolean;
   isTherapist: () => boolean;
-  needsOnboarding: () => boolean;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -162,13 +161,6 @@ export const useAuthStore = create<AuthStore>()(
         return get().hasRole('therapist');
       },
 
-      needsOnboarding: (): boolean => {
-        const { user, clinic } = get();
-        if (!user || !get().isClinicAdmin()) return false;
-        
-        // Clinic admin needs onboarding if no clinic or no subscription
-        return !clinic || !clinic.subscription;
-      },
     }),
     {
       name: 'auth-storage',

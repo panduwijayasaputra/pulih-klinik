@@ -110,30 +110,6 @@ function ProtectedPage() {
 }
 ```
 
-### Onboarding Flow
-
-```typescript
-import { useOnboarding } from '@/hooks/useOnboarding';
-
-function OnboardingPage() {
-  const { 
-    needsOnboarding, 
-    userHasClinic, 
-    hasActiveSubscription,
-    shouldRedirectToPortal 
-  } = useOnboarding();
-
-  if (shouldRedirectToPortal) {
-    return <div>Redirecting to portal...</div>;
-  }
-
-  if (!needsOnboarding) {
-    return <div>Onboarding not needed</div>;
-  }
-
-  return <OnboardingFlow />;
-}
-```
 
 ## 🗂️ File Structure
 
@@ -159,10 +135,7 @@ frontend/src/
 ├── types/auth.ts                  # Simplified auth types
 ├── store/auth.ts                  # Enhanced auth store
 ├── hooks/useAuth.ts               # Enhanced auth hook
-├── hooks/useOnboarding.ts         # Simplified onboarding hook
-├── store/onboarding.ts            # Enhanced onboarding store
 ├── components/auth/RouteGuard.tsx # Simplified route guard
-├── components/onboarding/OnboardingFlow.tsx # Enhanced onboarding flow
 └── lib/api/auth.ts                # Enhanced auth API client
 ```
 

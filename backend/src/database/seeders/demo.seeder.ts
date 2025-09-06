@@ -143,7 +143,7 @@ export class DemoSeeder extends Seeder {
           address: 'Jakarta Timur, Indonesia',
         },
       },
-      // 5. New admin for onboarding (no clinic yet)
+      // 5. New admin (no clinic yet)
       {
         email: 'newadmin@klinikbaru.com',
         passwordHash: await bcrypt.hash('onboard123', 10),
@@ -210,7 +210,7 @@ export class DemoSeeder extends Seeder {
       '   - dr.ahmad@kliniksehat.com (password: multi123) - Admin + Therapist',
     );
     console.log(
-      '   - newadmin@klinikbaru.com (password: onboard123) - Needs Onboarding',
+      '   - newadmin@klinikbaru.com (password: onboard123) - New Admin',
     );
   }
 }

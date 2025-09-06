@@ -84,12 +84,6 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
     try {
       const selectedRole = role as UserRole;
       
-      console.log('🔍 RoleSelector - Starting role switch:', {
-        selectedRole,
-        currentPath: window.location.pathname,
-        currentActiveRole: activeRole
-      });
-      
       // Set loading state FIRST, then navigate
       switchToRole(selectedRole);
       
@@ -99,14 +93,10 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
       // Navigate to role-specific page
       const roleBasedPath = getRoleBasedPath(selectedRole);
       
-      console.log('🔍 RoleSelector - Generated path:', roleBasedPath);
-      
       // Ensure the path is a valid string before navigation
       if (typeof roleBasedPath === 'string' && roleBasedPath.startsWith('/')) {
-        console.log('🔍 RoleSelector - Navigating to:', roleBasedPath);
         router.push(roleBasedPath as any);
       } else {
-        console.log('🔍 RoleSelector - Invalid path, falling back to /portal');
         // Fallback to generic portal
         router.push('/portal' as any);
       }
@@ -121,13 +111,6 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
 
   // Early return after all hooks are called
   if (!user?.roles || !isMultiRole) {
-    console.log('🔍 RoleSelector debug:', {
-      hasUser: !!user,
-      userRoles: user?.roles,
-      availableRoles,
-      isMultiRole,
-      userRolesLength: user?.roles?.length
-    });
     return null;
   }
 

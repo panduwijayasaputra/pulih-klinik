@@ -94,16 +94,8 @@ export const useNavigation = () => {
   useEffect(() => {
     if (effectiveUserRoles.length === 0) return;
     
-    console.log('🔍 useNavigation Auto Role Detection:', {
-      pathname,
-      activeRole,
-      isManualRoleSwitch: isManualRoleSwitch.current,
-      effectiveUserRoles
-    });
-    
     // COMPLETELY DISABLE automatic role detection
     // Let manual role switching handle all role changes
-    console.log('⏭️ Skipping auto role detection - disabled to prevent conflicts');
     return;
     
     // OLD CODE - DISABLED
@@ -152,11 +144,9 @@ export const useNavigation = () => {
     
     // Only set initial role if there's no active role
     if (!activeRole) {
-      console.log('🔍 Setting initial role for user with roles:', effectiveUserRoles);
-      
       // Determine role based on current path
       let roleFromPath: UserRole | null = null;
-      
+
       if (pathname.startsWith('/portal/admin')) {
         roleFromPath = UserRoleEnum.Administrator;
       } else if (pathname.startsWith('/portal/clinic')) {
@@ -164,13 +154,11 @@ export const useNavigation = () => {
       } else if (pathname.startsWith('/portal/therapist')) {
         roleFromPath = UserRoleEnum.Therapist;
       }
-      
+
       // Set initial role based on path or first available role
       if (roleFromPath && effectiveUserRoles.includes(roleFromPath)) {
-        console.log('✅ Setting initial active role from path:', roleFromPath);
         setActiveRole(roleFromPath);
       } else {
-        console.log('✅ Setting initial active role to first available:', effectiveUserRoles[0]);
         setActiveRole(effectiveUserRoles[0] as UserRole);
       }
     }
@@ -216,16 +204,8 @@ export const useNavigation = () => {
 
   // Role switching functions with validation
   const switchToRole = useCallback((role: UserRole) => {
-    console.log('🔍 switchToRole called:', {
-      requestedRole: role,
-      availableRoles,
-      currentActiveRole: activeRole,
-      isManualRoleSwitch: isManualRoleSwitch.current
-    });
-    
     if (availableRoles.includes(role)) {
       // Set loading state and flag to prevent automatic role detection during manual switch
-      console.log('✅ Setting manual role switch flag and switching to:', role);
       setRoleSwitching(true);
       isManualRoleSwitch.current = true;
       
@@ -236,7 +216,6 @@ export const useNavigation = () => {
       setTimeout(() => {
         isManualRoleSwitch.current = false;
         setRoleSwitching(false);
-        console.log('🔄 Manual role switch flag and loading state reset after timeout');
       }, 1500); // Reduced timeout for better UX
     } else {
       console.warn(`Cannot switch to role ${role}: not available for current user`);

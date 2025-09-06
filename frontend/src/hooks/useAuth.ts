@@ -31,7 +31,6 @@ export const useAuth = () => {
     isAdmin: storeIsAdmin,
     isClinicAdmin: storeIsClinicAdmin,
     isTherapist: storeIsTherapist,
-    needsOnboarding: storeNeedsOnboarding,
   } = useAuthStore();
 
   // Local loading states for specific operations
@@ -143,11 +142,6 @@ export const useAuth = () => {
           setClinic(null);
           console.log('✅ Clinic data cleared');
           
-          // Trigger redirection to clinic form step for onboarding users
-          if (typeof window !== 'undefined' && (window as any).triggerOnboardingRedirect) {
-            console.log('🔄 Triggering onboarding redirect to clinic form...');
-            (window as any).triggerOnboardingRedirect('clinic_info');
-          }
         }
         
         // Create data sync handler for regular changes
@@ -159,11 +153,6 @@ export const useAuth = () => {
             setClinic(null);
             console.log('✅ Clinic data cleared');
             
-            // Trigger redirection to clinic form step for onboarding users
-            if (typeof window !== 'undefined' && (window as any).triggerOnboardingRedirect) {
-              console.log('🔄 Triggering onboarding redirect to clinic form...');
-              (window as any).triggerOnboardingRedirect('clinic_info');
-            }
           },
           (changes) => {
             // Regular data change - log for debugging
@@ -570,6 +559,5 @@ export const useAuth = () => {
     isClinicAdmin: storeIsClinicAdmin,
     isTherapist: storeIsTherapist,
     isMultiRole,
-    needsOnboarding: storeNeedsOnboarding,
   };
 };

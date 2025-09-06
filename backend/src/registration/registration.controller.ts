@@ -25,7 +25,7 @@ export class RegistrationController {
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 registration attempts per minute
   @ApiOperation({
     summary: 'Start user registration process',
-    description: 'Create a new user account and begin the clinic onboarding process',
+    description: 'Create a new user account',
   })
   @ApiBody({ type: StartRegistrationDto })
   @ApiResponse({

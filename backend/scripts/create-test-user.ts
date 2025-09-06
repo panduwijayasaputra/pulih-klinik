@@ -10,9 +10,9 @@ async function createTestUser() {
   const em = orm.em.fork();
 
   try {
-    console.log('🔧 Creating fresh test user for onboarding...');
+    console.log('🔧 Creating fresh test user...');
 
-    const email = 'testuser@needsonboarding.com';
+    const email = 'testuser@newclinic.com';
     const password = 'test123';
 
     // Check if user already exists
@@ -44,7 +44,7 @@ async function createTestUser() {
     const userProfile = em.create(UserProfile, {
       userId: user.id,
       user: user,
-      name: 'Test User Needs Onboarding',
+      name: 'Test User',
       phone: '+62-812-9999999',
       address: 'Test Address, Indonesia',
       createdAt: new Date(),
@@ -55,7 +55,7 @@ async function createTestUser() {
 
     console.log('✅ Test user created successfully!');
     console.log(`📝 Credentials: ${email} / ${password}`);
-    console.log('🎯 This user needs onboarding (no clinic assigned)');
+    console.log('🎯 This user has no clinic assigned');
 
   } catch (error) {
     console.error('❌ Error creating test user:', error);

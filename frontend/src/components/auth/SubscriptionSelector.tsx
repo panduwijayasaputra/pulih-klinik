@@ -150,7 +150,7 @@ export const SubscriptionSelector: React.FC = () => {
           <li>• Periode berlangganan dimulai dari tanggal aktivasi akun</li>
           <li>• Dapat upgrade atau downgrade paket kapan saja</li>
           <li>• Pembayaran dapat dilakukan melalui transfer bank, kartu kredit, atau e-wallet</li>
-          <li>• Tim support akan membantu setup awal dan onboarding</li>
+          <li>• Tim support akan membantu setup awal</li>
           <li>• Garansi uang kembali 14 hari jika tidak puas</li>
         </ul>
       </div>

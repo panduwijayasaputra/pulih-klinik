@@ -21,7 +21,7 @@ The Indonesian Hypnotherapy AI System provides:
 
 ### Authentication System
 The application features a simplified, production-ready authentication system:
-- **Streamlined Auth Flow**: Simplified registration, login, and onboarding processes
+- **Streamlined Auth Flow**: Simplified registration and login processes
 - **Role-Based Access Control**: System Admin, Clinic Admin, and Therapist roles
 - **Real-time Data Validation**: Automatic sync with database on page reload
 - **Network Error Handling**: Retry logic with exponential backoff

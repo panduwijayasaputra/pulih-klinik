@@ -11,10 +11,6 @@ export const routeConfigs: RouteConfig[] = [
   { path: '/thankyou', allowPublic: true, requiredRoles: [] },
 
   // Authenticated routes (require login but no specific role)
-  { 
-    path: '/onboarding', 
-    requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
-  },
 
 
   // Portal routes - Clinic Admin only
@@ -208,11 +204,6 @@ export const getDefaultRouteForUser = (user: User | null): string => {
     return '/login';
   }
 
-  // Check if user needs onboarding (no clinic assigned)
-  const needsOnboarding = !user.clinicId && !user.clinicName;
-  if (needsOnboarding) {
-    return '/onboarding';
-  }
 
   // All authenticated users with clinics go to the unified portal page
   return '/portal';

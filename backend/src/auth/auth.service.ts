@@ -42,7 +42,7 @@ export class AuthService {
     const user = await this.em.findOne(
       User,
       { email, isActive: true },
-      { populate: ['roles', 'clinic', 'profile'] },
+      { populate: ['roles', 'clinic', 'clinic.subscriptionTier', 'profile'] },
     );
 
     if (!user) {
@@ -105,7 +105,7 @@ export class AuthService {
       const user = await this.em.findOne(
         User,
         { id: payload.sub, isActive: true },
-        { populate: ['roles', 'clinic'] },
+        { populate: ['roles', 'clinic', 'clinic.subscriptionTier'] },
       );
 
       if (!user) {

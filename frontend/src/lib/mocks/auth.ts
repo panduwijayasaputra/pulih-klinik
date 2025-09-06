@@ -82,7 +82,7 @@ export const demoCredentials = [
     password: 'multi123'
   },
   {
-    label: 'Admin Baru (Perlu Onboarding)',
+    label: 'Admin Baru',
     email: 'newadmin@klinikbaru.com',
     password: 'onboard123'
   }

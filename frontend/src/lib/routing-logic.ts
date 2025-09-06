@@ -17,7 +17,6 @@ export interface RoutingDecision {
 
 /**
  * Unified routing logic that determines where a user should be based on their state
- * This eliminates conflicts between RouteGuard and OnboardingFlow
  */
 export const getRoutingDecision = (
   pathname: string,
@@ -56,10 +55,16 @@ export const getRoutingDecision = (
 
   // User is authenticated, determine their state
   const hasClinic = !!clinic;
-  const hasSubscription = !!clinic?.subscription;
+  const hasSubscription = !!(clinic?.subscription && clinic.subscription.toString().trim() !== '');
   const isSystemAdmin = user.roles?.includes(UserRoleEnum.Administrator);
   const isTherapist = user.roles?.includes(UserRoleEnum.Therapist);
   const isClinicAdmin = user.roles?.includes(UserRoleEnum.ClinicAdmin);
+  
+  // For multi-role users, check if they have clinic data in their user object
+  // This is a fallback in case the clinic object is not populated
+  const hasClinicFromUser = !!(user.clinicId || user.clinicName);
+  const hasSubscriptionFromUser = !!(user.subscriptionTier && user.subscriptionTier.trim() !== '');
+  
 
   // Use active role if available, otherwise fall back to role detection
   const currentRole = activeRole || 
@@ -90,99 +95,15 @@ export const getRoutingDecision = (
         };
       }
     }
-    if (pathname.startsWith('/onboarding')) {
-      return {
-        shouldRedirect: true,
-        redirectPath: roleBasedPortal,
-        allowAccess: false,
-        reason: `${currentRole === UserRoleEnum.Administrator ? 'System admin' : 'Therapist'} should not be in onboarding`
-      };
-    }
   }
 
-  // Clinic Admin logic - this is where the main logic lives
-  if (currentRole === UserRoleEnum.ClinicAdmin) {
-    // Determine what step they should be on
-    let targetStep: string;
-    if (!hasClinic) {
-      targetStep = 'clinic_info';
-    } else if (!hasSubscription) {
-      targetStep = 'subscription';
-    } else {
-      targetStep = 'complete';
-    }
 
-    // Portal access logic
-    if (pathname.startsWith('/portal')) {
-      const clinicPortalPath = '/portal/clinic';
-      
-      if (targetStep === 'complete') {
-        // Check if they're on the correct clinic portal
-        if (pathname === clinicPortalPath || pathname.startsWith(clinicPortalPath + '/')) {
-          return {
-            shouldRedirect: false,
-            redirectPath: null,
-            allowAccess: true,
-            reason: 'Clinic admin with complete data accessing correct portal'
-          };
-        } else {
-          // Redirect to clinic portal
-          return {
-            shouldRedirect: true,
-            redirectPath: clinicPortalPath,
-            allowAccess: false,
-            reason: 'Redirecting clinic admin to clinic portal'
-          };
-        }
-      } else {
-        return {
-          shouldRedirect: true,
-          redirectPath: `/onboarding?step=${targetStep}`,
-          allowAccess: false,
-          reason: `Clinic admin missing ${targetStep === 'clinic_info' ? 'clinic' : 'subscription'} data`
-        };
-      }
-    }
-
-    // Onboarding access logic
-    if (pathname.startsWith('/onboarding')) {
-      if (targetStep === 'complete') {
-        return {
-          shouldRedirect: true,
-          redirectPath: '/portal/clinic',
-          allowAccess: false,
-          reason: 'Clinic admin with complete data should be in clinic portal'
-        };
-      } else {
-        // Check if they're on the right step
-        const currentStep = pathname.includes('step=') 
-          ? pathname.split('step=')[1] 
-          : 'clinic_info'; // default step
-        
-        if (currentStep !== targetStep) {
-          return {
-            shouldRedirect: true,
-            redirectPath: `/onboarding?step=${targetStep}`,
-            allowAccess: false,
-            reason: `Redirecting to correct step: ${targetStep}`
-          };
-        }
-        
-        return {
-          shouldRedirect: false,
-          redirectPath: null,
-          allowAccess: true,
-          reason: `Clinic admin on correct onboarding step: ${targetStep}`
-        };
-      }
-    }
-  }
 
   // Default fallback - redirect based on current role
-  const roleBasedPortal = currentRole === UserRoleEnum.Administrator ? '/portal/admin' : 
-                         currentRole === UserRoleEnum.Therapist ? '/portal/therapist' : 
-                         currentRole === UserRoleEnum.ClinicAdmin ? '/portal/clinic' : '/portal';
-  
+  const roleBasedPortal = currentRole === UserRoleEnum.Administrator ? '/portal/admin' :
+                          currentRole === UserRoleEnum.Therapist ? '/portal/therapist' :
+                          currentRole === UserRoleEnum.ClinicAdmin ? '/portal/clinic' : '/portal';
+
   return {
     shouldRedirect: true,
     redirectPath: roleBasedPortal,
@@ -191,15 +112,3 @@ export const getRoutingDecision = (
   };
 };
 
-/**
- * Helper function to get the correct onboarding step based on user state
- */
-export const getOnboardingStep = (userState: UserState): string => {
-  const { clinic } = userState;
-  const hasClinic = !!clinic;
-  const hasSubscription = !!clinic?.subscription;
-
-  if (!hasClinic) return 'clinic_info';
-  if (!hasSubscription) return 'subscription';
-  return 'complete';
-};

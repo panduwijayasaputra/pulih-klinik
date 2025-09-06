@@ -168,7 +168,7 @@ async function seedDemoData() {
       '   - dr.ahmad@kliniksehat.com (password: multi123) - Admin + Therapist',
     );
     console.log(
-      '   - newadmin@klinikbaru.com (password: onboard123) - Needs Onboarding',
+      '   - newadmin@klinikbaru.com (password: onboard123) - New Admin',
     );
   } catch (error) {
     console.error('Error seeding demo data:', error);
