@@ -102,6 +102,28 @@ export const useClinic = () => {
     }
   }, [clinicId, updateState, handleError]);
 
+  // Create clinic profile
+  const createClinic = useCallback(async (formData: ClinicProfileFormData) => {
+    updateState({ isLoading: true, error: null });
+    
+    try {
+      const response = await ClinicAPI.createClinic(formData);
+      if (response.success && response.data) {
+        updateState({ clinic: response.data });
+        return true;
+      } else {
+        updateState({ error: response.message || 'Gagal membuat data klinik' });
+        return false;
+      }
+    } catch (error) {
+      const errorMessage = handleError(error, 'Gagal membuat data klinik');
+      updateState({ error: errorMessage });
+      return false;
+    } finally {
+      updateState({ isLoading: false });
+    }
+  }, [updateState, handleError]);
+
   // Update clinic profile
   const updateClinic = useCallback(async (formData: ClinicProfileFormData) => {
     if (!clinicId) {
@@ -357,6 +379,7 @@ export const useClinic = () => {
     // Actions
     fetchClinic,
     fetchStats,
+    createClinic,
     updateClinic,
     uploadLogo,
     updateBranding,

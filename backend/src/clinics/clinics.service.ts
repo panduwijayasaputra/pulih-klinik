@@ -13,7 +13,12 @@ import {
 } from '../database/entities/therapist.entity';
 import { Client, ClientStatus } from '../database/entities/client.entity';
 import { TherapySession } from '../database/entities/therapy-session.entity';
-import { UpdateClinicDto, UpdateBrandingDto, UpdateSettingsDto } from './dto';
+import {
+  CreateClinicDto,
+  UpdateClinicDto,
+  UpdateBrandingDto,
+  UpdateSettingsDto,
+} from './dto';
 import { UserRole } from '../common/enums';
 
 export interface ClinicProfileResponse {
@@ -60,6 +65,41 @@ export interface ClinicDocumentPlaceholder {
 @Injectable()
 export class ClinicsService {
   constructor(private readonly em: EntityManager) {}
+
+  /**
+   * Create a new clinic
+   */
+  async createClinic(
+    createClinicDto: CreateClinicDto,
+    _createdByUserId: string,
+  ): Promise<ClinicProfileResponse> {
+    // Check if clinic with same name or email already exists
+    const existingClinic = await this.em.findOne(Clinic, {
+      $or: [{ name: createClinicDto.name }, { email: createClinicDto.email }],
+    });
+
+    if (existingClinic) {
+      throw new BadRequestException(
+        'A clinic with the same name or email already exists',
+      );
+    }
+
+    // Create new clinic
+    const clinic = new Clinic();
+    clinic.name = createClinicDto.name;
+    clinic.address = createClinicDto.address;
+    clinic.phone = createClinicDto.phone;
+    clinic.email = createClinicDto.email;
+    clinic.website = createClinicDto.website || undefined;
+    clinic.description = createClinicDto.description || undefined;
+    clinic.workingHours = createClinicDto.workingHours || undefined;
+    clinic.status = 'pending'; // New clinics start as pending
+    clinic.isActive = true;
+
+    await this.em.persistAndFlush(clinic);
+
+    return this.mapClinicToResponse(clinic);
+  }
 
   /**
    * Get clinic profile by ID

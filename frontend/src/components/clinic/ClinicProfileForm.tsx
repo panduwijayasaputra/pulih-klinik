@@ -28,7 +28,7 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
   onCancel,
   showActions = true
 }) => {
-  const { clinic, isLoading, error, updateClinic, uploadLogo, clearError } = useClinic();
+  const { clinic, isLoading, error, createClinic, updateClinic, uploadLogo, clearError } = useClinic();
   const { isOpen: confirmDialogOpen, config: confirmConfig, openDialog: openConfirmDialog, closeDialog: closeConfirmDialog } = useConfirmationDialog();
   const { addToast } = useToast();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -96,12 +96,15 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
   const onSubmit = async (data: ClinicProfileFormValidation) => {
     // Show confirmation dialog before submitting
     const hasLogoChange = fileInputRef.current?.files?.[0] !== undefined;
+    const isCreating = !clinic;
     
     openConfirmDialog({
-      title: 'Konfirmasi Perubahan Profil Klinik',
-      description: 'Apakah Anda yakin ingin menyimpan perubahan profil klinik?',
+      title: isCreating ? 'Konfirmasi Pembuatan Klinik' : 'Konfirmasi Perubahan Profil Klinik',
+      description: isCreating 
+        ? 'Apakah Anda yakin ingin membuat data klinik baru?'
+        : 'Apakah Anda yakin ingin menyimpan perubahan profil klinik?',
       variant: 'info',
-      confirmText: 'Ya, Simpan Perubahan',
+      confirmText: isCreating ? 'Ya, Buat Klinik' : 'Ya, Simpan Perubahan',
       cancelText: 'Batal',
       children: (
         <div className="space-y-4">
@@ -157,13 +160,17 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
         logo: fileInputRef.current?.files?.[0] ?? (clinic?.logo as unknown as File)
       };
 
-      const success = await updateClinic(formData);
+      // Determine if this is a create or update operation
+      const isCreating = !clinic;
+      const success = isCreating ? await createClinic(formData) : await updateClinic(formData);
       
       if (success) {
         addToast({
           type: 'success',
-          title: 'Profil Berhasil Diperbarui',
-          message: 'Profil klinik telah berhasil disimpan dan akan terlihat di seluruh sistem.',
+          title: isCreating ? 'Klinik Berhasil Dibuat' : 'Profil Berhasil Diperbarui',
+          message: isCreating 
+            ? 'Data klinik telah berhasil dibuat dan akan terlihat di seluruh sistem.'
+            : 'Profil klinik telah berhasil disimpan dan akan terlihat di seluruh sistem.',
           duration: 5000,
         });
         onSaveSuccess?.();

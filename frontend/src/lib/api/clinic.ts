@@ -9,6 +9,21 @@ import { ItemResponse, ListResponse, StatusResponse } from './types';
 import { httpClient, handleApiResponse, handleApiError } from '@/lib/http-client';
 
 export class ClinicAPI {
+  static async createClinic(data: ClinicProfileFormData): Promise<ItemResponse<ClinicProfile>> {
+    try {
+      const response = await httpClient.post('/clinics', data);
+      const result = handleApiResponse(response) as { data: ClinicProfile; message?: string };
+      return {
+        success: true,
+        message: result.message || 'Clinic created successfully',
+        data: result.data
+      };
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
+  }
+
   static async getClinicProfile(clinicId: string): Promise<ItemResponse<ClinicProfile>> {
     try {
       const response = await httpClient.get(`/clinics/${clinicId}`);

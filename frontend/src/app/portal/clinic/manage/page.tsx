@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageTabs from '@/components/ui/page-tabs';
 import { useClinic } from '@/hooks/useClinic';
+import { NoClinicDataBanner } from '@/components/clinic/NoClinicDataBanner';
 import {
   BuildingOfficeIcon,
   DocumentArrowUpIcon,
@@ -24,11 +25,18 @@ function ClinicManagePageContent() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleSaveSuccess = () => {
-    // Could add toast notification here
+    // Refresh clinic data after successful save
+    fetchClinic();
+    fetchStats();
   };
 
   const handleCancel = () => {
     router.push('/portal/clinic');
+  };
+
+  const handleCreateClinic = () => {
+    // Set active tab to profile to show the form
+    setActiveTab('profile');
   };
 
   // Refresh data when profile tab becomes active
@@ -209,6 +217,11 @@ function ClinicManagePageContent() {
         onTabChange={handleTabChange}
         gridCols={3}
       />
+
+      {/* Show floating banner when no clinic data exists */}
+      {!isLoading && !clinic && (
+        <NoClinicDataBanner onCreateClinic={handleCreateClinic} />
+      )}
     </PageWrapper>
   );
 }

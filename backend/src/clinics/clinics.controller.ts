@@ -36,7 +36,12 @@ import {
   ClinicProfileResponse,
   ClinicDocumentPlaceholder,
 } from './clinics.service';
-import { UpdateClinicDto, UpdateBrandingDto, UpdateSettingsDto } from './dto';
+import {
+  UpdateClinicDto,
+  UpdateBrandingDto,
+  UpdateSettingsDto,
+  CreateClinicDto,
+} from './dto';
 import type { AuthUser } from '../auth/jwt.strategy';
 
 @ApiTags('Clinics')
@@ -44,6 +49,67 @@ import type { AuthUser } from '../auth/jwt.strategy';
 @ApiBearerAuth()
 export class ClinicsController {
   constructor(private readonly clinicsService: ClinicsService) {}
+
+  @Post()
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Create a new clinic',
+    description:
+      'Create a new clinic profile. Only clinic admins and system admins can create clinics.',
+  })
+  @ApiBody({
+    type: CreateClinicDto,
+    description: 'Clinic creation data',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Clinic created successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'Wellness Therapy Center',
+          address: 'Jl. Sudirman No. 123, Jakarta',
+          phone: '+628123456789',
+          email: 'contact@wellness.com',
+          status: 'pending',
+          createdAt: '2024-01-01T00:00:00.000Z',
+        },
+        message: 'Clinic created successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or missing required fields',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Clinic with same name or email already exists',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions',
+  })
+  async createClinic(
+    @Body() createClinicDto: CreateClinicDto,
+    @CurrentUser() currentUser: AuthUser,
+  ): Promise<{
+    success: boolean;
+    data: ClinicProfileResponse;
+    message: string;
+  }> {
+    const clinic = await this.clinicsService.createClinic(
+      createClinicDto,
+      currentUser.id,
+    );
+    return {
+      success: true,
+      data: clinic,
+      message: 'Clinic created successfully',
+    };
+  }
 
   @Get()
   @RequireAdmin()
