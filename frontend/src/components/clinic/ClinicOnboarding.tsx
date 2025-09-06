@@ -17,13 +17,16 @@ interface ClinicOnboardingProps {
 
 type OnboardingStep = 'clinic-info' | 'subscription' | 'complete';
 
-export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({ 
-  onComplete, 
-  hasClinic = false, 
+export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
+  onComplete,
+  hasClinic = false,
   hasSubscription = false 
 }) => {
   const { updateSubscription, isLoading } = useClinic();
   const { addToast } = useToast();
+
+  // Debug logging
+  console.log('ClinicOnboarding props:', { hasClinic, hasSubscription });
 
   // Determine initial step based on what's missing
   const getInitialStep = (): OnboardingStep => {
@@ -32,9 +35,20 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
     return 'complete';
   };
 
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(getInitialStep());
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(() => {
+    // Only set initial step once when component mounts
+    const initialStep = !hasClinic ? 'clinic-info' : (!hasSubscription ? 'subscription' : 'complete');
+    console.log('Initial step set to:', initialStep);
+    return initialStep;
+  });
+
+  // Debug current step changes
+  React.useEffect(() => {
+    console.log('Current step changed to:', currentStep);
+  }, [currentStep]);
 
   const handleClinicCreated = () => {
+    console.log('Clinic created, moving to subscription step');
     setCurrentStep('subscription');
   };
 
