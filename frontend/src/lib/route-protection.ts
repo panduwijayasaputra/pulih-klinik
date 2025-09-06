@@ -22,8 +22,7 @@ export const routeConfigs: RouteConfig[] = [
   // Portal routes - Clinic Admin only
   { 
     path: '/portal/clinic/manage', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal/clinic'
+    requiredRoles: [UserRoleEnum.ClinicAdmin]
   },
   { 
     path: '/portal/clinic/therapists', 
