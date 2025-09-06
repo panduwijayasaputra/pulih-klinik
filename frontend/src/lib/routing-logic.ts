@@ -72,9 +72,11 @@ export const getRoutingDecision = (
      isTherapist ? UserRoleEnum.Therapist : 
      isClinicAdmin ? UserRoleEnum.ClinicAdmin : null);
 
-  // System Admin and Therapist logic
-  if (currentRole === UserRoleEnum.Administrator || currentRole === UserRoleEnum.Therapist) {
-    const roleBasedPortal = currentRole === UserRoleEnum.Administrator ? '/portal/admin' : '/portal/therapist';
+  // System Admin, Therapist, and Clinic Admin logic
+  if (currentRole === UserRoleEnum.Administrator || currentRole === UserRoleEnum.Therapist || currentRole === UserRoleEnum.ClinicAdmin) {
+    const roleBasedPortal = currentRole === UserRoleEnum.Administrator ? '/portal/admin' : 
+                           currentRole === UserRoleEnum.Therapist ? '/portal/therapist' : 
+                           '/portal/clinic';
     
     if (pathname.startsWith('/portal')) {
       // Check if they're on the correct role-based portal
@@ -83,7 +85,7 @@ export const getRoutingDecision = (
           shouldRedirect: false,
           redirectPath: null,
           allowAccess: true,
-          reason: `${currentRole === UserRoleEnum.Administrator ? 'System admin' : 'Therapist'} accessing correct portal`
+          reason: `${currentRole === UserRoleEnum.Administrator ? 'System admin' : currentRole === UserRoleEnum.Therapist ? 'Therapist' : 'Clinic admin'} accessing correct portal`
         };
       } else {
         // Redirect to their role-specific portal
@@ -91,7 +93,7 @@ export const getRoutingDecision = (
           shouldRedirect: true,
           redirectPath: roleBasedPortal,
           allowAccess: false,
-          reason: `Redirecting ${currentRole === UserRoleEnum.Administrator ? 'system admin' : 'therapist'} to role-specific portal`
+          reason: `Redirecting ${currentRole === UserRoleEnum.Administrator ? 'system admin' : currentRole === UserRoleEnum.Therapist ? 'therapist' : 'clinic admin'} to role-specific portal`
         };
       }
     }

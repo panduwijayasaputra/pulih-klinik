@@ -85,18 +85,15 @@ export const routeConfigs: RouteConfig[] = [
   // Role-specific dashboard routes
   { 
     path: '/portal/admin', 
-    requiredRoles: [UserRoleEnum.Administrator],
-    redirectTo: '/portal'
+    requiredRoles: [UserRoleEnum.Administrator]
   },
   { 
     path: '/portal/clinic', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
+    requiredRoles: [UserRoleEnum.ClinicAdmin]
   },
   { 
     path: '/portal/therapist', 
-    requiredRoles: [UserRoleEnum.Therapist],
-    redirectTo: '/portal'
+    requiredRoles: [UserRoleEnum.Therapist]
   },
 
   // Admin routes
