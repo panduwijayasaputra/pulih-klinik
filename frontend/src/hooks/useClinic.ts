@@ -444,10 +444,13 @@ export const useClinic = () => {
     }
   }, [clinicId, updateState, handleError, user, state.clinic, fetchClinic]);
 
-  // Auto-fetch clinic data and stats on mount
+  // Auto-fetch clinic data and stats on mount (but not on onboarding page)
   useEffect(() => {
-    fetchClinic();
-    fetchStats();
+    const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
+    if (!isOnOnboardingPage) {
+      fetchClinic();
+      fetchStats();
+    }
   }, [fetchClinic, fetchStats]);
 
   return {
