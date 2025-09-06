@@ -56,12 +56,8 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
   };
 
   const handleSubscriptionSelected = async (subscriptionTier: string) => {
-    console.log('handleSubscriptionSelected called with:', subscriptionTier);
     const success = await updateSubscription(subscriptionTier);
-    console.log('updateSubscription result:', success);
-    
     if (success) {
-      console.log('Subscription selection successful, showing success toast');
       addToast({
         type: 'success',
         title: 'Subscription Berhasil Dipilih',
@@ -70,7 +66,6 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
       });
       setCurrentStep('complete');
     } else {
-      console.log('Subscription selection failed, showing error toast');
       addToast({
         type: 'error',
         title: 'Gagal Memilih Subscription',

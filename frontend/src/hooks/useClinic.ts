@@ -42,10 +42,6 @@ export const useClinic = () => {
 
   // Get the clinic ID from the authenticated user
   const clinicId = user?.clinicId;
-  
-  // Debug logging
-  console.log('useClinic hook - user:', user);
-  console.log('useClinic hook - clinicId:', clinicId);
 
   const updateState = useCallback((updates: Partial<UseClinicState>) => {
     setState(prev => ({ ...prev, ...updates }));
@@ -66,6 +62,12 @@ export const useClinic = () => {
       if (!isOnOnboardingPage) {
         updateState({ error: 'Clinic ID not found. Please log in again.' });
       }
+      return;
+    }
+
+    // If we have clinic data in state but no clinicId, clear the stale data
+    if (state.clinic && !clinicId) {
+      updateState({ clinic: null });
       return;
     }
 
@@ -134,49 +136,28 @@ export const useClinic = () => {
 
   // Create clinic profile
   const createClinic = useCallback(async (formData: ClinicProfileFormData) => {
-    console.log('createClinic called with formData:', formData);
     updateState({ isLoading: true, error: null });
     
     try {
-      console.log('Calling ClinicAPI.createClinic...');
       const response = await ClinicAPI.createClinic(formData);
-      console.log('createClinic API response:', response);
-      
       if (response.success && response.data) {
-        console.log('Clinic created successfully, updating state with:', response.data);
         updateState({ clinic: response.data });
         
         // Update auth store with new clinic information
         const { setUser, setClinic } = useAuthStore.getState();
-        console.log('createClinic - updating user with clinic data:', { 
-          userId: user?.id, 
-          clinicId: response.data.id, 
-          clinicName: response.data.name 
-        });
-        
         if (user) {
-          console.log('createClinic - current user before update:', user);
-          console.log('createClinic - response.data:', response.data);
-          console.log('createClinic - response.data.id:', response.data.id);
-          console.log('createClinic - response.data.name:', response.data.name);
-          
-          const updatedUser = {
+          setUser({
             ...user,
             clinicId: response.data.id,
             clinicName: response.data.name
-          };
-          console.log('createClinic - setting updated user:', updatedUser);
-          setUser(updatedUser);
-          
+          });
           // Also set the clinic data in the auth store
-          const clinicData = {
+          setClinic({
             id: response.data.id,
             name: response.data.name,
             isActive: true, // New clinics are active by default
             ...(response.data.subscriptionTier && { subscriptionTier: response.data.subscriptionTier })
-          };
-          console.log('createClinic - setting clinic data:', clinicData);
-          setClinic(clinicData);
+          });
         }
         
         return true;
@@ -425,10 +406,7 @@ export const useClinic = () => {
 
   // Update clinic subscription
   const updateSubscription = useCallback(async (subscriptionTier: string) => {
-    console.log('updateSubscription called with:', { subscriptionTier, clinicId });
-    
     if (!clinicId) {
-      console.error('No clinic ID found');
       updateState({ error: 'Clinic ID not found. Please log in again.' });
       return false;
     }
@@ -436,10 +414,7 @@ export const useClinic = () => {
     updateState({ isLoading: true, error: null });
     
     try {
-      console.log('Calling ClinicAPI.updateSubscription...');
       const response = await ClinicAPI.updateSubscription(clinicId, subscriptionTier);
-      console.log('updateSubscription response:', response);
-      
       if (response.success && response.data) {
         // Update auth store with new subscription information
         const { setUser, setClinic } = useAuthStore.getState();
@@ -459,17 +434,14 @@ export const useClinic = () => {
         }
         
         // Refresh clinic data
-        console.log('Refreshing clinic data...');
         await fetchClinic();
-        console.log('Subscription update completed successfully');
+        
         return true;
       } else {
-        console.error('Subscription update failed:', response.message);
         updateState({ error: response.message || 'Gagal memperbarui subscription' });
         return false;
       }
     } catch (error) {
-      console.error('Subscription update error:', error);
       const errorMessage = handleError(error, 'Gagal memperbarui subscription');
       updateState({ error: errorMessage });
       return false;
@@ -478,14 +450,64 @@ export const useClinic = () => {
     }
   }, [clinicId, updateState, handleError, user, state.clinic, fetchClinic]);
 
+  // Validate stored clinic data against database
+  const validateStoredClinicData = useCallback(async () => {
+    // If we have clinic data in state but no clinicId from user, clear stale data
+    if (state.clinic && !clinicId) {
+      console.log('Clearing stale clinic data - no clinicId in user data');
+      updateState({ clinic: null });
+      return;
+    }
+
+    // If we have clinicId but no clinic data, try to fetch it
+    if (clinicId && !state.clinic) {
+      console.log('Fetching clinic data for clinicId:', clinicId);
+      await fetchClinic();
+      return;
+    }
+
+    // If we have both clinicId and clinic data, validate it exists in database
+    if (clinicId && state.clinic) {
+      try {
+        const response = await ClinicAPI.getClinicProfile(clinicId);
+        if (!response.success || !response.data) {
+          console.log('Stored clinic data is stale - clearing it');
+          // Clear stale data from both useClinic state and auth store
+          const { setUser, setClinic } = useAuthStore.getState();
+          if (user) {
+            const { clinicId: _, clinicName: __, ...userWithoutClinic } = user;
+            setUser(userWithoutClinic);
+            setClinic(null);
+          }
+          updateState({ clinic: null });
+        }
+      } catch (error: any) {
+        if (error?.response?.status === 404 || error?.message?.includes('Clinic not found')) {
+          console.log('Stored clinic data is stale (404) - clearing it');
+          // Clear stale data from both useClinic state and auth store
+          const { setUser, setClinic } = useAuthStore.getState();
+          if (user) {
+            const { clinicId: _, clinicName: __, ...userWithoutClinic } = user;
+            setUser(userWithoutClinic);
+            setClinic(null);
+          }
+          updateState({ clinic: null });
+        }
+      }
+    }
+  }, [clinicId, state.clinic, user, fetchClinic, updateState]);
+
   // Auto-fetch clinic data and stats on mount (but not on onboarding page)
   useEffect(() => {
     const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
     if (!isOnOnboardingPage) {
       fetchClinic();
       fetchStats();
+    } else {
+      // On onboarding page, validate stored data to clear any stale clinic data
+      validateStoredClinicData();
     }
-  }, [fetchClinic, fetchStats]);
+  }, [fetchClinic, fetchStats, validateStoredClinicData]);
 
   return {
     // Data
@@ -512,6 +534,7 @@ export const useClinic = () => {
     updateBranding,
     updateSettings,
     updateSubscription,
+    validateStoredClinicData,
     
     // Document actions
     fetchDocuments,

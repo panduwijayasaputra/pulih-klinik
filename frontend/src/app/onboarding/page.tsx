@@ -9,36 +9,24 @@ import { UserRoleEnum } from '@/types/enums';
 
 function OnboardingPageContent() {
   const router = useRouter();
-  const { clinic, isLoading } = useClinic();
+  const { clinic, isLoading, validateStoredClinicData } = useClinic();
   const { user, isAuthenticated } = useAuthStore();
 
   // Check if user is authenticated and is a clinic admin
   const isClinicAdmin = user?.roles?.includes(UserRoleEnum.ClinicAdmin);
 
-  // Check if user has clinic data and subscription (use API data as source of truth)
+  // Check if user has clinic data and subscription
   const hasClinic = !!clinic;
   const hasClinicFromUser = !!(user?.clinicId || user?.clinicName);
   const hasSubscription = !!(clinic?.subscriptionTier && clinic.subscriptionTier.trim() !== '');
   const hasSubscriptionFromUser = !!(user?.subscriptionTier && user.subscriptionTier.trim() !== '');
 
-  // Use API data as source of truth, but fallback to user data if API is still loading
-  const effectiveHasClinic = isLoading ? hasClinicFromUser : hasClinic;
-  const effectiveHasSubscription = isLoading ? hasSubscriptionFromUser : hasSubscription;
-
-  // Clear stale stored data if there's a mismatch between API and stored data
+  // Validate stored clinic data on page load to clear any stale data
   React.useEffect(() => {
-    if (!isLoading && user && !clinic && hasClinicFromUser) {
-      console.log('Clearing stale clinic data from storage - clinic exists in user data but not in API');
-      const { setUser, setClinic } = useAuthStore.getState();
-      setUser({
-        ...user,
-        clinicId: '',
-        clinicName: '',
-        subscriptionTier: ''
-      });
-      setClinic(null);
+    if (isAuthenticated && user && isClinicAdmin) {
+      validateStoredClinicData();
     }
-  }, [isLoading, user, clinic, hasClinicFromUser]);
+  }, [isAuthenticated, user, isClinicAdmin, validateStoredClinicData]);
 
   // Redirect if not authenticated or not a clinic admin
   React.useEffect(() => {
@@ -60,10 +48,10 @@ function OnboardingPageContent() {
 
   // If clinic exists and has subscription, redirect to manage page
   React.useEffect(() => {
-    if (!isLoading && effectiveHasClinic && effectiveHasSubscription) {
+    if (!isLoading && hasClinic && hasSubscription) {
       router.push('/portal');
     }
-  }, [effectiveHasClinic, effectiveHasSubscription, isLoading, router]);
+  }, [hasClinic, hasSubscription, isLoading, router]);
 
   // Show loading state while checking authentication and clinic data
   if (!isAuthenticated || !user || !isClinicAdmin || isLoading) {
@@ -78,15 +66,15 @@ function OnboardingPageContent() {
   }
 
   // If clinic exists and has subscription, don't render anything (redirect will happen)
-  if (effectiveHasClinic && effectiveHasSubscription) {
+  if (hasClinic && hasSubscription) {
     return null;
   }
 
   return (
     <ClinicOnboarding 
       onComplete={handleOnboardingComplete}
-      hasClinic={effectiveHasClinic}
-      hasSubscription={effectiveHasSubscription}
+      hasClinic={hasClinic || hasClinicFromUser}
+      hasSubscription={hasSubscription || hasSubscriptionFromUser}
     />
   );
 }
