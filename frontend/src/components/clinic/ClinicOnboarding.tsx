@@ -25,8 +25,6 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
   const { updateSubscription, isLoading } = useClinic();
   const { addToast } = useToast();
 
-  // Debug logging
-  console.log('ClinicOnboarding props:', { hasClinic, hasSubscription });
 
   // Determine initial step based on what's missing
   const getInitialStep = (): OnboardingStep => {
@@ -37,31 +35,21 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(() => {
     // Only set initial step once when component mounts
-    const initialStep = !hasClinic ? 'clinic-info' : (!hasSubscription ? 'subscription' : 'complete');
-    console.log('Initial step set to:', initialStep);
-    return initialStep;
+    return !hasClinic ? 'clinic-info' : (!hasSubscription ? 'subscription' : 'complete');
   });
-
-  // Debug current step changes
-  React.useEffect(() => {
-    console.log('Current step changed to:', currentStep);
-  }, [currentStep]);
 
   // Handle prop changes - only update step if we're going backwards or if it makes sense
   React.useEffect(() => {
     const newInitialStep = getInitialStep();
-    console.log('Props changed, new initial step would be:', newInitialStep, 'current step:', currentStep);
     
     // Only update if we're going backwards (e.g., from subscription back to clinic-info)
     // or if we're at complete and both clinic and subscription are now available
     if (newInitialStep === 'complete' && currentStep !== 'complete') {
-      console.log('Both clinic and subscription are available, moving to complete');
       setCurrentStep('complete');
     }
   }, [hasClinic, hasSubscription, currentStep]);
 
   const handleClinicCreated = () => {
-    console.log('Clinic created, moving to subscription step');
     setCurrentStep('subscription');
   };
 

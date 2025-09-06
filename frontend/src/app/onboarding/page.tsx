@@ -36,13 +36,13 @@ function OnboardingPageContent() {
 
   const handleOnboardingComplete = () => {
     // Redirect to clinic management page after successful completion
-    router.push('/portal/clinic/manage');
+    router.push('/portal');
   };
 
   // If clinic exists and has subscription, redirect to manage page
   React.useEffect(() => {
     if (!isLoading && hasClinic && hasSubscription) {
-      router.push('/portal/clinic/manage');
+      router.push('/portal');
     }
   }, [hasClinic, hasSubscription, isLoading, router]);
 
