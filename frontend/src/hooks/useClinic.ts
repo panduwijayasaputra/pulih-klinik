@@ -134,11 +134,16 @@ export const useClinic = () => {
 
   // Create clinic profile
   const createClinic = useCallback(async (formData: ClinicProfileFormData) => {
+    console.log('createClinic called with formData:', formData);
     updateState({ isLoading: true, error: null });
     
     try {
+      console.log('Calling ClinicAPI.createClinic...');
       const response = await ClinicAPI.createClinic(formData);
+      console.log('createClinic API response:', response);
+      
       if (response.success && response.data) {
+        console.log('Clinic created successfully, updating state with:', response.data);
         updateState({ clinic: response.data });
         
         // Update auth store with new clinic information
@@ -150,6 +155,11 @@ export const useClinic = () => {
         });
         
         if (user) {
+          console.log('createClinic - current user before update:', user);
+          console.log('createClinic - response.data:', response.data);
+          console.log('createClinic - response.data.id:', response.data.id);
+          console.log('createClinic - response.data.name:', response.data.name);
+          
           const updatedUser = {
             ...user,
             clinicId: response.data.id,
