@@ -110,6 +110,24 @@ export const useClinic = () => {
       const response = await ClinicAPI.createClinic(formData);
       if (response.success && response.data) {
         updateState({ clinic: response.data });
+        
+        // Update auth store with new clinic information
+        const { setUser, setClinic } = useAuthStore.getState();
+        if (user) {
+          setUser({
+            ...user,
+            clinicId: response.data.id,
+            clinicName: response.data.name
+          });
+          // Also set the clinic data in the auth store
+          setClinic({
+            id: response.data.id,
+            name: response.data.name,
+            isActive: true, // New clinics are active by default
+            subscription: response.data.subscriptionTier
+          });
+        }
+        
         return true;
       } else {
         updateState({ error: response.message || 'Gagal membuat data klinik' });
@@ -122,7 +140,7 @@ export const useClinic = () => {
     } finally {
       updateState({ isLoading: false });
     }
-  }, [updateState, handleError]);
+  }, [updateState, handleError, user]);
 
   // Update clinic profile
   const updateClinic = useCallback(async (formData: ClinicProfileFormData) => {
