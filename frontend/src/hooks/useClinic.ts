@@ -478,7 +478,7 @@ export const useClinic = () => {
           // Clear stale data from both useClinic state and auth store
           const { setUser, setClinic } = useAuthStore.getState();
           if (user) {
-            const { clinicId: _, clinicName: __, ...userWithoutClinic } = user;
+            const { clinicId: _, clinicName: __, subscriptionTier: ___, ...userWithoutClinic } = user;
             setUser(userWithoutClinic);
             setClinic(null);
           }
@@ -493,7 +493,7 @@ export const useClinic = () => {
           // Clear stale data from both useClinic state and auth store
           const { setUser, setClinic } = useAuthStore.getState();
           if (user) {
-            const { clinicId: _, clinicName: __, ...userWithoutClinic } = user;
+            const { clinicId: _, clinicName: __, subscriptionTier: ___, ...userWithoutClinic } = user;
             setUser(userWithoutClinic);
             setClinic(null);
           }

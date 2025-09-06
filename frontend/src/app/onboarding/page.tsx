@@ -21,6 +21,17 @@ function OnboardingPageContent() {
   const hasSubscription = !!(clinic?.subscriptionTier && clinic.subscriptionTier.trim() !== '');
   const hasSubscriptionFromUser = !!(user?.subscriptionTier && user.subscriptionTier.trim() !== '');
 
+  // Debug logging
+  console.log('Onboarding page state:', {
+    hasClinic,
+    hasClinicFromUser,
+    hasSubscription,
+    hasSubscriptionFromUser,
+    clinicSubscriptionTier: clinic?.subscriptionTier,
+    userSubscriptionTier: user?.subscriptionTier,
+    clinicId: user?.clinicId
+  });
+
   // Validate stored clinic data on page load to clear any stale data
   React.useEffect(() => {
     if (isAuthenticated && user && isClinicAdmin) {
