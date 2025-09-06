@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   HttpCode,
@@ -14,11 +15,15 @@ import {
 } from '@nestjs/swagger';
 import { RegistrationService, RegistrationResult, EmailVerificationResult, ResendCodeResult, EmailStatusResult } from './registration.service';
 import { StartRegistrationDto, VerifyEmailDto, ResendCodeDto, AdminVerifyDto, CheckEmailDto } from './dto';
+import { ClinicsService } from '../clinics/clinics.service';
 
 @ApiTags('Registration')
 @Controller('registration')
 export class RegistrationController {
-  constructor(private readonly registrationService: RegistrationService) { }
+  constructor(
+    private readonly registrationService: RegistrationService,
+    private readonly clinicsService: ClinicsService,
+  ) {}
 
   @Post('check-email')
   @HttpCode(HttpStatus.OK)
@@ -233,6 +238,50 @@ export class RegistrationController {
       success: true,
       data: result,
       message: 'Admin verification completed',
+    };
+  }
+
+  @Get('subscription-tiers')
+  @ApiOperation({
+    summary: 'Get available subscription tiers',
+    description: 'Get all available subscription tiers for clinic selection (public endpoint)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription tiers retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: [
+          {
+            id: 'uuid',
+            name: 'Beta',
+            code: 'beta',
+            description: 'Paket dasar untuk klinik yang baru memulai',
+            monthlyPrice: 50000,
+            yearlyPrice: 550000,
+            therapistLimit: 1,
+            newClientsPerDayLimit: 1,
+            isRecommended: false,
+            isActive: true,
+            sortOrder: 1,
+          },
+        ],
+        message: 'Subscription tiers retrieved successfully',
+      },
+    },
+  })
+  async getSubscriptionTiers(): Promise<{
+    success: boolean;
+    data: any[];
+    message: string;
+  }> {
+    const tiers = await this.clinicsService.getSubscriptionTiers();
+
+    return {
+      success: true,
+      data: tiers,
+      message: 'Subscription tiers retrieved successfully',
     };
   }
 }

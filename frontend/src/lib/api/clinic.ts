@@ -244,7 +244,7 @@ export class ClinicAPI {
     message: string;
   }> {
     try {
-      const response = await httpClient.get('/clinics/subscription-tiers');
+      const response = await httpClient.get('/registration/subscription-tiers');
       return handleApiResponse(response);
     } catch (error) {
       throw handleApiError(error);
