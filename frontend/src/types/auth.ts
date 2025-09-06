@@ -23,7 +23,7 @@ export interface User {
   roles: string[]; // Simplified to string array
   clinicId?: string;
   clinicName?: string;
-  subscriptionTier?: EnumValue<typeof SubscriptionTierEnum>;
+  subscriptionTier?: string;
 }
 
 // Simplified Clinic interface
@@ -31,7 +31,7 @@ export interface Clinic {
   id: string;
   name: string;
   isActive: boolean;
-  subscriptionTier?: EnumValue<typeof SubscriptionTierEnum>;
+  subscriptionTier?: string;
 }
 
 // Simplified Authentication state - only essential fields

@@ -1,48 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { useRegistrationStore } from '@/store/registration';
-
-// Subscription tiers matching backend data
-const subscriptionTiers = [
-  {
-    id: 'beta',
-    name: 'Beta',
-    price: 50000,
-    yearlyPrice: 550000,
-    therapists: 1,
-    clientsPerDay: 1,
-    features: ['1 Therapist', '1 Klien Baru/Hari'],
-    recommended: false,
-    period: 'bulan',
-    description: 'Paket dasar untuk klinik yang baru memulai dengan fitur terbaik'
-  },
-  {
-    id: 'alpha',
-    name: 'Alpha',
-    price: 100000,
-    yearlyPrice: 1000000,
-    therapists: 3,
-    clientsPerDay: 3,
-    features: ['3 Therapist', '3 Klien Baru/Hari'],
-    recommended: true,
-    period: 'bulan',
-    description: 'Paket terbaik untuk klinik yang ingin memiliki fitur lengkap'
-  },
-  {
-    id: 'theta',
-    name: 'Theta',
-    price: 150000,
-    yearlyPrice: 1500000,
-    therapists: 5,
-    clientsPerDay: 5,
-    features: ['5 Therapist', '5 Klien Baru/Hari'],
-    recommended: false,
-    period: 'bulan',
-    description: 'Paket untuk klinik yang ingin memiliki kapasitas maksimal'
-  }
-];
+import { ClinicAPI, SubscriptionTierData } from '@/lib/api/clinic';
 
 interface SubscriptionSelectorProps {
   onSubscriptionSelected?: (subscriptionTier: string) => void;
@@ -54,6 +15,32 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
   isLoading = false 
 }) => {
   const [selectedTier, setSelectedTier] = useState<string>('');
+  const [subscriptionTiers, setSubscriptionTiers] = useState<SubscriptionTierData[]>([]);
+  const [tiersLoading, setTiersLoading] = useState(true);
+  const [tiersError, setTiersError] = useState<string | null>(null);
+
+  // Fetch subscription tiers from API
+  useEffect(() => {
+    const fetchSubscriptionTiers = async () => {
+      try {
+        setTiersLoading(true);
+        setTiersError(null);
+        const response = await ClinicAPI.getSubscriptionTiers();
+        if (response.success) {
+          setSubscriptionTiers(response.data);
+        } else {
+          setTiersError('Gagal memuat paket subscription');
+        }
+      } catch (error) {
+        setTiersError('Gagal memuat paket subscription');
+        console.error('Error fetching subscription tiers:', error);
+      } finally {
+        setTiersLoading(false);
+      }
+    };
+
+    fetchSubscriptionTiers();
+  }, []);
 
   const onSubmit = () => {
     if (!selectedTier) return;
@@ -67,6 +54,51 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
       minimumFractionDigits: 0,
     }).format(price);
   };
+
+  // Show loading state
+  if (tiersLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Pilih Paket Berlangganan yang Sesuai
+          </h3>
+          <p className="text-gray-600">
+            Semua paket dapat diupgrade atau didowngrade kapan saja sesuai kebutuhan klinik Anda
+          </p>
+        </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Memuat paket subscription...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (tiersError) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Pilih Paket Berlangganan yang Sesuai
+          </h3>
+          <p className="text-gray-600">
+            Semua paket dapat diupgrade atau didowngrade kapan saja sesuai kebutuhan klinik Anda
+          </p>
+        </div>
+        <div className="text-center py-12">
+          <div className="text-red-600 mb-4">{tiersError}</div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            Coba lagi
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -85,14 +117,14 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
         {subscriptionTiers.map((tier) => (
           <div
             key={tier.id}
-            className={`relative rounded-lg border-2 p-6 cursor-pointer transition-all ${selectedTier === tier.id
+            className={`relative rounded-lg border-2 p-6 cursor-pointer transition-all ${selectedTier === tier.code
                 ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500'
                 : 'border-gray-200 bg-white hover:border-gray-300'
-              } ${tier.recommended ? 'ring-2 ring-blue-200' : ''}`}
-            onClick={() => setSelectedTier(tier.id)}
+              } ${tier.isRecommended ? 'ring-2 ring-blue-200' : ''}`}
+            onClick={() => setSelectedTier(tier.code)}
           >
             {/* Recommended Badge */}
-            {tier.recommended && (
+            {tier.isRecommended && (
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                   Direkomendasikan
@@ -104,15 +136,15 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
             <div className="absolute top-4 right-4">
               <input
                 type="radio"
-                value={tier.id}
-                id={tier.id}
-                checked={selectedTier === tier.id}
-                onChange={() => setSelectedTier(tier.id)}
+                value={tier.code}
+                id={tier.code}
+                checked={selectedTier === tier.code}
+                onChange={() => setSelectedTier(tier.code)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
               />
             </div>
 
-            <label htmlFor={tier.id} className="cursor-pointer">
+            <label htmlFor={tier.code} className="cursor-pointer">
               {/* Tier Name */}
               <h4 className="text-lg font-semibold text-gray-900 mb-2">
                 {tier.name}
@@ -121,10 +153,10 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
               {/* Price */}
               <div className="mb-4">
                 <span className="text-3xl font-bold text-gray-900">
-                  {formatPrice(tier.price)}
+                  {formatPrice(tier.monthlyPrice)}
                 </span>
                 <span className="text-gray-600 ml-2">
-                  {tier.period}
+                  /bulan
                 </span>
               </div>
 
@@ -135,12 +167,14 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
 
               {/* Features */}
               <ul className="space-y-2">
-                {tier.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <CheckIcon className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">{feature}</span>
-                  </li>
-                ))}
+                <li className="flex items-start">
+                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                  <span className="text-sm text-gray-700">{tier.therapistLimit} Therapist</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                  <span className="text-sm text-gray-700">{tier.newClientsPerDayLimit} Klien Baru/Hari</span>
+                </li>
               </ul>
             </label>
           </div>
@@ -164,8 +198,8 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
           <h4 className="font-medium text-blue-900 mb-1">Paket yang Dipilih:</h4>
           <p className="text-blue-800">
-            {subscriptionTiers.find(t => t.id === selectedTier)?.name} - {' '}
-            {formatPrice(subscriptionTiers.find(t => t.id === selectedTier)?.price || 0)} per bulan
+            {subscriptionTiers.find(t => t.code === selectedTier)?.name} - {' '}
+            {formatPrice(subscriptionTiers.find(t => t.code === selectedTier)?.monthlyPrice || 0)} per bulan
           </p>
         </div>
       )}

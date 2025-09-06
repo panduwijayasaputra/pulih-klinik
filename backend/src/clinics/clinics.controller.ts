@@ -864,6 +864,51 @@ export class ClinicsController {
     }
   }
 
+  @Get('subscription-tiers')
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Get available subscription tiers',
+    description: 'Get all available subscription tiers for clinic selection',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription tiers retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: [
+          {
+            id: 'uuid',
+            name: 'Beta',
+            code: 'beta',
+            description: 'Paket dasar untuk klinik yang baru memulai',
+            monthlyPrice: 50000,
+            yearlyPrice: 550000,
+            therapistLimit: 1,
+            newClientsPerDayLimit: 1,
+            isRecommended: false,
+            isActive: true,
+            sortOrder: 1,
+          },
+        ],
+        message: 'Subscription tiers retrieved successfully',
+      },
+    },
+  })
+  async getSubscriptionTiers(): Promise<{
+    success: boolean;
+    data: any[];
+    message: string;
+  }> {
+    const tiers = await this.clinicsService.getSubscriptionTiers();
+
+    return {
+      success: true,
+      data: tiers,
+      message: 'Subscription tiers retrieved successfully',
+    };
+  }
+
   @Put(':clinicId/subscription')
   @RequireAdminOrClinicAdmin()
   @ApiOperation({
@@ -882,8 +927,7 @@ export class ClinicsController {
       properties: {
         subscriptionTier: {
           type: 'string',
-          enum: ['beta', 'alpha', 'theta'],
-          description: 'Subscription tier',
+          description: 'Subscription tier code (e.g., beta, alpha, theta)',
         },
       },
       required: ['subscriptionTier'],

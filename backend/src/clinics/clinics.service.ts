@@ -47,7 +47,7 @@ export interface ClinicProfileResponse {
 
   // Status & Subscription
   status: 'active' | 'suspended' | 'pending' | 'inactive';
-  subscriptionTier: 'alpha' | 'beta' | 'theta' | 'delta' | undefined;
+  subscriptionTier: string | undefined;
   subscriptionExpires?: Date;
 
   // Timestamps
@@ -265,6 +265,31 @@ export class ClinicsService {
   }
 
   /**
+   * Get all available subscription tiers
+   */
+  async getSubscriptionTiers(): Promise<any[]> {
+    const tiers = await this.em.find(
+      SubscriptionTier,
+      { isActive: true },
+      { orderBy: { sortOrder: 'ASC' } },
+    );
+
+    return tiers.map((tier) => ({
+      id: tier.id,
+      name: tier.name,
+      code: tier.code,
+      description: tier.description,
+      monthlyPrice: tier.monthlyPrice,
+      yearlyPrice: tier.yearlyPrice,
+      therapistLimit: tier.therapistLimit,
+      newClientsPerDayLimit: tier.newClientsPerDayLimit,
+      isRecommended: tier.isRecommended,
+      isActive: tier.isActive,
+      sortOrder: tier.sortOrder,
+    }));
+  }
+
+  /**
    * Update clinic subscription tier
    */
   async updateClinicSubscription(
@@ -431,12 +456,7 @@ export class ClinicsService {
 
       // Status & Subscription
       status: clinic.status,
-      subscriptionTier: clinic.subscriptionTier?.code as
-        | 'alpha'
-        | 'beta'
-        | 'theta'
-        | 'delta'
-        | undefined,
+      subscriptionTier: clinic.subscriptionTier?.code,
       subscriptionExpires: clinic.subscriptionExpires,
 
       // Timestamps
@@ -521,12 +541,7 @@ export class ClinicsService {
 
       // Status & Subscription
       status: clinic.status,
-      subscriptionTier: clinic.subscriptionTier?.code as
-        | 'alpha'
-        | 'beta'
-        | 'theta'
-        | 'delta'
-        | undefined,
+      subscriptionTier: clinic.subscriptionTier?.code,
       subscriptionExpires: clinic.subscriptionExpires,
 
       // Timestamps

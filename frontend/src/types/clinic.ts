@@ -46,7 +46,7 @@ export interface ClinicProfile {
   branding: ClinicBranding;
   settings: ClinicSettings;
   documents?: ClinicDocument[];
-  subscriptionTier?: EnumValue<typeof ClinicSubscriptionTierEnum>;
+  subscriptionTier?: string;
   createdAt: string;
   updatedAt: string;
 }

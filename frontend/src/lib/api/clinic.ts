@@ -236,6 +236,22 @@ export class ClinicAPI {
   }
 
   /**
+   * Get available subscription tiers
+   */
+  static async getSubscriptionTiers(): Promise<{
+    success: boolean;
+    data: SubscriptionTierData[];
+    message: string;
+  }> {
+    try {
+      const response = await httpClient.get('/clinics/subscription-tiers');
+      return handleApiResponse(response);
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  /**
    * Update clinic subscription
    */
   static async updateSubscription(
@@ -255,4 +271,18 @@ export class ClinicAPI {
       throw handleApiError(error);
     }
   }
+}
+
+export interface SubscriptionTierData {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  therapistLimit: number;
+  newClientsPerDayLimit: number;
+  isRecommended: boolean;
+  isActive: boolean;
+  sortOrder: number;
 }
