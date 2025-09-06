@@ -28,6 +28,9 @@ export class User {
   @Property({ type: 'varchar', length: 255, nullable: true })
   emailVerificationToken?: string;
 
+  @Property({ type: 'varchar', length: 6, nullable: true })
+  emailVerificationCode?: string;
+
   @Property({ type: 'timestamp', nullable: true })
   emailVerificationExpires?: Date;
 

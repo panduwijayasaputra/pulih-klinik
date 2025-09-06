@@ -205,14 +205,6 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
         </Button>
       </form>
 
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600">
-          Sudah punya akun?{' '}
-          <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Masuk di sini
-          </a>
-        </p>
-      </div>
     </div>
   );
 };

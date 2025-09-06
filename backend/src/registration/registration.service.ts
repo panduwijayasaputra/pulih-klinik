@@ -13,7 +13,12 @@ import { UserProfile } from '../database/entities/user-profile.entity';
 import { UserRole as UserRoleEntity } from '../database/entities/user-role.entity';
 import { UserRole } from '../common/enums/user-roles.enum';
 import { EmailService } from '../lib/email/email.service';
-import { StartRegistrationDto, VerifyEmailDto, ResendCodeDto, AdminVerifyDto } from './dto';
+import {
+  StartRegistrationDto,
+  VerifyEmailDto,
+  ResendCodeDto,
+  AdminVerifyDto,
+} from './dto';
 
 export interface RegistrationResult {
   registrationId: string;
@@ -31,6 +36,12 @@ export interface ResendCodeResult {
   message: string;
 }
 
+export interface EmailStatusResult {
+  status: 'available' | 'exists' | 'needs_verification';
+  message: string;
+  email: string;
+}
+
 @Injectable()
 export class RegistrationService {
   constructor(
@@ -38,7 +49,37 @@ export class RegistrationService {
     private readonly emailService: EmailService,
   ) {}
 
-  async startRegistration(dto: StartRegistrationDto): Promise<RegistrationResult> {
+  async checkEmailStatus(email: string): Promise<EmailStatusResult> {
+    const user = await this.em.findOne(User, { email });
+
+    if (!user) {
+      return {
+        status: 'available',
+        message: 'Email is available for registration',
+        email,
+      };
+    }
+
+    if (user.emailVerified) {
+      return {
+        status: 'exists',
+        message: 'User with this email already exists and is verified',
+        email,
+      };
+    }
+
+    // User exists but email is not verified
+    return {
+      status: 'needs_verification',
+      message:
+        'User exists but email needs verification. Please check your email for verification code.',
+      email,
+    };
+  }
+
+  async startRegistration(
+    dto: StartRegistrationDto,
+  ): Promise<RegistrationResult> {
     // Check if user already exists
     const existingUser = await this.em.findOne(User, { email: dto.email });
     if (existingUser) {
@@ -61,22 +102,29 @@ export class RegistrationService {
     user.isActive = false; // User is inactive until email is verified
     user.emailVerified = false;
     user.emailVerificationToken = verificationToken;
+    user.emailVerificationCode = verificationCode;
     user.emailVerificationExpires = verificationExpires;
 
-    // Create user profile with required fields
-    const profile = new UserProfile();
-    profile.name = dto.name;
-    profile.user = user;
+    // Save user first
+    await this.em.persistAndFlush(user);
 
     // Create default role (ClinicAdmin for new registrations)
     const role = new UserRoleEntity();
     role.role = UserRole.CLINIC_ADMIN;
     role.user = user;
+    role.userId = user.id;
 
-    // Save everything in transaction
-    await this.em.transactional(async (em) => {
-      await em.persist([user, profile, role]);
-    });
+    // Save role
+    await this.em.persistAndFlush(role);
+
+    // Create user profile with required fields after user is saved
+    const profile = new UserProfile();
+    profile.name = dto.name;
+    profile.user = user;
+    profile.userId = user.id;
+
+    // Save profile
+    await this.em.persistAndFlush(profile);
 
     // Send verification email
     this.emailService.sendVerificationEmail({
@@ -89,7 +137,8 @@ export class RegistrationService {
       registrationId: user.id,
       email: user.email,
       name: profile.name,
-      message: 'Registration started successfully. Please check your email for verification code.',
+      message:
+        'Registration started successfully. Please check your email for verification code.',
     };
   }
 
@@ -106,20 +155,27 @@ export class RegistrationService {
       };
     }
 
-    if (!user.emailVerificationToken || !user.emailVerificationExpires) {
-      throw new BadRequestException('No verification token found. Please request a new verification code.');
-    }
+    // In development mode, accept static code '123456' without expiration checks
+    const isDevelopmentMode = process.env.NODE_ENV === 'development';
+    if (isDevelopmentMode && dto.code === '123456') {
+      // Skip all validation for development code - allows testing without real verification codes
+    } else {
+      // Normal validation for production codes
+      if (!user.emailVerificationCode || !user.emailVerificationExpires) {
+        throw new BadRequestException(
+          'No verification code found. Please request a new verification code.',
+        );
+      }
 
-    if (user.emailVerificationExpires < new Date()) {
-      throw new BadRequestException('Verification code has expired. Please request a new one.');
-    }
+      if (user.emailVerificationExpires < new Date()) {
+        throw new BadRequestException(
+          'Verification code has expired. Please request a new one.',
+        );
+      }
 
-    // For now, we'll use a simple verification code stored in the token
-    // In a real implementation, you might want to store the code separately
-    // and hash it for security
-    const storedCode = user.emailVerificationToken.substring(0, 6);
-    if (storedCode !== dto.code) {
-      throw new UnauthorizedException('Invalid verification code');
+      if (user.emailVerificationCode !== dto.code) {
+        throw new UnauthorizedException('Invalid verification code');
+      }
     }
 
     // Mark email as verified
@@ -133,7 +189,8 @@ export class RegistrationService {
 
     return {
       verified: true,
-      message: 'Email verified successfully. You can now login to your account.',
+      message:
+        'Email verified successfully. You can now login to your account.',
     };
   }
 
@@ -148,10 +205,18 @@ export class RegistrationService {
     }
 
     // Check if we can resend (prevent spam)
-    if (user.emailVerificationExpires && user.emailVerificationExpires > new Date()) {
-      const timeLeft = Math.ceil((user.emailVerificationExpires.getTime() - Date.now()) / 1000 / 60);
-      if (timeLeft > 10) { // Don't allow resend if more than 10 minutes left
-        throw new BadRequestException(`Please wait ${timeLeft} minutes before requesting a new code`);
+    if (
+      user.emailVerificationExpires &&
+      user.emailVerificationExpires > new Date()
+    ) {
+      const timeLeft = Math.ceil(
+        (user.emailVerificationExpires.getTime() - Date.now()) / 1000 / 60,
+      );
+      if (timeLeft > 10) {
+        // Don't allow resend if more than 10 minutes left
+        throw new BadRequestException(
+          `Please wait ${timeLeft} minutes before requesting a new code`,
+        );
       }
     }
 
@@ -161,6 +226,7 @@ export class RegistrationService {
     const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     user.emailVerificationToken = verificationToken;
+    user.emailVerificationCode = verificationCode;
     user.emailVerificationExpires = verificationExpires;
 
     await this.em.persistAndFlush(user);
@@ -177,7 +243,9 @@ export class RegistrationService {
     };
   }
 
-  async adminVerifyEmail(dto: AdminVerifyDto): Promise<EmailVerificationResult> {
+  async adminVerifyEmail(
+    dto: AdminVerifyDto,
+  ): Promise<EmailVerificationResult> {
     const user = await this.em.findOne(User, { email: dto.email });
     if (!user) {
       throw new NotFoundException('User not found');

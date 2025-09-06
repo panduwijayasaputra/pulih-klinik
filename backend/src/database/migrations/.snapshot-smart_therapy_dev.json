@@ -987,6 +987,16 @@
           "length": 255,
           "mappedType": "string"
         },
+        "email_verification_code": {
+          "name": "email_verification_code",
+          "type": "varchar(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "string"
+        },
         "email_verification_expires": {
           "name": "email_verification_expires",
           "type": "timestamptz(0)",

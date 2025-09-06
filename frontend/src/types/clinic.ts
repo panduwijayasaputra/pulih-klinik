@@ -69,8 +69,6 @@ export interface ClinicProfileFormData {
   logo?: File;
 }
 
-// Keep legacy ClinicFormData interface for backward compatibility
-export interface ClinicFormData extends ClinicProfileFormData {}
 
 // Form validation types (schemas are now in /schemas/clinicSchema.ts)
 export type { 

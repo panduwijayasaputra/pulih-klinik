@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRegistrationStore } from '@/store/registration';
+import { RegistrationStepEnum } from '@/types/enums';
 import {
   ArrowPathIcon,
   CheckIcon,
@@ -15,12 +16,10 @@ import {
 
 interface EmailVerificationProps {
   email: string;
-  registrationId?: string | undefined;
 }
 
 export const EmailVerification: React.FC<EmailVerificationProps> = ({
-  email,
-  registrationId
+  email
 }) => {
   const { 
     markEmailAsVerified, 
@@ -65,11 +64,6 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
   };
 
   const handleVerifyCode = async (verificationCode: string = code) => {
-    if (!registrationId) {
-      setLocalError('Registration ID tidak ditemukan');
-      return;
-    }
-
     if (verificationCode.length !== 6) {
       setLocalError('Kode verifikasi harus 6 digit');
       return;
@@ -80,7 +74,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
     clearError();
 
     try {
-      await verifyEmail(registrationId, verificationCode);
+      await verifyEmail(verificationCode);
       markEmailAsVerified(email);
     } catch (error: any) {
       setLocalError(error.message || 'Kode verifikasi tidak valid. Silakan coba lagi.');
@@ -128,6 +122,20 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
           Kami telah mengirim kode verifikasi 6 digit ke
         </p>
         <p className="font-medium text-gray-900">{email}</p>
+        <div className="mt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              // Clear registration store and go to email check step
+              const { resetRegistration, setStep } = useRegistrationStore.getState();
+              resetRegistration();
+              setStep(RegistrationStepEnum.EmailCheck);
+            }}
+          >
+            Ubah Email
+          </Button>
+        </div>
       </div>
 
       {displayError && (

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { UserFormData } from '@/types/registration';
 import { useRegistrationStore } from '@/store/registration';
 import { userFormSchema } from '@/schemas/registrationSchema';
+import { RegistrationStepEnum } from '@/types/enums';
 
 export const UserForm: React.FC = () => {
   const { data, updateUserData, startRegistration, isLoading, error, clearError } = useRegistrationStore();
@@ -91,10 +92,26 @@ export const UserForm: React.FC = () => {
             {...register('email')}
             className={`mt-1 ${errors.email ? 'border-red-500' : ''}`}
             placeholder="admin@klinik.com"
+            disabled
           />
           {errors.email && (
             <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
           )}
+          <div className="mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Clear registration store and go to email check step
+                const { resetRegistration, setStep } = useRegistrationStore.getState();
+                resetRegistration();
+                setStep(RegistrationStepEnum.EmailCheck);
+              }}
+            >
+              Ubah Email
+            </Button>
+          </div>
         </div>
 
         {/* Password */}
@@ -174,14 +191,6 @@ export const UserForm: React.FC = () => {
         </Button>
       </form>
 
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600">
-          Sudah punya akun?{' '}
-          <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Masuk di sini
-          </a>
-        </p>
-      </div>
     </div>
   );
 };

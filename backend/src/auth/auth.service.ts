@@ -36,7 +36,7 @@ export class AuthService {
   constructor(
     private readonly em: EntityManager,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.em.findOne(
@@ -57,12 +57,59 @@ export class AuthService {
     return user;
   }
 
-  async login(email: string, password: string): Promise<LoginResult> {
-    const user = await this.validateUser(email, password);
+  async validateUserWithDetailedError(
+    email: string,
+    password: string,
+  ): Promise<{ user: User | null; error?: string }> {
+    // First check if user exists
+    const user = await this.em.findOne(
+      User,
+      { email },
+      { populate: ['roles', 'clinic', 'clinic.subscriptionTier', 'profile'] },
+    );
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      return { user: null, error: 'User not found' };
     }
+
+    // Check password
+    const isPasswordValid = await bcryptjs.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return { user: null, error: 'Invalid password' };
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      return { user: null, error: 'Email not verified' };
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return { user: null, error: 'Account disabled' };
+    }
+
+    return { user, error: undefined };
+  }
+
+  async login(email: string, password: string): Promise<LoginResult> {
+    const validation = await this.validateUserWithDetailedError(
+      email,
+      password,
+    );
+
+    if (!validation.user) {
+      // For security, we still return a generic message for user not found
+      // but we can provide more specific messages for other cases
+      if (validation.error === 'User not found') {
+        throw new UnauthorizedException('Invalid credentials');
+      } else {
+        throw new UnauthorizedException(
+          validation.error || 'Invalid credentials',
+        );
+      }
+    }
+
+    const user = validation.user;
 
     const payload: JwtPayload = {
       sub: user.id,
@@ -180,9 +227,9 @@ export class AuthService {
       };
     }
 
-    // Generate reset token and set expiry (15 minutes)
+    // Generate reset token and set expiry (10 minutes)
     const resetToken = this.generateResetToken();
-    const resetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const resetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Save token to database
     await this.em.nativeUpdate(

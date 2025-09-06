@@ -12,13 +12,44 @@ import {
   ApiResponse,
   ApiBody,
 } from '@nestjs/swagger';
-import { RegistrationService, RegistrationResult, EmailVerificationResult, ResendCodeResult } from './registration.service';
-import { StartRegistrationDto, VerifyEmailDto, ResendCodeDto, AdminVerifyDto } from './dto';
+import { RegistrationService, RegistrationResult, EmailVerificationResult, ResendCodeResult, EmailStatusResult } from './registration.service';
+import { StartRegistrationDto, VerifyEmailDto, ResendCodeDto, AdminVerifyDto, CheckEmailDto } from './dto';
 
 @ApiTags('Registration')
 @Controller('registration')
 export class RegistrationController {
   constructor(private readonly registrationService: RegistrationService) { }
+
+  @Post('check-email')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 checks per minute
+  @ApiOperation({
+    summary: 'Check email availability and status',
+    description: 'Check if email is available, exists, or needs verification',
+  })
+  @ApiBody({ type: CheckEmailDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Email status checked successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          status: 'available',
+          message: 'Email is available for registration',
+          email: 'user@example.com',
+        },
+        message: 'Email status checked successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid email format',
+  })
+  async checkEmail(@Body() checkEmailDto: CheckEmailDto): Promise<EmailStatusResult> {
+    return this.registrationService.checkEmailStatus(checkEmailDto.email);
+  }
 
   @Post('start')
   @HttpCode(HttpStatus.CREATED)

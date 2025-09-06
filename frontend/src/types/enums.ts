@@ -216,20 +216,12 @@ export enum SortOrderEnum {
 
 // Registration
 export enum RegistrationStepEnum {
+  EmailCheck = 'email_check',
   UserForm = 'user_form',
   EmailVerification = 'email_verification',
-  ClinicInfo = 'clinic_info',
-  Subscription = 'subscription',
-  Payment = 'payment',
   Complete = 'complete',
 }
 
-export enum PaymentMethodEnum {
-  BankTransfer = 'bank_transfer',
-  CreditCard = 'credit_card',
-  EWallet = 'e_wallet',
-  Crypto = 'crypto',
-}
 
 export enum BillingCycleEnum {
   Monthly = 'monthly',

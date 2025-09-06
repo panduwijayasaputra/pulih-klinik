@@ -1,6 +1,7 @@
 'use client';
 
 import { useRegistrationStore } from '@/store/registration';
+import { EmailCheck } from './EmailCheck';
 import { UserForm } from './UserForm';
 import { EmailVerification } from './EmailVerification';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { RegistrationStepEnum } from '@/types/enums';
 
 const stepDescriptions = {
+  [RegistrationStepEnum.EmailCheck]: 'Periksa ketersediaan email Anda',
   [RegistrationStepEnum.UserForm]: 'Masukkan informasi admin klinik Anda',
   [RegistrationStepEnum.EmailVerification]: 'Verifikasi email Anda untuk melanjutkan',
   [RegistrationStepEnum.Complete]: 'Registrasi berhasil diselesaikan',
@@ -21,11 +23,11 @@ export const RegisterFlow: React.FC = () => {
     clearError,
     resetRegistration,
     data,
-    registrationId,
     isLoading
   } = useRegistrationStore();
 
   const stepOrder = [
+    RegistrationStepEnum.EmailCheck,
     RegistrationStepEnum.UserForm,
     RegistrationStepEnum.EmailVerification,
     RegistrationStepEnum.Complete,
@@ -33,14 +35,6 @@ export const RegisterFlow: React.FC = () => {
 
   const getStepNumber = () => {
     return stepOrder.indexOf(currentStep) + 1;
-  };
-
-  const canGoBack = currentStep !== RegistrationStepEnum.UserForm && 
-                    currentStep !== RegistrationStepEnum.Complete;
-
-  const handleBack = () => {
-    clearError();
-    prevStep();
   };
 
   const handleStartOver = () => {
@@ -54,13 +48,14 @@ export const RegisterFlow: React.FC = () => {
 
   const renderCurrentStep = () => {
     switch (currentStep) {
+      case RegistrationStepEnum.EmailCheck:
+        return <EmailCheck />;
       case RegistrationStepEnum.UserForm:
         return <UserForm />;
       case RegistrationStepEnum.EmailVerification:
         return (
           <EmailVerification
             email={data.user?.email || ''}
-            registrationId={registrationId}
           />
         );
       case RegistrationStepEnum.Complete:
@@ -112,7 +107,7 @@ export const RegisterFlow: React.FC = () => {
         {/* Progress Steps */}
         {currentStep !== RegistrationStepEnum.Complete && (
           <div className="mb-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center">
               {stepOrder.slice(0, -1).map((step, index) => (
                 <div key={step} className="flex items-center">
                   <div
@@ -154,28 +149,20 @@ export const RegisterFlow: React.FC = () => {
 
           {renderCurrentStep()}
 
-          {/* Back Button */}
-          {canGoBack && (
-            <div className="mt-6">
-              <Button
-                onClick={handleBack}
-                variant="outline"
-                className="w-full"
-                disabled={isLoading}
-              >
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Kembali
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center flex flex-col justify-center items-center gap-2">
           <p className="text-sm text-gray-600">
             Sudah punya akun?{' '}
             <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
               Masuk di sini
+            </a>
+          </p>
+          <p className="text-sm text-gray-600">
+            atau{' '}
+            <a href="/" className="font-medium text-blue-600 hover:text-blue-500">
+              Kembali ke Beranda
             </a>
           </p>
         </div>

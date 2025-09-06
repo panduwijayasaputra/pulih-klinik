@@ -20,7 +20,59 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showVerifyEmailButton, setShowVerifyEmailButton] = useState(false);
   const { login, isLoading, error, clearError } = useAuth();
+
+  // Function to translate error messages to Bahasa Indonesia
+  const translateError = (errorMessage: string): string => {
+    const errorLower = errorMessage.toLowerCase();
+    
+    // Authentication errors - handle specific backend error messages
+    if (errorLower.includes('email not verified')) {
+      return 'Email belum diverifikasi. Silakan periksa email Anda dan klik link verifikasi, atau daftar ulang.';
+    }
+    if (errorLower.includes('account disabled')) {
+      return 'Akun Anda telah dinonaktifkan. Silakan hubungi admin klinik Anda.';
+    }
+    if (errorLower.includes('invalid password')) {
+      return 'Password salah. Silakan periksa kembali.';
+    }
+    if (errorLower.includes('user not found')) {
+      return 'Email tidak ditemukan. Silakan periksa kembali atau daftar akun baru.';
+    }
+    
+    // Fallback for generic "invalid credentials" (for security, we don't distinguish between user not found and wrong password)
+    if (errorLower.includes('invalid credentials') || errorLower.includes('wrong password') || errorLower.includes('incorrect password')) {
+      return 'Email atau password salah. Silakan periksa kembali.';
+    }
+    if (errorLower.includes('too many attempts') || errorLower.includes('rate limit') || errorLower.includes('throttle')) {
+      return 'Terlalu banyak percobaan login. Silakan tunggu beberapa saat dan coba lagi.';
+    }
+    if (errorLower.includes('network') || errorLower.includes('connection') || errorLower.includes('fetch')) {
+      return 'Kesalahan koneksi. Silakan periksa internet Anda dan coba lagi.';
+    }
+    if (errorLower.includes('server error') || errorLower.includes('internal error') || errorLower.includes('500')) {
+      return 'Terjadi kesalahan server. Silakan coba lagi nanti.';
+    }
+    if (errorLower.includes('unauthorized') || errorLower.includes('401')) {
+      return 'Akses ditolak. Silakan login kembali.';
+    }
+    if (errorLower.includes('forbidden') || errorLower.includes('403')) {
+      return 'Anda tidak memiliki izin untuk mengakses sistem ini.';
+    }
+    if (errorLower.includes('not found') || errorLower.includes('404')) {
+      return 'Layanan tidak ditemukan. Silakan coba lagi nanti.';
+    }
+    if (errorLower.includes('timeout') || errorLower.includes('timed out')) {
+      return 'Waktu koneksi habis. Silakan coba lagi.';
+    }
+    if (errorLower.includes('login failed') || errorLower.includes('authentication failed')) {
+      return 'Login gagal. Silakan periksa email dan password Anda.';
+    }
+    
+    // Return original message if no translation found
+    return errorMessage;
+  };
 
   const {
     register,
@@ -57,6 +109,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     }
   }, [setValue]);
 
+  // Clear verify email button when error is cleared and check for email not verified
+  useEffect(() => {
+    if (!error) {
+      setShowVerifyEmailButton(false);
+    } else {
+      // Check if the current error is email not verified
+      const errorLower = error.toLowerCase();
+      if (errorLower.includes('email not verified')) {
+        setShowVerifyEmailButton(true);
+      } else {
+        setShowVerifyEmailButton(false);
+      }
+    }
+  }, [error]);
+
   // Handle demo user selection
   const handleDemoUserSelect = (selectedUser: string) => {
     if (selectedUser === '') return;
@@ -69,9 +136,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     }
   };
 
+  // Handle verify email button click
+  const handleVerifyEmail = () => {
+    const email = watch('email');
+    if (email) {
+      // Navigate to registration page with email pre-filled and go to verification step
+      window.location.href = `/register?email=${encodeURIComponent(email)}&step=email_verification`;
+    }
+  };
+
 
   const onSubmit = async (data: LoginFormData) => {
     clearError();
+    setShowVerifyEmailButton(false);
     
     // Handle remember me functionality
     if (typeof window !== 'undefined') {
@@ -102,7 +179,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       }
     } catch (error) {
       console.error('❌ Login failed:', error);
-      // Error is handled by the auth hook
+      // Error is handled by the auth hook and useEffect will check for email not verified
     }
   };
 
@@ -120,7 +197,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-              {error}
+              <div className="mb-2">
+                {translateError(error)}
+              </div>
+              {showVerifyEmailButton && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleVerifyEmail}
+                  className="w-full"
+                >
+                  Verifikasi Email
+                </Button>
+              )}
             </div>
           )}
 
@@ -159,6 +249,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               type="email"
               placeholder="nama@email.com"
               className={errors.email ? 'border-destructive' : ''}
+              disabled={isLoading}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -174,6 +265,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password Anda"
                 className={`pr-10 ${errors.password ? 'border-destructive' : ''}`}
+                disabled={isLoading}
               />
               <button
                 type="button"
@@ -198,6 +290,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               id="rememberMe"
               type="checkbox"
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              disabled={isLoading}
             />
             <Label htmlFor="rememberMe" className="text-sm text-foreground">
               Ingat saya

@@ -4,12 +4,9 @@ import {
   RegistrationState,
   RegistrationStep,
   UserFormData,
-  ClinicFormData,
-  SubscriptionData,
-  PaymentData,
   VerificationData,
   RegistrationStatus,
-  SUBSCRIPTION_TIERS,
+  EmailStatus,
 } from '@/types/registration';
 import { RegistrationStepEnum } from '@/types/enums';
 import { apiClient } from '@/lib/http-client';
@@ -19,9 +16,6 @@ interface RegistrationStore extends RegistrationState {
   nextStep: () => void;
   prevStep: () => void;
   updateUserData: (data: UserFormData) => void;
-  updateClinicData: (data: ClinicFormData) => void;
-  updateSubscriptionData: (data: SubscriptionData) => void;
-  updatePaymentData: (data: PaymentData) => void;
   updateVerificationData: (data: VerificationData) => void;
   validateVerificationCode: (code: string) => boolean;
   resendVerificationEmail: () => Promise<void>;
@@ -29,19 +23,17 @@ interface RegistrationStore extends RegistrationState {
   submitRegistration: () => Promise<boolean>;
   resetRegistration: () => void;
   clearError: () => void;
+  clearEmailStatus: () => void;
   markEmailAsVerified: (email: string) => void;
   isEmailVerified: (email: string) => boolean;
   // API methods
+  checkEmailStatus: (email: string) => Promise<EmailStatus>;
   startRegistration: (userData: UserFormData) => Promise<RegistrationStatus>;
-  verifyEmail: (registrationId: string, code: string) => Promise<RegistrationStatus>;
-  submitClinicData: (registrationId: string, clinicData: ClinicFormData) => Promise<RegistrationStatus>;
-  selectSubscription: (registrationId: string, subscriptionData: SubscriptionData) => Promise<RegistrationStatus>;
-  processPayment: (registrationId: string, paymentData: PaymentData) => Promise<RegistrationStatus>;
-  completeRegistration: (registrationId: string) => Promise<RegistrationStatus>;
-  getRegistrationStatus: (registrationId: string) => Promise<RegistrationStatus>;
+  verifyEmail: (code: string) => Promise<RegistrationStatus>;
 }
 
 const stepOrder: RegistrationStep[] = [
+  RegistrationStepEnum.EmailCheck,
   RegistrationStepEnum.UserForm,
   RegistrationStepEnum.EmailVerification,
   RegistrationStepEnum.Complete,
@@ -50,7 +42,7 @@ const stepOrder: RegistrationStep[] = [
 export const useRegistrationStore = create<RegistrationStore>()(
   persist(
     (set, get) => ({
-      currentStep: RegistrationStepEnum.UserForm,
+      currentStep: RegistrationStepEnum.EmailCheck,
       data: {},
       verificationData: {
         code: '',
@@ -58,7 +50,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
         attempts: 0,
         verified: false
       },
-      registrationId: undefined,
+      emailStatus: null,
       isLoading: false,
       error: null,
       verifiedEmails: [],
@@ -97,35 +89,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
         });
       },
 
-      updateClinicData: (clinicData: ClinicFormData) => {
-        const { data } = get();
-        set({
-          data: {
-            ...data,
-            clinic: clinicData,
-          },
-        });
-      },
 
-      updateSubscriptionData: (subscriptionData: SubscriptionData) => {
-        const { data } = get();
-        set({
-          data: {
-            ...data,
-            subscription: subscriptionData,
-          },
-        });
-      },
-
-      updatePaymentData: (paymentData: PaymentData) => {
-        const { data } = get();
-        set({
-          data: {
-            ...data,
-            payment: paymentData,
-          },
-        });
-      },
 
       updateVerificationData: (verificationData: VerificationData) => {
         set({ verificationData });
@@ -155,14 +119,13 @@ export const useRegistrationStore = create<RegistrationStore>()(
       },
 
       resendVerificationEmail: async () => {
-        const { verificationData, registrationId } = get();
-        if (!registrationId) return;
+        const { verificationData } = get();
 
         try {
-          await apiClient.post(`/registration/resend-verification`, {
+          await apiClient.post('/registration/resend-code', {
             email: get().data.user?.email
           });
-          
+
           set({
             verificationData: {
               ...verificationData,
@@ -190,28 +153,13 @@ export const useRegistrationStore = create<RegistrationStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { data, registrationId } = get();
-          
-          if (!registrationId) {
-            throw new Error('No registration ID found');
-          }
-
-          // Complete registration
-          const result = await get().completeRegistration(registrationId);
-
-          if (result) {
-            set({
-              isLoading: false,
-              currentStep: RegistrationStepEnum.Complete,
-            });
-            return true;
-          } else {
-            set({
-              error: 'Registrasi gagal. Silakan coba lagi.',
-              isLoading: false,
-            });
-            return false;
-          }
+          // Registration is complete after email verification
+          // No additional API call needed since backend automatically activates user
+          set({
+            isLoading: false,
+            currentStep: RegistrationStepEnum.Complete,
+          });
+          return true;
         } catch (error) {
           set({
             error: 'Terjadi kesalahan saat registrasi',
@@ -223,7 +171,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
 
       resetRegistration: () => {
         set({
-          currentStep: RegistrationStepEnum.UserForm,
+          currentStep: RegistrationStepEnum.EmailCheck,
           data: {},
           verificationData: {
             code: '',
@@ -231,7 +179,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
             attempts: 0,
             verified: false
           },
-          registrationId: undefined,
+          emailStatus: null,
           isLoading: false,
           error: null,
           verifiedEmails: [],
@@ -240,10 +188,12 @@ export const useRegistrationStore = create<RegistrationStore>()(
 
       clearError: () => set({ error: null }),
 
+      clearEmailStatus: () => set({ emailStatus: null }),
+
       markEmailAsVerified: (email: string) => {
         const { verifiedEmails } = get();
         if (!verifiedEmails.includes(email)) {
-          set({ 
+          set({
             verifiedEmails: [...verifiedEmails, email],
             verificationData: {
               code: '',
@@ -261,6 +211,30 @@ export const useRegistrationStore = create<RegistrationStore>()(
       },
 
       // API Methods
+      checkEmailStatus: async (email: string) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await apiClient.post('/registration/check-email', {
+            email,
+          });
+
+          const emailStatus = response.data.data;
+          set({
+            emailStatus,
+            isLoading: false,
+          });
+
+          return emailStatus;
+        } catch (error: any) {
+          set({
+            error: error.response?.data?.message || 'Gagal memeriksa status email',
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
       startRegistration: async (userData: UserFormData) => {
         set({ isLoading: true, error: null });
 
@@ -273,7 +247,6 @@ export const useRegistrationStore = create<RegistrationStore>()(
 
           const registrationStatus = response.data.data;
           set({
-            registrationId: registrationStatus.id,
             isLoading: false,
             currentStep: RegistrationStepEnum.EmailVerification,
           });
@@ -281,22 +254,23 @@ export const useRegistrationStore = create<RegistrationStore>()(
           return registrationStatus;
         } catch (error: any) {
           set({
-            error: error.response?.data?.message || 'Failed to start registration',
+            error: error.response?.data?.message || 'Gagal memulai registrasi',
             isLoading: false,
           });
           throw error;
         }
       },
 
-      verifyEmail: async (registrationId: string, code: string) => {
+      verifyEmail: async (code: string) => {
         set({ isLoading: true, error: null });
 
         try {
-          const response = await apiClient.post(`/registration/${registrationId}/verify-email`, {
-            verificationCode: code,
+          const response = await apiClient.post('/registration/verify-email', {
+            email: get().data.user?.email,
+            code: code,
           });
 
-          const registrationStatus = response.data.data;
+          const verificationResult = response.data.data;
           set({
             isLoading: false,
             currentStep: RegistrationStepEnum.Complete,
@@ -308,125 +282,18 @@ export const useRegistrationStore = create<RegistrationStore>()(
             }
           });
 
-          return registrationStatus;
+          return verificationResult;
         } catch (error: any) {
           set({
-            error: error.response?.data?.message || 'Failed to verify email',
+            error: error.response?.data?.message || 'Gagal memverifikasi email',
             isLoading: false,
           });
           throw error;
         }
       },
 
-      submitClinicData: async (registrationId: string, clinicData: ClinicFormData) => {
-        set({ isLoading: true, error: null });
 
-        try {
-          const response = await apiClient.put(`/registration/${registrationId}/clinic-data`, clinicData);
 
-          const registrationStatus = response.data.data;
-          set({
-            isLoading: false,
-            currentStep: RegistrationStepEnum.Subscription,
-          });
-
-          return registrationStatus;
-        } catch (error: any) {
-          set({
-            error: error.response?.data?.message || 'Failed to submit clinic data',
-            isLoading: false,
-          });
-          throw error;
-        }
-      },
-
-      selectSubscription: async (registrationId: string, subscriptionData: SubscriptionData) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await apiClient.post(`/registration/${registrationId}/subscription`, {
-            tierCode: subscriptionData.tierCode,
-            billingCycle: subscriptionData.billingCycle,
-            amount: subscriptionData.amount,
-            currency: subscriptionData.currency,
-          });
-
-          const registrationStatus = response.data.data;
-          set({
-            isLoading: false,
-            currentStep: RegistrationStepEnum.Payment,
-          });
-
-          return registrationStatus;
-        } catch (error: any) {
-          set({
-            error: error.response?.data?.message || 'Failed to select subscription',
-            isLoading: false,
-          });
-          throw error;
-        }
-      },
-
-      processPayment: async (registrationId: string, paymentData: PaymentData) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await apiClient.post(`/registration/${registrationId}/payment`, {
-            paymentMethod: paymentData.paymentMethod,
-            amount: paymentData.amount,
-            currency: paymentData.currency,
-            transactionId: paymentData.transactionId,
-            paymentId: paymentData.paymentId,
-          });
-
-          const registrationStatus = response.data.data;
-          set({
-            isLoading: false,
-            currentStep: RegistrationStepEnum.Complete,
-          });
-
-          return registrationStatus;
-        } catch (error: any) {
-          set({
-            error: error.response?.data?.message || 'Failed to process payment',
-            isLoading: false,
-          });
-          throw error;
-        }
-      },
-
-      completeRegistration: async (registrationId: string) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await apiClient.post(`/registration/${registrationId}/complete`, {
-            confirm: true,
-          });
-
-          const registrationStatus = response.data.data;
-          set({
-            isLoading: false,
-            currentStep: RegistrationStepEnum.Complete,
-          });
-
-          return registrationStatus;
-        } catch (error: any) {
-          set({
-            error: error.response?.data?.message || 'Failed to complete registration',
-            isLoading: false,
-          });
-          throw error;
-        }
-      },
-
-      getRegistrationStatus: async (registrationId: string) => {
-        try {
-          const response = await apiClient.get(`/registration/${registrationId}/status`);
-          return response.data.data;
-        } catch (error: any) {
-          throw error;
-        }
-      },
     }),
     {
       name: 'registration-storage',
@@ -434,7 +301,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
         currentStep: state.currentStep,
         data: state.data,
         verificationData: state.verificationData,
-        registrationId: state.registrationId,
+        emailStatus: state.emailStatus,
         verifiedEmails: state.verifiedEmails,
       }),
     }

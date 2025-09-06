@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { ToastProvider } from '@/components/ui/toast';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { TestModeBanner } from '@/components/common/TestModeBanner';
 import { disableConsoleInProduction } from '@/lib/security-utils';
 
 // Disable console logs in production for security
@@ -89,6 +90,7 @@ export default function RootLayout({
             <ToastProvider>
               <div className='relative flex min-h-screen flex-col'>
                 <div className='flex-1'>{children}</div>
+                <TestModeBanner />
               </div>
             </ToastProvider>
           </AuthProvider>

@@ -9,27 +9,36 @@ import { RouteGuard } from '@/components/auth/RouteGuard';
 export default function RegisterPage() {
   const searchParams = useSearchParams();
   const { 
-    registrationId, 
-    getRegistrationStatus, 
     setStep, 
-    currentStep 
+    currentStep,
+    updateUserData,
+    data,
+    resetRegistration
   } = useRegistrationStore();
 
   // Handle URL-based state management
   useEffect(() => {
-    const urlRegistrationId = searchParams.get('registrationId');
     const urlStep = searchParams.get('step');
+    const urlEmail = searchParams.get('email');
 
-    // If we have a registration ID in URL but not in store, fetch status
-    if (urlRegistrationId && !registrationId) {
-      getRegistrationStatus(urlRegistrationId).catch(console.error);
+    // Clear entire registration store when page loads to ensure fresh start
+    resetRegistration();
+
+    // If we have an email in URL, pre-fill it
+    if (urlEmail) {
+      updateUserData({ 
+        email: urlEmail,
+        name: '',
+        password: '',
+        confirmPassword: ''
+      });
     }
 
     // If we have a step in URL, set it
     if (urlStep) {
       setStep(urlStep as any);
     }
-  }, [searchParams, registrationId, getRegistrationStatus, setStep]);
+  }, [searchParams, setStep, updateUserData, resetRegistration]);
 
   return (
     <RouteGuard>
