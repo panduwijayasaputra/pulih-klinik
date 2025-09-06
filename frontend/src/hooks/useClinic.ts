@@ -24,6 +24,7 @@ interface UseClinicState {
   error: string | null;
   documentsError: string | null;
   statsError: string | null;
+  isValidating: boolean;
 }
 
 export const useClinic = () => {
@@ -37,7 +38,8 @@ export const useClinic = () => {
     isStatsLoading: false,
     error: null,
     documentsError: null,
-    statsError: null
+    statsError: null,
+    isValidating: false
   });
 
   // Get the clinic ID from the authenticated user
@@ -452,6 +454,11 @@ export const useClinic = () => {
 
   // Validate stored clinic data against database
   const validateStoredClinicData = useCallback(async () => {
+    // Prevent multiple validations from running simultaneously
+    if (state.isValidating) {
+      return;
+    }
+
     // If we have clinic data in state but no clinicId from user, clear stale data
     if (state.clinic && !clinicId) {
       console.log('Clearing stale clinic data - no clinicId in user data');
@@ -459,15 +466,9 @@ export const useClinic = () => {
       return;
     }
 
-    // If we have clinicId but no clinic data, try to fetch it
-    if (clinicId && !state.clinic) {
-      console.log('Fetching clinic data for clinicId:', clinicId);
-      await fetchClinic();
-      return;
-    }
-
     // If we have both clinicId and clinic data, validate it exists in database
     if (clinicId && state.clinic) {
+      updateState({ isValidating: true });
       try {
         const response = await ClinicAPI.getClinicProfile(clinicId);
         if (!response.success || !response.data) {
@@ -493,9 +494,11 @@ export const useClinic = () => {
           }
           updateState({ clinic: null });
         }
+      } finally {
+        updateState({ isValidating: false });
       }
     }
-  }, [clinicId, state.clinic, user, fetchClinic, updateState]);
+  }, [clinicId, state.clinic, state.isValidating, user, updateState]);
 
   // Auto-fetch clinic data and stats on mount (but not on onboarding page)
   useEffect(() => {
@@ -503,11 +506,16 @@ export const useClinic = () => {
     if (!isOnOnboardingPage) {
       fetchClinic();
       fetchStats();
-    } else {
-      // On onboarding page, validate stored data to clear any stale clinic data
+    }
+  }, [fetchClinic, fetchStats]);
+
+  // Validate stored clinic data on onboarding page
+  useEffect(() => {
+    const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
+    if (isOnOnboardingPage) {
       validateStoredClinicData();
     }
-  }, [fetchClinic, fetchStats, validateStoredClinicData]);
+  }, [validateStoredClinicData]);
 
   return {
     // Data
@@ -519,6 +527,7 @@ export const useClinic = () => {
     isLoading: state.isLoading,
     isDocumentsLoading: state.isDocumentsLoading,
     isStatsLoading: state.isStatsLoading,
+    isValidating: state.isValidating,
     
     // Error states
     error: state.error,
