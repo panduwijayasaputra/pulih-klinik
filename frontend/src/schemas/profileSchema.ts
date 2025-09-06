@@ -13,7 +13,17 @@ export const profileSchema = z.object({
     .email('Format email tidak valid')
     .min(1, 'Email harus diisi'),
   
-  phone: z.string().optional().or(z.literal('')),
+  phone: z.string()
+    .optional()
+    .or(z.literal(''))
+    .refine(
+      (val) => {
+        if (!val || val === '') return true; // Allow empty
+        return /^(?:\+62|62|0)8[1-9][0-9]{6,10}$/.test(val);
+      },
+      { message: 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)' }
+    )
+    .transform(v => (v === '' ? undefined : v)),
   
   address: z.string().optional().or(z.literal('')),
   

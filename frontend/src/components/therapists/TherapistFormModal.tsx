@@ -31,7 +31,7 @@ const TherapistRegistrationSchema = z.object({
   // Personal Information
   name: z.string().min(2, 'Nama minimal 2 karakter'),
   email: z.string().email('Format email tidak valid'),
-  phone: z.string().regex(/^(\+62|0)[0-9]{9,13}$/, 'Format nomor telepon tidak valid'),
+  phone: z.string().regex(/^(?:\+62|62|0)8[1-9][0-9]{6,10}$/, 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)'),
 
   // Professional Information
   licenseNumber: z.string().min(1, 'Nomor SIP wajib diisi'),

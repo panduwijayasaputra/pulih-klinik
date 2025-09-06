@@ -31,7 +31,7 @@ const optionalPhoneValidation = z.string().optional().or(z.literal('')).transfor
 // Required phone validation for main phone field
 const requiredPhoneValidation = z
   .string()
-  .regex(phoneIdPattern, 'Format nomor telepon tidak valid (gunakan +62 atau 0)')
+  .regex(phoneIdPattern, 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)')
   .min(10, 'Nomor telepon minimal 10 digit');
 
 // Optional phone validation for emergency contact details
@@ -44,7 +44,7 @@ const optionalEmergencyPhoneValidation = z
       if (!val || val === '') return true; // Allow empty
       return phoneIdPattern.test(val) && val.length >= 10;
     },
-    { message: 'Format nomor telepon tidak valid (gunakan +62 atau 0)' }
+    { message: 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)' }
   )
   .transform(v => (v === '' ? undefined : v));
 

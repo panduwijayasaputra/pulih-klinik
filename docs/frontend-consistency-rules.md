@@ -612,7 +612,7 @@ import { z } from 'zod';
 export const mySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email format'),
-  phone: z.string().regex(/^(\+62|0)[0-9]{9,13}$/, 'Invalid phone format'),
+  phone: z.string().regex(/^(?:\+62|62|0)8[1-9][0-9]{6,10}$/, 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)'),
   // ... other fields
 });
 

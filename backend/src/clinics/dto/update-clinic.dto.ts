@@ -31,7 +31,7 @@ export class UpdateClinicDto {
 
   @ApiProperty({
     description: 'Clinic phone number in Indonesian format',
-    example: '+6221123456789',
+    example: '+628123456789',
     maxLength: 20,
   })
   @IsPhoneNumber('ID', {

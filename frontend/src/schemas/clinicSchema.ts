@@ -11,7 +11,7 @@ export const clinicProfileFormSchema = z.object({
     .min(10, 'Alamat harus minimal 10 karakter')
     .max(500, 'Alamat maksimal 500 karakter'),
   phone: z.string()
-    .regex(/^\+62[0-9]{8,13}$/, 'Format nomor telepon tidak valid (contoh: +628123456789)'),
+    .regex(/^(?:\+62|62|0)8[1-9][0-9]{6,10}$/, 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)'),
   email: z.string()
     .email('Format email tidak valid')
     .max(100, 'Email maksimal 100 karakter'),
