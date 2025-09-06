@@ -28,6 +28,7 @@ import {
   CurrentUser,
   RequireClinicAccess,
   RequireAdminOrClinicAdmin,
+  RequireAdminOrClinicAdminForCreation,
   RequireAdmin,
 } from '../auth/decorators';
 import { ParseUuidPipe } from '../common/pipes';
@@ -51,7 +52,7 @@ export class ClinicsController {
   constructor(private readonly clinicsService: ClinicsService) {}
 
   @Post()
-  @RequireAdminOrClinicAdmin()
+  @RequireAdminOrClinicAdminForCreation()
   @ApiOperation({
     summary: 'Create a new clinic',
     description:

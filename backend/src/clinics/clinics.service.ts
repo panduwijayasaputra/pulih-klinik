@@ -71,7 +71,7 @@ export class ClinicsService {
    */
   async createClinic(
     createClinicDto: CreateClinicDto,
-    _createdByUserId: string,
+    createdByUserId: string,
   ): Promise<ClinicProfileResponse> {
     // Check if clinic with same name or email already exists
     const existingClinic = await this.em.findOne(Clinic, {
@@ -97,6 +97,13 @@ export class ClinicsService {
     clinic.isActive = true;
 
     await this.em.persistAndFlush(clinic);
+
+    // Associate the clinic with the user who created it
+    const user = await this.em.findOne(User, { id: createdByUserId });
+    if (user) {
+      user.clinic = clinic;
+      await this.em.persistAndFlush(user);
+    }
 
     return this.mapClinicToResponse(clinic);
   }

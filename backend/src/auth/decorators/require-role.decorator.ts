@@ -74,6 +74,17 @@ export const RequireAdminOrClinicAdmin = () =>
   );
 
 /**
+ * Decorator that allows admin or clinic admin access (without clinic scope requirement)
+ * Used for clinic creation where clinic admins don't have clinic data yet
+ * Admin has global access, clinic admin can access without clinic scope
+ */
+export const RequireAdminOrClinicAdminForCreation = () =>
+  RequireRole(
+    { role: UserRole.ADMINISTRATOR },
+    { role: UserRole.CLINIC_ADMIN }, // No requireClinicScope for creation
+  );
+
+/**
  * Decorator that allows access to own resources or admin override
  * Used for endpoints where users can access their own data or admins can access any
  * Note: Additional logic needed in controller to check if user is accessing own data
