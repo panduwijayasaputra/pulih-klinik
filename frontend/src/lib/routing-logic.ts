@@ -77,7 +77,7 @@ export const getRoutingDecision = (
     // Special handling for clinic admins without clinic data
     if (currentRole === UserRoleEnum.ClinicAdmin && !hasClinic && !hasClinicFromUser) {
       // If they're already on onboarding page, allow access
-      if (pathname === '/portal/onboarding') {
+      if (pathname === '/onboarding') {
         return {
           shouldRedirect: false,
           redirectPath: null,
@@ -88,7 +88,7 @@ export const getRoutingDecision = (
       // Otherwise redirect to onboarding
       return {
         shouldRedirect: true,
-        redirectPath: '/portal/onboarding',
+        redirectPath: '/onboarding',
         allowAccess: false,
         reason: 'Clinic admin without clinic data, redirecting to onboarding'
       };

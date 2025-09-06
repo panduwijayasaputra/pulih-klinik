@@ -4,10 +4,29 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ClinicOnboarding } from '@/components/clinic/ClinicOnboarding';
 import { useClinic } from '@/hooks/useClinic';
+import { useAuthStore } from '@/store/auth';
+import { UserRoleEnum } from '@/types/enums';
 
 function OnboardingPageContent() {
   const router = useRouter();
   const { clinic, isLoading } = useClinic();
+  const { user, isAuthenticated } = useAuthStore();
+
+  // Check if user is authenticated and is a clinic admin
+  const isClinicAdmin = user?.roles?.includes(UserRoleEnum.ClinicAdmin);
+
+  // Redirect if not authenticated or not a clinic admin
+  React.useEffect(() => {
+    if (!isAuthenticated || !user) {
+      router.push('/login');
+      return;
+    }
+    
+    if (!isClinicAdmin) {
+      router.push('/portal');
+      return;
+    }
+  }, [isAuthenticated, user, isClinicAdmin, router]);
 
   const handleOnboardingComplete = () => {
     // Redirect to clinic management page after successful creation
@@ -21,8 +40,8 @@ function OnboardingPageContent() {
     }
   }, [clinic, isLoading, router]);
 
-  // Show loading state while checking clinic data
-  if (isLoading) {
+  // Show loading state while checking authentication and clinic data
+  if (!isAuthenticated || !user || !isClinicAdmin || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">

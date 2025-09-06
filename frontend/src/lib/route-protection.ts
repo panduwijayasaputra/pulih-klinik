@@ -9,6 +9,12 @@ export const routeConfigs: RouteConfig[] = [
   { path: '/login', allowPublic: true, requiredRoles: [] },
   { path: '/register', allowPublic: true, requiredRoles: [] },
   { path: '/thankyou', allowPublic: true, requiredRoles: [] },
+  
+  // Onboarding route - requires authentication and clinic admin role
+  { 
+    path: '/onboarding', 
+    requiredRoles: [UserRoleEnum.ClinicAdmin]
+  },
 
   // Authenticated routes (require login but no specific role)
 
@@ -72,10 +78,6 @@ export const routeConfigs: RouteConfig[] = [
   { 
     path: '/portal', 
     requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
-  },
-  { 
-    path: '/portal/onboarding', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin]
   },
   { 
     path: '/portal/profile', 
