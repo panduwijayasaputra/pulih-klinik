@@ -400,7 +400,10 @@ export const useClinic = () => {
 
   // Update clinic subscription
   const updateSubscription = useCallback(async (subscriptionTier: string) => {
+    console.log('updateSubscription called with:', { subscriptionTier, clinicId });
+    
     if (!clinicId) {
+      console.error('No clinic ID found');
       updateState({ error: 'Clinic ID not found. Please log in again.' });
       return false;
     }
@@ -408,7 +411,10 @@ export const useClinic = () => {
     updateState({ isLoading: true, error: null });
     
     try {
+      console.log('Calling ClinicAPI.updateSubscription...');
       const response = await ClinicAPI.updateSubscription(clinicId, subscriptionTier);
+      console.log('updateSubscription response:', response);
+      
       if (response.success && response.data) {
         // Update auth store with new subscription information
         const { setUser, setClinic } = useAuthStore.getState();
@@ -428,14 +434,17 @@ export const useClinic = () => {
         }
         
         // Refresh clinic data
+        console.log('Refreshing clinic data...');
         await fetchClinic();
-        
+        console.log('Subscription update completed successfully');
         return true;
       } else {
+        console.error('Subscription update failed:', response.message);
         updateState({ error: response.message || 'Gagal memperbarui subscription' });
         return false;
       }
     } catch (error) {
+      console.error('Subscription update error:', error);
       const errorMessage = handleError(error, 'Gagal memperbarui subscription');
       updateState({ error: errorMessage });
       return false;
