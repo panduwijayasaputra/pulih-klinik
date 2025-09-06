@@ -36,7 +36,7 @@ function ClinicManagePageContent() {
   // Redirect to onboarding if no clinic data exists
   React.useEffect(() => {
     if (!isLoading && !clinic) {
-      router.push('/portal/clinic/onboarding');
+      router.push('/portal/onboarding');
     }
   }, [clinic, isLoading, router]);
 

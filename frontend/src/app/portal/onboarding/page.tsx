@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ClinicOnboarding } from '@/components/clinic/ClinicOnboarding';
 import { useClinic } from '@/hooks/useClinic';
 
-function ClinicOnboardingPageContent() {
+function OnboardingPageContent() {
   const router = useRouter();
   const { clinic, isLoading } = useClinic();
 
@@ -41,6 +41,6 @@ function ClinicOnboardingPageContent() {
   return <ClinicOnboarding onComplete={handleOnboardingComplete} />;
 }
 
-export default function ClinicOnboardingPage() {
-  return <ClinicOnboardingPageContent />;
+export default function OnboardingPage() {
+  return <OnboardingPageContent />;
 }

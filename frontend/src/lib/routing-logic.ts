@@ -74,6 +74,26 @@ export const getRoutingDecision = (
 
   // System Admin, Therapist, and Clinic Admin logic
   if (currentRole === UserRoleEnum.Administrator || currentRole === UserRoleEnum.Therapist || currentRole === UserRoleEnum.ClinicAdmin) {
+    // Special handling for clinic admins without clinic data
+    if (currentRole === UserRoleEnum.ClinicAdmin && !hasClinic && !hasClinicFromUser) {
+      // If they're already on onboarding page, allow access
+      if (pathname === '/portal/onboarding') {
+        return {
+          shouldRedirect: false,
+          redirectPath: null,
+          allowAccess: true,
+          reason: 'Clinic admin on onboarding page'
+        };
+      }
+      // Otherwise redirect to onboarding
+      return {
+        shouldRedirect: true,
+        redirectPath: '/portal/onboarding',
+        allowAccess: false,
+        reason: 'Clinic admin without clinic data, redirecting to onboarding'
+      };
+    }
+
     const roleBasedPortal = currentRole === UserRoleEnum.Administrator ? '/portal/admin' : 
                            currentRole === UserRoleEnum.Therapist ? '/portal/therapist' : 
                            '/portal/clinic';

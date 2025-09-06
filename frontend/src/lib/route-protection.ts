@@ -74,6 +74,10 @@ export const routeConfigs: RouteConfig[] = [
     requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
   },
   { 
+    path: '/portal/onboarding', 
+    requiredRoles: [UserRoleEnum.ClinicAdmin]
+  },
+  { 
     path: '/portal/profile', 
     requiredRoles: [UserRoleEnum.Administrator, UserRoleEnum.ClinicAdmin, UserRoleEnum.Therapist]
   },
