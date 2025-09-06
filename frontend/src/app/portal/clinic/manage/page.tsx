@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageTabs from '@/components/ui/page-tabs';
 import { useClinic } from '@/hooks/useClinic';
-import { NoClinicDataBanner } from '@/components/clinic/NoClinicDataBanner';
+import { ClinicOnboarding } from '@/components/clinic/ClinicOnboarding';
 import {
   BuildingOfficeIcon,
   DocumentArrowUpIcon,
@@ -34,9 +34,10 @@ function ClinicManagePageContent() {
     router.push('/portal/clinic');
   };
 
-  const handleCreateClinic = () => {
-    // Set active tab to profile to show the form
-    setActiveTab('profile');
+  const handleOnboardingComplete = () => {
+    // Refresh clinic data after successful creation
+    fetchClinic();
+    fetchStats();
   };
 
   // Refresh data when profile tab becomes active
@@ -49,6 +50,11 @@ function ClinicManagePageContent() {
       });
     }
   };
+
+  // Show full-page onboarding if no clinic data exists
+  if (!isLoading && !clinic) {
+    return <ClinicOnboarding onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <PageWrapper
@@ -217,11 +223,6 @@ function ClinicManagePageContent() {
         onTabChange={handleTabChange}
         gridCols={3}
       />
-
-      {/* Show floating banner when no clinic data exists */}
-      {!isLoading && !clinic && (
-        <NoClinicDataBanner onCreateClinic={handleCreateClinic} />
-      )}
     </PageWrapper>
   );
 }
