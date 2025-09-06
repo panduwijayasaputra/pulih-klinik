@@ -7,6 +7,12 @@ import {
 import { EntityManager } from '@mikro-orm/core';
 import { Clinic } from '../database/entities/clinic.entity';
 import { User } from '../database/entities/user.entity';
+import {
+  Therapist,
+  TherapistStatus,
+} from '../database/entities/therapist.entity';
+import { Client, ClientStatus } from '../database/entities/client.entity';
+import { TherapySession } from '../database/entities/therapy-session.entity';
 import { UpdateClinicDto, UpdateBrandingDto, UpdateSettingsDto } from './dto';
 import { UserRole } from '../common/enums';
 
@@ -472,21 +478,26 @@ export class ClinicsService {
 
     // Get therapists count
     const [totalTherapists, activeTherapists] = await Promise.all([
-      this.em.count('Therapist', { clinic: clinicId }),
-      this.em.count('Therapist', { clinic: clinicId, isActive: true }),
+      this.em.count(Therapist, { clinic: clinicId }),
+      this.em.count(Therapist, {
+        clinic: clinicId,
+        status: TherapistStatus.ACTIVE,
+      }),
     ]);
 
     // Get clients count
     const [totalClients, activeClients] = await Promise.all([
-      this.em.count('Client', { clinic: clinicId }),
-      this.em.count('Client', { clinic: clinicId, isActive: true }),
+      this.em.count(Client, { clinic: clinicId }),
+      this.em.count(Client, { clinic: clinicId, status: ClientStatus.THERAPY }),
     ]);
 
     // Get sessions count
     const [totalSessions, thisMonthSessions] = await Promise.all([
-      this.em.count('TherapySession', { clinic: clinicId }),
-      this.em.count('TherapySession', {
-        clinic: clinicId,
+      this.em.count(TherapySession, {
+        client: { clinic: clinicId },
+      }),
+      this.em.count(TherapySession, {
+        client: { clinic: clinicId },
         createdAt: {
           $gte: startOfMonth,
           $lte: endOfMonth,
