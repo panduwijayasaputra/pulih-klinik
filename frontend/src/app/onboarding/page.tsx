@@ -15,11 +15,30 @@ function OnboardingPageContent() {
   // Check if user is authenticated and is a clinic admin
   const isClinicAdmin = user?.roles?.includes(UserRoleEnum.ClinicAdmin);
 
-  // Check if user has clinic data and subscription
+  // Check if user has clinic data and subscription (use API data as source of truth)
   const hasClinic = !!clinic;
   const hasClinicFromUser = !!(user?.clinicId || user?.clinicName);
   const hasSubscription = !!(clinic?.subscriptionTier && clinic.subscriptionTier.trim() !== '');
   const hasSubscriptionFromUser = !!(user?.subscriptionTier && user.subscriptionTier.trim() !== '');
+
+  // Use API data as source of truth, but fallback to user data if API is still loading
+  const effectiveHasClinic = isLoading ? hasClinicFromUser : hasClinic;
+  const effectiveHasSubscription = isLoading ? hasSubscriptionFromUser : hasSubscription;
+
+  // Clear stale stored data if there's a mismatch between API and stored data
+  React.useEffect(() => {
+    if (!isLoading && user && !clinic && hasClinicFromUser) {
+      console.log('Clearing stale clinic data from storage - clinic exists in user data but not in API');
+      const { setUser, setClinic } = useAuthStore.getState();
+      setUser({
+        ...user,
+        clinicId: '',
+        clinicName: '',
+        subscriptionTier: ''
+      });
+      setClinic(null);
+    }
+  }, [isLoading, user, clinic, hasClinicFromUser]);
 
   // Redirect if not authenticated or not a clinic admin
   React.useEffect(() => {
@@ -41,10 +60,10 @@ function OnboardingPageContent() {
 
   // If clinic exists and has subscription, redirect to manage page
   React.useEffect(() => {
-    if (!isLoading && hasClinic && hasSubscription) {
+    if (!isLoading && effectiveHasClinic && effectiveHasSubscription) {
       router.push('/portal');
     }
-  }, [hasClinic, hasSubscription, isLoading, router]);
+  }, [effectiveHasClinic, effectiveHasSubscription, isLoading, router]);
 
   // Show loading state while checking authentication and clinic data
   if (!isAuthenticated || !user || !isClinicAdmin || isLoading) {
@@ -59,15 +78,15 @@ function OnboardingPageContent() {
   }
 
   // If clinic exists and has subscription, don't render anything (redirect will happen)
-  if (hasClinic && hasSubscription) {
+  if (effectiveHasClinic && effectiveHasSubscription) {
     return null;
   }
 
   return (
     <ClinicOnboarding 
       onComplete={handleOnboardingComplete}
-      hasClinic={hasClinic || hasClinicFromUser}
-      hasSubscription={hasSubscription || hasSubscriptionFromUser}
+      hasClinic={effectiveHasClinic}
+      hasSubscription={effectiveHasSubscription}
     />
   );
 }
