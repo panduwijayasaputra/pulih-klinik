@@ -57,7 +57,11 @@ export const useClinic = () => {
   // Fetch clinic profile
   const fetchClinic = useCallback(async () => {
     if (!clinicId) {
-      updateState({ error: 'Clinic ID not found. Please log in again.' });
+      // Don't show error on onboarding page since users don't have clinicId yet
+      const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
+      if (!isOnOnboardingPage) {
+        updateState({ error: 'Clinic ID not found. Please log in again.' });
+      }
       return;
     }
 
@@ -93,7 +97,11 @@ export const useClinic = () => {
   // Fetch clinic statistics
   const fetchStats = useCallback(async () => {
     if (!clinicId) {
-      updateState({ statsError: 'Clinic ID not found. Please log in again.' });
+      // Don't show error on onboarding page since users don't have clinicId yet
+      const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
+      if (!isOnOnboardingPage) {
+        updateState({ statsError: 'Clinic ID not found. Please log in again.' });
+      }
       return;
     }
 
