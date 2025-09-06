@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageTabs from '@/components/ui/page-tabs';
 import { useClinic } from '@/hooks/useClinic';
-import { ClinicOnboarding } from '@/components/clinic/ClinicOnboarding';
 import {
   BuildingOfficeIcon,
   DocumentArrowUpIcon,
@@ -34,11 +33,12 @@ function ClinicManagePageContent() {
     router.push('/portal/clinic');
   };
 
-  const handleOnboardingComplete = () => {
-    // Refresh clinic data after successful creation
-    fetchClinic();
-    fetchStats();
-  };
+  // Redirect to onboarding if no clinic data exists
+  React.useEffect(() => {
+    if (!isLoading && !clinic) {
+      router.push('/portal/clinic/onboarding');
+    }
+  }, [clinic, isLoading, router]);
 
   // Refresh data when profile tab becomes active
   const handleTabChange = (tab: string) => {
@@ -51,9 +51,14 @@ function ClinicManagePageContent() {
     }
   };
 
-  // Show full-page onboarding if no clinic data exists
-  if (!isLoading && !clinic) {
-    return <ClinicOnboarding onComplete={handleOnboardingComplete} />;
+  // Show loading state while checking clinic data or redirecting
+  if (isLoading || !clinic) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <span className="ml-2 text-gray-600">Memuat data klinik...</span>
+      </div>
+    );
   }
 
   return (
