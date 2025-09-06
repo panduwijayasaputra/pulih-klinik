@@ -25,6 +25,7 @@ interface UseClinicState {
   documentsError: string | null;
   statsError: string | null;
   isValidating: boolean;
+  hasValidated: boolean;
 }
 
 export const useClinic = () => {
@@ -39,7 +40,8 @@ export const useClinic = () => {
     error: null,
     documentsError: null,
     statsError: null,
-    isValidating: false
+    isValidating: false,
+    hasValidated: false
   });
 
   // Get the clinic ID from the authenticated user
@@ -454,15 +456,15 @@ export const useClinic = () => {
 
   // Validate stored clinic data against database
   const validateStoredClinicData = useCallback(async () => {
-    // Prevent multiple validations from running simultaneously
-    if (state.isValidating) {
+    // Prevent multiple validations from running simultaneously or if already validated
+    if (state.isValidating || state.hasValidated) {
       return;
     }
 
     // If we have clinic data in state but no clinicId from user, clear stale data
     if (state.clinic && !clinicId) {
       console.log('Clearing stale clinic data - no clinicId in user data');
-      updateState({ clinic: null });
+      updateState({ clinic: null, hasValidated: true });
       return;
     }
 
@@ -480,7 +482,10 @@ export const useClinic = () => {
             setUser(userWithoutClinic);
             setClinic(null);
           }
-          updateState({ clinic: null });
+          updateState({ clinic: null, hasValidated: true });
+        } else {
+          // Data is valid, mark as validated
+          updateState({ hasValidated: true });
         }
       } catch (error: any) {
         if (error?.response?.status === 404 || error?.message?.includes('Clinic not found')) {
@@ -492,13 +497,19 @@ export const useClinic = () => {
             setUser(userWithoutClinic);
             setClinic(null);
           }
-          updateState({ clinic: null });
+          updateState({ clinic: null, hasValidated: true });
+        } else {
+          // Other errors, mark as validated to prevent retry loops
+          updateState({ hasValidated: true });
         }
       } finally {
         updateState({ isValidating: false });
       }
+    } else {
+      // No clinic data to validate, mark as validated
+      updateState({ hasValidated: true });
     }
-  }, [clinicId, state.clinic, state.isValidating, user, updateState]);
+  }, [clinicId, state.clinic, state.isValidating, state.hasValidated, user, updateState]);
 
   // Auto-fetch clinic data and stats on mount (but not on onboarding page)
   useEffect(() => {
@@ -509,13 +520,13 @@ export const useClinic = () => {
     }
   }, [fetchClinic, fetchStats]);
 
-  // Validate stored clinic data on onboarding page
+  // Validate stored clinic data on onboarding page (only once)
   useEffect(() => {
     const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
-    if (isOnOnboardingPage) {
+    if (isOnOnboardingPage && !state.hasValidated) {
       validateStoredClinicData();
     }
-  }, [validateStoredClinicData]);
+  }, [state.hasValidated, validateStoredClinicData]);
 
   return {
     // Data
