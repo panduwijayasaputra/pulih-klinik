@@ -47,6 +47,19 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
     console.log('Current step changed to:', currentStep);
   }, [currentStep]);
 
+  // Handle prop changes - only update step if we're going backwards or if it makes sense
+  React.useEffect(() => {
+    const newInitialStep = getInitialStep();
+    console.log('Props changed, new initial step would be:', newInitialStep, 'current step:', currentStep);
+    
+    // Only update if we're going backwards (e.g., from subscription back to clinic-info)
+    // or if we're at complete and both clinic and subscription are now available
+    if (newInitialStep === 'complete' && currentStep !== 'complete') {
+      console.log('Both clinic and subscription are available, moving to complete');
+      setCurrentStep('complete');
+    }
+  }, [hasClinic, hasSubscription, currentStep]);
+
   const handleClinicCreated = () => {
     console.log('Clinic created, moving to subscription step');
     setCurrentStep('subscription');
