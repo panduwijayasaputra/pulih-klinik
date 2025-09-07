@@ -76,19 +76,16 @@ export class ClientsController {
 
     // Get clinic ID from user's role context
     let clinicId: string;
-    if (currentUser.isAdmin) {
+    if (currentUser.roles.includes('administrator')) {
       // System admin needs to specify clinic in body or we use the first available clinic
       // For now, we'll require clinic ID to be passed differently for admins
       throw new Error('System admin must specify target clinic');
     } else {
       // Clinic admin can only create clients in their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.clientsService.createClient(
@@ -302,7 +299,7 @@ export class ClientsController {
     // Determine clinic scope based on user role
     let clinicId: string | undefined;
 
-    if (currentUser.isAdmin) {
+    if (currentUser.roles.includes('administrator')) {
       // System admin can specify clinic or see all
       clinicId = query.clinicId;
     } else {
@@ -453,15 +450,12 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
     // Admin can update any client (clinicId remains undefined)
 
@@ -512,15 +506,12 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.clientsService.updateClientStatus(
@@ -571,15 +562,12 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.clientsService.updateClientProgress(
@@ -633,18 +621,14 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.clientsService.deleteClient(clientId, clinicId);
   }
-
 }

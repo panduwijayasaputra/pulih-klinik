@@ -8,6 +8,7 @@ import {
   IsArray,
   IsUrl,
   IsDateString,
+  IsEmail,
   Min,
   Max,
   MinLength,
@@ -23,11 +24,11 @@ import {
 
 export class CreateTherapistDto {
   @ApiProperty({
-    description: 'User ID to associate with this therapist profile',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Email address for the therapist account',
+    example: 'therapist@example.com',
   })
-  @IsString({ message: 'User ID must be a string' })
-  userId!: string;
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  email!: string;
 
   @ApiProperty({
     description: 'Full name of the therapist',

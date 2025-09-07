@@ -44,9 +44,9 @@ export class TherapistsController {
   @Post()
   @RequireAdminOrClinicAdmin()
   @ApiOperation({
-    summary: 'Create a new therapist',
+    summary: 'Create a new therapist with user account',
     description:
-      'Create a new therapist profile and assign them to a clinic. Only clinic admins and system admins can create therapists.',
+      'Create a new therapist profile with user account and assign them to a clinic. Only clinic admins and system admins can create therapists.',
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -59,7 +59,7 @@ export class TherapistsController {
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: 'User is already a therapist or license number already exists',
+    description: 'Email already exists or license number already exists',
   })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
@@ -67,7 +67,7 @@ export class TherapistsController {
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'User or clinic not found',
+    description: 'Clinic not found',
   })
   async createTherapist(
     @Body() createTherapistDto: CreateTherapistDto,
@@ -77,26 +77,115 @@ export class TherapistsController {
 
     // Get clinic ID from user's role context
     let clinicId: string;
-    if (currentUser.isAdmin) {
+    if (currentUser.roles.includes('administrator')) {
       // System admin needs to specify clinic in body or we use the first available clinic
       // For now, we'll require clinic ID to be passed differently for admins
       throw new Error('System admin must specify target clinic');
     } else {
       // Clinic admin can only create therapists in their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
-    return this.therapistsService.createTherapist(
+    return this.therapistsService.createTherapistWithUser(
       clinicId,
       createTherapistDto,
       currentUser.id,
     );
+  }
+
+  @Post('check-email')
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Check email availability for therapist creation',
+    description:
+      'Check if email is available for creating a new therapist account',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Email status checked successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid email format',
+  })
+  async checkEmail(
+    @Body() body: { email: string },
+    @Request() _req: any,
+  ): Promise<{ available: boolean; message: string }> {
+    const { email } = body;
+
+    // Check if email already exists
+    const existingUser =
+      await this.therapistsService.checkEmailAvailability(email);
+
+    if (existingUser) {
+      return {
+        available: false,
+        message: 'Email already exists in the system',
+      };
+    }
+
+    return {
+      available: true,
+      message: 'Email is available',
+    };
+  }
+
+  @Post(':id/send-verification')
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Send email verification to therapist',
+    description:
+      'Send email verification to a therapist who has not verified their email yet',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Therapist ID',
+    type: 'string',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Verification email sent successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Therapist not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Therapist email already verified',
+  })
+  async sendEmailVerification(
+    @Param('id', ParseUUIDPipe) therapistId: string,
+    @Request() req: any,
+  ): Promise<{ success: boolean; message: string }> {
+    const currentUser = req.user;
+
+    // Get clinic ID from user's role context
+    let clinicId: string;
+    if (currentUser.roles.includes('administrator')) {
+      // System admin can send verification to any therapist
+      clinicId = undefined as any;
+    } else {
+      // Clinic admin can only send verification to therapists in their clinic
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
+      }
+      clinicId = currentUser.clinicId;
+    }
+
+    const result = await this.therapistsService.sendEmailVerification(
+      therapistId,
+      clinicId,
+    );
+
+    return {
+      success: true,
+      message: result.message,
+    };
   }
 
   @Get()
@@ -207,7 +296,7 @@ export class TherapistsController {
     // Determine clinic scope based on user role
     let clinicId: string | undefined;
 
-    if (currentUser.isAdmin) {
+    if (currentUser.roles.includes('administrator')) {
       // System admin can specify clinic or see all
       clinicId = query.clinicId;
     } else {
@@ -348,15 +437,12 @@ export class TherapistsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
     // Admin can update any therapist (clinicId remains undefined)
 
@@ -403,15 +489,12 @@ export class TherapistsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.therapistsService.updateTherapistStatus(
@@ -461,15 +544,12 @@ export class TherapistsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.therapistsService.updateTherapistCapacity(
@@ -523,15 +603,12 @@ export class TherapistsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.therapistsService.deleteTherapist(therapistId, clinicId);
@@ -828,18 +905,15 @@ export class TherapistsController {
 
     // Get clinic ID from user's role context
     let clinicId: string;
-    if (currentUser.isAdmin) {
+    if (currentUser.roles.includes('administrator')) {
       // For admin, we need to determine client's clinic first
       // This is a simplified approach - in production, you might want to accept clinicId as query param
       throw new Error('System admin must specify clinic ID');
     } else {
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.therapistsService.getAvailableTherapistsForAssignment(

@@ -9,7 +9,6 @@ import {
   Therapist,
   TherapistStatus,
 } from '../database/entities/therapist.entity';
-import { TherapistSpecialization } from '../database/entities/therapist-specialization.entity';
 import { User } from '../database/entities/user.entity';
 import { Clinic } from '../database/entities/clinic.entity';
 import { Client } from '../database/entities/client.entity';
@@ -54,10 +53,7 @@ export interface TherapistResponse {
   maxSessionsPerDay: number;
   workingDays: number[];
   adminNotes?: string;
-  specializations: Array<{
-    id: string;
-    specialization: string;
-  }>;
+  specializations?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,6 +61,151 @@ export interface TherapistResponse {
 @Injectable()
 export class TherapistsService {
   constructor(private readonly em: EntityManager) {}
+
+  /**
+   * Check if email is available for therapist creation
+   */
+  async checkEmailAvailability(email: string): Promise<User | null> {
+    return await this.em.findOne(User, { email });
+  }
+
+  /**
+   * Send email verification to therapist
+   */
+  async sendEmailVerification(
+    therapistId: string,
+    clinicId?: string,
+  ): Promise<{ message: string }> {
+    const whereConditions: any = { id: therapistId };
+    if (clinicId) {
+      whereConditions.clinic = clinicId;
+    }
+
+    const therapist = await this.em.findOne(Therapist, whereConditions, {
+      populate: ['user'],
+    });
+
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
+    if (therapist.user.emailVerified) {
+      throw new BadRequestException('Therapist email is already verified');
+    }
+
+    // Generate verification code
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    // Update user with verification code
+    therapist.user.emailVerificationCode = verificationCode;
+    therapist.user.emailVerificationExpires = verificationExpires;
+
+    await this.em.persistAndFlush(therapist.user);
+
+    // TODO: Send actual email with verification code
+    // For now, we'll just return success
+    // In production, you would integrate with an email service like SendGrid, AWS SES, etc.
+
+    return {
+      message: `Verification code sent to ${therapist.user.email}. Code: ${verificationCode} (This is for development only)`,
+    };
+  }
+
+  /**
+   * Create a new therapist with user creation and rollback system
+   */
+  async createTherapistWithUser(
+    clinicId: string,
+    createTherapistDto: CreateTherapistDto,
+    _createdByUserId: string,
+  ): Promise<TherapistResponse> {
+    // Start transaction for rollback capability
+    await this.em.begin();
+
+    try {
+      // Validate clinic exists
+      const clinic = await this.em.findOne(Clinic, { id: clinicId });
+      if (!clinic) {
+        throw new NotFoundException('Clinic not found');
+      }
+
+      // Check if email already exists
+      const existingUser = await this.em.findOne(User, {
+        email: createTherapistDto.email,
+      });
+      if (existingUser) {
+        throw new ConflictException('User with this email already exists');
+      }
+
+      // Check license number uniqueness within clinic
+      const existingLicense = await this.em.findOne(Therapist, {
+        clinic: clinicId,
+        licenseNumber: createTherapistDto.licenseNumber,
+      });
+      if (existingLicense) {
+        throw new ConflictException(
+          'License number already exists in this clinic',
+        );
+      }
+
+      // Create user with therapist role
+      const user = new User();
+      user.email = createTherapistDto.email;
+      user.isActive = false; // Inactive until email verified
+      user.emailVerified = false; // Not verified yet
+      user.passwordHash = 'temp-password-hash'; // Temporary password hash
+
+      await this.em.persistAndFlush(user);
+
+      // Create therapist role for the user
+      const role = new UserRoleEntity();
+      role.role = UserRole.THERAPIST;
+      role.user = user;
+      role.userId = user.id;
+
+      await this.em.persistAndFlush(role);
+
+      // Create therapist profile
+      const therapist = new Therapist();
+      therapist.clinic = clinic;
+      therapist.user = user;
+      therapist.fullName = createTherapistDto.fullName;
+      therapist.phone = createTherapistDto.phone;
+      therapist.avatarUrl = createTherapistDto.avatarUrl;
+      therapist.licenseNumber = createTherapistDto.licenseNumber;
+      therapist.licenseType = createTherapistDto.licenseType;
+      therapist.yearsOfExperience = createTherapistDto.yearsOfExperience;
+      therapist.employmentType = createTherapistDto.employmentType;
+      therapist.joinDate = new Date(createTherapistDto.joinDate);
+      therapist.maxClients = createTherapistDto.maxClients || 10;
+      therapist.timezone = createTherapistDto.timezone || 'Asia/Jakarta';
+      therapist.sessionDuration = createTherapistDto.sessionDuration || 60;
+      therapist.breakBetweenSessions =
+        createTherapistDto.breakBetweenSessions || 15;
+      therapist.maxSessionsPerDay = createTherapistDto.maxSessionsPerDay || 8;
+      therapist.workingDays = createTherapistDto.workingDays || [1, 2, 3, 4, 5];
+      therapist.adminNotes = createTherapistDto.adminNotes;
+      therapist.specializations =
+        createTherapistDto.specializations?.join(', ') || '';
+      therapist.status = TherapistStatus.PENDING_SETUP;
+
+      await this.em.persistAndFlush(therapist);
+
+      // Commit transaction
+      await this.em.commit();
+
+      // Return the created therapist
+      return this.mapToResponse(therapist);
+    } catch (error) {
+      // Rollback transaction on any error
+      await this.em.rollback();
+      console.error('Error creating therapist:', error);
+      throw error;
+    }
+  }
 
   /**
    * Create a new therapist
@@ -81,14 +222,16 @@ export class TherapistsService {
     }
 
     // Validate user exists and is not already a therapist
-    const user = await this.em.findOne(User, { id: createTherapistDto.userId });
+    const user = await this.em.findOne(User, {
+      email: createTherapistDto.email,
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     // Check if user is already a therapist in any clinic
     const existingTherapist = await this.em.findOne(Therapist, {
-      user: createTherapistDto.userId,
+      user: user.id,
     });
     if (existingTherapist) {
       throw new ConflictException('User is already registered as a therapist');
@@ -143,17 +286,6 @@ export class TherapistsService {
 
     await this.em.persistAndFlush(therapist);
 
-    // Create specializations if provided
-    if (createTherapistDto.specializations?.length) {
-      for (const spec of createTherapistDto.specializations) {
-        const specialization = new TherapistSpecialization();
-        specialization.therapist = therapist;
-        specialization.specialization = spec;
-        this.em.persist(specialization);
-      }
-      await this.em.flush();
-    }
-
     // Set user's clinic
     user.clinic = clinic;
     await this.em.persistAndFlush(user);
@@ -182,7 +314,7 @@ export class TherapistsService {
     }
 
     const therapist = await this.em.findOne(Therapist, whereConditions, {
-      populate: ['clinic', 'user', 'specializations'],
+      populate: ['clinic', 'user'],
     });
 
     if (!therapist) {
@@ -316,9 +448,7 @@ export class TherapistsService {
       whereConditions.clinic = clinicId;
     }
 
-    const therapist = await this.em.findOne(Therapist, whereConditions, {
-      populate: ['specializations'],
-    });
+    const therapist = await this.em.findOne(Therapist, whereConditions);
 
     if (!therapist) {
       throw new NotFoundException('Therapist not found');
@@ -393,18 +523,7 @@ export class TherapistsService {
 
     // Update specializations if provided
     if (updateTherapistDto.specializations !== undefined) {
-      // Remove existing specializations
-      await this.em.nativeDelete(TherapistSpecialization, {
-        therapist: therapistId,
-      });
-
-      // Add new specializations
-      for (const spec of updateTherapistDto.specializations) {
-        const specialization = new TherapistSpecialization();
-        specialization.therapist = therapist;
-        specialization.specialization = spec;
-        this.em.persist(specialization);
-      }
+      therapist.specializations = updateTherapistDto.specializations.join(', ');
     }
 
     therapist.updatedAt = new Date();
@@ -1233,10 +1352,7 @@ export class TherapistsService {
       maxSessionsPerDay: therapist.maxSessionsPerDay,
       workingDays: therapist.workingDays,
       adminNotes: therapist.adminNotes,
-      specializations: therapist.specializations.toArray().map((spec) => ({
-        id: spec.id,
-        specialization: spec.specialization,
-      })),
+      specializations: therapist.specializations,
       createdAt: therapist.createdAt,
       updatedAt: therapist.updatedAt,
     };

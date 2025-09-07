@@ -3,13 +3,10 @@ import {
   PrimaryKey,
   Property,
   ManyToOne,
-  OneToMany,
-  Collection,
   Unique,
 } from '@mikro-orm/core';
 import { User } from './user.entity';
 import { Clinic } from './clinic.entity';
-import { TherapistSpecialization } from './therapist-specialization.entity';
 
 export enum LicenseType {
   PSYCHOLOGIST = 'psychologist',
@@ -118,12 +115,9 @@ export class Therapist {
   @Property({ type: 'text', nullable: true })
   adminNotes?: string;
 
-  // Relationships
-  @OneToMany(
-    () => TherapistSpecialization,
-    (specialization) => specialization.therapist,
-  )
-  specializations = new Collection<TherapistSpecialization>(this);
+  // Specializations as comma-separated string
+  @Property({ type: 'text', nullable: true })
+  specializations?: string;
 
   @Property({ type: 'timestamp', defaultRaw: 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();

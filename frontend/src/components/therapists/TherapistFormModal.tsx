@@ -19,7 +19,6 @@ import {
   UserIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline';
-import { useTherapist } from '@/hooks/useTherapist';
 import { useAuth } from '@/hooks/useAuth';
 import { TherapistAPI } from '@/lib/api/therapist';
 import ConfirmationDialog, { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
@@ -74,10 +73,8 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
   onCancel,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [emailValidationState, setEmailValidationState] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
-  const [emailErrorMessage, setEmailErrorMessage] = useState<string>('');
   const [isLoadingTherapist, setIsLoadingTherapist] = useState(mode === 'edit');
-  const { createTherapistAccount, loading } = useTherapist();
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { openDialog, isOpen: dialogIsOpen, config: dialogConfig, closeDialog } = useConfirmationDialog();
   const { addToast } = useToast();
@@ -87,17 +84,16 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     handleSubmit,
     formState: { errors, isValid, isDirty, touchedFields },
     reset,
-    setError,
     watch,
     setValue,
-    clearErrors
+    setError,
   } = useForm<TherapistRegistrationForm>({
     resolver: zodResolver(TherapistRegistrationSchema),
     mode: 'onChange'
   });
 
-  const watchedEmail = watch('email');
   const watchedFormData = watch();
+
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -130,7 +126,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                 licenseType: therapistData.licenseType || TherapistLicenseTypeEnum.Psychologist,
                 employmentType: therapistData.employmentType || EmploymentTypeEnum.FullTime,
               });
-              setEmailValidationState('valid');
             } else {
               // Fallback to default values if API fails
               reset({
@@ -147,7 +142,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                 employmentType: EmploymentTypeEnum.FullTime,
                 ...defaultValues,
               });
-              setEmailValidationState('valid');
             }
           } catch (error) {
             console.error('Failed to load therapist data:', error);
@@ -166,7 +160,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               employmentType: EmploymentTypeEnum.FullTime,
               ...defaultValues,
             });
-            setEmailValidationState('valid');
           } finally {
             setIsLoadingTherapist(false);
           }
@@ -189,65 +182,15 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           employmentType: EmploymentTypeEnum.FullTime,
           ...defaultValues,
         });
-        setEmailValidationState('idle');
         setIsLoadingTherapist(false);
       }
     }
   }, [open, mode, therapistId, defaultValues, reset]);
 
+
   // Remove the old specializations mapping since we now use THERAPIST_SPECIALIZATIONS directly
 
-  const validateEmailAvailability = useCallback(async (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return;
-    }
 
-    setEmailValidationState('checking');
-
-    try {
-      // API call to check email availability
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // For now, assume all emails are valid
-      if (false) {
-        setEmailValidationState('invalid');
-        setEmailErrorMessage('Email sudah terdaftar dalam sistem');
-        setError('email', {
-          type: 'manual',
-          message: 'Email sudah terdaftar dalam sistem'
-        });
-      } else {
-        setEmailValidationState('valid');
-        setEmailErrorMessage('');
-        clearErrors('email');
-      }
-    } catch (error) {
-      setEmailValidationState('idle');
-      setEmailErrorMessage('');
-      console.error('Email validation error:', error);
-    }
-  }, [setError, clearErrors]);
-
-  // Debounced email validation - disabled in edit mode
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (watchedEmail && watchedEmail.length > 0 && !errors.email) {
-        if (mode === 'edit') {
-          setEmailValidationState('valid');
-          setEmailErrorMessage('');
-          clearErrors('email');
-        } else {
-          validateEmailAvailability(watchedEmail);
-        }
-      } else {
-        setEmailValidationState('idle');
-        setEmailErrorMessage('');
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [watchedEmail, errors.email, validateEmailAvailability, mode, clearErrors]);
 
   const handleFormSubmit = (data: TherapistRegistrationForm) => {
     if (!user || !user.roles.includes('clinic_admin' as UserRole)) {
@@ -320,6 +263,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     }
 
     setIsSubmitting(true);
+    setLoading(true);
 
     try {
       if (mode === 'edit') {
@@ -331,21 +275,25 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         onOpenChange(false);
       } else {
         // Create new therapist
-        const result = await createTherapistAccount({
-          name: data.name,
+        const result = await TherapistAPI.createTherapist({
+          fullName: data.name,
           email: data.email,
           phone: data.phone,
           licenseNumber: data.licenseNumber,
           licenseType: data.licenseType,
-          specializations: data.specializations,
-          yearsExperience: data.yearsExperience,
+          specializations: data.specializations.map(id => 
+            THERAPIST_SPECIALIZATIONS.find(s => s.id === id)?.name || id
+          ),
+          yearsOfExperience: data.yearsExperience,
           employmentType: data.employmentType,
-          education: data.education,
-          certifications: data.certifications,
-          adminNotes: data.adminNotes,
-          createdBy: user.id,
-          clinicId: user.clinicId || 'default-clinic',
-          status: 'pending_setup'
+          maxClients: 15, // Default value
+          preferences: {
+            sessionDuration: 60,
+            breakBetweenSessions: 15,
+            maxSessionsPerDay: 8,
+            workingDays: [1, 2, 3, 4, 5],
+            languages: ['Indonesian']
+          }
         });
 
         if (result.success) {
@@ -377,6 +325,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
       setError('root', { message: `Terjadi kesalahan saat ${mode === 'edit' ? 'memperbarui' : 'membuat'} akun therapist` });
     } finally {
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -461,27 +410,12 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                     type="email"
                     placeholder="therapist@contoh.com"
                     disabled={mode === 'edit'}
-                    className={`
-                      ${errors.email || emailValidationState === 'invalid' ? 'border-red-500' : ''}
-                      ${emailValidationState === 'valid' ? 'border-green-500' : ''}
-                      ${emailValidationState === 'checking' ? 'pr-10' : ''}
-                      ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
-                    `}
+                    className={mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
                   />
-                  {emailValidationState === 'checking' && (
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
-                    </div>
-                  )}
-                  {emailValidationState === 'valid' && !errors.email && (
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                    </div>
-                  )}
                 </div>
-                {(errors.email || emailErrorMessage) && (
+                {errors.email && (
                   <p className="mt-1 text-sm text-red-600">
-                    {errors.email?.message || emailErrorMessage}
+                    {errors.email?.message}
                   </p>
                 )}
               </div>
@@ -763,20 +697,13 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                 loading ||
                 isSubmitting ||
                 !isValid ||
-                !isDirty ||
-                emailValidationState === 'checking' ||
-                emailValidationState === 'invalid'
+                !isDirty
               }
             >
               {loading || isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                   {mode === 'edit' ? 'Updating...' : 'Creating Account...'}
-                </>
-              ) : emailValidationState === 'checking' ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Memvalidasi Email...
                 </>
               ) : !isValid || !isDirty ? (
                 mode === 'edit' ? 'Lengkapi Form untuk Update' : 'Lengkapi Form untuk Melanjutkan'

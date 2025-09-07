@@ -3,9 +3,9 @@ import { IsOptional, IsEnum, IsString, MaxLength } from 'class-validator';
 import { CreateTherapistDto } from './create-therapist.dto';
 import { TherapistStatus } from '../../database/entities/therapist.entity';
 
-// Omit userId since it cannot be updated
+// Omit email since it cannot be updated
 export class UpdateTherapistDto extends PartialType(
-  OmitType(CreateTherapistDto, ['userId'] as const),
+  OmitType(CreateTherapistDto, ['email'] as const),
 ) {
   @ApiProperty({
     description: 'Therapist status',

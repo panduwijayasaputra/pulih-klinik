@@ -111,7 +111,7 @@ export class ConsultationsService {
         clinic: clinicId,
         status: TherapistStatus.ACTIVE,
       },
-      { populate: ['user', 'specializations'] },
+      { populate: ['user'] },
     );
 
     if (!therapist) {
@@ -275,7 +275,6 @@ export class ConsultationsService {
           'client',
           'therapist',
           'therapist.user',
-          'therapist.specializations',
         ],
         orderBy,
         limit,
@@ -309,7 +308,6 @@ export class ConsultationsService {
           'client',
           'therapist',
           'therapist.user',
-          'therapist.specializations',
         ],
       },
     );
@@ -338,7 +336,6 @@ export class ConsultationsService {
           'client',
           'therapist',
           'therapist.user',
-          'therapist.specializations',
         ],
       },
     );
@@ -400,7 +397,6 @@ export class ConsultationsService {
           'client',
           'therapist',
           'therapist.user',
-          'therapist.specializations',
         ],
       },
     );
@@ -651,9 +647,7 @@ export class ConsultationsService {
           fullName: therapist.fullName,
           email: therapist.user.email,
         },
-        specializations: therapist.specializations
-          .getItems()
-          .map((s) => s.specialization),
+        specializations: therapist.specializations ? therapist.specializations.split(', ') : [],
       },
       formType: consultation.formType,
       status: consultation.status,

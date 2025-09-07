@@ -1,8 +1,21 @@
 import { Therapist, TherapistAssignment, TherapistFilters, TherapistFormData } from '@/types/therapist';
 import { ItemResponse, ListResponse, PaginatedResponse, StatusResponse } from './types';
 import { getMockTherapists, getMockTherapistById } from '@/lib/mocks/therapist';
+import { apiClient } from '../http-client';
 
 export class TherapistAPI {
+  static async checkEmailAvailability(email: string): Promise<{ available: boolean; message: string }> {
+    try {
+      const response = await apiClient.post('/therapists/check-email', { email });
+      return response.data;
+    } catch (error: any) {
+      return {
+        available: false,
+        message: error.response?.data?.message || 'Failed to check email availability'
+      };
+    }
+  }
+
   static async getTherapists(
     page: number = 1,
     pageSize: number = 10,
@@ -122,69 +135,70 @@ export class TherapistAPI {
 
   static async createTherapist(data: TherapistFormData): Promise<ItemResponse<Therapist>> {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Generate new therapist ID
-      const newId = `th-${String(Date.now()).slice(-6)}`;
-      const clinicId = 'clinic-001'; // TODO: Get from auth context
-
-      // Create new therapist object
-      const newTherapist: Therapist = {
-        id: newId,
-        clinicId,
-        fullName: data.fullName,
+      // Convert frontend data to backend DTO format
+      const createTherapistDto = {
         email: data.email,
+        fullName: data.fullName,
         phone: data.phone,
-        
-        // Professional Info
         licenseNumber: data.licenseNumber,
         licenseType: data.licenseType,
-        specializations: data.specializations,
-        education: data.education,
-        certifications: data.certifications.map((cert, index) => ({
-          ...cert,
-          id: `cert-${newId}-${index + 1}`,
-          status: 'active' as const
-        })),
         yearsOfExperience: data.yearsOfExperience,
-        
-        // Status & Availability
-        status: 'pending_setup' as any,
         employmentType: data.employmentType,
         joinDate: new Date().toISOString().split('T')[0]!,
-        
-        // Assignment Info
-        assignedClients: [],
         maxClients: data.maxClients,
-        currentLoad: 0,
-        
-        // Schedule - empty initially, will be set up later
-        schedule: [],
         timezone: 'Asia/Jakarta',
-        
-        // Settings
-        preferences: data.preferences,
-        
-        // Audit
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        sessionDuration: data.preferences?.sessionDuration || 60,
+        breakBetweenSessions: data.preferences?.breakBetweenSessions || 15,
+        maxSessionsPerDay: data.preferences?.maxSessionsPerDay || 8,
+        workingDays: data.preferences?.workingDays || [1, 2, 3, 4, 5],
+        adminNotes: undefined,
+        specializations: data.specializations
       };
 
-      // In a real implementation, this would save to the database
-      // For mock purposes, we'll add to the mock data
-      const { getMockTherapists } = await import('@/lib/mocks/therapist');
-      const currentTherapists = getMockTherapists();
-      currentTherapists.push(newTherapist);
+      const response = await apiClient.post('/therapists', createTherapistDto);
+      
+      // Convert backend response to frontend format
+      // The response is wrapped by ResponseInterceptor: { success: true, data: therapist, message: "..." }
+      const backendTherapist = response.data.data;
+      const frontendTherapist: Therapist = {
+        id: backendTherapist.id,
+        clinicId: backendTherapist.clinic.id,
+        fullName: backendTherapist.fullName,
+        email: backendTherapist.user.email,
+        phone: backendTherapist.phone,
+        licenseNumber: backendTherapist.licenseNumber,
+        licenseType: backendTherapist.licenseType,
+        specializations: backendTherapist.specializations ? backendTherapist.specializations.split(', ') : [],
+        yearsOfExperience: backendTherapist.yearsOfExperience,
+        status: backendTherapist.status,
+        employmentType: backendTherapist.employmentType,
+        joinDate: backendTherapist.joinDate,
+        maxClients: backendTherapist.maxClients,
+        currentLoad: backendTherapist.currentLoad,
+        timezone: backendTherapist.timezone,
+        preferences: {
+          sessionDuration: backendTherapist.sessionDuration,
+          breakBetweenSessions: backendTherapist.breakBetweenSessions,
+          maxSessionsPerDay: backendTherapist.maxSessionsPerDay,
+          workingDays: backendTherapist.workingDays,
+          languages: ['Indonesian']
+        },
+        assignedClients: [],
+        schedule: [],
+        education: [],
+        certifications: [],
+        createdAt: backendTherapist.createdAt,
+        updatedAt: backendTherapist.updatedAt
+      };
 
       return {
         success: true,
-        data: newTherapist
+        data: frontendTherapist
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: 'Failed to create therapist'
+        message: error.response?.data?.message || 'Failed to create therapist'
       };
     }
   }
@@ -261,5 +275,20 @@ export class TherapistAPI {
       success: false,
       message: 'API not implemented yet'
     };
+  }
+
+  static async sendEmailVerification(therapistId: string): Promise<StatusResponse> {
+    try {
+      const response = await apiClient.post(`/therapists/${therapistId}/send-verification`);
+      return {
+        success: true,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to send email verification'
+      };
+    }
   }
 }
