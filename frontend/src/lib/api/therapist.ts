@@ -22,87 +22,105 @@ export class TherapistAPI {
     filters?: TherapistFilters
   ): Promise<PaginatedResponse<Therapist>> {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Build query parameters
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: pageSize.toString(),
+      });
 
-      let therapists = getMockTherapists();
-
-      // Apply filters
+      // Add filters to query params
       if (filters) {
         if (filters.status) {
-          therapists = therapists.filter(t => t.status === filters.status);
+          queryParams.append('status', filters.status);
         }
         if (filters.specializations && filters.specializations.length > 0) {
-          therapists = therapists.filter(t => 
-            t.specializations.some(spec => filters.specializations!.includes(spec))
-          );
+          // For now, use the first specialization for filtering
+          // Backend supports single specialization filter
+          queryParams.append('specialization', filters.specializations[0] || '');
         }
         if (filters.employmentType) {
-          therapists = therapists.filter(t => t.employmentType === filters.employmentType);
+          queryParams.append('employmentType', filters.employmentType);
         }
         if (filters.licenseType) {
-          therapists = therapists.filter(t => t.licenseType === filters.licenseType);
+          queryParams.append('licenseType', filters.licenseType);
         }
         if (filters.search || filters.searchQuery) {
-          const searchTerm = (filters.search || filters.searchQuery || '').toLowerCase();
-          therapists = therapists.filter(t => 
-            t.fullName.toLowerCase().includes(searchTerm) ||
-            t.email.toLowerCase().includes(searchTerm) ||
-            t.specializations.some(spec => spec.toLowerCase().includes(searchTerm))
-          );
+          const searchTerm = filters.search || filters.searchQuery || '';
+          queryParams.append('search', searchTerm);
         }
-        if (filters.maxLoad) {
-          therapists = therapists.filter(t => t.currentLoad <= filters.maxLoad!);
+        if (filters.minExperience !== undefined) {
+          queryParams.append('minExperience', filters.minExperience.toString());
+        }
+        if (filters.hasAvailableCapacity) {
+          queryParams.append('hasAvailableCapacity', 'true');
+        }
+        if (filters.sortBy) {
+          queryParams.append('sortBy', filters.sortBy);
+        }
+        if (filters.sortOrder) {
+          queryParams.append('sortOrder', filters.sortOrder);
         }
       }
 
-      // Apply sorting
-      if (filters?.sortBy) {
-        therapists.sort((a, b) => {
-          let aValue: any, bValue: any;
-          
-          switch (filters.sortBy) {
-            case 'name':
-              aValue = a.fullName;
-              bValue = b.fullName;
-              break;
-            case 'joinDate':
-              aValue = new Date(a.joinDate);
-              bValue = new Date(b.joinDate);
-              break;
-            case 'clientCount':
-              aValue = a.currentLoad;
-              bValue = b.currentLoad;
-              break;
-            default:
-              return 0;
-          }
-
-          if (aValue < bValue) return filters.sortOrder === 'desc' ? 1 : -1;
-          if (aValue > bValue) return filters.sortOrder === 'desc' ? -1 : 1;
-          return 0;
-        });
-      }
-
-      // Apply pagination
-      const startIndex = (page - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      const paginatedTherapists = therapists.slice(startIndex, endIndex);
+      const response = await apiClient.get(`/therapists?${queryParams.toString()}`);
+      
+      // The response is wrapped by ResponseInterceptor: { success: true, data: { therapists, total, page, limit, totalPages }, message: "..." }
+      const backendData = response.data.data;
+      
+      // Convert backend response to frontend format
+      const frontendTherapists: Therapist[] = backendData.therapists.map((backendTherapist: any) => ({
+        id: backendTherapist.id,
+        clinicId: backendTherapist.clinic.id,
+        fullName: backendTherapist.fullName,
+        email: backendTherapist.user.email,
+        phone: backendTherapist.phone,
+        licenseNumber: backendTherapist.licenseNumber,
+        licenseType: backendTherapist.licenseType,
+        specializations: backendTherapist.specializations ? backendTherapist.specializations.split(', ') : [],
+        yearsOfExperience: backendTherapist.yearsOfExperience,
+        status: backendTherapist.status,
+        employmentType: backendTherapist.employmentType,
+        joinDate: backendTherapist.joinDate,
+        maxClients: backendTherapist.maxClients,
+        currentLoad: backendTherapist.currentLoad,
+        timezone: backendTherapist.timezone,
+        preferences: {
+          sessionDuration: backendTherapist.sessionDuration,
+          breakBetweenSessions: backendTherapist.breakBetweenSessions,
+          maxSessionsPerDay: backendTherapist.maxSessionsPerDay,
+          workingDays: backendTherapist.workingDays,
+          languages: ['Indonesian']
+        },
+        assignedClients: [],
+        schedule: [],
+        education: [],
+        certifications: [],
+        createdAt: backendTherapist.createdAt,
+        updatedAt: backendTherapist.updatedAt
+      }));
 
       return {
         success: true,
         data: {
-          items: paginatedTherapists,
-          total: therapists.length,
-          page,
-          pageSize,
-          totalPages: Math.ceil(therapists.length / pageSize)
+          items: frontendTherapists,
+          total: backendData.total,
+          page: backendData.page,
+          pageSize: backendData.limit,
+          totalPages: backendData.totalPages
         }
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to fetch therapists:', error);
       return {
         success: false,
-        message: 'Failed to fetch therapists'
+        message: error.response?.data?.message || 'Failed to fetch therapists',
+        data: {
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: 10,
+          totalPages: 0
+        }
       };
     }
   }

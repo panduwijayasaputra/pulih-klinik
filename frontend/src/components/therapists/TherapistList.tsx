@@ -72,12 +72,15 @@ export const TherapistList: React.FC = () => {
   const loadTherapists = useCallback(async () => {
     setLoading(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const response = await TherapistAPI.getTherapists();
+      const response = await TherapistAPI.getTherapists(1, 50);
       if (response.success && response.data) {
         setTherapists(response.data.items);
+      } else {
+        addToast({
+          type: 'error',
+          title: 'Gagal Memuat Data',
+          message: response.message || 'Gagal memuat daftar therapist'
+        });
       }
     } catch (error) {
       console.error('Failed to load therapists:', error);

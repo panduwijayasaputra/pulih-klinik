@@ -301,11 +301,10 @@ export class TherapistsController {
       clinicId = query.clinicId;
     } else {
       // Non-admin users are restricted to their clinic
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
+      clinicId = currentUser.clinicId;
+      if (!clinicId) {
         throw new Error('User not associated with any clinic');
       }
-      clinicId = userRole.clinicId;
     }
 
     if (!clinicId) {

@@ -374,47 +374,31 @@ export class TherapistsService {
 
     // Note: hasAvailableCapacity filtering will be done post-query due to MikroORM limitations
 
-    let therapists: Therapist[];
-    let total: number;
-
     if (query.specialization) {
-      // When filtering by specialization, we need a more complex query
-      // Use raw query or join approach with MikroORM
+      // When filtering by specialization, search in the specializations string field
       const specializationFilter = {
-        specializations: {
-          specialization: { $ilike: `%${query.specialization}%` },
-        },
+        specializations: { $ilike: `%${query.specialization}%` },
       };
 
       // Add specialization filter to where conditions
       Object.assign(whereConditions, specializationFilter);
-
-      [therapists, total] = await this.em.findAndCount(
-        Therapist,
-        whereConditions,
-        {
-          populate: ['clinic', 'user', 'specializations'],
-          orderBy: { [sortBy]: sortDirection },
-          limit,
-          offset,
-        },
-      );
-    } else {
-      // Standard query without specialization filtering
-      [therapists, total] = await this.em.findAndCount(
-        Therapist,
-        whereConditions,
-        {
-          populate: ['clinic', 'user', 'specializations'],
-          orderBy: { [sortBy]: sortDirection },
-          limit,
-          offset,
-        },
-      );
     }
+
+    // Standard query with or without specialization filtering
+    const [therapists, totalCount] = await this.em.findAndCount(
+      Therapist,
+      whereConditions,
+      {
+        populate: ['clinic', 'user'],
+        orderBy: { [sortBy]: sortDirection },
+        limit,
+        offset,
+      },
+    );
 
     // Apply hasAvailableCapacity filter if specified
     let filteredTherapists = therapists;
+    let total = totalCount;
     if (query.hasAvailableCapacity) {
       filteredTherapists = therapists.filter(
         (t) => t.currentLoad < t.maxClients,
@@ -1003,7 +987,6 @@ export class TherapistsService {
         status: TherapistStatus.ACTIVE,
       },
       {
-        populate: ['specializations'],
         orderBy: { currentLoad: 'ASC', yearsOfExperience: 'DESC' },
       },
     );
