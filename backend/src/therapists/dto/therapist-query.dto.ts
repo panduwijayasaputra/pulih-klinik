@@ -8,6 +8,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import {
   LicenseType,
   TherapistStatus,
@@ -22,6 +23,7 @@ export class TherapistQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Page must be an integer' })
   @Min(1, { message: 'Page must be at least 1' })
   page?: number = 1;
@@ -34,6 +36,7 @@ export class TherapistQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Limit must be an integer' })
   @Min(1, { message: 'Limit must be at least 1' })
   @Max(100, { message: 'Limit cannot exceed 100' })
@@ -104,6 +107,7 @@ export class TherapistQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Min experience must be an integer' })
   @Min(0, { message: 'Min experience cannot be negative' })
   @Max(50, { message: 'Min experience cannot exceed 50' })
@@ -115,6 +119,7 @@ export class TherapistQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true')
   @IsBoolean({ message: 'Available capacity must be a boolean' })
   hasAvailableCapacity?: boolean;
 
