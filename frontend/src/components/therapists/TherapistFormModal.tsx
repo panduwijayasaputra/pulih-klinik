@@ -266,13 +266,46 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
     setLoading(true);
 
     try {
-      if (mode === 'edit') {
-        // Mock update API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (mode === 'edit' && therapistId) {
+        // Update existing therapist
+        const result = await TherapistAPI.updateTherapist(therapistId, {
+          fullName: data.name,
+          phone: data.phone,
+          licenseNumber: data.licenseNumber,
+          licenseType: data.licenseType,
+          specializations: data.specializations.map(id => 
+            THERAPIST_SPECIALIZATIONS.find(s => s.id === id)?.name || id
+          ),
+          yearsOfExperience: data.yearsExperience,
+          employmentType: data.employmentType,
+          maxClients: 15, // Default value
+          preferences: {
+            sessionDuration: 60,
+            breakBetweenSessions: 15,
+            maxSessionsPerDay: 8,
+            workingDays: [1, 2, 3, 4, 5],
+            languages: ['Indonesian']
+          }
+        });
 
-        // Don't show toast here for edit mode - parent component handles it
-        onSubmitSuccess?.(data);
-        onOpenChange(false);
+        if (result.success) {
+          addToast({
+            type: 'success',
+            title: 'Data Therapist Berhasil Diperbarui!',
+            message: 'Informasi therapist telah berhasil diperbarui.',
+            duration: 5000,
+          });
+
+          onSubmitSuccess?.(data);
+          onOpenChange(false);
+        } else {
+          addToast({
+            type: 'error',
+            title: 'Pembaruan Gagal',
+            message: result.message || 'Gagal memperbarui data therapist. Silakan coba lagi.'
+          });
+          setError('root', { message: result.message || 'Gagal memperbarui data therapist' });
+        }
       } else {
         // Create new therapist
         const result = await TherapistAPI.createTherapist({

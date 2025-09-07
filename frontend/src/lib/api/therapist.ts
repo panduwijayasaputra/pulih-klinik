@@ -222,11 +222,75 @@ export class TherapistAPI {
   }
 
   static async updateTherapist(therapistId: string, data: Partial<TherapistFormData>): Promise<ItemResponse<Therapist>> {
-    // TODO: Implement actual API call
-    return {
-      success: false,
-      message: 'API not implemented yet'
-    };
+    try {
+      // Map frontend data to backend DTO format
+      const updateTherapistDto: any = {};
+      
+      if (data.fullName !== undefined) updateTherapistDto.fullName = data.fullName;
+      if (data.phone !== undefined) updateTherapistDto.phone = data.phone;
+      if (data.licenseNumber !== undefined) updateTherapistDto.licenseNumber = data.licenseNumber;
+      if (data.licenseType !== undefined) updateTherapistDto.licenseType = data.licenseType;
+      if (data.specializations !== undefined) {
+        updateTherapistDto.specializations = data.specializations.join(', ');
+      }
+      if (data.yearsOfExperience !== undefined) updateTherapistDto.yearsOfExperience = data.yearsOfExperience;
+      if (data.employmentType !== undefined) updateTherapistDto.employmentType = data.employmentType;
+      if (data.maxClients !== undefined) updateTherapistDto.maxClients = data.maxClients;
+      if (data.preferences?.sessionDuration !== undefined) updateTherapistDto.sessionDuration = data.preferences.sessionDuration;
+      if (data.preferences?.breakBetweenSessions !== undefined) updateTherapistDto.breakBetweenSessions = data.preferences.breakBetweenSessions;
+      if (data.preferences?.maxSessionsPerDay !== undefined) updateTherapistDto.maxSessionsPerDay = data.preferences.maxSessionsPerDay;
+      if (data.preferences?.workingDays !== undefined) updateTherapistDto.workingDays = data.preferences.workingDays;
+      if (data.timezone !== undefined) updateTherapistDto.timezone = data.timezone;
+      if (data.adminNotes !== undefined) updateTherapistDto.adminNotes = data.adminNotes;
+
+      const response = await apiClient.put(`/therapists/${therapistId}`, updateTherapistDto);
+      
+      // The response is wrapped by ResponseInterceptor: { success: true, data: therapist, message: "..." }
+      const backendTherapist = response.data.data;
+      
+      // Convert backend response to frontend format
+      const frontendTherapist: Therapist = {
+        id: backendTherapist.id,
+        clinicId: backendTherapist.clinic.id,
+        fullName: backendTherapist.fullName,
+        email: backendTherapist.user.email,
+        phone: backendTherapist.phone,
+        licenseNumber: backendTherapist.licenseNumber,
+        licenseType: backendTherapist.licenseType,
+        specializations: backendTherapist.specializations ? backendTherapist.specializations.split(', ') : [],
+        yearsOfExperience: backendTherapist.yearsOfExperience,
+        status: backendTherapist.status,
+        employmentType: backendTherapist.employmentType,
+        joinDate: backendTherapist.joinDate,
+        maxClients: backendTherapist.maxClients,
+        currentLoad: backendTherapist.currentLoad,
+        timezone: backendTherapist.timezone,
+        preferences: {
+          sessionDuration: backendTherapist.sessionDuration,
+          breakBetweenSessions: backendTherapist.breakBetweenSessions,
+          maxSessionsPerDay: backendTherapist.maxSessionsPerDay,
+          workingDays: backendTherapist.workingDays,
+          languages: ['Indonesian']
+        },
+        assignedClients: [],
+        schedule: [],
+        education: [],
+        certifications: [],
+        createdAt: backendTherapist.createdAt,
+        updatedAt: backendTherapist.updatedAt
+      };
+
+      return {
+        success: true,
+        data: frontendTherapist
+      };
+    } catch (error: any) {
+      console.error('Failed to update therapist:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to update therapist'
+      };
+    }
   }
 
   static async deleteTherapist(therapistId: string): Promise<StatusResponse> {
@@ -245,39 +309,6 @@ export class TherapistAPI {
     };
   }
 
-  static async updateTherapistStatus(therapistId: string, status: string): Promise<ItemResponse<Therapist>> {
-    try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const therapist = getMockTherapistById(therapistId);
-      
-      if (!therapist) {
-        return {
-          success: false,
-          message: 'Therapist not found'
-        };
-      }
-
-      // In a real implementation, this would update the database
-      // For mock purposes, we'll just return the therapist with updated status
-      const updatedTherapist = {
-        ...therapist,
-        status: status as any,
-        updatedAt: new Date().toISOString()
-      };
-
-      return {
-        success: true,
-        data: updatedTherapist
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to update therapist status'
-      };
-    }
-  }
 
   static async assignClientToTherapist(therapistId: string, clientId: string): Promise<ItemResponse<TherapistAssignment>> {
     // TODO: Implement actual API call
@@ -306,6 +337,61 @@ export class TherapistAPI {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to send email verification'
+      };
+    }
+  }
+
+  static async updateTherapistStatus(therapistId: string, status: string, reason?: string): Promise<ItemResponse<Therapist>> {
+    try {
+      const response = await apiClient.patch(`/therapists/${therapistId}/status`, {
+        status,
+        reason
+      });
+      
+      // The response is wrapped by ResponseInterceptor: { success: true, data: therapist, message: "..." }
+      const backendTherapist = response.data.data;
+      
+      // Convert backend response to frontend format
+      const frontendTherapist: Therapist = {
+        id: backendTherapist.id,
+        clinicId: backendTherapist.clinic.id,
+        fullName: backendTherapist.fullName,
+        email: backendTherapist.user.email,
+        phone: backendTherapist.phone,
+        licenseNumber: backendTherapist.licenseNumber,
+        licenseType: backendTherapist.licenseType,
+        specializations: backendTherapist.specializations ? backendTherapist.specializations.split(', ') : [],
+        yearsOfExperience: backendTherapist.yearsOfExperience,
+        status: backendTherapist.status,
+        employmentType: backendTherapist.employmentType,
+        joinDate: backendTherapist.joinDate,
+        maxClients: backendTherapist.maxClients,
+        currentLoad: backendTherapist.currentLoad,
+        timezone: backendTherapist.timezone,
+        preferences: {
+          sessionDuration: backendTherapist.sessionDuration,
+          breakBetweenSessions: backendTherapist.breakBetweenSessions,
+          maxSessionsPerDay: backendTherapist.maxSessionsPerDay,
+          workingDays: backendTherapist.workingDays,
+          languages: ['Indonesian']
+        },
+        assignedClients: [],
+        schedule: [],
+        education: [],
+        certifications: [],
+        createdAt: backendTherapist.createdAt,
+        updatedAt: backendTherapist.updatedAt
+      };
+
+      return {
+        success: true,
+        data: frontendTherapist
+      };
+    } catch (error: any) {
+      console.error('Failed to update therapist status:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to update therapist status'
       };
     }
   }

@@ -102,6 +102,8 @@ export interface TherapistFormData {
   yearsOfExperience: number;
   employmentType: Therapist['employmentType'];
   maxClients: number;
+  timezone?: string;
+  adminNotes?: string;
   education?: TherapistEducation[];
   certifications?: Omit<TherapistCertification, 'id' | 'status'>[];
   preferences: Therapist['preferences'];
