@@ -56,15 +56,6 @@ export class UpdateTherapistStatusDto {
 
 export class UpdateTherapistCapacityDto {
   @ApiProperty({
-    description: 'Maximum number of clients',
-    example: 20,
-    minimum: 1,
-    maximum: 50,
-  })
-  @IsOptional()
-  maxClients?: number;
-
-  @ApiProperty({
     description: 'Administrative notes about capacity change',
     example: 'Increased capacity due to experience growth',
     required: false,

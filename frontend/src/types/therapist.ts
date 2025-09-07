@@ -55,10 +55,8 @@ export interface Therapist {
   // Professional Info
   licenseNumber: string;
   licenseType: EnumValue<typeof TherapistLicenseTypeEnum>;
-  specializations: string[];
   education: TherapistEducation[];
   certifications: TherapistCertification[];
-  yearsOfExperience: number;
   
   // Status & Availability
   status: EnumValue<typeof TherapistStatusEnum>;
@@ -67,7 +65,6 @@ export interface Therapist {
   
   // Assignment Info
   assignedClients: string[]; // Client IDs
-  maxClients: number;
   currentLoad: number; // Current number of active clients
   
   // Schedule
@@ -76,11 +73,8 @@ export interface Therapist {
   
   // Settings
   preferences: {
-    sessionDuration: number; // in minutes
     breakBetweenSessions: number; // in minutes
-    maxSessionsPerDay: number;
     languages: string[];
-    workingDays: number[]; // 0-6 (Sunday-Saturday)
   };
     
   // Admin Notes
@@ -98,10 +92,7 @@ export interface TherapistFormData {
   phone: string;
   licenseNumber: string;
   licenseType: Therapist['licenseType'];
-  specializations: string[];
-  yearsOfExperience: number;
   employmentType: Therapist['employmentType'];
-  maxClients: number;
   timezone?: string;
   adminNotes?: string;
   education?: TherapistEducation[];
@@ -111,13 +102,11 @@ export interface TherapistFormData {
 
 export interface TherapistFilters {
   status?: Therapist['status'];
-  specializations?: string[];
   employmentType?: Therapist['employmentType'];
   licenseType?: Therapist['licenseType'];
   search?: string; // Added 'search' field that API expects
   searchQuery?: string; // Keep for backward compatibility
   maxLoad?: number;
-  minExperience?: number;
   hasAvailableCapacity?: boolean;
   sortBy?: 'name' | 'joinDate' | 'clientCount';
   sortOrder?: 'asc' | 'desc';

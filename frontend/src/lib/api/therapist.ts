@@ -33,11 +33,6 @@ export class TherapistAPI {
         if (filters.status) {
           queryParams.append('status', filters.status);
         }
-        if (filters.specializations && filters.specializations.length > 0) {
-          // For now, use the first specialization for filtering
-          // Backend supports single specialization filter
-          queryParams.append('specialization', filters.specializations[0] || '');
-        }
         if (filters.employmentType) {
           queryParams.append('employmentType', filters.employmentType);
         }
@@ -47,9 +42,6 @@ export class TherapistAPI {
         if (filters.search || filters.searchQuery) {
           const searchTerm = filters.search || filters.searchQuery || '';
           queryParams.append('search', searchTerm);
-        }
-        if (filters.minExperience !== undefined) {
-          queryParams.append('minExperience', filters.minExperience.toString());
         }
         if (filters.hasAvailableCapacity) {
           queryParams.append('hasAvailableCapacity', 'true');
@@ -76,19 +68,13 @@ export class TherapistAPI {
         phone: backendTherapist.phone,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        specializations: backendTherapist.specializations ? backendTherapist.specializations.split(', ') : [],
-        yearsOfExperience: backendTherapist.yearsOfExperience,
         status: backendTherapist.status,
         employmentType: backendTherapist.employmentType,
         joinDate: backendTherapist.joinDate,
-        maxClients: backendTherapist.maxClients,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
         preferences: {
-          sessionDuration: backendTherapist.sessionDuration,
           breakBetweenSessions: backendTherapist.breakBetweenSessions,
-          maxSessionsPerDay: backendTherapist.maxSessionsPerDay,
-          workingDays: backendTherapist.workingDays,
           languages: ['Indonesian']
         },
         assignedClients: [],
@@ -160,17 +146,11 @@ export class TherapistAPI {
         phone: data.phone,
         licenseNumber: data.licenseNumber,
         licenseType: data.licenseType,
-        yearsOfExperience: data.yearsOfExperience,
         employmentType: data.employmentType,
         joinDate: new Date().toISOString().split('T')[0]!,
-        maxClients: data.maxClients,
         timezone: 'Asia/Jakarta',
-        sessionDuration: data.preferences?.sessionDuration || 60,
         breakBetweenSessions: data.preferences?.breakBetweenSessions || 15,
-        maxSessionsPerDay: data.preferences?.maxSessionsPerDay || 8,
-        workingDays: data.preferences?.workingDays || [1, 2, 3, 4, 5],
-        adminNotes: undefined,
-        specializations: data.specializations
+        adminNotes: undefined
       };
 
       const response = await apiClient.post('/therapists', createTherapistDto);
@@ -186,19 +166,13 @@ export class TherapistAPI {
         phone: backendTherapist.phone,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        specializations: backendTherapist.specializations ? backendTherapist.specializations.split(', ') : [],
-        yearsOfExperience: backendTherapist.yearsOfExperience,
         status: backendTherapist.status,
         employmentType: backendTherapist.employmentType,
         joinDate: backendTherapist.joinDate,
-        maxClients: backendTherapist.maxClients,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
         preferences: {
-          sessionDuration: backendTherapist.sessionDuration,
           breakBetweenSessions: backendTherapist.breakBetweenSessions,
-          maxSessionsPerDay: backendTherapist.maxSessionsPerDay,
-          workingDays: backendTherapist.workingDays,
           languages: ['Indonesian']
         },
         assignedClients: [],
@@ -230,16 +204,8 @@ export class TherapistAPI {
       if (data.phone !== undefined) updateTherapistDto.phone = data.phone;
       if (data.licenseNumber !== undefined) updateTherapistDto.licenseNumber = data.licenseNumber;
       if (data.licenseType !== undefined) updateTherapistDto.licenseType = data.licenseType;
-      if (data.specializations !== undefined) {
-        updateTherapistDto.specializations = data.specializations.join(', ');
-      }
-      if (data.yearsOfExperience !== undefined) updateTherapistDto.yearsOfExperience = data.yearsOfExperience;
       if (data.employmentType !== undefined) updateTherapistDto.employmentType = data.employmentType;
-      if (data.maxClients !== undefined) updateTherapistDto.maxClients = data.maxClients;
-      if (data.preferences?.sessionDuration !== undefined) updateTherapistDto.sessionDuration = data.preferences.sessionDuration;
       if (data.preferences?.breakBetweenSessions !== undefined) updateTherapistDto.breakBetweenSessions = data.preferences.breakBetweenSessions;
-      if (data.preferences?.maxSessionsPerDay !== undefined) updateTherapistDto.maxSessionsPerDay = data.preferences.maxSessionsPerDay;
-      if (data.preferences?.workingDays !== undefined) updateTherapistDto.workingDays = data.preferences.workingDays;
       if (data.timezone !== undefined) updateTherapistDto.timezone = data.timezone;
       if (data.adminNotes !== undefined) updateTherapistDto.adminNotes = data.adminNotes;
 
@@ -257,19 +223,13 @@ export class TherapistAPI {
         phone: backendTherapist.phone,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        specializations: backendTherapist.specializations ? backendTherapist.specializations.split(', ') : [],
-        yearsOfExperience: backendTherapist.yearsOfExperience,
         status: backendTherapist.status,
         employmentType: backendTherapist.employmentType,
         joinDate: backendTherapist.joinDate,
-        maxClients: backendTherapist.maxClients,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
         preferences: {
-          sessionDuration: backendTherapist.sessionDuration,
           breakBetweenSessions: backendTherapist.breakBetweenSessions,
-          maxSessionsPerDay: backendTherapist.maxSessionsPerDay,
-          workingDays: backendTherapist.workingDays,
           languages: ['Indonesian']
         },
         assignedClients: [],
@@ -360,19 +320,13 @@ export class TherapistAPI {
         phone: backendTherapist.phone,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        specializations: backendTherapist.specializations ? backendTherapist.specializations.split(', ') : [],
-        yearsOfExperience: backendTherapist.yearsOfExperience,
         status: backendTherapist.status,
         employmentType: backendTherapist.employmentType,
         joinDate: backendTherapist.joinDate,
-        maxClients: backendTherapist.maxClients,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
         preferences: {
-          sessionDuration: backendTherapist.sessionDuration,
           breakBetweenSessions: backendTherapist.breakBetweenSessions,
-          maxSessionsPerDay: backendTherapist.maxSessionsPerDay,
-          workingDays: backendTherapist.workingDays,
           languages: ['Indonesian']
         },
         assignedClients: [],

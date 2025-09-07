@@ -59,8 +59,6 @@ export class Therapist {
   @Property({ type: 'varchar', length: 50 })
   licenseType!: LicenseType;
 
-  @Property({ type: 'integer', default: 0 })
-  yearsOfExperience: number = 0;
 
   // Status & employment
   @Property({
@@ -76,9 +74,6 @@ export class Therapist {
   @Property({ type: 'date' })
   joinDate!: Date;
 
-  // Capacity
-  @Property({ type: 'integer', default: 10 })
-  maxClients: number = 10;
 
   @Property({ type: 'integer', default: 0 })
   currentLoad: number = 0;
@@ -87,12 +82,6 @@ export class Therapist {
   @Property({ type: 'varchar', length: 50, default: 'Asia/Jakarta' })
   timezone: string = 'Asia/Jakarta';
 
-  @Property({
-    type: 'integer',
-    default: 60,
-    comment: 'Session duration in minutes',
-  })
-  sessionDuration: number = 60;
 
   @Property({
     type: 'integer',
@@ -101,23 +90,12 @@ export class Therapist {
   })
   breakBetweenSessions: number = 15;
 
-  @Property({ type: 'integer', default: 8 })
-  maxSessionsPerDay: number = 8;
 
-  @Property({
-    type: 'json',
-    defaultRaw: "'[1,2,3,4,5]'",
-    comment: 'Working days (1=Monday to 7=Sunday)',
-  })
-  workingDays: number[] = [1, 2, 3, 4, 5];
 
   // Admin notes
   @Property({ type: 'text', nullable: true })
   adminNotes?: string;
 
-  // Specializations as comma-separated string
-  @Property({ type: 'text', nullable: true })
-  specializations?: string;
 
   @Property({ type: 'timestamp', defaultRaw: 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();

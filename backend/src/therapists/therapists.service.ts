@@ -41,19 +41,13 @@ export interface TherapistResponse {
   avatarUrl?: string;
   licenseNumber: string;
   licenseType: string;
-  yearsOfExperience: number;
   status: string;
   employmentType: string;
   joinDate: Date;
-  maxClients: number;
   currentLoad: number;
   timezone: string;
-  sessionDuration: number;
   breakBetweenSessions: number;
-  maxSessionsPerDay: number;
-  workingDays: number[];
   adminNotes?: string;
-  specializations?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -177,19 +171,12 @@ export class TherapistsService {
       therapist.avatarUrl = createTherapistDto.avatarUrl;
       therapist.licenseNumber = createTherapistDto.licenseNumber;
       therapist.licenseType = createTherapistDto.licenseType;
-      therapist.yearsOfExperience = createTherapistDto.yearsOfExperience;
       therapist.employmentType = createTherapistDto.employmentType;
       therapist.joinDate = new Date(createTherapistDto.joinDate);
-      therapist.maxClients = createTherapistDto.maxClients || 10;
       therapist.timezone = createTherapistDto.timezone || 'Asia/Jakarta';
-      therapist.sessionDuration = createTherapistDto.sessionDuration || 60;
       therapist.breakBetweenSessions =
         createTherapistDto.breakBetweenSessions || 15;
-      therapist.maxSessionsPerDay = createTherapistDto.maxSessionsPerDay || 8;
-      therapist.workingDays = createTherapistDto.workingDays || [1, 2, 3, 4, 5];
       therapist.adminNotes = createTherapistDto.adminNotes;
-      therapist.specializations =
-        createTherapistDto.specializations?.join(', ') || '';
       therapist.status = TherapistStatus.PENDING_SETUP;
 
       await this.em.persistAndFlush(therapist);
@@ -257,28 +244,15 @@ export class TherapistsService {
     therapist.avatarUrl = createTherapistDto.avatarUrl;
     therapist.licenseNumber = createTherapistDto.licenseNumber;
     therapist.licenseType = createTherapistDto.licenseType;
-    therapist.yearsOfExperience = createTherapistDto.yearsOfExperience;
     therapist.employmentType = createTherapistDto.employmentType;
     therapist.joinDate = new Date(createTherapistDto.joinDate);
 
     // Optional fields with defaults
-    if (createTherapistDto.maxClients !== undefined) {
-      therapist.maxClients = createTherapistDto.maxClients;
-    }
     if (createTherapistDto.timezone) {
       therapist.timezone = createTherapistDto.timezone;
     }
-    if (createTherapistDto.sessionDuration !== undefined) {
-      therapist.sessionDuration = createTherapistDto.sessionDuration;
-    }
     if (createTherapistDto.breakBetweenSessions !== undefined) {
       therapist.breakBetweenSessions = createTherapistDto.breakBetweenSessions;
-    }
-    if (createTherapistDto.maxSessionsPerDay !== undefined) {
-      therapist.maxSessionsPerDay = createTherapistDto.maxSessionsPerDay;
-    }
-    if (createTherapistDto.workingDays) {
-      therapist.workingDays = createTherapistDto.workingDays;
     }
     if (createTherapistDto.adminNotes) {
       therapist.adminNotes = createTherapistDto.adminNotes;
@@ -397,14 +371,8 @@ export class TherapistsService {
     );
 
     // Apply hasAvailableCapacity filter if specified
-    let filteredTherapists = therapists;
-    let total = totalCount;
-    if (query.hasAvailableCapacity) {
-      filteredTherapists = therapists.filter(
-        (t) => t.currentLoad < t.maxClients,
-      );
-      total = filteredTherapists.length; // Update total count
-    }
+    const filteredTherapists = therapists;
+    const total = totalCount;
 
     const therapistResponses = filteredTherapists.map((therapist) =>
       this.mapToResponse(therapist),
@@ -468,9 +436,6 @@ export class TherapistsService {
     if (updateTherapistDto.licenseType !== undefined) {
       therapist.licenseType = updateTherapistDto.licenseType;
     }
-    if (updateTherapistDto.yearsOfExperience !== undefined) {
-      therapist.yearsOfExperience = updateTherapistDto.yearsOfExperience;
-    }
     if (updateTherapistDto.status !== undefined) {
       therapist.status = updateTherapistDto.status;
     }
@@ -480,34 +445,17 @@ export class TherapistsService {
     if (updateTherapistDto.joinDate !== undefined) {
       therapist.joinDate = new Date(updateTherapistDto.joinDate);
     }
-    if (updateTherapistDto.maxClients !== undefined) {
-      therapist.maxClients = updateTherapistDto.maxClients;
-    }
     if (updateTherapistDto.currentLoad !== undefined) {
       therapist.currentLoad = updateTherapistDto.currentLoad;
     }
     if (updateTherapistDto.timezone !== undefined) {
       therapist.timezone = updateTherapistDto.timezone;
     }
-    if (updateTherapistDto.sessionDuration !== undefined) {
-      therapist.sessionDuration = updateTherapistDto.sessionDuration;
-    }
     if (updateTherapistDto.breakBetweenSessions !== undefined) {
       therapist.breakBetweenSessions = updateTherapistDto.breakBetweenSessions;
     }
-    if (updateTherapistDto.maxSessionsPerDay !== undefined) {
-      therapist.maxSessionsPerDay = updateTherapistDto.maxSessionsPerDay;
-    }
-    if (updateTherapistDto.workingDays !== undefined) {
-      therapist.workingDays = updateTherapistDto.workingDays;
-    }
     if (updateTherapistDto.adminNotes !== undefined) {
       therapist.adminNotes = updateTherapistDto.adminNotes;
-    }
-
-    // Update specializations if provided
-    if (updateTherapistDto.specializations !== undefined) {
-      therapist.specializations = updateTherapistDto.specializations.join(', ');
     }
 
     therapist.updatedAt = new Date();
@@ -570,24 +518,11 @@ export class TherapistsService {
       throw new NotFoundException('Therapist not found');
     }
 
-    if (updateCapacityDto.maxClients !== undefined) {
-      // Validate that new capacity is not less than current load
-      if (updateCapacityDto.maxClients < therapist.currentLoad) {
-        throw new BadRequestException(
-          `Cannot set max clients (${updateCapacityDto.maxClients}) below current load (${therapist.currentLoad})`,
-        );
-      }
-
-      const oldMaxClients = therapist.maxClients;
-      therapist.maxClients = updateCapacityDto.maxClients;
-
-      // Add capacity change to admin notes
-      if (updateCapacityDto.notes) {
-        const timestamp = new Date().toISOString();
-        const capacityChangeNote = `\n[${timestamp}] Max clients changed from ${oldMaxClients} to ${updateCapacityDto.maxClients}: ${updateCapacityDto.notes}`;
-        therapist.adminNotes =
-          (therapist.adminNotes || '') + capacityChangeNote;
-      }
+    // Add capacity change to admin notes
+    if (updateCapacityDto.notes) {
+      const timestamp = new Date().toISOString();
+      const capacityChangeNote = `\n[${timestamp}] Capacity notes: ${updateCapacityDto.notes}`;
+      therapist.adminNotes = (therapist.adminNotes || '') + capacityChangeNote;
     }
 
     therapist.updatedAt = new Date();
@@ -644,7 +579,9 @@ export class TherapistsService {
       throw new NotFoundException('Therapist not found');
     }
 
-    return therapist.currentLoad < therapist.maxClients;
+    // Since we removed maxClients, always return true for now
+    // This can be modified later if needed
+    return true;
   }
 
   /**
@@ -662,9 +599,6 @@ export class TherapistsService {
     const newLoad = therapist.currentLoad + increment;
     if (newLoad < 0) {
       throw new BadRequestException('Current load cannot be negative');
-    }
-    if (newLoad > therapist.maxClients) {
-      throw new BadRequestException('Cannot exceed maximum client capacity');
     }
 
     therapist.currentLoad = newLoad;
@@ -689,12 +623,6 @@ export class TherapistsService {
 
     if (therapist.status !== TherapistStatus.ACTIVE) {
       throw new BadRequestException('Therapist is not active');
-    }
-
-    if (therapist.currentLoad >= therapist.maxClients) {
-      throw new BadRequestException(
-        'Therapist has reached maximum client capacity',
-      );
     }
 
     // Validate client exists
@@ -777,12 +705,6 @@ export class TherapistsService {
 
     if (newTherapist.status !== TherapistStatus.ACTIVE) {
       throw new BadRequestException('New therapist is not active');
-    }
-
-    if (newTherapist.currentLoad >= newTherapist.maxClients) {
-      throw new BadRequestException(
-        'New therapist has reached maximum client capacity',
-      );
     }
 
     // Validate transferred by user
@@ -979,7 +901,7 @@ export class TherapistsService {
       throw new NotFoundException('Client not found in specified clinic');
     }
 
-    // Get active therapists with available capacity
+    // Get active therapists
     const therapists = await this.em.find(
       Therapist,
       {
@@ -987,12 +909,12 @@ export class TherapistsService {
         status: TherapistStatus.ACTIVE,
       },
       {
-        orderBy: { currentLoad: 'ASC', yearsOfExperience: 'DESC' },
+        orderBy: { currentLoad: 'ASC' },
       },
     );
 
-    // Filter therapists with available capacity
-    return therapists.filter((t) => t.currentLoad < t.maxClients);
+    // Return all active therapists since we removed maxClients
+    return therapists;
   }
 
   // === THERAPIST PORTAL METHODS ===
@@ -1323,19 +1245,13 @@ export class TherapistsService {
       avatarUrl: therapist.avatarUrl,
       licenseNumber: therapist.licenseNumber,
       licenseType: therapist.licenseType,
-      yearsOfExperience: therapist.yearsOfExperience,
       status: therapist.status,
       employmentType: therapist.employmentType,
       joinDate: therapist.joinDate,
-      maxClients: therapist.maxClients,
       currentLoad: therapist.currentLoad,
       timezone: therapist.timezone,
-      sessionDuration: therapist.sessionDuration,
       breakBetweenSessions: therapist.breakBetweenSessions,
-      maxSessionsPerDay: therapist.maxSessionsPerDay,
-      workingDays: therapist.workingDays,
       adminNotes: therapist.adminNotes,
-      specializations: therapist.specializations,
       createdAt: therapist.createdAt,
       updatedAt: therapist.updatedAt,
     };

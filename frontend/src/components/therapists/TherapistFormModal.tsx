@@ -11,7 +11,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FormModal } from '@/components/ui/form-modal';
 import { EmploymentTypeEnum, TherapistLicenseTypeEnum } from '@/types/enums';
-import { THERAPIST_SPECIALIZATIONS } from '@/types/therapist';
 import {
   AcademicCapIcon,
   BriefcaseIcon,
@@ -34,8 +33,6 @@ const TherapistRegistrationSchema = z.object({
 
   // Professional Information
   licenseNumber: z.string().min(1, 'Nomor SIP wajib diisi'),
-  specializations: z.array(z.string()).min(1, 'Minimal pilih satu spesialisasi'),
-  yearsExperience: z.number().min(0, 'Pengalaman tidak boleh negatif').max(50, 'Pengalaman maksimal 50 tahun'),
   education: z.string().min(1, 'Pendidikan wajib diisi'),
   certifications: z.string().optional(),
 
@@ -114,8 +111,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                 email: therapistData.email || '',
                 phone: therapistData.phone || '',
                 licenseNumber: therapistData.licenseNumber || '',
-                specializations: therapistData.specializations || [],
-                yearsExperience: therapistData.yearsOfExperience || 0,
                 education: therapistData.education.map(edu => 
                   `${edu.degree} ${edu.field} - ${edu.institution} (${edu.year})`
                 ).join('; '),
@@ -133,8 +128,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                 email: '',
                 phone: '',
                 licenseNumber: '',
-                specializations: [],
-                yearsExperience: 0,
                 education: '',
                 certifications: '',
                 adminNotes: '',
@@ -151,8 +144,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               email: '',
               phone: '',
               licenseNumber: '',
-              specializations: [],
-              yearsExperience: 0,
               education: '',
               certifications: '',
               adminNotes: '',
@@ -173,8 +164,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           email: '',
           phone: '',
           licenseNumber: '',
-          specializations: [],
-          yearsExperience: 0,
           education: '',
           certifications: '',
           adminNotes: '',
@@ -204,10 +193,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
 
     const titleText = mode === 'edit' ? 'Perbarui Akun Therapist' : 'Buat Akun Therapist';
     const confirmText = mode === 'edit' ? 'Perbarui Akun' : 'Buat Akun';
-    const specializations = data.specializations
-      .map(id => THERAPIST_SPECIALIZATIONS.find(s => s.id === id)?.name)
-      .filter(Boolean)
-      .join(', ');
 
     openDialog({
       title: titleText,
@@ -227,10 +212,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Email:</span>
               <span className="text-sm font-semibold text-gray-900">{data.email}</span>
-            </div>
-            <div className="flex justify-between items-start">
-              <span className="text-sm font-medium text-gray-600">Spesialisasi:</span>
-              <span className="text-sm font-semibold text-gray-900 text-right max-w-60">{specializations}</span>
             </div>
             {mode === 'create' && (
               <div className="flex justify-between items-center">
@@ -273,17 +254,9 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           phone: data.phone,
           licenseNumber: data.licenseNumber,
           licenseType: data.licenseType,
-          specializations: data.specializations.map(id => 
-            THERAPIST_SPECIALIZATIONS.find(s => s.id === id)?.name || id
-          ),
-          yearsOfExperience: data.yearsExperience,
           employmentType: data.employmentType,
-          maxClients: 15, // Default value
           preferences: {
-            sessionDuration: 60,
             breakBetweenSessions: 15,
-            maxSessionsPerDay: 8,
-            workingDays: [1, 2, 3, 4, 5],
             languages: ['Indonesian']
           }
         });
@@ -314,17 +287,9 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           phone: data.phone,
           licenseNumber: data.licenseNumber,
           licenseType: data.licenseType,
-          specializations: data.specializations.map(id => 
-            THERAPIST_SPECIALIZATIONS.find(s => s.id === id)?.name || id
-          ),
-          yearsOfExperience: data.yearsExperience,
           employmentType: data.employmentType,
-          maxClients: 15, // Default value
           preferences: {
-            sessionDuration: 60,
             breakBetweenSessions: 15,
-            maxSessionsPerDay: 8,
-            workingDays: [1, 2, 3, 4, 5],
             languages: ['Indonesian']
           }
         });
@@ -514,51 +479,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                 )}
               </div>
 
-              <div>
-                <Label htmlFor="specializations">Spesialisasi *</Label>
-                <div className="space-y-2">
-                  <div className="border rounded-md p-3 min-h-[40px] max-h-40 overflow-y-auto">
-                    {THERAPIST_SPECIALIZATIONS.map((spec) => {
-                      const isSelected = (watch('specializations') || []).includes(spec.id);
-                      return (
-                        <div key={spec.id} className="flex items-center space-x-2 py-1">
-                          <input
-                            type="checkbox"
-                            id={`spec-${spec.id}`}
-                            checked={isSelected}
-                            onChange={(e) => {
-                              const current = watch('specializations') || [];
-                              if (e.target.checked) {
-                                setValue('specializations', [...current, spec.id], { shouldValidate: true });
-                              } else {
-                                setValue('specializations', current.filter(id => id !== spec.id), { shouldValidate: true });
-                              }
-                            }}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <label htmlFor={`spec-${spec.id}`} className="text-sm text-gray-700 cursor-pointer">
-                            {spec.name}
-                          </label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {watch('specializations') && watch('specializations')!.length > 0 && (
-                    <div className="text-xs text-gray-600">
-                      Terpilih: {watch('specializations')!.map(id => {
-                        const spec = THERAPIST_SPECIALIZATIONS.find(s => s.id === id);
-                        return spec?.name;
-                      }).join(', ')}
-                    </div>
-                  )}
-                </div>
-                {errors.specializations && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <XCircleIcon className="w-3 h-3 mr-1" />
-                    {errors.specializations.message}
-                  </p>
-                )}
-              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
@@ -614,34 +534,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="yearsExperience">Tahun Pengalaman *</Label>
-                <div className="relative">
-                  <Input
-                    {...register('yearsExperience', { valueAsNumber: true })}
-                    id="yearsExperience"
-                    type="number"
-                    min="0"
-                    max="50"
-                    placeholder="5"
-                    className={`
-                      ${errors.yearsExperience ? 'border-red-500 focus:border-red-500' : ''}
-                      ${touchedFields.yearsExperience && !errors.yearsExperience && watchedFormData.yearsExperience ? 'border-green-500 focus:border-green-500' : ''}
-                    `}
-                  />
-                  {touchedFields.yearsExperience && !errors.yearsExperience && watchedFormData.yearsExperience && (
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                    </div>
-                  )}
-                </div>
-                {errors.yearsExperience && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <XCircleIcon className="w-3 h-3 mr-1" />
-                    {errors.yearsExperience.message}
-                  </p>
-                )}
-              </div>
 
               <div>
                 <Label htmlFor="education">Pendidikan *</Label>

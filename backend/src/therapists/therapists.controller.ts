@@ -633,8 +633,6 @@ export class TherapistsController {
       properties: {
         hasAvailableCapacity: { type: 'boolean' },
         currentLoad: { type: 'number' },
-        maxClients: { type: 'number' },
-        availableSlots: { type: 'number' },
       },
     },
   })
@@ -668,8 +666,6 @@ export class TherapistsController {
     return {
       hasAvailableCapacity,
       currentLoad: therapist.currentLoad,
-      maxClients: therapist.maxClients,
-      availableSlots: therapist.maxClients - therapist.currentLoad,
     };
   }
 

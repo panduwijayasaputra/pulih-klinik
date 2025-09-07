@@ -5,7 +5,6 @@ import {
   IsEnum,
   IsOptional,
   IsInt,
-  IsArray,
   IsUrl,
   IsDateString,
   IsEmail,
@@ -13,8 +12,6 @@ import {
   Max,
   MinLength,
   MaxLength,
-  ArrayMinSize,
-  ArrayMaxSize,
   IsIn,
 } from 'class-validator';
 import {
@@ -85,17 +82,6 @@ export class CreateTherapistDto {
   licenseType!: LicenseType;
 
   @ApiProperty({
-    description: 'Years of professional experience',
-    example: 5,
-    minimum: 0,
-    maximum: 50,
-  })
-  @IsInt({ message: 'Years of experience must be an integer' })
-  @Min(0, { message: 'Years of experience cannot be negative' })
-  @Max(50, { message: 'Years of experience cannot exceed 50' })
-  yearsOfExperience!: number;
-
-  @ApiProperty({
     description: 'Employment type',
     enum: EmploymentType,
     example: EmploymentType.FULL_TIME,
@@ -114,18 +100,6 @@ export class CreateTherapistDto {
   joinDate!: string;
 
   @ApiProperty({
-    description: 'Maximum number of clients the therapist can handle',
-    example: 15,
-    minimum: 1,
-    maximum: 50,
-  })
-  @IsOptional()
-  @IsInt({ message: 'Max clients must be an integer' })
-  @Min(1, { message: 'Max clients must be at least 1' })
-  @Max(50, { message: 'Max clients cannot exceed 50' })
-  maxClients?: number;
-
-  @ApiProperty({
     description: 'Timezone for scheduling',
     example: 'Asia/Jakarta',
     required: false,
@@ -136,19 +110,6 @@ export class CreateTherapistDto {
     message: 'Timezone must be a supported Indonesian timezone',
   })
   timezone?: string;
-
-  @ApiProperty({
-    description: 'Session duration in minutes',
-    example: 60,
-    minimum: 30,
-    maximum: 180,
-    required: false,
-  })
-  @IsOptional()
-  @IsInt({ message: 'Session duration must be an integer' })
-  @Min(30, { message: 'Session duration must be at least 30 minutes' })
-  @Max(180, { message: 'Session duration cannot exceed 180 minutes' })
-  sessionDuration?: number;
 
   @ApiProperty({
     description: 'Break between sessions in minutes',
@@ -164,34 +125,6 @@ export class CreateTherapistDto {
   breakBetweenSessions?: number;
 
   @ApiProperty({
-    description: 'Maximum sessions per day',
-    example: 8,
-    minimum: 1,
-    maximum: 12,
-    required: false,
-  })
-  @IsOptional()
-  @IsInt({ message: 'Max sessions per day must be an integer' })
-  @Min(1, { message: 'Must have at least 1 session per day' })
-  @Max(12, { message: 'Cannot exceed 12 sessions per day' })
-  maxSessionsPerDay?: number;
-
-  @ApiProperty({
-    description: 'Working days (1=Monday to 7=Sunday)',
-    example: [1, 2, 3, 4, 5],
-    type: [Number],
-    required: false,
-  })
-  @IsOptional()
-  @IsArray({ message: 'Working days must be an array' })
-  @ArrayMinSize(1, { message: 'Must have at least 1 working day' })
-  @ArrayMaxSize(7, { message: 'Cannot have more than 7 working days' })
-  @IsInt({ each: true, message: 'Each working day must be an integer' })
-  @Min(1, { each: true, message: 'Working day must be between 1 and 7' })
-  @Max(7, { each: true, message: 'Working day must be between 1 and 7' })
-  workingDays?: number[];
-
-  @ApiProperty({
     description: 'Administrative notes about the therapist',
     example: 'Specializes in anxiety and stress management',
     required: false,
@@ -200,19 +133,4 @@ export class CreateTherapistDto {
   @IsString({ message: 'Admin notes must be a string' })
   @MaxLength(1000, { message: 'Admin notes cannot exceed 1000 characters' })
   adminNotes?: string;
-
-  @ApiProperty({
-    description: 'Array of specialization areas',
-    example: ['anxiety', 'depression', 'trauma'],
-    type: [String],
-    required: false,
-  })
-  @IsOptional()
-  @IsArray({ message: 'Specializations must be an array' })
-  @IsString({ each: true, message: 'Each specialization must be a string' })
-  @MaxLength(100, {
-    each: true,
-    message: 'Each specialization cannot exceed 100 characters',
-  })
-  specializations?: string[];
 }
