@@ -41,7 +41,6 @@ export interface ConsultationResponse {
       fullName: string;
       email: string;
     };
-    specializations: string[];
   };
   formType: FormType;
   status: ConsultationStatus;
@@ -647,7 +646,6 @@ export class ConsultationsService {
           fullName: therapist.fullName,
           email: therapist.user.email,
         },
-        specializations: therapist.specializations ? therapist.specializations.split(', ') : [],
       },
       formType: consultation.formType,
       status: consultation.status,

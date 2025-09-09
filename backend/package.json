@@ -1,8 +1,8 @@
 {
-  "name": "backend",
+  "name": "pulih-klinik-backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Pulih Klinik - Backend API Server",
+  "author": "Pulih Klinik Team",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -30,7 +30,7 @@
     "seeder:run": "mikro-orm seeder:run",
     "seeder:create": "mikro-orm seeder:create",
     "db:fresh": "mikro-orm schema:drop --run && mikro-orm schema:create --run && mikro-orm seeder:run",
-    "seed:run": "node -e \"const { MikroORM } = require('@mikro-orm/core'); const config = require('./dist/config/mikro-orm.config.js').default; (async () => { const orm = await MikroORM.init(config); const em = orm.em.fork(); const { UserSeeder } = require('./dist/database/seeders/user.seeder.js'); const { TherapistSeeder } = require('./dist/database/seeders/therapist.seeder.js'); const { ClientSeeder } = require('./dist/database/seeders/client.seeder.js'); const { ConsultationSeeder } = require('./dist/database/seeders/consultation.seeder.js'); const { TherapySessionSeeder } = require('./dist/database/seeders/therapy-session.seeder.js'); console.log('🚀 Starting database seeding...\\n'); try { await new UserSeeder().run(em); console.log('✅ Users seeder completed\\n'); await new TherapistSeeder().run(em); console.log('✅ Therapists seeder completed\\n'); await new ClientSeeder().run(em); console.log('✅ Clients seeder completed\\n'); await new ConsultationSeeder().run(em); console.log('✅ Consultations seeder completed\\n'); await new TherapySessionSeeder().run(em); console.log('✅ Therapy Sessions seeder completed\\n'); console.log('✅ Database seeding completed successfully!'); } catch (error) { console.error('\\n❌ Database seeding failed:', error); process.exit(1); } await orm.close(); })();\""
+    "seed:run": "mikro-orm seeder:run"
   },
   "dependencies": {
     "@mikro-orm/core": "5.9.7",

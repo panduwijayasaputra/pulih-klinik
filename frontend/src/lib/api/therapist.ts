@@ -3,6 +3,49 @@ import { ItemResponse, ListResponse, PaginatedResponse, StatusResponse } from '.
 import { getMockTherapists, getMockTherapistById } from '@/lib/mocks/therapist';
 import { apiClient } from '../http-client';
 
+// Helper function to map backend therapist to frontend format
+const mapBackendTherapistToFrontend = (backendTherapist: any): Therapist => ({
+  id: backendTherapist.id,
+  clinicId: backendTherapist.clinic.id,
+  fullName: backendTherapist.fullName,
+  email: backendTherapist.user.email,
+  phone: backendTherapist.phone,
+  licenseNumber: backendTherapist.licenseNumber,
+  licenseType: backendTherapist.licenseType,
+  status: backendTherapist.status,
+  joinDate: backendTherapist.joinDate,
+  currentLoad: backendTherapist.currentLoad,
+  timezone: backendTherapist.timezone,
+  preferences: {
+    languages: ['Indonesian']
+  },
+  assignedClients: [],
+  schedule: [],
+  education: backendTherapist.education ? [{
+    degree: backendTherapist.education,
+    institution: '',
+    year: new Date().getFullYear(),
+    field: ''
+  }] : [],
+  certifications: backendTherapist.certifications ? [{
+    id: '1',
+    name: backendTherapist.certifications,
+    issuingOrganization: '',
+    issueDate: new Date().toISOString(),
+    certificateNumber: '',
+    status: 'active' as const
+  }] : [],
+  adminNotes: backendTherapist.adminNotes,
+  createdAt: backendTherapist.createdAt,
+  updatedAt: backendTherapist.updatedAt
+});
+
+// Helper function to get raw backend therapist data (for form editing)
+const getRawBackendTherapist = async (therapistId: string): Promise<any> => {
+  const response = await apiClient.get(`/therapists/${therapistId}`);
+  return response.data.data;
+};
+
 export class TherapistAPI {
   static async checkEmailAvailability(email: string): Promise<{ available: boolean; message: string }> {
     try {
@@ -32,9 +75,6 @@ export class TherapistAPI {
       if (filters) {
         if (filters.status) {
           queryParams.append('status', filters.status);
-        }
-        if (filters.employmentType) {
-          queryParams.append('employmentType', filters.employmentType);
         }
         if (filters.licenseType) {
           queryParams.append('licenseType', filters.licenseType);
@@ -69,18 +109,28 @@ export class TherapistAPI {
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
         status: backendTherapist.status,
-        employmentType: backendTherapist.employmentType,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
         preferences: {
-          breakBetweenSessions: backendTherapist.breakBetweenSessions,
           languages: ['Indonesian']
         },
         assignedClients: [],
         schedule: [],
-        education: [],
-        certifications: [],
+        education: backendTherapist.education ? [{
+          degree: backendTherapist.education,
+          institution: '',
+          year: new Date().getFullYear(),
+          field: ''
+        }] : [],
+        certifications: backendTherapist.certifications ? [{
+          id: '1',
+          name: backendTherapist.certifications,
+          issuingOrganization: '',
+          issueDate: new Date().toISOString(),
+          certificateNumber: '',
+          status: 'active' as const
+        }] : [],
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       }));
@@ -111,28 +161,68 @@ export class TherapistAPI {
     }
   }
 
+  static async getRawTherapist(therapistId: string): Promise<any> {
+    try {
+      return await getRawBackendTherapist(therapistId);
+    } catch (error: any) {
+      console.error('Failed to fetch raw therapist data:', error);
+      throw error;
+    }
+  }
+
   static async getTherapist(therapistId: string): Promise<ItemResponse<Therapist>> {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const therapist = getMockTherapistById(therapistId);
+      const response = await apiClient.get(`/therapists/${therapistId}`);
       
-      if (!therapist) {
-        return {
-          success: false,
-          message: 'Therapist not found'
-        };
-      }
+      // The response is wrapped by ResponseInterceptor: { success: true, data: therapist, message: "..." }
+      const backendTherapist = response.data.data;
+      
+      // Convert backend response to frontend format
+      const frontendTherapist: Therapist = {
+        id: backendTherapist.id,
+        clinicId: backendTherapist.clinic.id,
+        fullName: backendTherapist.fullName,
+        email: backendTherapist.user.email,
+        phone: backendTherapist.phone,
+        licenseNumber: backendTherapist.licenseNumber,
+        licenseType: backendTherapist.licenseType,
+        status: backendTherapist.status,
+        joinDate: backendTherapist.joinDate,
+        currentLoad: backendTherapist.currentLoad,
+        timezone: backendTherapist.timezone,
+        preferences: {
+          languages: ['Indonesian']
+        },
+        assignedClients: [],
+        schedule: [],
+        education: backendTherapist.education ? [{
+          degree: backendTherapist.education,
+          institution: '',
+          year: new Date().getFullYear(),
+          field: ''
+        }] : [],
+        certifications: backendTherapist.certifications ? [{
+          id: '1',
+          name: backendTherapist.certifications,
+          issuingOrganization: '',
+          issueDate: new Date().toISOString(),
+          certificateNumber: '',
+          status: 'active' as const
+        }] : [],
+        adminNotes: backendTherapist.adminNotes,
+        createdAt: backendTherapist.createdAt,
+        updatedAt: backendTherapist.updatedAt
+      };
 
       return {
         success: true,
-        data: therapist
+        data: frontendTherapist
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to fetch therapist:', error);
       return {
         success: false,
-        message: 'Failed to fetch therapist'
+        message: error.response?.data?.message || 'Failed to fetch therapist'
       };
     }
   }
@@ -146,11 +236,11 @@ export class TherapistAPI {
         phone: data.phone,
         licenseNumber: data.licenseNumber,
         licenseType: data.licenseType,
-        employmentType: data.employmentType,
         joinDate: new Date().toISOString().split('T')[0]!,
         timezone: 'Asia/Jakarta',
-        breakBetweenSessions: data.preferences?.breakBetweenSessions || 15,
-        adminNotes: undefined
+        education: data.education,
+        certifications: data.certifications,
+        adminNotes: data.adminNotes
       };
 
       const response = await apiClient.post('/therapists', createTherapistDto);
@@ -167,18 +257,28 @@ export class TherapistAPI {
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
         status: backendTherapist.status,
-        employmentType: backendTherapist.employmentType,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
         preferences: {
-          breakBetweenSessions: backendTherapist.breakBetweenSessions,
           languages: ['Indonesian']
         },
         assignedClients: [],
         schedule: [],
-        education: [],
-        certifications: [],
+        education: backendTherapist.education ? [{
+          degree: backendTherapist.education,
+          institution: '',
+          year: new Date().getFullYear(),
+          field: ''
+        }] : [],
+        certifications: backendTherapist.certifications ? [{
+          id: '1',
+          name: backendTherapist.certifications,
+          issuingOrganization: '',
+          issueDate: new Date().toISOString(),
+          certificateNumber: '',
+          status: 'active' as const
+        }] : [],
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       };
@@ -204,9 +304,9 @@ export class TherapistAPI {
       if (data.phone !== undefined) updateTherapistDto.phone = data.phone;
       if (data.licenseNumber !== undefined) updateTherapistDto.licenseNumber = data.licenseNumber;
       if (data.licenseType !== undefined) updateTherapistDto.licenseType = data.licenseType;
-      if (data.employmentType !== undefined) updateTherapistDto.employmentType = data.employmentType;
-      if (data.preferences?.breakBetweenSessions !== undefined) updateTherapistDto.breakBetweenSessions = data.preferences.breakBetweenSessions;
       if (data.timezone !== undefined) updateTherapistDto.timezone = data.timezone;
+      if (data.education !== undefined) updateTherapistDto.education = data.education;
+      if (data.certifications !== undefined) updateTherapistDto.certifications = data.certifications;
       if (data.adminNotes !== undefined) updateTherapistDto.adminNotes = data.adminNotes;
 
       const response = await apiClient.put(`/therapists/${therapistId}`, updateTherapistDto);
@@ -224,18 +324,28 @@ export class TherapistAPI {
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
         status: backendTherapist.status,
-        employmentType: backendTherapist.employmentType,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
         preferences: {
-          breakBetweenSessions: backendTherapist.breakBetweenSessions,
           languages: ['Indonesian']
         },
         assignedClients: [],
         schedule: [],
-        education: [],
-        certifications: [],
+        education: backendTherapist.education ? [{
+          degree: backendTherapist.education,
+          institution: '',
+          year: new Date().getFullYear(),
+          field: ''
+        }] : [],
+        certifications: backendTherapist.certifications ? [{
+          id: '1',
+          name: backendTherapist.certifications,
+          issuingOrganization: '',
+          issueDate: new Date().toISOString(),
+          certificateNumber: '',
+          status: 'active' as const
+        }] : [],
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       };
@@ -321,18 +431,28 @@ export class TherapistAPI {
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
         status: backendTherapist.status,
-        employmentType: backendTherapist.employmentType,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
         preferences: {
-          breakBetweenSessions: backendTherapist.breakBetweenSessions,
           languages: ['Indonesian']
         },
         assignedClients: [],
         schedule: [],
-        education: [],
-        certifications: [],
+        education: backendTherapist.education ? [{
+          degree: backendTherapist.education,
+          institution: '',
+          year: new Date().getFullYear(),
+          field: ''
+        }] : [],
+        certifications: backendTherapist.certifications ? [{
+          id: '1',
+          name: backendTherapist.certifications,
+          issuingOrganization: '',
+          issueDate: new Date().toISOString(),
+          certificateNumber: '',
+          status: 'active' as const
+        }] : [],
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       };

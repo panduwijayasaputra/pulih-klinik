@@ -47,7 +47,7 @@ async function bootstrap() {
 
   // Swagger documentation
   const config = new DocumentBuilder()
-    .setTitle('Smart Therapy API')
+    .setTitle('Pulih Klinik API')
     .setDescription('Indonesian Hypnotherapy AI System API')
     .setVersion('1.0')
     .addBearerAuth()

@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This security audit was conducted on the refactored authentication system for the Smart Therapy Management System. The audit covers token management, input validation, password security, rate limiting, and client-side security practices.
+This security audit was conducted on the refactored authentication system for the Pulih Klinik Management System. The audit covers token management, input validation, password security, rate limiting, and client-side security practices.
 
 ## Security Assessment Results
 

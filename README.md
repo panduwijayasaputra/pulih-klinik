@@ -1,4 +1,4 @@
-# Smart Therapy - Indonesian Hypnotherapy AI System
+# Pulih Klinik - Indonesian Hypnotherapy AI System
 
 A comprehensive web platform designed to revolutionize the workflow of licensed Indonesian hypnotherapists by transforming manual 2-hour session planning into streamlined 15-minute AI-assisted workflows.
 
@@ -30,7 +30,7 @@ The application features a simplified, production-ready authentication system:
 
 ### Project Structure
 ```
-smart-therapy/
+pulih-klinik/
 ├── frontend/           # Next.js 14 application
 ├── backend/            # NestJS API server
 ├── docs/              # Project documentation
@@ -51,7 +51,7 @@ smart-therapy/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd smart-therapy
+   cd pulih-klinik
    ```
 
 2. **Install dependencies**
@@ -188,4 +188,4 @@ This project is proprietary and confidential. Unauthorized access, use, or distr
 
 ---
 
-**Smart Therapy Team** - Revolutionizing Indonesian hypnotherapy through AI-assisted workflows
+**Pulih Klinik Team** - Revolutionizing Indonesian hypnotherapy through AI-assisted workflows

@@ -25,6 +25,7 @@ import {
   UpdateTherapistCapacityDto,
   TherapistQueryDto,
 } from './dto';
+import { EmailService } from '../lib/email/email.service';
 
 export interface TherapistResponse {
   id: string;
@@ -42,11 +43,11 @@ export interface TherapistResponse {
   licenseNumber: string;
   licenseType: string;
   status: string;
-  employmentType: string;
   joinDate: Date;
   currentLoad: number;
   timezone: string;
-  breakBetweenSessions: number;
+  education?: string;
+  certifications?: string;
   adminNotes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -54,7 +55,10 @@ export interface TherapistResponse {
 
 @Injectable()
 export class TherapistsService {
-  constructor(private readonly em: EntityManager) {}
+  constructor(
+    private readonly em: EntityManager,
+    private readonly emailService: EmailService,
+  ) {}
 
   /**
    * Check if email is available for therapist creation
@@ -145,12 +149,18 @@ export class TherapistsService {
         );
       }
 
+      // Generate verification code for email verification
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
       // Create user with therapist role
       const user = new User();
       user.email = createTherapistDto.email;
       user.isActive = false; // Inactive until email verified
       user.emailVerified = false; // Not verified yet
       user.passwordHash = 'temp-password-hash'; // Temporary password hash
+      user.emailVerificationCode = verificationCode;
+      user.emailVerificationExpires = verificationExpires;
 
       await this.em.persistAndFlush(user);
 
@@ -171,11 +181,10 @@ export class TherapistsService {
       therapist.avatarUrl = createTherapistDto.avatarUrl;
       therapist.licenseNumber = createTherapistDto.licenseNumber;
       therapist.licenseType = createTherapistDto.licenseType;
-      therapist.employmentType = createTherapistDto.employmentType;
       therapist.joinDate = new Date(createTherapistDto.joinDate);
       therapist.timezone = createTherapistDto.timezone || 'Asia/Jakarta';
-      therapist.breakBetweenSessions =
-        createTherapistDto.breakBetweenSessions || 15;
+      therapist.education = createTherapistDto.education;
+      therapist.certifications = createTherapistDto.certifications;
       therapist.adminNotes = createTherapistDto.adminNotes;
       therapist.status = TherapistStatus.PENDING_SETUP;
 
@@ -183,6 +192,13 @@ export class TherapistsService {
 
       // Commit transaction
       await this.em.commit();
+
+      // Send verification email to therapist
+      await this.emailService.sendVerificationEmail({
+        email: createTherapistDto.email,
+        name: createTherapistDto.fullName,
+        code: verificationCode,
+      });
 
       // Return the created therapist
       return this.mapToResponse(therapist);
@@ -244,17 +260,19 @@ export class TherapistsService {
     therapist.avatarUrl = createTherapistDto.avatarUrl;
     therapist.licenseNumber = createTherapistDto.licenseNumber;
     therapist.licenseType = createTherapistDto.licenseType;
-    therapist.employmentType = createTherapistDto.employmentType;
     therapist.joinDate = new Date(createTherapistDto.joinDate);
 
     // Optional fields with defaults
     if (createTherapistDto.timezone) {
       therapist.timezone = createTherapistDto.timezone;
     }
-    if (createTherapistDto.breakBetweenSessions !== undefined) {
-      therapist.breakBetweenSessions = createTherapistDto.breakBetweenSessions;
+    if (createTherapistDto.education !== undefined) {
+      therapist.education = createTherapistDto.education;
     }
-    if (createTherapistDto.adminNotes) {
+    if (createTherapistDto.certifications !== undefined) {
+      therapist.certifications = createTherapistDto.certifications;
+    }
+    if (createTherapistDto.adminNotes !== undefined) {
       therapist.adminNotes = createTherapistDto.adminNotes;
     }
 
@@ -338,27 +356,13 @@ export class TherapistsService {
       whereConditions.licenseType = query.licenseType;
     }
 
-    if (query.employmentType) {
-      whereConditions.employmentType = query.employmentType;
-    }
-
     if (query.minExperience !== undefined) {
       whereConditions.yearsOfExperience = { $gte: query.minExperience };
     }
 
     // Note: hasAvailableCapacity filtering will be done post-query due to MikroORM limitations
 
-    if (query.specialization) {
-      // When filtering by specialization, search in the specializations string field
-      const specializationFilter = {
-        specializations: { $ilike: `%${query.specialization}%` },
-      };
-
-      // Add specialization filter to where conditions
-      Object.assign(whereConditions, specializationFilter);
-    }
-
-    // Standard query with or without specialization filtering
+    // Standard query
     const [therapists, totalCount] = await this.em.findAndCount(
       Therapist,
       whereConditions,
@@ -439,9 +443,6 @@ export class TherapistsService {
     if (updateTherapistDto.status !== undefined) {
       therapist.status = updateTherapistDto.status;
     }
-    if (updateTherapistDto.employmentType !== undefined) {
-      therapist.employmentType = updateTherapistDto.employmentType;
-    }
     if (updateTherapistDto.joinDate !== undefined) {
       therapist.joinDate = new Date(updateTherapistDto.joinDate);
     }
@@ -451,8 +452,11 @@ export class TherapistsService {
     if (updateTherapistDto.timezone !== undefined) {
       therapist.timezone = updateTherapistDto.timezone;
     }
-    if (updateTherapistDto.breakBetweenSessions !== undefined) {
-      therapist.breakBetweenSessions = updateTherapistDto.breakBetweenSessions;
+    if (updateTherapistDto.education !== undefined) {
+      therapist.education = updateTherapistDto.education;
+    }
+    if (updateTherapistDto.certifications !== undefined) {
+      therapist.certifications = updateTherapistDto.certifications;
     }
     if (updateTherapistDto.adminNotes !== undefined) {
       therapist.adminNotes = updateTherapistDto.adminNotes;
@@ -1246,11 +1250,11 @@ export class TherapistsService {
       licenseNumber: therapist.licenseNumber,
       licenseType: therapist.licenseType,
       status: therapist.status,
-      employmentType: therapist.employmentType,
       joinDate: therapist.joinDate,
       currentLoad: therapist.currentLoad,
       timezone: therapist.timezone,
-      breakBetweenSessions: therapist.breakBetweenSessions,
+      education: therapist.education,
+      certifications: therapist.certifications,
       adminNotes: therapist.adminNotes,
       createdAt: therapist.createdAt,
       updatedAt: therapist.updatedAt,

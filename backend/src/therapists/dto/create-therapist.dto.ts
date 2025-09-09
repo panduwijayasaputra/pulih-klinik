@@ -4,20 +4,14 @@ import {
   IsPhoneNumber,
   IsEnum,
   IsOptional,
-  IsInt,
   IsUrl,
   IsDateString,
   IsEmail,
-  Min,
-  Max,
   MinLength,
   MaxLength,
   IsIn,
 } from 'class-validator';
-import {
-  LicenseType,
-  EmploymentType,
-} from '../../database/entities/therapist.entity';
+import { LicenseType } from '../../database/entities/therapist.entity';
 
 export class CreateTherapistDto {
   @ApiProperty({
@@ -82,17 +76,6 @@ export class CreateTherapistDto {
   licenseType!: LicenseType;
 
   @ApiProperty({
-    description: 'Employment type',
-    enum: EmploymentType,
-    example: EmploymentType.FULL_TIME,
-  })
-  @IsEnum(EmploymentType, {
-    message:
-      'Employment type must be one of: full_time, part_time, contract, freelance',
-  })
-  employmentType!: EmploymentType;
-
-  @ApiProperty({
     description: 'Date when the therapist joined the clinic',
     example: '2023-01-15',
   })
@@ -112,17 +95,25 @@ export class CreateTherapistDto {
   timezone?: string;
 
   @ApiProperty({
-    description: 'Break between sessions in minutes',
-    example: 15,
-    minimum: 5,
-    maximum: 60,
+    description: 'Education background',
+    example: 'S1 Psikologi, Universitas Indonesia (2015)',
     required: false,
   })
   @IsOptional()
-  @IsInt({ message: 'Break between sessions must be an integer' })
-  @Min(5, { message: 'Break must be at least 5 minutes' })
-  @Max(60, { message: 'Break cannot exceed 60 minutes' })
-  breakBetweenSessions?: number;
+  @IsString({ message: 'Education must be a string' })
+  @MaxLength(1000, { message: 'Education cannot exceed 1000 characters' })
+  education?: string;
+
+  @ApiProperty({
+    description: 'Professional certifications',
+    example:
+      'Certified Hypnotherapist - Indonesian Hypnotherapy Association (2020)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'Certifications must be a string' })
+  @MaxLength(1000, { message: 'Certifications cannot exceed 1000 characters' })
+  certifications?: string;
 
   @ApiProperty({
     description: 'Administrative notes about the therapist',

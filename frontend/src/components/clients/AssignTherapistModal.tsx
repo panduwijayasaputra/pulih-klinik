@@ -51,7 +51,8 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
   const isAtCapacity = (therapistId: string): boolean => {
     const t = therapists.find((x) => x.id === therapistId);
     if (!t) return false;
-    return t.currentLoad >= t.maxClients;
+    // For now, assume max capacity is 15 clients per therapist
+    return t.currentLoad >= 15;
   };
 
   const isSameTherapist = (therapistId: string): boolean => {
@@ -67,8 +68,9 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
   const selectedInfo = useMemo(() => {
     const t = therapists.find((x) => x.id === selectedTherapist);
     if (!t) return null;
-    const loadPct = Math.round((t.currentLoad / t.maxClients) * 100);
-    return { currentLoad: t.currentLoad, maxClients: t.maxClients, loadPct };
+    const maxClients = 15; // Default max capacity
+    const loadPct = Math.round((t.currentLoad / maxClients) * 100);
+    return { currentLoad: t.currentLoad, maxClients, loadPct };
   }, [therapists, selectedTherapist]);
 
   const handleConfirm = async (): Promise<void> => {
@@ -135,13 +137,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-600">Kapasitas Saat Ini:</span>
                 <span className="text-sm font-semibold text-gray-700">
-                  {selectedTherapistData.currentLoad}/{selectedTherapistData.maxClients} klien
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-600">Spesialisasi:</span>
-                <span className="text-sm text-gray-700">
-                  {selectedTherapistData.specializations?.slice(0, 2).join(', ') || 'Hipnoterapi Umum'}
+                  {selectedTherapistData.currentLoad}/15 klien
                 </span>
               </div>
             </div>
@@ -233,7 +229,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
                   </div>
                 ) : (
                   availableTherapists.map((t) => {
-                    const disabled = t.currentLoad >= t.maxClients;
+                    const disabled = t.currentLoad >= 15;
 
                     return (
                       <SelectItem
@@ -284,7 +280,7 @@ export const AssignTherapistModal: React.FC<AssignTherapistModalProps> = ({
                     ? 'text-red-600'
                     : 'text-green-600'
                   }`}>
-                  {selectedInfo.currentLoad}/{selectedInfo.maxClients}
+                  {selectedInfo.currentLoad}/15
                 </span>
               </div>
 

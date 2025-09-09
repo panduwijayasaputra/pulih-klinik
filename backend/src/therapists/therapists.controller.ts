@@ -11,6 +11,7 @@ import {
   Request,
   HttpStatus,
   ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -226,18 +227,6 @@ export class TherapistsController {
     description: 'Filter by license type',
   })
   @ApiQuery({
-    name: 'employmentType',
-    required: false,
-    enum: ['full_time', 'part_time', 'contract', 'freelance'],
-    description: 'Filter by employment type',
-  })
-  @ApiQuery({
-    name: 'specialization',
-    required: false,
-    type: 'string',
-    description: 'Filter by specialization',
-  })
-  @ApiQuery({
     name: 'minExperience',
     required: false,
     type: 'number',
@@ -303,7 +292,9 @@ export class TherapistsController {
       // Non-admin users are restricted to their clinic
       clinicId = currentUser.clinicId;
       if (!clinicId) {
-        throw new Error('User not associated with any clinic');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
     }
 
@@ -326,8 +317,6 @@ export class TherapistsController {
   @ApiQuery({ name: 'search', required: false, type: 'string' })
   @ApiQuery({ name: 'status', required: false, type: 'string' })
   @ApiQuery({ name: 'licenseType', required: false, type: 'string' })
-  @ApiQuery({ name: 'employmentType', required: false, type: 'string' })
-  @ApiQuery({ name: 'specialization', required: false, type: 'string' })
   @ApiQuery({ name: 'minExperience', required: false, type: 'number' })
   @ApiQuery({ name: 'hasAvailableCapacity', required: false, type: 'boolean' })
   @ApiQuery({ name: 'clinicId', required: false, type: 'string' })
@@ -383,13 +372,14 @@ export class TherapistsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+      clinicId = currentUser.clinicId;
+      if (!clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = userRole.clinicId;
     }
     // Admin can access any therapist (clinicId remains undefined)
 
@@ -648,12 +638,13 @@ export class TherapistsController {
 
     // First get the therapist to check clinic access
     let clinicId: string | undefined;
-    if (!currentUser.isAdmin) {
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+    if (!currentUser.roles.includes('administrator')) {
+      clinicId = currentUser.clinicId;
+      if (!clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = userRole.clinicId;
     }
 
     const therapist = await this.therapistsService.getTherapistById(
@@ -830,12 +821,13 @@ export class TherapistsController {
 
     // Determine clinic scope for access control
     let clinicId: string | undefined;
-    if (!currentUser.isAdmin) {
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+    if (!currentUser.roles.includes('administrator')) {
+      clinicId = currentUser.clinicId;
+      if (!clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = userRole.clinicId;
     }
 
     return this.therapistsService.getTherapistAssignments(
@@ -865,12 +857,13 @@ export class TherapistsController {
 
     // Determine clinic scope for access control
     let clinicId: string | undefined;
-    if (!currentUser.isAdmin) {
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+    if (!currentUser.roles.includes('administrator')) {
+      clinicId = currentUser.clinicId;
+      if (!clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = userRole.clinicId;
     }
 
     return this.therapistsService.getClientAssignmentHistory(
@@ -1000,13 +993,15 @@ export class TherapistsController {
     if (!currentUser.isAdmin) {
       const userRole = currentUser.roles.find((role: any) => role.clinicId);
       if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = userRole.clinicId;
 
       // If user is a therapist, they can only see their own clients
       const therapistRole = currentUser.roles.find(
-        (role: any) => role.role === 'therapist',
+        (role: any) => role === 'therapist',
       );
       if (therapistRole && currentUser.id !== therapistId) {
         throw new Error('Therapists can only access their own clients');
@@ -1057,12 +1052,14 @@ export class TherapistsController {
     if (!currentUser.isAdmin) {
       const userRole = currentUser.roles.find((role: any) => role.clinicId);
       if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = userRole.clinicId;
 
       const therapistRole = currentUser.roles.find(
-        (role: any) => role.role === 'therapist',
+        (role: any) => role === 'therapist',
       );
       if (therapistRole && currentUser.id !== therapistId) {
         throw new Error('Therapists can only access their own clients');
@@ -1107,9 +1104,9 @@ export class TherapistsController {
     const currentUser = req.user;
 
     // Authorization: Only the assigned therapist can update their client's notes
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       const therapistRole = currentUser.roles.find(
-        (role: any) => role.role === 'therapist',
+        (role: any) => role === 'therapist',
       );
       if (therapistRole && currentUser.id !== therapistId) {
         throw new Error("Therapists can only update their own clients' notes");
@@ -1175,12 +1172,14 @@ export class TherapistsController {
     if (!currentUser.isAdmin) {
       const userRole = currentUser.roles.find((role: any) => role.clinicId);
       if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = userRole.clinicId;
 
       const therapistRole = currentUser.roles.find(
-        (role: any) => role.role === 'therapist',
+        (role: any) => role === 'therapist',
       );
       if (therapistRole && currentUser.id !== therapistId) {
         throw new Error('Therapists can only access their own statistics');
@@ -1226,9 +1225,9 @@ export class TherapistsController {
     const currentUser = req.user;
 
     // Authorization
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       const therapistRole = currentUser.roles.find(
-        (role: any) => role.role === 'therapist',
+        (role: any) => role === 'therapist',
       );
       if (therapistRole && currentUser.id !== therapistId) {
         throw new Error(

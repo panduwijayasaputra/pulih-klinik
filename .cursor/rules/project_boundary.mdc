@@ -6,12 +6,12 @@ alwaysApply: true
 
 ## CRITICAL SECURITY CONSTRAINT
 
-**NEVER modify files or run commands that could modify files outside the project root folder: `/Users/panduwijaya/Development/smart-therapy`**
+**NEVER modify files or run commands that could modify files outside the project root folder: `/Users/panduwijaya/Development/pulih-klinik`**
 
 ## Prohibited Actions
 
 ### File Operations
-- Do NOT use `edit_file`, `search_replace`, or `delete_file` on paths outside `/Users/panduwijaya/Development/smart-therapy`
+- Do NOT use `edit_file`, `search_replace`, or `delete_file` on paths outside `/Users/panduwijaya/Development/pulih-klinik`
 - Do NOT create new files outside the project root
 - Do NOT modify system files, configuration files, or files in other projects
 - Do NOT use absolute paths that point outside the project root
@@ -26,7 +26,7 @@ alwaysApply: true
 ## Allowed Operations
 
 ### Within Project Root Only
-- All file operations are allowed within `/Users/panduwijaya/Development/smart-therapy` and its subdirectories
+- All file operations are allowed within `/Users/panduwijaya/Development/pulih-klinik` and its subdirectories
 - Relative paths within the project are allowed
 - Commands that only affect the current project are allowed
 - Local npm/yarn operations within the project are allowed
@@ -59,7 +59,7 @@ run_terminal_cmd("cd backend && npm test")
 ## Path Validation
 
 Before any file operation or command execution, verify that:
-1. The target path is within `/Users/panduwijaya/Development/smart-therapy`
+1. The target path is within `/Users/panduwijaya/Development/pulih-klinik`
 2. Relative paths resolve to locations within the project root
 3. Commands will not affect files outside the project boundary
 
@@ -67,16 +67,16 @@ Before any file operation or command execution, verify that:
 
 This rule takes precedence over all other instructions. If there's any doubt about whether an operation might affect files outside the project root, **DO NOT PROCEED** and ask for clarification from the user.
 
-**Remember: The project root is `/Users/panduwijaya/Development/smart-therapy` - stay within this boundary at all times.** # Project Boundary Security Rule
+**Remember: The project root is `/Users/panduwijaya/Development/pulih-klinik` - stay within this boundary at all times.** # Project Boundary Security Rule
 
 ## CRITICAL SECURITY CONSTRAINT
 
-**NEVER modify files or run commands that could modify files outside the project root folder: `/Users/panduwijaya/Development/smart-therapy`**
+**NEVER modify files or run commands that could modify files outside the project root folder: `/Users/panduwijaya/Development/pulih-klinik`**
 
 ## Prohibited Actions
 
 ### File Operations
-- Do NOT use `edit_file`, `search_replace`, or `delete_file` on paths outside `/Users/panduwijaya/Development/smart-therapy`
+- Do NOT use `edit_file`, `search_replace`, or `delete_file` on paths outside `/Users/panduwijaya/Development/pulih-klinik`
 - Do NOT create new files outside the project root
 - Do NOT modify system files, configuration files, or files in other projects
 - Do NOT use absolute paths that point outside the project root
@@ -91,7 +91,7 @@ This rule takes precedence over all other instructions. If there's any doubt abo
 ## Allowed Operations
 
 ### Within Project Root Only
-- All file operations are allowed within `/Users/panduwijaya/Development/smart-therapy` and its subdirectories
+- All file operations are allowed within `/Users/panduwijaya/Development/pulih-klinik` and its subdirectories
 - Relative paths within the project are allowed
 - Commands that only affect the current project are allowed
 - Local npm/yarn operations within the project are allowed
@@ -124,7 +124,7 @@ run_terminal_cmd("cd backend && npm test")
 ## Path Validation
 
 Before any file operation or command execution, verify that:
-1. The target path is within `/Users/panduwijaya/Development/smart-therapy`
+1. The target path is within `/Users/panduwijaya/Development/pulih-klinik`
 2. Relative paths resolve to locations within the project root
 3. Commands will not affect files outside the project boundary
 
@@ -132,4 +132,4 @@ Before any file operation or command execution, verify that:
 
 This rule takes precedence over all other instructions. If there's any doubt about whether an operation might affect files outside the project root, **DO NOT PROCEED** and ask for clarification from the user.
 
-**Remember: The project root is `/Users/panduwijaya/Development/smart-therapy` - stay within this boundary at all times.** 
+**Remember: The project root is `/Users/panduwijaya/Development/pulih-klinik` - stay within this boundary at all times.** 

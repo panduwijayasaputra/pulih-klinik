@@ -352,7 +352,6 @@ export const TherapistList: React.FC = () => {
       render: (therapist) => (
         <div>
           <div className="font-medium text-gray-900">{therapist.fullName}</div>
-          <div className="text-xs text-gray-500">{therapist.specializations.map(id => getSpecializationNameById(id)).join(', ')}</div>
         </div>
       ),
     },
@@ -370,20 +369,6 @@ export const TherapistList: React.FC = () => {
       key: 'status',
       header: 'Status',
       render: (therapist) => getStatusBadge(therapist.status),
-    },
-    {
-      key: 'specializations',
-      header: 'Spesialisasi',
-      render: (therapist) => (
-        <div>
-          <div className="text-sm">
-            {therapist.specializations.map(id => getSpecializationNameById(id)).join(', ')}
-          </div>
-          <div className="text-xs text-gray-500">
-            {therapist.yearsOfExperience} tahun pengalaman
-          </div>
-        </div>
-      ),
     },
   ];
 
@@ -485,8 +470,8 @@ export const TherapistList: React.FC = () => {
         loading={loading}
         emptyMessage="Tidak ada therapist yang ditemukan"
         loadingMessage="Memuat data therapist..."
-        searchPlaceholder="Cari nama, email, atau spesialisasi..."
-        searchKeys={['fullName', 'email', 'specializations']}
+        searchPlaceholder="Cari nama, email..."
+        searchKeys={['fullName', 'email']}
         filters={[statusFilter]}
         refreshAction={{
           label: 'Segarkan',

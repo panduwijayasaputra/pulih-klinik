@@ -1,8 +1,8 @@
-# Smart Therapy Database Schema
+# Pulih Klinik Database Schema
 
 ## Overview
 
-This document contains the comprehensive database schema design for the Smart Therapy Management System, based on analysis of the frontend codebase and business requirements.
+This document contains the comprehensive database schema design for the Pulih Klinik Management System, based on analysis of the frontend codebase and business requirements.
 
 ## System Architecture
 
@@ -702,4 +702,4 @@ New → Assigned → Consultation → Therapy → Done
 
 ---
 
-*This schema is designed to support the Smart Therapy Management System's current requirements while maintaining flexibility for future enhancements.*
+*This schema is designed to support the Pulih Klinik Management System's current requirements while maintaining flexibility for future enhancements.*

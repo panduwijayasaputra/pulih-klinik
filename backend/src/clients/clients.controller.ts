@@ -11,6 +11,7 @@ import {
   Request,
   HttpStatus,
   ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -306,7 +307,9 @@ export class ClientsController {
       // Non-admin users are restricted to their clinic
       const userRole = currentUser.roles.find((role: any) => role.clinicId);
       if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = userRole.clinicId;
 
@@ -401,7 +404,9 @@ export class ClientsController {
       // Non-admin users are restricted to their clinic
       const userRole = currentUser.roles.find((role: any) => role.clinicId);
       if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = userRole.clinicId;
     }

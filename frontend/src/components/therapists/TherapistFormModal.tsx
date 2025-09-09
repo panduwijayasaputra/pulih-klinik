@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FormModal } from '@/components/ui/form-modal';
-import { EmploymentTypeEnum, TherapistLicenseTypeEnum } from '@/types/enums';
+import { TherapistLicenseTypeEnum } from '@/types/enums';
+import { TherapistFormData } from '@/types/therapist';
 import {
   AcademicCapIcon,
   BriefcaseIcon,
@@ -39,9 +40,6 @@ const TherapistRegistrationSchema = z.object({
   // Enums (required)
   licenseType: z.nativeEnum(TherapistLicenseTypeEnum, {
     error: 'Tipe lisensi wajib dipilih'
-  }),
-  employmentType: z.nativeEnum(EmploymentTypeEnum, {
-    error: 'Tipe pekerjaan wajib dipilih'
   }),
 
   // Clinic admin notes (optional)
@@ -101,43 +99,26 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           setIsLoadingTherapist(true);
           try {
             // Fetch fresh therapist data from API
-            const response = await TherapistAPI.getTherapist(therapistId);
-            if (response.success && response.data) {
-              const therapistData = response.data;
-              
-              // Reset with fetched therapist data
-              reset({
-                name: therapistData.fullName || '',
-                email: therapistData.email || '',
-                phone: therapistData.phone || '',
-                licenseNumber: therapistData.licenseNumber || '',
-                education: therapistData.education.map(edu => 
-                  `${edu.degree} ${edu.field} - ${edu.institution} (${edu.year})`
-                ).join('; '),
-                certifications: therapistData.certifications.map(cert => 
-                  `${cert.name} - ${cert.issuingOrganization}`
-                ).join('; '),
-                adminNotes: therapistData.adminNotes || '',
-                licenseType: therapistData.licenseType || TherapistLicenseTypeEnum.Psychologist,
-                employmentType: therapistData.employmentType || EmploymentTypeEnum.FullTime,
-              });
-            } else {
-              // Fallback to default values if API fails
-              reset({
-                name: '',
-                email: '',
-                phone: '',
-                licenseNumber: '',
-                education: '',
-                certifications: '',
-                adminNotes: '',
-                licenseType: TherapistLicenseTypeEnum.Psychologist,
-                employmentType: EmploymentTypeEnum.FullTime,
-                ...defaultValues,
-              });
-            }
-          } catch (error) {
+            const therapistData = await TherapistAPI.getRawTherapist(therapistId);
+            
+            // Reset with fetched therapist data
+            reset({
+              name: therapistData.fullName || '',
+              email: therapistData.user?.email || '',
+              phone: therapistData.phone || '',
+              licenseNumber: therapistData.licenseNumber || '',
+              education: therapistData.education || '',
+              certifications: therapistData.certifications || '',
+              adminNotes: therapistData.adminNotes || '',
+              licenseType: therapistData.licenseType || TherapistLicenseTypeEnum.Psychologist,
+            });
+          } catch (error: any) {
             console.error('Failed to load therapist data:', error);
+            addToast({
+              type: 'error',
+              title: 'Gagal Memuat Data',
+              message: error.response?.data?.message || 'Gagal memuat data therapist. Silakan coba lagi.'
+            });
             // Fallback to default values on error
             reset({
               name: '',
@@ -148,8 +129,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               certifications: '',
               adminNotes: '',
               licenseType: TherapistLicenseTypeEnum.Psychologist,
-              employmentType: EmploymentTypeEnum.FullTime,
-              ...defaultValues,
             });
           } finally {
             setIsLoadingTherapist(false);
@@ -168,7 +147,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           certifications: '',
           adminNotes: '',
           licenseType: TherapistLicenseTypeEnum.Psychologist,
-          employmentType: EmploymentTypeEnum.FullTime,
           ...defaultValues,
         });
         setIsLoadingTherapist(false);
@@ -254,12 +232,14 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           phone: data.phone,
           licenseNumber: data.licenseNumber,
           licenseType: data.licenseType,
-          employmentType: data.employmentType,
+          timezone: 'Asia/Jakarta',
+          education: data.education,
+          certifications: data.certifications,
+          adminNotes: data.adminNotes,
           preferences: {
-            breakBetweenSessions: 15,
             languages: ['Indonesian']
           }
-        });
+        } as Partial<TherapistFormData>);
 
         if (result.success) {
           addToast({
@@ -287,12 +267,13 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           phone: data.phone,
           licenseNumber: data.licenseNumber,
           licenseType: data.licenseType,
-          employmentType: data.employmentType,
+          education: data.education,
+          certifications: data.certifications,
+          adminNotes: data.adminNotes,
           preferences: {
-            breakBetweenSessions: 15,
             languages: ['Indonesian']
           }
-        });
+        } as TherapistFormData);
 
         if (result.success) {
           addToast({
@@ -480,9 +461,8 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               </div>
 
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <Label>Tipe Lisensi *</Label>
+              <div>
+                <Label>Tipe Lisensi *</Label>
                   <Select
                     value={watch('licenseType')}
                     onValueChange={(value) => {
@@ -505,33 +485,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                       {errors.licenseType.message}
                     </p>
                   )}
-                </div>
-
-                <div>
-                  <Label>Tipe Pekerjaan *</Label>
-                  <Select
-                    value={watch('employmentType')}
-                    onValueChange={(value) => {
-                      setValue('employmentType', value as any, { shouldValidate: true });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih Tipe Pekerjaan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={EmploymentTypeEnum.FullTime}>Penuh Waktu</SelectItem>
-                      <SelectItem value={EmploymentTypeEnum.PartTime}>Paruh Waktu</SelectItem>
-                      <SelectItem value={EmploymentTypeEnum.Contract}>Kontrak</SelectItem>
-                      <SelectItem value={EmploymentTypeEnum.Freelance}>Freelance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.employmentType && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <XCircleIcon className="w-3 h-3 mr-1" />
-                      {errors.employmentType.message}
-                    </p>
-                  )}
-                </div>
               </div>
 
 

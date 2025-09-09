@@ -7,14 +7,21 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBody,
-} from '@nestjs/swagger';
-import { RegistrationService, RegistrationResult, EmailVerificationResult, ResendCodeResult, EmailStatusResult } from './registration.service';
-import { StartRegistrationDto, VerifyEmailDto, ResendCodeDto, AdminVerifyDto, CheckEmailDto } from './dto';
+  RegistrationService,
+  RegistrationResult,
+  EmailVerificationResult,
+  ResendCodeResult,
+  EmailStatusResult,
+} from './registration.service';
+import {
+  StartRegistrationDto,
+  VerifyEmailDto,
+  ResendCodeDto,
+  AdminVerifyDto,
+  CheckEmailDto,
+} from './dto';
 import { ClinicsService } from '../clinics/clinics.service';
 
 @ApiTags('Registration')
@@ -52,7 +59,9 @@ export class RegistrationController {
     status: 400,
     description: 'Invalid email format',
   })
-  async checkEmail(@Body() checkEmailDto: CheckEmailDto): Promise<EmailStatusResult> {
+  async checkEmail(
+    @Body() checkEmailDto: CheckEmailDto,
+  ): Promise<EmailStatusResult> {
     return this.registrationService.checkEmailStatus(checkEmailDto.email);
   }
 
@@ -74,7 +83,8 @@ export class RegistrationController {
           registrationId: '123e4567-e89b-12d3-a456-426614174000',
           email: 'user@example.com',
           name: 'John Doe',
-          message: 'Registration started successfully. Please proceed to setup your clinic.',
+          message:
+            'Registration started successfully. Please proceed to setup your clinic.',
         },
         message: 'Registration completed successfully',
       },
@@ -102,12 +112,15 @@ export class RegistrationController {
       },
     },
   })
-  async startRegistration(@Body() startRegistrationDto: StartRegistrationDto): Promise<{
+  async startRegistration(
+    @Body() startRegistrationDto: StartRegistrationDto,
+  ): Promise<{
     success: boolean;
     data: RegistrationResult;
     message: string;
   }> {
-    const result = await this.registrationService.startRegistration(startRegistrationDto);
+    const result =
+      await this.registrationService.startRegistration(startRegistrationDto);
 
     return {
       success: true,
@@ -131,7 +144,8 @@ export class RegistrationController {
         success: true,
         data: {
           verified: true,
-          message: 'Email verified successfully. You can now login to your account.',
+          message:
+            'Email verified successfully. You can now login to your account.',
         },
         message: 'Email verification completed',
       },
@@ -174,7 +188,8 @@ export class RegistrationController {
       example: {
         success: true,
         data: {
-          message: 'Verification code sent successfully. Please check your email.',
+          message:
+            'Verification code sent successfully. Please check your email.',
         },
         message: 'Code sent successfully',
       },
@@ -193,7 +208,8 @@ export class RegistrationController {
     data: ResendCodeResult;
     message: string;
   }> {
-    const result = await this.registrationService.resendVerificationCode(resendCodeDto);
+    const result =
+      await this.registrationService.resendVerificationCode(resendCodeDto);
 
     return {
       success: true,
@@ -232,7 +248,8 @@ export class RegistrationController {
     data: EmailVerificationResult;
     message: string;
   }> {
-    const result = await this.registrationService.adminVerifyEmail(adminVerifyDto);
+    const result =
+      await this.registrationService.adminVerifyEmail(adminVerifyDto);
 
     return {
       success: true,
@@ -244,7 +261,8 @@ export class RegistrationController {
   @Get('subscription-tiers')
   @ApiOperation({
     summary: 'Get available subscription tiers',
-    description: 'Get all available subscription tiers for clinic selection (public endpoint)',
+    description:
+      'Get all available subscription tiers for clinic selection (public endpoint)',
   })
   @ApiResponse({
     status: 200,

@@ -1,5 +1,5 @@
 {
-  "name": "smart-therapy-frontend",
+  "name": "pulih-klinik-frontend",
   "version": "1.0.0",
   "description": "Indonesian Hypnotherapy AI System - Frontend Application",
   "private": true,
@@ -31,7 +31,7 @@
     "nextjs",
     "typescript"
   ],
-  "author": "Smart Therapy Team",
+  "author": "Pulih Klinik Team",
   "license": "UNLICENSED",
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

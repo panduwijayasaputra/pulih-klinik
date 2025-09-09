@@ -44,9 +44,9 @@ function ProfilePageContent() {
     defaultValues: {
       name: '',
       email: '',
-      phone: '',
-      address: '',
-      bio: ''
+      phone: undefined,
+      address: undefined,
+      bio: undefined
     }
   });
 

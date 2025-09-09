@@ -26,7 +26,7 @@ module.exports = {
     },
     extend: {
       colors: {
-        // Smart Therapy blue-based color system
+        // Pulih Klinik blue-based color system
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',

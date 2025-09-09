@@ -177,7 +177,7 @@ function AdminClinicsPageContent() {
                     <div className="flex items-center space-x-2 mb-1">
                       <h4 className="font-medium">{clinic.name}</h4>
                       {getStatusBadge(clinic.status as ClinicStatusEnum)}
-                      {getTierBadge(clinic.subscriptionTier)}
+                      {getTierBadge(clinic.subscriptionTier || 'free')}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">

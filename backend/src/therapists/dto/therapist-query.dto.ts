@@ -12,7 +12,6 @@ import { Transform } from 'class-transformer';
 import {
   LicenseType,
   TherapistStatus,
-  EmploymentType,
 } from '../../database/entities/therapist.entity';
 
 export class TherapistQueryDto {
@@ -76,28 +75,6 @@ export class TherapistQueryDto {
       'License type must be one of: psychologist, psychiatrist, counselor, hypnotherapist',
   })
   licenseType?: LicenseType;
-
-  @ApiProperty({
-    description: 'Filter by employment type',
-    enum: EmploymentType,
-    example: EmploymentType.FULL_TIME,
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(EmploymentType, {
-    message:
-      'Employment type must be one of: full_time, part_time, contract, freelance',
-  })
-  employmentType?: EmploymentType;
-
-  @ApiProperty({
-    description: 'Filter by specialization area',
-    example: 'anxiety',
-    required: false,
-  })
-  @IsOptional()
-  @IsString({ message: 'Specialization must be a string' })
-  specialization?: string;
 
   @ApiProperty({
     description: 'Filter by minimum years of experience',

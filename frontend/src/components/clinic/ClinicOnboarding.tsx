@@ -107,14 +107,14 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
             <BuildingOfficeIcon className="w-8 h-8 text-white" />
           </div>
                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                   {currentStep === 'clinic-info' && 'Selamat Datang di Smart Therapy'}
+                   {currentStep === 'clinic-info' && 'Selamat Datang di Pulih Klinik'}
                    {currentStep === 'subscription' && 'Pilih Paket Subscription'}
                    {currentStep === 'complete' && 'Onboarding Selesai!'}
                  </h1>
                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                    {currentStep === 'clinic-info' && 'Mari kita mulai dengan membuat profil klinik Anda. Informasi ini akan membantu kami memberikan pengalaman terbaik untuk Anda dan pasien.'}
                    {currentStep === 'subscription' && 'Pilih paket subscription yang sesuai dengan kebutuhan klinik Anda. Anda dapat mengubah paket kapan saja.'}
-                   {currentStep === 'complete' && 'Proses onboarding telah selesai. Anda sekarang dapat mengakses semua fitur Smart Therapy.'}
+                   {currentStep === 'complete' && 'Proses onboarding telah selesai. Anda sekarang dapat mengakses semua fitur Pulih Klinik.'}
                  </p>
         </div>
 
@@ -206,9 +206,9 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
                    {currentStep === 'complete' && 'Selamat! Klinik Anda Siap'}
                  </CardTitle>
                  <CardDescription className="text-gray-600 text-base">
-                   {currentStep === 'clinic-info' && 'Lengkapi informasi berikut untuk memulai menggunakan Smart Therapy. Semua informasi dapat diubah nanti di pengaturan.'}
+                   {currentStep === 'clinic-info' && 'Lengkapi informasi berikut untuk memulai menggunakan Pulih Klinik. Semua informasi dapat diubah nanti di pengaturan.'}
                    {currentStep === 'subscription' && 'Pilih paket subscription yang sesuai dengan kebutuhan klinik Anda. Anda dapat mengubah paket kapan saja.'}
-                   {currentStep === 'complete' && 'Proses onboarding telah selesai. Anda sekarang dapat mengakses semua fitur Smart Therapy.'}
+                   {currentStep === 'complete' && 'Proses onboarding telah selesai. Anda sekarang dapat mengakses semua fitur Pulih Klinik.'}
                  </CardDescription>
           </CardHeader>
           <CardContent>
@@ -230,7 +230,7 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
                   </h3>
                   <p className="text-gray-600 mb-6 max-w-md mx-auto">
                     Pilih paket yang sesuai dengan kebutuhan klinik Anda. 
-                    Semua paket termasuk fitur dasar Smart Therapy.
+                    Semua paket termasuk fitur dasar Pulih Klinik.
                   </p>
                 </div>
                 
@@ -251,12 +251,12 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
                 </h3>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
                   Klinik Anda telah berhasil dibuat dan siap digunakan. 
-                  Anda sekarang dapat mengakses semua fitur Smart Therapy.
+                  Anda sekarang dapat mengakses semua fitur Pulih Klinik.
                 </p>
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                   <p className="text-green-800 text-sm">
                     <strong>Selamat!</strong> Anda dapat mulai menambahkan terapis, 
-                    mengelola klien, dan menggunakan semua fitur Smart Therapy.
+                    mengelola klien, dan menggunakan semua fitur Pulih Klinik.
                   </p>
                 </div>
                 <Button 
@@ -281,7 +281,7 @@ export const ClinicOnboarding: React.FC<ClinicOnboardingProps> = ({
             <a href="#" className="text-blue-600 hover:text-blue-700 underline">
               Kebijakan Privasi
             </a>{' '}
-            Smart Therapy.
+            Pulih Klinik.
           </p>
         </div>
       </div>

@@ -127,7 +127,7 @@ export class RegistrationService {
     await this.em.persistAndFlush(profile);
 
     // Send verification email
-    this.emailService.sendVerificationEmail({
+    await this.emailService.sendVerificationEmail({
       email: dto.email,
       name: dto.name,
       code: verificationCode,
@@ -232,7 +232,7 @@ export class RegistrationService {
     await this.em.persistAndFlush(user);
 
     // Send verification email
-    this.emailService.sendVerificationEmail({
+    await this.emailService.sendVerificationEmail({
       email: dto.email,
       name: user.profile?.name || 'User',
       code: verificationCode,

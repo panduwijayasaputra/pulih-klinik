@@ -41,7 +41,6 @@ export interface SessionResponse {
       fullName: string;
       email: string;
     };
-    specializations: string[];
   };
   sessionNumber: number;
   title: string;
@@ -307,7 +306,6 @@ export class SessionsService {
             fullName: session.therapist.fullName,
             email: session.therapist.user.email,
           },
-          specializations: session.therapist.specializations ? session.therapist.specializations.split(', ') : [],
         },
         sessionNumber: session.sessionNumber,
         title: session.title,
@@ -611,7 +609,6 @@ export class SessionsService {
           fullName: therapist.fullName,
           email: therapist.user.email,
         },
-        specializations: therapist.specializations ? therapist.specializations.split(', ') : [],
       },
       sessionNumber: session.sessionNumber,
       title: session.title,

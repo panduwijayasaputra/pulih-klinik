@@ -1,4 +1,4 @@
-import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from './enums';
+import { TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from './enums';
 
 export interface TherapistSpecialization {
   id: string;
@@ -60,7 +60,6 @@ export interface Therapist {
   
   // Status & Availability
   status: EnumValue<typeof TherapistStatusEnum>;
-  employmentType: EnumValue<typeof EmploymentTypeEnum>;
   joinDate: string;
   
   // Assignment Info
@@ -73,7 +72,6 @@ export interface Therapist {
   
   // Settings
   preferences: {
-    breakBetweenSessions: number; // in minutes
     languages: string[];
   };
     
@@ -92,17 +90,15 @@ export interface TherapistFormData {
   phone: string;
   licenseNumber: string;
   licenseType: Therapist['licenseType'];
-  employmentType: Therapist['employmentType'];
   timezone?: string;
   adminNotes?: string;
-  education?: TherapistEducation[];
-  certifications?: Omit<TherapistCertification, 'id' | 'status'>[];
+  education?: string;
+  certifications?: string;
   preferences: Therapist['preferences'];
 }
 
 export interface TherapistFilters {
   status?: Therapist['status'];
-  employmentType?: Therapist['employmentType'];
   licenseType?: Therapist['licenseType'];
   search?: string; // Added 'search' field that API expects
   searchQuery?: string; // Keep for backward compatibility
@@ -183,13 +179,6 @@ export const LICENSE_TYPES = [
   { value: 'psychiatrist', label: 'Psikiater' },
   { value: 'counselor', label: 'Konselor' },
   { value: 'hypnotherapist', label: 'Hipnoterapis' }
-] as const;
-
-export const EMPLOYMENT_TYPES = [
-  { value: 'full_time', label: 'Penuh Waktu' },
-  { value: 'part_time', label: 'Paruh Waktu' },
-  { value: 'contract', label: 'Kontrak' },
-  { value: 'freelance', label: 'Freelance' }
 ] as const;
 
 export const THERAPIST_STATUS = [

@@ -180,14 +180,6 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                     <p className="mt-1 text-sm text-gray-900">{therapistData.licenseNumber}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Spesialisasi</label>
-                    <p className="mt-1 text-sm text-gray-900">{therapistData.specializations.map(id => getSpecializationNameById(id)).join(', ')}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Tahun Pengalaman</label>
-                    <p className="mt-1 text-sm text-gray-900">{therapistData.yearsOfExperience} tahun</p>
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium text-gray-700">Pendidikan</label>
                     <div className="mt-1 text-sm text-gray-900">
                       {therapistData.education.map((edu, index) => (
@@ -220,12 +212,6 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700">Klien Aktif</span>
                       <span className="text-2xl font-bold text-blue-600">{therapistData.currentLoad}</span>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Maksimal Klien</span>
-                      <span className="text-2xl font-bold text-green-600">{therapistData.maxClients}</span>
                     </div>
                   </div>
                 </div>

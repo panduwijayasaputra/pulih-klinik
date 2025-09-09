@@ -1,12 +1,12 @@
-# Smart Therapy API Endpoints
+# Pulih Klinik API Endpoints
 
 ## Overview
 
-This document outlines all the API endpoints required for the Smart Therapy Management System backend, based on analysis of the frontend codebase.
+This document outlines all the API endpoints required for the Pulih Klinik Management System backend, based on analysis of the frontend codebase.
 
 ## Base URL
 ```
-https://api.smarttherapy.com/v1
+https://api.pulihklinik.com/v1
 ```
 
 ## Authentication
@@ -1497,4 +1497,4 @@ Webhook endpoints:
 
 ---
 
-*This API specification covers all endpoints required by the Smart Therapy Management System frontend.*
+*This API specification covers all endpoints required by the Pulih Klinik Management System frontend.*

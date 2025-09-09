@@ -66,7 +66,7 @@ export const RegisterFlow: React.FC = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Registrasi Berhasil!</h2>
             <p className="text-gray-600 mb-6">
-              Akun Anda telah berhasil dibuat. Silakan login untuk melengkapi setup klinik dan memulai menggunakan Smart Therapy.
+              Akun Anda telah berhasil dibuat. Silakan login untuk melengkapi setup klinik dan memulai menggunakan Pulih Klinik.
             </p>
             <div className="space-y-3">
               <Button

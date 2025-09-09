@@ -43,9 +43,9 @@ export default function HomePage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary-600 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">TP</span>
+                <span className="text-white font-bold text-sm">PK</span>
               </div>
-              <span className="text-xl font-semibold text-gray-900">Terapintar</span>
+              <span className="text-xl font-semibold text-gray-900">Pulih Klinik</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
@@ -423,7 +423,7 @@ export default function HomePage() {
       <section className="py-20 bg-white" id="cara-kerja">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Mengapa Anda akan menyukai Terapintar
+            Mengapa Anda akan menyukai Pulih Klinik
           </h2>
           <p className="text-lg text-gray-600 mb-16 max-w-3xl mx-auto">
             Platform yang dirancang khusus untuk kebutuhan terapis Indonesia dengan pendekatan yang mudah dan efektif.
@@ -763,7 +763,7 @@ export default function HomePage() {
             Dipercaya oleh Tim Marketing
           </h2>
           <p className="text-lg text-gray-600 mb-16 max-w-3xl mx-auto">
-            Ribuan terapis Indonesia telah mempercayai Smart Therapy untuk meningkatkan efektivitas praktik mereka.
+            Ribuan terapis Indonesia telah mempercayai Pulih Klinik untuk meningkatkan efektivitas praktik mereka.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -848,7 +848,7 @@ export default function HomePage() {
       <section className="py-20 bg-gradient-to-r from-primary-600 to-indigo-600">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Setup Terapintar dalam 2 Menit
+            Setup Pulih Klinik dalam 2 Menit
           </h2>
           <p className="text-lg text-primary-100 mb-8">
             Mulai transformasi praktik terapi Anda hari ini dengan platform yang dirancang khusus untuk terapis Indonesia.
@@ -915,12 +915,12 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-primary-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">TP</span>
+                  <span className="text-white font-bold text-sm">PK</span>
                 </div>
-                <span className="text-xl font-semibold text-gray-900">Terapintar</span>
+                <span className="text-xl font-semibold text-gray-900">Pulih Klinik</span>
               </div>
               <p className="text-gray-600 text-sm">
-                © 2025 Terapintar.<br />
+                © 2025 Pulih Klinik.<br />
                 Semua Hak Dilindungi.
               </p>
             </div>

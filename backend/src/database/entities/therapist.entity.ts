@@ -23,13 +23,6 @@ export enum TherapistStatus {
   PENDING_SETUP = 'pending_setup',
 }
 
-export enum EmploymentType {
-  FULL_TIME = 'full_time',
-  PART_TIME = 'part_time',
-  CONTRACT = 'contract',
-  FREELANCE = 'freelance',
-}
-
 @Entity({ tableName: 'therapists' })
 @Unique({ properties: ['clinic', 'licenseNumber'] })
 export class Therapist {
@@ -59,8 +52,7 @@ export class Therapist {
   @Property({ type: 'varchar', length: 50 })
   licenseType!: LicenseType;
 
-
-  // Status & employment
+  // Status
   @Property({
     type: 'varchar',
     length: 20,
@@ -68,12 +60,8 @@ export class Therapist {
   })
   status: TherapistStatus = TherapistStatus.PENDING_SETUP;
 
-  @Property({ type: 'varchar', length: 20 })
-  employmentType!: EmploymentType;
-
   @Property({ type: 'date' })
   joinDate!: Date;
-
 
   @Property({ type: 'integer', default: 0 })
   currentLoad: number = 0;
@@ -82,20 +70,16 @@ export class Therapist {
   @Property({ type: 'varchar', length: 50, default: 'Asia/Jakarta' })
   timezone: string = 'Asia/Jakarta';
 
+  // Education and certifications (stored as text)
+  @Property({ type: 'text', nullable: true })
+  education?: string;
 
-  @Property({
-    type: 'integer',
-    default: 15,
-    comment: 'Break between sessions in minutes',
-  })
-  breakBetweenSessions: number = 15;
-
-
+  @Property({ type: 'text', nullable: true })
+  certifications?: string;
 
   // Admin notes
   @Property({ type: 'text', nullable: true })
   adminNotes?: string;
-
 
   @Property({ type: 'timestamp', defaultRaw: 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();

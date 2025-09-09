@@ -1,6 +1,6 @@
 # Frontend Consistency Rules
 
-This document defines the standards and patterns for maintaining consistency across the Smart Therapy frontend application. All new features must follow these rules to ensure a cohesive user experience and maintainable codebase.
+This document defines the standards and patterns for maintaining consistency across the Pulih Klinik frontend application. All new features must follow these rules to ensure a cohesive user experience and maintainable codebase.
 
 ## Table of Contents
 
