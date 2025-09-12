@@ -9,10 +9,8 @@ import {
   Max,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import {
-  LicenseType,
-  TherapistStatus,
-} from '../../database/entities/therapist.entity';
+import { LicenseType } from '../../database/entities/therapist.entity';
+import { UserStatus } from 'src/common/enums';
 
 export class TherapistQueryDto {
   @ApiProperty({
@@ -52,16 +50,16 @@ export class TherapistQueryDto {
 
   @ApiProperty({
     description: 'Filter by therapist status',
-    enum: TherapistStatus,
-    example: TherapistStatus.ACTIVE,
+    enum: UserStatus,
+    example: UserStatus.ACTIVE,
     required: false,
   })
   @IsOptional()
-  @IsEnum(TherapistStatus, {
+  @IsEnum(UserStatus, {
     message:
-      'Status must be one of: active, inactive, on_leave, suspended, pending_setup',
+      'Status must be one of: active, inactive, on_leave, suspended, pending_setup, pending_verification, disabled, deleted',
   })
-  status?: TherapistStatus;
+  status?: UserStatus;
 
   @ApiProperty({
     description: 'Filter by license type',
@@ -102,25 +100,16 @@ export class TherapistQueryDto {
 
   @ApiProperty({
     description: 'Sort field',
-    enum: [
-      'fullName',
-      'joinDate',
-      'yearsOfExperience',
-      'currentLoad',
-      'status',
-    ],
-    example: 'fullName',
+    enum: ['name', 'joinDate', 'yearsOfExperience', 'currentLoad', 'status'],
+    example: 'name',
     required: false,
   })
   @IsOptional()
-  @IsEnum(
-    ['fullName', 'joinDate', 'yearsOfExperience', 'currentLoad', 'status'],
-    {
-      message:
-        'Sort by must be one of: fullName, joinDate, yearsOfExperience, currentLoad, status',
-    },
-  )
-  sortBy?: string = 'fullName';
+  @IsEnum(['name', 'joinDate', 'yearsOfExperience', 'currentLoad', 'status'], {
+    message:
+      'Sort by must be one of: name, joinDate, yearsOfExperience, currentLoad, status',
+  })
+  sortBy?: string = 'name';
 
   @ApiProperty({
     description: 'Sort direction',

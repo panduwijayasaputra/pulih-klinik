@@ -9,12 +9,17 @@ import { User } from '../database/entities/user.entity';
 import { AuthService } from '../auth/auth.service';
 import { UpdateProfileDto } from './dto';
 import { ChangePasswordDto } from '../common/dto';
-import { UserRole, UserRoleType } from '../common/enums';
+import {
+  UserRole,
+  UserRoleType,
+  UserStatus,
+  UserStatusHelper,
+} from '../common/enums';
 
 export interface UserProfileResponse {
   id: string;
   email: string;
-  isActive: boolean;
+  status: UserStatus;
   profile: {
     id: string;
     name: string;
@@ -47,7 +52,7 @@ export class UsersService {
   async getUserProfile(userId: string): Promise<UserProfileResponse> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['profile', 'roles', 'clinic'] },
     );
 
@@ -62,7 +67,7 @@ export class UsersService {
     return {
       id: user.id,
       email: user.email,
-      isActive: user.isActive,
+      status: user.status,
       profile: {
         id: user.profile.id,
         name: user.profile.name,
@@ -92,7 +97,7 @@ export class UsersService {
   ): Promise<{ message: string; profile: UserProfileResponse['profile'] }> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['profile'] },
     );
 
@@ -164,7 +169,7 @@ export class UsersService {
   ): Promise<boolean> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['roles', 'clinic'] },
     );
 
@@ -206,7 +211,7 @@ export class UsersService {
   ): Promise<boolean> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['roles'] },
     );
 
@@ -233,7 +238,7 @@ export class UsersService {
   async getUserClinicIds(userId: string): Promise<string[]> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['roles', 'clinic'] },
     );
 
@@ -305,7 +310,7 @@ export class UsersService {
       .map((user) => ({
         id: user.id,
         email: user.email,
-        isActive: user.isActive,
+        status: user.status,
         profile: {
           id: user.profile!.id,
           name: user.profile!.name,
@@ -331,6 +336,46 @@ export class UsersService {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async updateUserStatus(
+    userId: string,
+    status: UserStatus,
+    reason?: string,
+  ): Promise<{
+    message: string;
+    user: {
+      id: string;
+      email: string;
+      status: UserStatus;
+    };
+  }> {
+    const user = await this.em.findOne(User, { id: userId });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Update user status
+    user.status = status;
+    user.updatedAt = new Date();
+
+    await this.em.persistAndFlush(user);
+
+    const action = UserStatusHelper.isActive(status)
+      ? 'activated'
+      : 'deactivated';
+    const message = reason
+      ? `User account ${action}. Reason: ${reason}`
+      : `User account ${action} successfully`;
+
+    return {
+      message,
+      user: {
+        id: user.id,
+        email: user.email,
+        status: user.status,
+      },
     };
   }
 }

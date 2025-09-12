@@ -3,13 +3,14 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
-import {
-  Therapist,
-  TherapistStatus,
-} from '../database/entities/therapist.entity';
+import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
+import { Therapist } from '../database/entities/therapist.entity';
 import { User } from '../database/entities/user.entity';
+import { UserProfile } from '../database/entities/user-profile.entity';
 import { Clinic } from '../database/entities/clinic.entity';
 import { Client } from '../database/entities/client.entity';
 import {
@@ -17,7 +18,7 @@ import {
   AssignmentStatus,
 } from '../database/entities/client-therapist-assignment.entity';
 import { UserRole as UserRoleEntity } from '../database/entities/user-role.entity';
-import { UserRole } from '../common/enums';
+import { UserRole, UserStatus } from '../common/enums';
 import {
   CreateTherapistDto,
   UpdateTherapistDto,
@@ -29,20 +30,16 @@ import { EmailService } from '../lib/email/email.service';
 
 export interface TherapistResponse {
   id: string;
-  clinic: {
-    id: string;
-    name: string;
-  };
-  user: {
-    id: string;
-    email: string;
-  };
-  fullName: string;
-  phone: string;
+  clinicId: string;
+  clinicName: string;
+  userId: string;
+  email: string;
+  name: string;
+  phone?: string;
   avatarUrl?: string;
   licenseNumber: string;
   licenseType: string;
-  status: string;
+  status: UserStatus;
   joinDate: Date;
   currentLoad: number;
   timezone: string;
@@ -55,6 +52,8 @@ export interface TherapistResponse {
 
 @Injectable()
 export class TherapistsService {
+  private readonly logger = new Logger(TherapistsService.name);
+
   constructor(
     private readonly em: EntityManager,
     private readonly emailService: EmailService,
@@ -80,7 +79,7 @@ export class TherapistsService {
     }
 
     const therapist = await this.em.findOne(Therapist, whereConditions, {
-      populate: ['user'],
+      populate: ['user', 'user.profile', 'clinic'],
     });
 
     if (!therapist) {
@@ -103,13 +102,50 @@ export class TherapistsService {
 
     await this.em.persistAndFlush(therapist.user);
 
-    // TODO: Send actual email with verification code
-    // For now, we'll just return success
-    // In production, you would integrate with an email service like SendGrid, AWS SES, etc.
+    // For therapists, send setup email instead of verification code
+    if (therapist.user.status === UserStatus.PENDING_SETUP) {
+      console.log('Generating setup token for therapist:', therapist.id);
+      // Generate new setup token and link
+      const setupToken = crypto.randomBytes(32).toString('hex');
+      const setupExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    return {
-      message: `Verification code sent to ${therapist.user.email}. Code: ${verificationCode} (This is for development only)`,
-    };
+      console.log('Generated token:', setupToken.substring(0, 10) + '...');
+      console.log('Token expires at:', setupExpires.toISOString());
+
+      // Update user with new setup token
+      therapist.user.passwordResetToken = setupToken;
+      therapist.user.passwordResetExpires = setupExpires;
+      await this.em.persistAndFlush(therapist.user);
+
+      console.log('Token saved to database for user:', therapist.user.email);
+
+      // Generate setup link
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const setupLink = `${frontendUrl}/therapist/setup?token=${setupToken}`;
+
+      // Send therapist setup email
+      await this.emailService.sendTherapistSetupEmail({
+        email: therapist.user.email,
+        name: therapist.user.profile?.name || 'Therapist',
+        setupLink: setupLink,
+        clinicName: therapist.clinic.name,
+      });
+
+      return {
+        message: `Setup email sent to ${therapist.user.email}. Please check your email for the setup link.`,
+      };
+    } else {
+      // For other cases, send verification email
+      await this.emailService.sendVerificationEmail({
+        email: therapist.user.email,
+        name: therapist.user.profile?.name || 'Therapist',
+        code: verificationCode,
+      });
+
+      return {
+        message: `Verification code sent to ${therapist.user.email}. Code: ${verificationCode} (This is for development only)`,
+      };
+    }
   }
 
   /**
@@ -150,19 +186,31 @@ export class TherapistsService {
       }
 
       // Generate verification code for email verification
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationCode = Math.floor(
+        100000 + Math.random() * 900000,
+      ).toString();
       const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       // Create user with therapist role
       const user = new User();
       user.email = createTherapistDto.email;
-      user.isActive = false; // Inactive until email verified
+      user.status = UserStatus.PENDING_SETUP; // Pending setup until email verified
       user.emailVerified = false; // Not verified yet
       user.passwordHash = 'temp-password-hash'; // Temporary password hash
       user.emailVerificationCode = verificationCode;
       user.emailVerificationExpires = verificationExpires;
 
       await this.em.persistAndFlush(user);
+
+      // Create user profile
+      const userProfile = new UserProfile();
+      userProfile.userId = user.id;
+      userProfile.name = createTherapistDto.fullName;
+      userProfile.phone = createTherapistDto.phone;
+      userProfile.avatarUrl = createTherapistDto.avatarUrl;
+      userProfile.user = user;
+
+      await this.em.persistAndFlush(userProfile);
 
       // Create therapist role for the user
       const role = new UserRoleEntity();
@@ -176,9 +224,6 @@ export class TherapistsService {
       const therapist = new Therapist();
       therapist.clinic = clinic;
       therapist.user = user;
-      therapist.fullName = createTherapistDto.fullName;
-      therapist.phone = createTherapistDto.phone;
-      therapist.avatarUrl = createTherapistDto.avatarUrl;
       therapist.licenseNumber = createTherapistDto.licenseNumber;
       therapist.licenseType = createTherapistDto.licenseType;
       therapist.joinDate = new Date(createTherapistDto.joinDate);
@@ -186,18 +231,32 @@ export class TherapistsService {
       therapist.education = createTherapistDto.education;
       therapist.certifications = createTherapistDto.certifications;
       therapist.adminNotes = createTherapistDto.adminNotes;
-      therapist.status = TherapistStatus.PENDING_SETUP;
+      // Status is now managed by User.status field
 
       await this.em.persistAndFlush(therapist);
 
       // Commit transaction
       await this.em.commit();
 
-      // Send verification email to therapist
-      await this.emailService.sendVerificationEmail({
+      // Generate password setup token and link
+      const setupToken = crypto.randomBytes(32).toString('hex');
+      const setupExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Update user with setup token
+      user.passwordResetToken = setupToken;
+      user.passwordResetExpires = setupExpires;
+      await this.em.persistAndFlush(user);
+
+      // Generate setup link
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const setupLink = `${frontendUrl}/therapist/setup?token=${setupToken}`;
+
+      // Send therapist setup email
+      await this.emailService.sendTherapistSetupEmail({
         email: createTherapistDto.email,
-        name: createTherapistDto.fullName,
-        code: verificationCode,
+        name: userProfile.name,
+        setupLink: setupLink,
+        clinicName: clinic.name,
       });
 
       // Return the created therapist
@@ -255,9 +314,6 @@ export class TherapistsService {
     const therapist = new Therapist();
     therapist.clinic = clinic;
     therapist.user = user;
-    therapist.fullName = createTherapistDto.fullName;
-    therapist.phone = createTherapistDto.phone;
-    therapist.avatarUrl = createTherapistDto.avatarUrl;
     therapist.licenseNumber = createTherapistDto.licenseNumber;
     therapist.licenseType = createTherapistDto.licenseType;
     therapist.joinDate = new Date(createTherapistDto.joinDate);
@@ -306,7 +362,7 @@ export class TherapistsService {
     }
 
     const therapist = await this.em.findOne(Therapist, whereConditions, {
-      populate: ['clinic', 'user'],
+      populate: ['clinic', 'user', 'user.profile'],
     });
 
     if (!therapist) {
@@ -332,7 +388,7 @@ export class TherapistsService {
     const {
       page = 1,
       limit = 20,
-      sortBy = 'fullName',
+      sortBy = 'name',
       sortDirection = 'ASC',
     } = query;
     const offset = (page - 1) * limit;
@@ -342,8 +398,8 @@ export class TherapistsService {
 
     if (query.search) {
       whereConditions.$or = [
-        { fullName: { $ilike: `%${query.search}%` } },
-        { phone: { $ilike: `%${query.search}%` } },
+        { 'user.profile.name': { $ilike: `%${query.search}%` } },
+        { 'user.profile.phone': { $ilike: `%${query.search}%` } },
         { licenseNumber: { $ilike: `%${query.search}%` } },
       ];
     }
@@ -362,21 +418,40 @@ export class TherapistsService {
 
     // Note: hasAvailableCapacity filtering will be done post-query due to MikroORM limitations
 
+    // Handle sorting - map simplified field names to actual database fields
+    let orderBy: any = {};
+    if (sortBy === 'name') {
+      // For name sorting, we'll sort by therapist ID and then sort in memory
+      orderBy = { id: sortDirection };
+    } else {
+      orderBy = { [sortBy]: sortDirection };
+    }
+
     // Standard query
     const [therapists, totalCount] = await this.em.findAndCount(
       Therapist,
       whereConditions,
       {
-        populate: ['clinic', 'user'],
-        orderBy: { [sortBy]: sortDirection },
+        populate: ['clinic', 'user', 'user.profile'],
+        orderBy,
         limit,
         offset,
       },
     );
 
     // Apply hasAvailableCapacity filter if specified
-    const filteredTherapists = therapists;
+    let filteredTherapists = therapists;
     const total = totalCount;
+
+    // Apply in-memory sorting for name if needed
+    if (sortBy === 'name') {
+      filteredTherapists = therapists.sort((a, b) => {
+        const nameA = a.user.profile?.name || '';
+        const nameB = b.user.profile?.name || '';
+        const comparison = nameA.localeCompare(nameB);
+        return sortDirection === 'ASC' ? comparison : -comparison;
+      });
+    }
 
     const therapistResponses = filteredTherapists.map((therapist) =>
       this.mapToResponse(therapist),
@@ -404,7 +479,9 @@ export class TherapistsService {
       whereConditions.clinic = clinicId;
     }
 
-    const therapist = await this.em.findOne(Therapist, whereConditions);
+    const therapist = await this.em.findOne(Therapist, whereConditions, {
+      populate: ['user', 'user.profile'],
+    });
 
     if (!therapist) {
       throw new NotFoundException('Therapist not found');
@@ -424,15 +501,21 @@ export class TherapistsService {
       }
     }
 
-    // Update fields
+    // Update user profile fields
     if (updateTherapistDto.fullName !== undefined) {
-      therapist.fullName = updateTherapistDto.fullName;
+      if (therapist.user.profile) {
+        therapist.user.profile.name = updateTherapistDto.fullName;
+      }
     }
     if (updateTherapistDto.phone !== undefined) {
-      therapist.phone = updateTherapistDto.phone;
+      if (therapist.user.profile) {
+        therapist.user.profile.phone = updateTherapistDto.phone;
+      }
     }
     if (updateTherapistDto.avatarUrl !== undefined) {
-      therapist.avatarUrl = updateTherapistDto.avatarUrl;
+      if (therapist.user.profile) {
+        therapist.user.profile.avatarUrl = updateTherapistDto.avatarUrl;
+      }
     }
     if (updateTherapistDto.licenseNumber !== undefined) {
       therapist.licenseNumber = updateTherapistDto.licenseNumber;
@@ -441,7 +524,7 @@ export class TherapistsService {
       therapist.licenseType = updateTherapistDto.licenseType;
     }
     if (updateTherapistDto.status !== undefined) {
-      therapist.status = updateTherapistDto.status;
+      therapist.user.status = updateTherapistDto.status;
     }
     if (updateTherapistDto.joinDate !== undefined) {
       therapist.joinDate = new Date(updateTherapistDto.joinDate);
@@ -463,7 +546,17 @@ export class TherapistsService {
     }
 
     therapist.updatedAt = new Date();
-    await this.em.persistAndFlush(therapist);
+
+    // Persist both therapist and user profile if profile was updated
+    if (
+      updateTherapistDto.fullName !== undefined ||
+      updateTherapistDto.phone !== undefined ||
+      updateTherapistDto.avatarUrl !== undefined
+    ) {
+      await this.em.persistAndFlush([therapist, therapist.user.profile]);
+    } else {
+      await this.em.persistAndFlush(therapist);
+    }
 
     return this.getTherapistById(therapistId, clinicId);
   }
@@ -487,8 +580,8 @@ export class TherapistsService {
       throw new NotFoundException('Therapist not found');
     }
 
-    const oldStatus = therapist.status;
-    therapist.status = updateStatusDto.status;
+    const oldStatus = therapist.user.status;
+    therapist.user.status = updateStatusDto.status;
 
     // Add status change to admin notes if reason provided
     if (updateStatusDto.reason) {
@@ -560,8 +653,8 @@ export class TherapistsService {
       );
     }
 
-    // Soft delete by setting status to inactive
-    therapist.status = TherapistStatus.INACTIVE;
+    // Soft delete by setting user status to inactive
+    therapist.user.status = UserStatus.INACTIVE;
     therapist.updatedAt = new Date();
 
     // Add deletion note
@@ -625,7 +718,7 @@ export class TherapistsService {
       throw new NotFoundException('Therapist not found');
     }
 
-    if (therapist.status !== TherapistStatus.ACTIVE) {
+    if (therapist.user.status !== UserStatus.ACTIVE) {
       throw new BadRequestException('Therapist is not active');
     }
 
@@ -688,7 +781,14 @@ export class TherapistsService {
     const currentAssignment = await this.em.findOne(
       ClientTherapistAssignment,
       { id: currentAssignmentId },
-      { populate: ['client', 'therapist'] },
+      {
+        populate: [
+          'client',
+          'therapist',
+          'therapist.user',
+          'therapist.user.profile',
+        ],
+      },
     );
 
     if (!currentAssignment) {
@@ -707,7 +807,7 @@ export class TherapistsService {
       throw new NotFoundException('New therapist not found');
     }
 
-    if (newTherapist.status !== TherapistStatus.ACTIVE) {
+    if (newTherapist.user.status !== UserStatus.ACTIVE) {
       throw new BadRequestException('New therapist is not active');
     }
 
@@ -731,7 +831,7 @@ export class TherapistsService {
     newAssignment.assignedBy = transferredByUser;
     newAssignment.notes =
       notes ||
-      `Transferred from therapist ${currentAssignment.therapist.fullName}: ${transferReason}`;
+      `Transferred from therapist ${currentAssignment.therapist.user.profile?.name || 'Unknown'}: ${transferReason}`;
     newAssignment.status = AssignmentStatus.ACTIVE;
 
     await this.em.persistAndFlush([currentAssignment, newAssignment]);
@@ -910,10 +1010,11 @@ export class TherapistsService {
       Therapist,
       {
         clinic: clinicId,
-        status: TherapistStatus.ACTIVE,
+        user: { status: UserStatus.ACTIVE },
       },
       {
         orderBy: { currentLoad: 'ASC' },
+        populate: ['user'],
       },
     );
 
@@ -1236,20 +1337,16 @@ export class TherapistsService {
   private mapToResponse(therapist: Therapist): TherapistResponse {
     return {
       id: therapist.id,
-      clinic: {
-        id: therapist.clinic.id,
-        name: therapist.clinic.name,
-      },
-      user: {
-        id: therapist.user.id,
-        email: therapist.user.email,
-      },
-      fullName: therapist.fullName,
-      phone: therapist.phone,
-      avatarUrl: therapist.avatarUrl,
+      clinicId: therapist.clinic.id,
+      clinicName: therapist.clinic.name,
+      userId: therapist.user.id,
+      email: therapist.user.email,
+      name: therapist.user.profile?.name || 'Unknown User',
+      phone: therapist.user.profile?.phone,
+      avatarUrl: therapist.user.profile?.avatarUrl,
       licenseNumber: therapist.licenseNumber,
       licenseType: therapist.licenseType,
-      status: therapist.status,
+      status: therapist.user.status,
       joinDate: therapist.joinDate,
       currentLoad: therapist.currentLoad,
       timezone: therapist.timezone,
@@ -1258,6 +1355,183 @@ export class TherapistsService {
       adminNotes: therapist.adminNotes,
       createdAt: therapist.createdAt,
       updatedAt: therapist.updatedAt,
+    };
+  }
+
+  /**
+   * Verify therapist setup token
+   */
+  async verifySetupToken(token: string): Promise<{
+    valid: boolean;
+    therapist?: {
+      id: string;
+      name: string;
+      email: string;
+      clinicName: string;
+    };
+    error?: string;
+  }> {
+    try {
+      console.log('Verifying setup token:', token.substring(0, 10) + '...');
+      console.log('Current time:', new Date().toISOString());
+
+      // Find user with setup token (without expiration check first)
+      // Note: Therapist users are created with PENDING_SETUP status until setup is completed
+      const user = await this.em.findOne(User, {
+        passwordResetToken: token,
+        status: UserStatus.PENDING_SETUP, // Therapists are in pending setup until completed
+      });
+
+      console.log('Found user:', user ? user.email : 'null');
+      if (user) {
+        console.log(
+          'Token expires at:',
+          user.passwordResetExpires?.toISOString(),
+        );
+        console.log(
+          'Token is valid:',
+          user.passwordResetExpires && user.passwordResetExpires > new Date(),
+        );
+
+        // Check expiration manually
+        if (
+          user.passwordResetExpires &&
+          user.passwordResetExpires <= new Date()
+        ) {
+          console.log('Token is expired');
+          return {
+            valid: false,
+            error: 'Setup token has expired',
+          };
+        }
+      }
+
+      if (!user) {
+        return {
+          valid: false,
+          error: 'Invalid setup token',
+        };
+      }
+
+      // Find therapist profile for this user
+      const therapist = await this.em.findOne(
+        Therapist,
+        {
+          user: user.id,
+        },
+        {
+          populate: ['clinic', 'user', 'user.profile'],
+        },
+      );
+
+      if (!therapist) {
+        return {
+          valid: false,
+          error: 'No therapist profile found for this user',
+        };
+      }
+
+      // Check if therapist is in pending setup status
+      if (therapist.user.status !== UserStatus.PENDING_SETUP) {
+        return {
+          valid: false,
+          error: 'Therapist account is not in setup mode',
+        };
+      }
+
+      return {
+        valid: true,
+        therapist: {
+          id: therapist.id,
+          name: therapist.user.profile?.name || 'Unknown User',
+          email: user.email,
+          clinicName: therapist.clinic.name,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error verifying setup token:', error);
+      return {
+        valid: false,
+        error: 'Token verification failed',
+      };
+    }
+  }
+
+  /**
+   * Complete therapist setup with password
+   */
+  async completeSetup(
+    token: string,
+    password: string,
+    confirmPassword: string,
+  ): Promise<{ message: string; therapistId: string }> {
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    // Find user with valid setup token
+    // Note: Therapist users are created with PENDING_SETUP status until setup is completed
+    const user = await this.em.findOne(User, {
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: new Date() },
+      status: UserStatus.PENDING_SETUP, // Therapists are in pending setup until completed
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired setup token');
+    }
+
+    // Find therapist profile for this user
+    const therapist = await this.em.findOne(
+      Therapist,
+      {
+        user: user.id,
+      },
+      {
+        populate: ['user', 'user.profile'],
+      },
+    );
+
+    if (!therapist) {
+      throw new BadRequestException('No therapist profile found for this user');
+    }
+
+    // Check if therapist is in pending setup status
+    if (therapist.user.status !== UserStatus.PENDING_SETUP) {
+      throw new BadRequestException('Therapist account is not in setup mode');
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Update user password, clear reset token, verify email, and activate user and therapist
+    await this.em.transactional(async (em) => {
+      // Update user password, clear reset token, verify email, and activate user
+      await em.nativeUpdate(
+        User,
+        { id: user.id },
+        {
+          passwordHash: hashedPassword,
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
+          status: UserStatus.ACTIVE, // Activate the user account
+        },
+      );
+
+      // User status is already updated to ACTIVE above, no need to update therapist
+    });
+
+    this.logger.log(
+      `Therapist setup completed for user ${user.email} (therapist ID: ${therapist.id}) - email verified and account activated`,
+    );
+
+    return {
+      message:
+        'Therapist account setup completed successfully. You can now login.',
+      therapistId: therapist.id,
     };
   }
 }

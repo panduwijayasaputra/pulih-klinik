@@ -636,7 +636,7 @@ export class ClientsService {
         status: AssignmentStatus.ACTIVE,
       },
       {
-        populate: ['therapist'],
+        populate: ['therapist', 'therapist.user', 'therapist.user.profile'],
       },
     );
 
@@ -692,7 +692,7 @@ export class ClientsService {
             id: currentAssignment.id,
             therapist: {
               id: currentAssignment.therapist.id,
-              fullName: currentAssignment.therapist.fullName,
+              fullName: currentAssignment.therapist.user.profile?.name || 'Unknown User',
             },
             assignedDate: currentAssignment.assignedDate,
             status: currentAssignment.status,

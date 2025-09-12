@@ -32,6 +32,7 @@ import {
   RequireAdmin,
 } from '../auth/decorators';
 import { ParseUuidPipe } from '../common/pipes';
+import { ClinicStatus } from '../common/enums';
 import {
   ClinicsService,
   ClinicProfileResponse,
@@ -143,7 +144,7 @@ export class ClinicsController {
   @ApiQuery({
     name: 'status',
     required: false,
-    enum: ['active', 'inactive', 'suspended'],
+    enum: Object.values(ClinicStatus),
     description: 'Filter clinics by status',
     example: 'active',
   })

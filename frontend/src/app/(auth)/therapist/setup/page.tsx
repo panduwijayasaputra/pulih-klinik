@@ -24,18 +24,18 @@ function TherapistSetupContent() {
               <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Registration Link</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Link Registrasi Tidak Valid</h2>
               <p className="text-gray-600 mb-6">
-                The registration link appears to be invalid or incomplete. Please check your email for the correct link.
+                Link registrasi tampaknya tidak valid atau tidak lengkap. Silakan periksa email Anda untuk link yang benar.
               </p>
               <div className="space-y-3">
                 <Link href="/login">
                   <Button className="w-full">
-                    Go to Login
+                    Ke Halaman Login
                   </Button>
                 </Link>
                 <p className="text-sm text-gray-500">
-                  Need help? Contact your clinic administrator.
+                  Butuh bantuan? Hubungi administrator klinik Anda.
                 </p>
               </div>
             </CardContent>
@@ -53,18 +53,18 @@ function TherapistSetupContent() {
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <ShieldCheckIcon className="w-8 h-8 text-blue-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Registration</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Selesaikan Registrasi Anda</h1>
           <p className="text-gray-600">
-            Set your password to activate your therapist account
+            Atur kata sandi untuk mengaktifkan akun terapis Anda
           </p>
         </div>
 
         {/* Registration Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Password Setup</CardTitle>
+            <CardTitle>Pengaturan Kata Sandi</CardTitle>
             <p className="text-sm text-gray-600">
-              Create a secure password for your therapist account
+              Buat kata sandi yang aman untuk akun terapis Anda
             </p>
           </CardHeader>
           <CardContent>
@@ -81,13 +81,13 @@ function TherapistSetupContent() {
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-blue-800">
-                  Security Information
+                  Informasi Keamanan
                 </h3>
                 <div className="mt-2 text-sm text-blue-700">
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Your registration link is secure and can only be used once</li>
-                    <li>The link will expire after 24 hours for security</li>
-                    <li>After setting your password, you can login normally</li>
+                    <li>Link registrasi Anda aman dan hanya dapat digunakan sekali</li>
+                    <li>Link akan kedaluwarsa setelah 24 jam untuk keamanan</li>
+                    <li>Setelah mengatur kata sandi, Anda dapat login secara normal</li>
                   </ul>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export default function TherapistSetupPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        <span className="ml-2 text-gray-600">Loading...</span>
+        <span className="ml-2 text-gray-600">Memuat...</span>
       </div>
     }>
       <TherapistSetupContent />

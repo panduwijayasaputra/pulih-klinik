@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Therapist, TherapistAssignment, TherapistFilters, TherapistFormData } from '@/types/therapist';
-import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from '@/types/enums';
+import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum } from '@/types/enums';
+import { UserStatusEnum } from '@/types/status';
 import { TherapistAPI } from '@/lib/api/therapist';
 
 export const useTherapists = () => {
@@ -108,7 +109,7 @@ export const useTherapists = () => {
     }
   }, []);
 
-  const updateTherapistStatus = useCallback(async (therapistId: string, status: TherapistStatusEnum) => {
+  const updateTherapistStatus = useCallback(async (therapistId: string, status: UserStatusEnum) => {
     setIsLoading(true);
     setError(null);
     

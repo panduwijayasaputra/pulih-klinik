@@ -1,4 +1,5 @@
 import { SubscriptionTierEnum, UserRoleEnum } from './enums';
+import { UserStatusEnum, ClinicStatusEnum } from './status';
 
 type EnumValue<T> = T[keyof T];
 
@@ -19,7 +20,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  isActive: boolean;
+  status: UserStatusEnum; // Unified status (replaces isActive)
   roles: string[]; // Simplified to string array
   clinicId?: string;
   clinicName?: string;
@@ -30,7 +31,7 @@ export interface User {
 export interface Clinic {
   id: string;
   name: string;
-  isActive: boolean;
+  status: ClinicStatusEnum; // Unified status (replaces isActive)
   subscriptionTier?: string;
 }
 

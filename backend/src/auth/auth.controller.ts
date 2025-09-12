@@ -56,7 +56,7 @@ export class AuthController {
             id: '123e4567-e89b-12d3-a456-426614174000',
             email: 'user@example.com',
             name: 'John Doe',
-            isActive: true,
+            status: 'active',
             roles: [
               {
                 id: '456e7890-e89b-12d3-a456-426614174001',
@@ -260,7 +260,7 @@ export class AuthController {
           user: {
             id: '123e4567-e89b-12d3-a456-426614174000',
             email: 'user@example.com',
-            isActive: true,
+            status: 'active',
             roles: [
               {
                 id: '456e7890-e89b-12d3-a456-426614174001',

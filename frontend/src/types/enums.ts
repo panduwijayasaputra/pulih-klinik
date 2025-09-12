@@ -175,13 +175,7 @@ export enum TherapistLicenseTypeEnum {
   Hypnotherapist = 'hypnotherapist',
 }
 
-export enum TherapistStatusEnum {
-  Active = 'active',
-  Inactive = 'inactive',
-  OnLeave = 'on_leave',
-  Suspended = 'suspended',
-  PendingSetup = 'pending_setup',
-}
+// TherapistStatusEnum moved to unified UserStatusEnum in ./status.ts
 
 export enum EmploymentTypeEnum {
   FullTime = 'full_time',
@@ -297,13 +291,7 @@ export enum ConsultationFormTypeEnum {
   Minor = 'minor',
 }
 
-// Clinic status enum values
-export enum ClinicStatusEnum {
-  Active = 'active',
-  Suspended = 'suspended',
-  Pending = 'pending',
-  Inactive = 'inactive',
-}
+// ClinicStatusEnum moved to unified ClinicStatusEnum in ./status.ts
 
 
 

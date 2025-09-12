@@ -13,12 +13,12 @@ export default defineConfig({
   debug: environmentConfig.NODE_ENV === 'development',
   metadataProvider: TsMorphMetadataProvider,
   migrations: {
-    path: './src/database/migrations',
+    path: './dist/database/migrations',
     tableName: 'migrations',
     transactional: true,
   },
   seeder: {
-    path: './src/database/seeders',
+    path: './dist/database/seeders',
   },
   driverOptions: {
     connection: {

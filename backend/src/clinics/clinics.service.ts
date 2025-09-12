@@ -8,10 +8,7 @@ import { EntityManager } from '@mikro-orm/core';
 import { Clinic } from '../database/entities/clinic.entity';
 import { User } from '../database/entities/user.entity';
 import { SubscriptionTier } from '../database/entities/subscription-tier.entity';
-import {
-  Therapist,
-  TherapistStatus,
-} from '../database/entities/therapist.entity';
+import { Therapist } from '../database/entities/therapist.entity';
 import { Client, ClientStatus } from '../database/entities/client.entity';
 import { TherapySession } from '../database/entities/therapy-session.entity';
 import {
@@ -20,7 +17,7 @@ import {
   UpdateBrandingDto,
   UpdateSettingsDto,
 } from './dto';
-import { UserRole } from '../common/enums';
+import { UserRole, UserStatus, ClinicStatus } from '../common/enums';
 
 export interface ClinicProfileResponse {
   id: string;
@@ -46,7 +43,7 @@ export interface ClinicProfileResponse {
   pushNotifications: boolean;
 
   // Status & Subscription
-  status: 'active' | 'suspended' | 'pending' | 'inactive';
+  status: ClinicStatus;
   subscriptionTier: string | undefined;
   subscriptionExpires?: Date;
 
@@ -94,8 +91,7 @@ export class ClinicsService {
     clinic.website = createClinicDto.website || undefined;
     clinic.description = createClinicDto.description || undefined;
     clinic.workingHours = createClinicDto.workingHours || undefined;
-    clinic.status = 'pending'; // New clinics start as pending
-    clinic.isActive = true;
+    clinic.status = ClinicStatus.PENDING; // New clinics start as pending
 
     await this.em.persistAndFlush(clinic);
 
@@ -230,7 +226,7 @@ export class ClinicsService {
       User,
       {
         id: userId,
-        isActive: true,
+        status: UserStatus.ACTIVE,
       },
       { populate: ['roles', 'clinic'] },
     );
@@ -338,7 +334,7 @@ export class ClinicsService {
   async getUserAccessibleClinics(userId: string): Promise<string[]> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['roles', 'clinic'] },
     );
 
@@ -595,7 +591,7 @@ export class ClinicsService {
       this.em.count(Therapist, { clinic: clinicId }),
       this.em.count(Therapist, {
         clinic: clinicId,
-        status: TherapistStatus.ACTIVE,
+        user: { status: UserStatus.ACTIVE },
       }),
     ]);
 

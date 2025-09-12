@@ -1,5 +1,6 @@
 import { Entity, PrimaryKey, Property, ManyToOne } from '@mikro-orm/core';
 import { SubscriptionTier } from './subscription-tier.entity';
+import { ClinicStatus } from '../../common/enums/clinic-status.enum';
 
 @Entity({ tableName: 'clinics' })
 export class Clinic {
@@ -60,13 +61,9 @@ export class Clinic {
   @Property({
     type: 'varchar',
     length: 20,
-    default: 'pending',
-    check: "status IN ('active', 'suspended', 'pending', 'inactive')",
+    default: ClinicStatus.PENDING,
   })
-  status: 'active' | 'suspended' | 'pending' | 'inactive' = 'pending';
-
-  @Property({ type: 'boolean', default: true })
-  isActive: boolean = true;
+  status: ClinicStatus = ClinicStatus.PENDING;
 
   @ManyToOne(() => SubscriptionTier, { nullable: true })
   subscriptionTier?: SubscriptionTier;

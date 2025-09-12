@@ -4,6 +4,8 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { EntityManager } from '@mikro-orm/core';
 import { environmentConfig } from '../config/environment.config';
 import { User } from '../database/entities/user.entity';
+import { Therapist } from '../database/entities/therapist.entity';
+import { UserStatus } from '../common/enums';
 
 export interface JwtPayload {
   sub: string; // user id
@@ -20,7 +22,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
-  isActive: boolean;
+  status: UserStatus;
   roles: string[];
   clinicId?: string;
   clinicName?: string;
@@ -48,8 +50,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Validate user exists and is still active in database
     const user = await this.em.findOne(
       User,
-      { id: userId, email, isActive: true },
-      { populate: ['roles', 'clinic', 'profile'] },
+      { id: userId, email, status: UserStatus.ACTIVE },
+      { populate: ['roles', 'clinic', 'profile', 'therapist', 'therapist.clinic', 'therapist.clinic.subscriptionTier'] },
     );
 
     if (!user) {
@@ -66,16 +68,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       );
     }
 
+    // Get clinic info from user.clinic or fallback to therapist.clinic
+    const clinic = user.clinic || user.therapist.getItems()[0]?.clinic;
+
     // Return validated user with current database role information
     const authUser: AuthUser = {
       id: user.id,
       email: user.email,
       name: user.profile?.name || user.email.split('@')[0] || 'User',
-      isActive: user.isActive,
+      status: user.status,
       roles: user.roles.map((role) => role.role),
-      clinicId: user.clinic?.id,
-      clinicName: user.clinic?.name,
-      subscriptionTier: user.clinic?.subscriptionTier?.code,
+      clinicId: clinic?.id,
+      clinicName: clinic?.name,
+      subscriptionTier: clinic?.subscriptionTier?.code,
     };
 
     return authUser;

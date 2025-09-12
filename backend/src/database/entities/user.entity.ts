@@ -10,6 +10,8 @@ import {
 import { UserProfile } from './user-profile.entity';
 import { UserRole } from './user-role.entity';
 import { Clinic } from './clinic.entity';
+import { Therapist } from './therapist.entity';
+import { UserStatus } from '../../common/enums/user-status.enum';
 
 @Entity({ tableName: 'users' })
 export class User {
@@ -49,8 +51,12 @@ export class User {
   @Property({ type: 'timestamp', nullable: true })
   lastLogin?: Date;
 
-  @Property({ type: 'boolean', default: true })
-  isActive: boolean = true;
+  @Property({
+    type: 'varchar',
+    length: 20,
+    default: UserStatus.ACTIVE,
+  })
+  status: UserStatus = UserStatus.ACTIVE;
 
   @Property({ type: 'timestamp', defaultRaw: 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();
@@ -70,4 +76,7 @@ export class User {
 
   @OneToMany(() => UserRole, (role) => role.user)
   roles = new Collection<UserRole>(this);
+
+  @OneToMany(() => Therapist, (therapist) => therapist.user)
+  therapist = new Collection<Therapist>(this);
 }

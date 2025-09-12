@@ -15,13 +15,7 @@ export enum LicenseType {
   HYPNOTHERAPIST = 'hypnotherapist',
 }
 
-export enum TherapistStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ON_LEAVE = 'on_leave',
-  SUSPENDED = 'suspended',
-  PENDING_SETUP = 'pending_setup',
-}
+// TherapistStatus enum moved to UserStatus in common/enums/user-status.enum.ts
 
 @Entity({ tableName: 'therapists' })
 @Unique({ properties: ['clinic', 'licenseNumber'] })
@@ -35,15 +29,7 @@ export class Therapist {
   @ManyToOne(() => User, { onDelete: 'cascade' })
   user!: User;
 
-  // Basic info
-  @Property({ type: 'varchar', length: 255 })
-  fullName!: string;
-
-  @Property({ type: 'varchar', length: 20 })
-  phone!: string;
-
-  @Property({ type: 'varchar', length: 500, nullable: true })
-  avatarUrl?: string;
+  // Basic info is now stored in UserProfile
 
   // Professional info
   @Property({ type: 'varchar', length: 100 })
@@ -52,13 +38,7 @@ export class Therapist {
   @Property({ type: 'varchar', length: 50 })
   licenseType!: LicenseType;
 
-  // Status
-  @Property({
-    type: 'varchar',
-    length: 20,
-    default: TherapistStatus.PENDING_SETUP,
-  })
-  status: TherapistStatus = TherapistStatus.PENDING_SETUP;
+  // Status is now managed by User.status field
 
   @Property({ type: 'date' })
   joinDate!: Date;

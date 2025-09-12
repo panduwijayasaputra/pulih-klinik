@@ -1,7 +1,7 @@
 import { ApiProperty, PartialType, OmitType } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString, MaxLength } from 'class-validator';
 import { CreateTherapistDto } from './create-therapist.dto';
-import { TherapistStatus } from '../../database/entities/therapist.entity';
+import { UserStatus } from '../../common/enums';
 
 // Omit email since it cannot be updated
 export class UpdateTherapistDto extends PartialType(
@@ -9,16 +9,16 @@ export class UpdateTherapistDto extends PartialType(
 ) {
   @ApiProperty({
     description: 'Therapist status',
-    enum: TherapistStatus,
-    example: TherapistStatus.ACTIVE,
+    enum: UserStatus,
+    example: UserStatus.ACTIVE,
     required: false,
   })
   @IsOptional()
-  @IsEnum(TherapistStatus, {
+  @IsEnum(UserStatus, {
     message:
-      'Status must be one of: active, inactive, on_leave, suspended, pending_setup',
+      'Status must be one of: active, inactive, on_leave, suspended, pending_setup, pending_verification, disabled, deleted',
   })
-  status?: TherapistStatus;
+  status?: UserStatus;
 
   @ApiProperty({
     description: 'Current client load (updated automatically by system)',
@@ -33,14 +33,14 @@ export class UpdateTherapistDto extends PartialType(
 export class UpdateTherapistStatusDto {
   @ApiProperty({
     description: 'New status for the therapist',
-    enum: TherapistStatus,
-    example: TherapistStatus.ACTIVE,
+    enum: UserStatus,
+    example: UserStatus.ACTIVE,
   })
-  @IsEnum(TherapistStatus, {
+  @IsEnum(UserStatus, {
     message:
-      'Status must be one of: active, inactive, on_leave, suspended, pending_setup',
+      'Status must be one of: active, inactive, on_leave, suspended, pending_setup, pending_verification, disabled, deleted',
   })
-  status!: TherapistStatus;
+  status!: UserStatus;
 
   @ApiProperty({
     description: 'Reason for status change',

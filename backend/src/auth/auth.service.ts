@@ -9,7 +9,9 @@ import { EntityManager } from '@mikro-orm/core';
 import * as bcryptjs from 'bcryptjs';
 import * as crypto from 'crypto';
 import { User } from '../database/entities/user.entity';
+import { Therapist } from '../database/entities/therapist.entity';
 import { JwtPayload } from './jwt.strategy';
+import { UserStatus, UserStatusHelper } from '../common/enums';
 
 export interface LoginResult {
   accessToken: string;
@@ -18,7 +20,7 @@ export interface LoginResult {
     id: string;
     email: string;
     name: string;
-    isActive: boolean;
+    status: UserStatus;
     roles: string[];
     clinicId?: string;
     clinicName?: string;
@@ -41,7 +43,7 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.em.findOne(
       User,
-      { email, isActive: true },
+      { email, status: UserStatus.ACTIVE },
       { populate: ['roles', 'clinic', 'clinic.subscriptionTier', 'profile'] },
     );
 
@@ -65,7 +67,7 @@ export class AuthService {
     const user = await this.em.findOne(
       User,
       { email },
-      { populate: ['roles', 'clinic', 'clinic.subscriptionTier', 'profile'] },
+      { populate: ['roles', 'clinic', 'clinic.subscriptionTier', 'profile', 'therapist', 'therapist.clinic', 'therapist.clinic.subscriptionTier'] },
     );
 
     if (!user) {
@@ -83,8 +85,8 @@ export class AuthService {
       return { user: null, error: 'Email not verified' };
     }
 
-    // Check if user is active
-    if (!user.isActive) {
+    // Check if user can login
+    if (!UserStatusHelper.canLogin(user.status)) {
       return { user: null, error: 'Account disabled' };
     }
 
@@ -111,13 +113,16 @@ export class AuthService {
 
     const user = validation.user;
 
+    // Get clinic info from user.clinic or fallback to therapist.clinic
+    const clinic = user.clinic || user.therapist.getItems()[0]?.clinic;
+
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       roles: user.roles.map((role) => role.role),
-      clinicId: user.clinic?.id,
-      clinicName: user.clinic?.name,
-      subscriptionTier: user.clinic?.subscriptionTier?.code,
+      clinicId: clinic?.id,
+      clinicName: clinic?.name,
+      subscriptionTier: clinic?.subscriptionTier?.code,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -135,11 +140,11 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.profile?.name || 'Unknown User',
-        isActive: user.isActive,
+        status: user.status,
         roles: user.roles.map((role) => role.role),
-        clinicId: user.clinic?.id,
-        clinicName: user.clinic?.name,
-        subscriptionTier: user.clinic?.subscriptionTier?.code,
+        clinicId: clinic?.id,
+        clinicName: clinic?.name,
+        subscriptionTier: clinic?.subscriptionTier?.code,
       },
     };
   }
@@ -151,7 +156,7 @@ export class AuthService {
       // Verify user still exists and is active
       const user = await this.em.findOne(
         User,
-        { id: payload.sub, isActive: true },
+        { id: payload.sub, status: UserStatus.ACTIVE },
         { populate: ['roles', 'clinic', 'clinic.subscriptionTier'] },
       );
 
@@ -197,7 +202,7 @@ export class AuthService {
   async getUserWithRoles(userId: string): Promise<User | null> {
     return this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['roles', 'clinic'] },
     );
   }
@@ -217,7 +222,7 @@ export class AuthService {
    * Send password reset email (token generation)
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const user = await this.em.findOne(User, { email, isActive: true });
+    const user = await this.em.findOne(User, { email, status: UserStatus.ACTIVE });
 
     // Don't reveal whether user exists or not for security
     if (!user) {
@@ -261,7 +266,7 @@ export class AuthService {
     const user = await this.em.findOne(User, {
       passwordResetToken: token,
       passwordResetExpires: { $gt: new Date() },
-      isActive: true,
+      status: UserStatus.ACTIVE,
     });
 
     if (!user) {
@@ -288,7 +293,7 @@ export class AuthService {
     const user = await this.em.findOne(User, {
       passwordResetToken: token,
       passwordResetExpires: { $gt: new Date() },
-      isActive: true,
+      status: UserStatus.ACTIVE,
     });
 
     if (!user) {
@@ -330,7 +335,7 @@ export class AuthService {
     }
 
     // Find user
-    const user = await this.em.findOne(User, { id: userId, isActive: true });
+    const user = await this.em.findOne(User, { id: userId, status: UserStatus.ACTIVE });
     if (!user) {
       throw new NotFoundException('User not found');
     }

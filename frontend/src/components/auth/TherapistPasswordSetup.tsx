@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
@@ -62,20 +62,36 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    control,
+    formState: { errors, isValid },
     watch,
     setError
   } = useForm<PasswordSetupForm>({
-    resolver: zodResolver(PasswordSetupSchema)
+    resolver: zodResolver(PasswordSetupSchema),
+    mode: 'onChange' // Enable real-time validation
   });
 
   const password = watch('password');
+  const passwordConfirmation = watch('passwordConfirmation');
+  const acceptTerms = watch('acceptTerms');
+  
+  // Debug form state
+  useEffect(() => {
+    console.log('Form state:', {
+      password: password ? `${password.substring(0, 3)}...` : 'empty',
+      passwordConfirmation: passwordConfirmation ? `${passwordConfirmation.substring(0, 3)}...` : 'empty',
+      acceptTerms,
+      isValid,
+      errors
+    });
+  }, [password, passwordConfirmation, acceptTerms, isValid, errors]);
 
   // Validate token on component mount
   useEffect(() => {
     const validateRegistrationToken = async () => {
       try {
         const result = await validateToken(token);
+        
         if (result.valid && result.therapist) {
           setTherapistInfo(result.therapist);
           setTokenValid(true);
@@ -83,7 +99,6 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
           setTokenValid(false);
         }
       } catch (error) {
-        console.error('Token validation error:', error);
         setTokenValid(false);
       }
     };
@@ -93,28 +108,35 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
 
   const onSubmit = async (data: PasswordSetupForm) => {
     setIsSubmitting(true);
+    console.log('Form data:', data);
+    console.log('Token:', token);
     
     try {
-      const result = await completeRegistration({
+      const registrationData = {
         token,
         password: data.password
-      });
+      };
+      console.log('Registration data being sent:', registrationData);
+      
+      const result = await completeRegistration(registrationData);
+      console.log('Registration result:', result);
 
       if (result.success) {
         // Show success message
-        alert('Registration completed successfully! You can now login with your credentials.');
+        alert('Registrasi berhasil diselesaikan! Anda sekarang dapat login dengan kredensial Anda.');
         
         // Redirect to login page with success message
         router.push('/login?message=registration_complete');
       } else {
+        console.log('Registration failed:', result.message);
         setError('root', { 
-          message: result.message || 'Failed to complete registration. Please try again.' 
+          message: result.message || 'Gagal menyelesaikan registrasi. Silakan coba lagi.' 
         });
       }
     } catch (error) {
-      console.error('Registration completion error:', error);
+      console.error('Registration error:', error);
       setError('root', { 
-        message: 'An error occurred while completing registration. Please try again.' 
+        message: 'Terjadi kesalahan saat menyelesaikan registrasi. Silakan coba lagi.' 
       });
     } finally {
       setIsSubmitting(false);
@@ -137,13 +159,13 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
     strength = checks.filter(Boolean).length;
     
     if (strength <= 2) {
-      return { strength, label: 'Weak', color: 'bg-red-500' };
+      return { strength, label: 'Lemah', color: 'bg-red-500' };
     } else if (strength <= 3) {
-      return { strength, label: 'Medium', color: 'bg-yellow-500' };
+      return { strength, label: 'Sedang', color: 'bg-yellow-500' };
     } else if (strength <= 4) {
-      return { strength, label: 'Strong', color: 'bg-blue-500' };
+      return { strength, label: 'Kuat', color: 'bg-blue-500' };
     } else {
-      return { strength, label: 'Very Strong', color: 'bg-green-500' };
+      return { strength, label: 'Sangat Kuat', color: 'bg-green-500' };
     }
   };
 
@@ -152,7 +174,7 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
-        <p className="text-gray-600">Validating registration link...</p>
+        <p className="text-gray-600">Memvalidasi link registrasi...</p>
       </div>
     );
   }
@@ -164,15 +186,15 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
         <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
           <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Invalid or Expired Link</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Link Tidak Valid atau Kedaluwarsa</h3>
         <p className="text-gray-600 mb-4">
-          This registration link is invalid or has expired. Please contact your clinic administrator for a new link.
+          Link registrasi ini tidak valid atau telah kedaluwarsa. Silakan hubungi administrator klinik Anda untuk link baru.
         </p>
         <Button 
           variant="outline" 
           onClick={() => router.push('/login')}
         >
-          Go to Login
+          Ke Halaman Login
         </Button>
       </div>
     );
@@ -192,11 +214,11 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-green-800">
-                  Welcome, {therapistInfo.name}!
+                  Selamat datang, {therapistInfo.name}!
                 </h3>
                 <div className="mt-1 text-sm text-green-700">
                   <p>Email: {therapistInfo.email}</p>
-                  <p>Clinic: {therapistInfo.clinicName}</p>
+                  <p>Klinik: {therapistInfo.clinicName}</p>
                 </div>
               </div>
             </div>
@@ -207,13 +229,13 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Password Field */}
         <div>
-          <Label htmlFor="password">Create Password *</Label>
+          <Label htmlFor="password">Buat Kata Sandi *</Label>
           <div className="relative">
             <Input
               {...register('password')}
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
+              placeholder="Masukkan kata sandi Anda"
               className={errors.password ? 'border-red-500 pr-20' : 'pr-20'}
             />
             <button
@@ -245,13 +267,13 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
                 <span className="text-xs text-gray-600">{passwordStrength.label}</span>
               </div>
               <div className="mt-2 text-xs text-gray-600">
-                <p>Password requirements:</p>
+                <p>Persyaratan kata sandi:</p>
                 <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li className={password.length >= 8 ? 'text-green-600' : ''}>At least 8 characters</li>
-                  <li className={/[A-Z]/.test(password) ? 'text-green-600' : ''}>One uppercase letter</li>
-                  <li className={/[a-z]/.test(password) ? 'text-green-600' : ''}>One lowercase letter</li>
-                  <li className={/[0-9]/.test(password) ? 'text-green-600' : ''}>One number</li>
-                  <li className={/[^A-Za-z0-9]/.test(password) ? 'text-green-600' : ''}>One special character</li>
+                  <li className={password.length >= 8 ? 'text-green-600' : ''}>Minimal 8 karakter</li>
+                  <li className={/[A-Z]/.test(password) ? 'text-green-600' : ''}>Satu huruf kapital</li>
+                  <li className={/[a-z]/.test(password) ? 'text-green-600' : ''}>Satu huruf kecil</li>
+                  <li className={/[0-9]/.test(password) ? 'text-green-600' : ''}>Satu angka</li>
+                  <li className={/[^A-Za-z0-9]/.test(password) ? 'text-green-600' : ''}>Satu karakter khusus</li>
                 </ul>
               </div>
             </div>
@@ -260,13 +282,13 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
 
         {/* Password Confirmation Field */}
         <div>
-          <Label htmlFor="passwordConfirmation">Confirm Password *</Label>
+          <Label htmlFor="passwordConfirmation">Konfirmasi Kata Sandi *</Label>
           <div className="relative">
             <Input
               {...register('passwordConfirmation')}
               id="passwordConfirmation"
               type={showPasswordConfirmation ? 'text' : 'password'}
-              placeholder="Confirm your password"
+              placeholder="Konfirmasi kata sandi Anda"
               className={errors.passwordConfirmation ? 'border-red-500 pr-20' : 'pr-20'}
             />
             <button
@@ -288,20 +310,27 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
 
         {/* Terms and Conditions */}
         <div className="flex items-start space-x-3">
-          <Checkbox
-            {...register('acceptTerms')}
-            id="acceptTerms"
-            className={errors.acceptTerms ? 'border-red-500' : ''}
+          <Controller
+            name="acceptTerms"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                id="acceptTerms"
+                checked={field.value || false}
+                onCheckedChange={field.onChange}
+                className={errors.acceptTerms ? 'border-red-500' : ''}
+              />
+            )}
           />
           <div className="flex-1">
             <Label htmlFor="acceptTerms" className="text-sm">
-              I accept the{' '}
+              Saya menyetujui{' '}
               <a href="#" className="text-blue-600 hover:underline">
-                Terms and Conditions
+                Syarat dan Ketentuan
               </a>{' '}
-              and{' '}
+              dan{' '}
               <a href="#" className="text-blue-600 hover:underline">
-                Privacy Policy
+                Kebijakan Privasi
               </a>
             </Label>
             {errors.acceptTerms && (
@@ -323,16 +352,21 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
             type="submit" 
             className="w-full"
             disabled={loading || isSubmitting}
+            onClick={() => {
+              console.log('Submit button clicked');
+              console.log('Form valid:', isValid);
+              console.log('Form errors:', errors);
+            }}
           >
             {loading || isSubmitting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Setting up account...
+                Mengatur akun...
               </>
             ) : (
               <>
                 <LockClosedIcon className="w-4 h-4 mr-2" />
-                Complete Registration
+                Selesaikan Registrasi
               </>
             )}
           </Button>
@@ -348,11 +382,11 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-blue-800">
-                What happens next?
+                Apa yang terjadi selanjutnya?
               </h3>
               <div className="mt-2 text-sm text-blue-700">
                 <p>
-                  After completing registration, you'll be redirected to the login page where you can access your therapist account with your new credentials.
+                  Setelah menyelesaikan registrasi, Anda akan dialihkan ke halaman login di mana Anda dapat mengakses akun terapis Anda dengan kredensial baru.
                 </p>
               </div>
             </div>

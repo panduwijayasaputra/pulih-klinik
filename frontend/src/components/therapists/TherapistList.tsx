@@ -7,7 +7,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
 // useRouter import removed - using modal-based editing
-import { TherapistStatusEnum, UserRoleEnum } from '@/types/enums';
+import { UserRoleEnum } from '@/types/enums';
+import { UserStatusEnum, UserStatusHelper } from '@/types/status';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -19,6 +20,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { TherapistAPI } from '@/lib/api/therapist';
+import { UserAPI } from '@/lib/api/user';
 import { Therapist, THERAPIST_SPECIALIZATIONS } from '@/types/therapist';
 import { TherapistFormModal } from './TherapistFormModal';
 import { TherapistDetailsModal } from './TherapistDetailsModal';
@@ -39,7 +41,7 @@ export const TherapistList: React.FC = () => {
   const [selectedTherapistId, setSelectedTherapistId] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [resendCooldowns, setResendCooldowns] = useState<Record<string, number>>({});
-  const [selectedStatus, setSelectedStatus] = useState<'all' | TherapistStatusEnum>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | UserStatusEnum>('all');
   const [showTherapistFormModal, setShowTherapistFormModal] = useState(false);
   const [therapistFormMode, setTherapistFormMode] = useState<'create' | 'edit'>('create');
   const [therapistFormDefaultValues, setTherapistFormDefaultValues] = useState<Partial<any>>({});
@@ -180,26 +182,30 @@ export const TherapistList: React.FC = () => {
 
     setActionLoading(therapistId);
     try {
-      // Mock API call to resend email
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the real API to resend verification email
+      const response = await TherapistAPI.sendEmailVerification(therapistId);
+      
+      if (response.success) {
+        // Set cooldown timer (60 seconds)
+        setResendCooldowns(prev => ({
+          ...prev,
+          [therapistId]: 60
+        }));
 
-      // Set cooldown timer (60 seconds)
-      setResendCooldowns(prev => ({
-        ...prev,
-        [therapistId]: 60
-      }));
-
-      addToast({
-        type: 'success',
-        title: 'Email Berhasil Dikirim Ulang',
-        message: `Email registrasi telah dikirim ulang ke ${therapist.email}. Therapist akan menerima link setup yang baru.`
-      });
+        addToast({
+          type: 'success',
+          title: 'Email Berhasil Dikirim Ulang',
+          message: `Email verifikasi telah dikirim ulang ke ${therapist.email}. Therapist akan menerima kode verifikasi yang baru.`
+        });
+      } else {
+        throw new Error(response.message || 'Failed to resend verification email');
+      }
     } catch (error) {
       console.error('Resend email error:', error);
       addToast({
         type: 'error',
         title: 'Kesalahan Sistem',
-        message: 'Gagal mengirim ulang email registrasi. Silakan coba lagi.'
+        message: error instanceof Error ? error.message : 'Gagal mengirim ulang email verifikasi. Silakan coba lagi.'
       });
     } finally {
       setActionLoading(null);
@@ -218,8 +224,8 @@ export const TherapistList: React.FC = () => {
     }
 
     openDialog({
-      title: 'Kirim Ulang Email Registrasi',
-      description: `Yakin ingin mengirim ulang email registrasi ke ${therapist.email}? Therapist akan menerima link setup yang baru.`,
+      title: 'Kirim Ulang Email Verifikasi',
+      description: `Yakin ingin mengirim ulang email verifikasi ke ${therapist.email}? Therapist akan menerima kode verifikasi yang baru untuk menyelesaikan pendaftaran.`,
       confirmText: 'Kirim Ulang',
       cancelText: 'Batal',
       variant: 'info',
@@ -253,7 +259,7 @@ export const TherapistList: React.FC = () => {
     openDialog({
       variant: newStatus === 'active' ? 'success' : 'danger',
       title: actionTitleId,
-      description: `Yakin ingin ${actionTextId} akun ${therapist.fullName}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
+      description: `Yakin ingin ${actionTextId} akun ${therapist.name}? ${newStatus === 'active' ? 'Mereka akan dapat mengakses akun kembali.' : 'Mereka tidak akan dapat mengakses akun hingga diaktifkan lagi.'}`,
       confirmText: actionTextId.charAt(0).toUpperCase() + actionTextId.slice(1),
       cancelText: 'Batal',
       onConfirm: () => executeStatusChange(therapistId, newStatus)
@@ -272,65 +278,79 @@ export const TherapistList: React.FC = () => {
 
     setActionLoading(therapistId);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       const therapist = therapists.find(t => t.id === therapistId);
-
-      // Update local state
-      setTherapists(prev => {
-        const updated = prev.map(therapist =>
-          therapist.id === therapistId
-            ? { ...therapist, status: newStatus === 'active' ? TherapistStatusEnum.Active : TherapistStatusEnum.Inactive }
-            : therapist
-        );
-        return updated;
+      if (!therapist) {
+        throw new Error('Therapist not found');
+      }
+      
+      // Call the user status API with unified status
+      const result = await UserAPI.updateUserStatus(therapist.userId, {
+        status: newStatus === 'active' ? UserStatusEnum.ACTIVE : UserStatusEnum.INACTIVE,
+        reason: newStatus === 'active' ? 'Account reactivated by admin' : 'Account deactivated by admin'
       });
+      
+      if (result.success) {
+        // Update local state with the new unified status
+        setTherapists(prev => {
+          const updated = prev.map(t =>
+            t.id === therapistId ? { ...t, status: result.data.status } : t
+          );
+          return updated;
+        });
 
-      addToast({
-        type: 'success',
-        title: 'Status Berhasil Diperbarui',
-        message: `Akun ${therapist?.fullName} telah ${newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan'}. ${newStatus === 'active' ? 'Mereka sekarang dapat mengakses akun dan melakukan sesi.' : 'Mereka tidak akan dapat mengakses akun lagi.'}`
-      });
-    } catch (error) {
+        addToast({
+          type: 'success',
+          title: 'Status Berhasil Diperbarui',
+          message: `Akun ${therapist?.name} telah ${newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan'}. ${newStatus === 'active' ? 'Mereka sekarang dapat mengakses akun dan melakukan sesi.' : 'Mereka tidak akan dapat mengakses akun lagi.'}`
+        });
+      } else {
+        throw new Error(result.message || 'Gagal memperbarui status therapist');
+      }
+    } catch (error: any) {
       console.error('Status update error:', error);
+      
+      // Handle different types of errors
+      let errorMessage = 'Terjadi kesalahan tak terduga saat memperbarui status therapist. Silakan coba lagi.';
+      
+      if (error.response?.status === 403) {
+        errorMessage = 'Anda tidak memiliki izin untuk memperbarui status therapist ini.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Therapist tidak ditemukan.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       addToast({
         type: 'error',
         title: 'Kesalahan Sistem',
-        message: 'Terjadi kesalahan tak terduga saat memperbarui status therapist. Silakan coba lagi.'
+        message: errorMessage
       });
     } finally {
       setActionLoading(null);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case TherapistStatusEnum.Active:
-        return (
-          <Badge variant="success">
-            <CheckCircleIcon className="w-3 h-3 mr-1" />
-            Aktif
-          </Badge>
-        );
-      case TherapistStatusEnum.PendingSetup:
-        return (
-          <Badge variant="warning">
-            <ClockIcon className="w-3 h-3 mr-1" />
-            Menunggu Setup
-          </Badge>
-        );
-      case TherapistStatusEnum.Inactive:
-        return (
-          <Badge variant="destructive">
-            <XCircleIcon className="w-3 h-3 mr-1" />
-            Tidak Aktif
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  const getStatusBadge = (status: UserStatusEnum) => {
+    const variant = UserStatusHelper.getBadgeVariant(status);
+    const label = UserStatusHelper.getDisplayLabel(status);
+    
+    return (
+      <Badge variant={variant}>
+        {status === UserStatusEnum.ACTIVE && <CheckCircleIcon className="w-3 h-3 mr-1" />}
+        {status === UserStatusEnum.PENDING_SETUP && <ClockIcon className="w-3 h-3 mr-1" />}
+        {status === UserStatusEnum.INACTIVE && <XCircleIcon className="w-3 h-3 mr-1" />}
+        {status === UserStatusEnum.ON_LEAVE && <ClockIcon className="w-3 h-3 mr-1" />}
+        {status === UserStatusEnum.SUSPENDED && <XCircleIcon className="w-3 h-3 mr-1" />}
+        {status === UserStatusEnum.PENDING_VERIFICATION && <ClockIcon className="w-3 h-3 mr-1" />}
+        {status === UserStatusEnum.DISABLED && <XCircleIcon className="w-3 h-3 mr-1" />}
+        {label}
+      </Badge>
+    );
   };
+
+  // getUserStatusBadge removed - now using unified status system
 
 
   const formatCountdown = (seconds: number) => {
@@ -339,9 +359,10 @@ export const TherapistList: React.FC = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // Filter therapists by status
+  // Filter therapists by unified status
   const filteredTherapists = therapists.filter((therapist) => {
-    return selectedStatus === 'all' ? true : therapist.status === selectedStatus;
+    const statusMatch = selectedStatus === 'all' ? true : therapist.status === selectedStatus;
+    return statusMatch;
   });
 
   // Define table columns
@@ -351,7 +372,7 @@ export const TherapistList: React.FC = () => {
       header: 'Therapist',
       render: (therapist) => (
         <div>
-          <div className="font-medium text-gray-900">{therapist.fullName}</div>
+          <div className="font-medium text-gray-900">{therapist.name}</div>
         </div>
       ),
     },
@@ -360,7 +381,7 @@ export const TherapistList: React.FC = () => {
       header: 'Kontak',
       render: (therapist) => (
         <div>
-          <div>{therapist.phone}</div>
+          <div>{therapist.phone || 'N/A'}</div>
           <div className="text-xs text-gray-500">{therapist.email}</div>
         </div>
       ),
@@ -401,7 +422,7 @@ export const TherapistList: React.FC = () => {
       variant: 'success',
       show: (therapist) =>
         hasRole(UserRoleEnum.ClinicAdmin) &&
-        therapist.status === TherapistStatusEnum.Inactive,
+        !UserStatusHelper.canLogin(therapist.status),
       loading: (therapist) => actionLoading === therapist.id,
       onClick: (therapist) => handleStatusChangeRequest(therapist.id, 'active'),
     },
@@ -412,7 +433,7 @@ export const TherapistList: React.FC = () => {
       variant: 'destructive',
       show: (therapist) =>
         hasRole(UserRoleEnum.ClinicAdmin) &&
-        therapist.status === TherapistStatusEnum.Active,
+        UserStatusHelper.canLogin(therapist.status),
       loading: (therapist) => actionLoading === therapist.id,
       onClick: (therapist) => handleStatusChangeRequest(therapist.id, 'inactive'),
     },
@@ -425,13 +446,13 @@ export const TherapistList: React.FC = () => {
         if (isInCooldown) {
           return `Kirim Ulang (${formatCountdown(cooldown || 0)})`;
         }
-        return 'Kirim Ulang Email';
+        return 'Kirim Ulang Email Verifikasi';
       },
       icon: EnvelopeIcon,
       variant: 'softInfo',
       show: (therapist) =>
         hasRole(UserRoleEnum.ClinicAdmin) &&
-        therapist.status === TherapistStatusEnum.PendingSetup,
+        therapist.status === UserStatusEnum.PENDING_SETUP,
       loading: (therapist) => actionLoading === therapist.id,
       disabled: (therapist) => {
         const cooldown = resendCooldowns[therapist.id];
@@ -444,20 +465,24 @@ export const TherapistList: React.FC = () => {
   // Define status filter
   const statusFilter = {
     key: 'status',
-    label: 'Semua Status',
+    label: 'Status Therapist',
     options: [
       { value: 'all', label: 'Semua Status' },
-      { value: TherapistStatusEnum.Active, label: 'Aktif' },
-      { value: TherapistStatusEnum.PendingSetup, label: 'Menunggu Setup' },
-      { value: TherapistStatusEnum.OnLeave, label: 'Cuti' },
-      { value: TherapistStatusEnum.Suspended, label: 'Ditahan' },
-      { value: TherapistStatusEnum.Inactive, label: 'Tidak Aktif' },
+      { value: UserStatusEnum.ACTIVE, label: 'Aktif' },
+      { value: UserStatusEnum.PENDING_SETUP, label: 'Menunggu Setup' },
+      { value: UserStatusEnum.ON_LEAVE, label: 'Cuti' },
+      { value: UserStatusEnum.SUSPENDED, label: 'Ditahan' },
+      { value: UserStatusEnum.INACTIVE, label: 'Tidak Aktif' },
+      { value: UserStatusEnum.PENDING_VERIFICATION, label: 'Menunggu Verifikasi' },
+      { value: UserStatusEnum.DISABLED, label: 'Dinonaktifkan' },
     ],
     value: selectedStatus,
     onChange: (value: string) => {
-      setSelectedStatus(value as 'all' | TherapistStatusEnum);
+      setSelectedStatus(value as 'all' | UserStatusEnum);
     },
   };
+
+  // User status filter removed - now using unified status system
 
   return (
     <>
@@ -471,7 +496,7 @@ export const TherapistList: React.FC = () => {
         emptyMessage="Tidak ada therapist yang ditemukan"
         loadingMessage="Memuat data therapist..."
         searchPlaceholder="Cari nama, email..."
-        searchKeys={['fullName', 'email']}
+        searchKeys={['name', 'email']}
         filters={[statusFilter]}
         refreshAction={{
           label: 'Segarkan',

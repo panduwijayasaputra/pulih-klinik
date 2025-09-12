@@ -2,6 +2,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { AuthAPI } from '@/lib/api/auth';
 import { LoginApiData, Clinic } from '@/types/auth';
+import { ClinicStatusEnum } from '@/types/status';
 import { withRetry, classifyNetworkError, createUserFriendlyErrorMessage, setupNetworkStatusListener } from '@/lib/network-error-handler';
 import { createAuthDataSyncHandler } from '@/lib/data-sync';
 
@@ -374,7 +375,7 @@ export const useAuth = () => {
         const clinicData: Clinic | undefined = response.user.clinicId ? {
           id: response.user.clinicId,
           name: response.user.clinicName || '',
-          isActive: true,
+          status: ClinicStatusEnum.ACTIVE, // Default to active for now, will be updated by clinic API
           ...(response.user.subscriptionTier && { subscription: response.user.subscriptionTier }),
         } : undefined;
 

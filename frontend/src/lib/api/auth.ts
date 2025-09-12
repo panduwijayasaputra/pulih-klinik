@@ -46,6 +46,8 @@ export class AuthAPI {
         // Map the user data to match frontend interface
         const mappedUser: User = {
           ...data.data.user,
+          // Handle status field - backend now returns unified status
+          status: data.data.user.status || data.data.user.isActive ? 'active' : 'inactive',
           roles: (() => {
             const validRoles = Array.isArray(data.data.user.roles) 
               ? data.data.user.roles

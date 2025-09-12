@@ -42,7 +42,7 @@ export const compareUserData = (oldUser: User | null, newUser: User | null) => {
     oldUser.id !== newUser.id ||
     oldUser.email !== newUser.email ||
     oldUser.name !== newUser.name ||
-    oldUser.isActive !== newUser.isActive ||
+    oldUser.status !== newUser.status ||
     JSON.stringify(oldUser.roles) !== JSON.stringify(newUser.roles)
   ) {
     changes.userChanged = true;
@@ -85,13 +85,13 @@ export const compareClinicData = (oldClinic: Clinic | null, newClinic: Clinic | 
   if (
     oldClinic.id !== newClinic.id ||
     oldClinic.name !== newClinic.name ||
-    oldClinic.isActive !== newClinic.isActive
+    oldClinic.status !== newClinic.status
   ) {
     changes.clinicChanged = true;
   }
 
   // Check subscription changes
-  if (oldClinic.subscription !== newClinic.subscription) {
+  if (oldClinic.subscriptionTier !== newClinic.subscriptionTier) {
     changes.subscriptionChanged = true;
   }
 
@@ -120,7 +120,7 @@ export const validateCriticalData = (oldUser: User | null, newUser: User | null)
   }
 
   // Check if user was deactivated
-  if (oldUser.isActive && !newUser.isActive) {
+  if (oldUser.status === 'active' && newUser.status !== 'active') {
     console.warn('🚨 Critical data change: User was deactivated');
     return false;
   }

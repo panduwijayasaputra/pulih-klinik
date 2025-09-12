@@ -10,10 +10,7 @@ import {
   SessionStatus,
 } from '../database/entities/therapy-session.entity';
 import { Client, ClientStatus } from '../database/entities/client.entity';
-import {
-  Therapist,
-  TherapistStatus,
-} from '../database/entities/therapist.entity';
+import { Therapist } from '../database/entities/therapist.entity';
 import {
   ClientTherapistAssignment,
   AssignmentStatus,
@@ -26,6 +23,7 @@ import {
   SessionQueryDto,
   SessionStatsQueryDto,
 } from './dto';
+import { UserStatus } from '../common/enums';
 
 export interface SessionResponse {
   id: string;
@@ -105,7 +103,7 @@ export class SessionsService {
       {
         id: createSessionDto.therapistId,
         clinic: clinicId,
-        status: TherapistStatus.ACTIVE,
+        user: { status: UserStatus.ACTIVE },
       },
       { populate: ['user'] },
     );
@@ -280,11 +278,7 @@ export class SessionsService {
       TherapySession,
       whereConditions,
       {
-        populate: [
-          'client',
-          'therapist',
-          'therapist.user',
-        ],
+        populate: ['client', 'therapist', 'therapist.user'],
         orderBy,
         limit,
         offset,
@@ -303,7 +297,7 @@ export class SessionsService {
         therapist: {
           id: session.therapist.id,
           user: {
-            fullName: session.therapist.fullName,
+            fullName: session.therapist.user.profile?.name || 'Unknown User',
             email: session.therapist.user.email,
           },
         },
@@ -347,6 +341,7 @@ export class SessionsService {
           'client',
           'therapist',
           'therapist.user',
+          'therapist.user.profile',
         ],
       },
     );
@@ -375,6 +370,7 @@ export class SessionsService {
           'client',
           'therapist',
           'therapist.user',
+          'therapist.user.profile',
         ],
       },
     );
@@ -413,6 +409,7 @@ export class SessionsService {
           'client',
           'therapist',
           'therapist.user',
+          'therapist.user.profile',
         ],
       },
     );
@@ -606,7 +603,7 @@ export class SessionsService {
       therapist: {
         id: therapist.id,
         user: {
-          fullName: therapist.fullName,
+          fullName: therapist.user.profile?.name || 'Unknown User',
           email: therapist.user.email,
         },
       },

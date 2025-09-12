@@ -1,4 +1,5 @@
 import { Therapist, TherapistAssignment, TherapistFilters, TherapistFormData } from '@/types/therapist';
+import { UserStatusEnum } from '@/types/status';
 import { ItemResponse, ListResponse, PaginatedResponse, StatusResponse } from './types';
 import { getMockTherapists, getMockTherapistById } from '@/lib/mocks/therapist';
 import { apiClient } from '../http-client';
@@ -6,13 +7,16 @@ import { apiClient } from '../http-client';
 // Helper function to map backend therapist to frontend format
 const mapBackendTherapistToFrontend = (backendTherapist: any): Therapist => ({
   id: backendTherapist.id,
-  clinicId: backendTherapist.clinic.id,
-  fullName: backendTherapist.fullName,
-  email: backendTherapist.user.email,
+  clinicId: backendTherapist.clinicId,
+  clinicName: backendTherapist.clinicName,
+  userId: backendTherapist.userId,
+  name: backendTherapist.name,
+  email: backendTherapist.email,
   phone: backendTherapist.phone,
+  avatarUrl: backendTherapist.avatarUrl,
   licenseNumber: backendTherapist.licenseNumber,
   licenseType: backendTherapist.licenseType,
-  status: backendTherapist.status,
+  status: backendTherapist.status as UserStatusEnum, // Backend now returns unified status
   joinDate: backendTherapist.joinDate,
   currentLoad: backendTherapist.currentLoad,
   timezone: backendTherapist.timezone,
@@ -21,20 +25,8 @@ const mapBackendTherapistToFrontend = (backendTherapist: any): Therapist => ({
   },
   assignedClients: [],
   schedule: [],
-  education: backendTherapist.education ? [{
-    degree: backendTherapist.education,
-    institution: '',
-    year: new Date().getFullYear(),
-    field: ''
-  }] : [],
-  certifications: backendTherapist.certifications ? [{
-    id: '1',
-    name: backendTherapist.certifications,
-    issuingOrganization: '',
-    issueDate: new Date().toISOString(),
-    certificateNumber: '',
-    status: 'active' as const
-  }] : [],
+  education: backendTherapist.education,
+  certifications: backendTherapist.certifications,
   adminNotes: backendTherapist.adminNotes,
   createdAt: backendTherapist.createdAt,
   updatedAt: backendTherapist.updatedAt
@@ -102,13 +94,16 @@ export class TherapistAPI {
       // Convert backend response to frontend format
       const frontendTherapists: Therapist[] = backendData.therapists.map((backendTherapist: any) => ({
         id: backendTherapist.id,
-        clinicId: backendTherapist.clinic.id,
-        fullName: backendTherapist.fullName,
-        email: backendTherapist.user.email,
+        clinicId: backendTherapist.clinicId,
+        clinicName: backendTherapist.clinicName,
+        userId: backendTherapist.userId,
+        name: backendTherapist.name,
+        email: backendTherapist.email,
         phone: backendTherapist.phone,
+        avatarUrl: backendTherapist.avatarUrl,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        status: backendTherapist.status,
+        status: backendTherapist.status as UserStatusEnum,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
@@ -117,20 +112,8 @@ export class TherapistAPI {
         },
         assignedClients: [],
         schedule: [],
-        education: backendTherapist.education ? [{
-          degree: backendTherapist.education,
-          institution: '',
-          year: new Date().getFullYear(),
-          field: ''
-        }] : [],
-        certifications: backendTherapist.certifications ? [{
-          id: '1',
-          name: backendTherapist.certifications,
-          issuingOrganization: '',
-          issueDate: new Date().toISOString(),
-          certificateNumber: '',
-          status: 'active' as const
-        }] : [],
+        education: backendTherapist.education,
+        certifications: backendTherapist.certifications,
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       }));
@@ -180,13 +163,16 @@ export class TherapistAPI {
       // Convert backend response to frontend format
       const frontendTherapist: Therapist = {
         id: backendTherapist.id,
-        clinicId: backendTherapist.clinic.id,
-        fullName: backendTherapist.fullName,
-        email: backendTherapist.user.email,
+        clinicId: backendTherapist.clinicId,
+        clinicName: backendTherapist.clinicName,
+        userId: backendTherapist.userId,
+        name: backendTherapist.name,
+        email: backendTherapist.email,
         phone: backendTherapist.phone,
+        avatarUrl: backendTherapist.avatarUrl,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        status: backendTherapist.status,
+        status: backendTherapist.status as UserStatusEnum,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
@@ -195,20 +181,8 @@ export class TherapistAPI {
         },
         assignedClients: [],
         schedule: [],
-        education: backendTherapist.education ? [{
-          degree: backendTherapist.education,
-          institution: '',
-          year: new Date().getFullYear(),
-          field: ''
-        }] : [],
-        certifications: backendTherapist.certifications ? [{
-          id: '1',
-          name: backendTherapist.certifications,
-          issuingOrganization: '',
-          issueDate: new Date().toISOString(),
-          certificateNumber: '',
-          status: 'active' as const
-        }] : [],
+        education: backendTherapist.education,
+        certifications: backendTherapist.certifications,
         adminNotes: backendTherapist.adminNotes,
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
@@ -250,13 +224,16 @@ export class TherapistAPI {
       const backendTherapist = response.data.data;
       const frontendTherapist: Therapist = {
         id: backendTherapist.id,
-        clinicId: backendTherapist.clinic.id,
-        fullName: backendTherapist.fullName,
-        email: backendTherapist.user.email,
+        clinicId: backendTherapist.clinicId,
+        clinicName: backendTherapist.clinicName,
+        userId: backendTherapist.userId,
+        name: backendTherapist.name,
+        email: backendTherapist.email,
         phone: backendTherapist.phone,
+        avatarUrl: backendTherapist.avatarUrl,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        status: backendTherapist.status,
+        status: backendTherapist.status as UserStatusEnum,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
@@ -265,20 +242,8 @@ export class TherapistAPI {
         },
         assignedClients: [],
         schedule: [],
-        education: backendTherapist.education ? [{
-          degree: backendTherapist.education,
-          institution: '',
-          year: new Date().getFullYear(),
-          field: ''
-        }] : [],
-        certifications: backendTherapist.certifications ? [{
-          id: '1',
-          name: backendTherapist.certifications,
-          issuingOrganization: '',
-          issueDate: new Date().toISOString(),
-          certificateNumber: '',
-          status: 'active' as const
-        }] : [],
+        education: backendTherapist.education,
+        certifications: backendTherapist.certifications,
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       };
@@ -317,13 +282,16 @@ export class TherapistAPI {
       // Convert backend response to frontend format
       const frontendTherapist: Therapist = {
         id: backendTherapist.id,
-        clinicId: backendTherapist.clinic.id,
-        fullName: backendTherapist.fullName,
-        email: backendTherapist.user.email,
+        clinicId: backendTherapist.clinicId,
+        clinicName: backendTherapist.clinicName,
+        userId: backendTherapist.userId,
+        name: backendTherapist.name,
+        email: backendTherapist.email,
         phone: backendTherapist.phone,
+        avatarUrl: backendTherapist.avatarUrl,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        status: backendTherapist.status,
+        status: backendTherapist.status as UserStatusEnum,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
@@ -332,20 +300,8 @@ export class TherapistAPI {
         },
         assignedClients: [],
         schedule: [],
-        education: backendTherapist.education ? [{
-          degree: backendTherapist.education,
-          institution: '',
-          year: new Date().getFullYear(),
-          field: ''
-        }] : [],
-        certifications: backendTherapist.certifications ? [{
-          id: '1',
-          name: backendTherapist.certifications,
-          issuingOrganization: '',
-          issueDate: new Date().toISOString(),
-          certificateNumber: '',
-          status: 'active' as const
-        }] : [],
+        education: backendTherapist.education,
+        certifications: backendTherapist.certifications,
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       };
@@ -424,13 +380,15 @@ export class TherapistAPI {
       // Convert backend response to frontend format
       const frontendTherapist: Therapist = {
         id: backendTherapist.id,
-        clinicId: backendTherapist.clinic.id,
-        fullName: backendTherapist.fullName,
-        email: backendTherapist.user.email,
+        clinicId: backendTherapist.clinicId,
+        clinicName: backendTherapist.clinicName,
+        userId: backendTherapist.userId,
+        name: backendTherapist.name,
+        email: backendTherapist.email,
         phone: backendTherapist.phone,
         licenseNumber: backendTherapist.licenseNumber,
         licenseType: backendTherapist.licenseType,
-        status: backendTherapist.status,
+        status: backendTherapist.status as UserStatusEnum,
         joinDate: backendTherapist.joinDate,
         currentLoad: backendTherapist.currentLoad,
         timezone: backendTherapist.timezone,
@@ -439,20 +397,8 @@ export class TherapistAPI {
         },
         assignedClients: [],
         schedule: [],
-        education: backendTherapist.education ? [{
-          degree: backendTherapist.education,
-          institution: '',
-          year: new Date().getFullYear(),
-          field: ''
-        }] : [],
-        certifications: backendTherapist.certifications ? [{
-          id: '1',
-          name: backendTherapist.certifications,
-          issuingOrganization: '',
-          issueDate: new Date().toISOString(),
-          certificateNumber: '',
-          status: 'active' as const
-        }] : [],
+        education: backendTherapist.education,
+        certifications: backendTherapist.certifications,
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       };

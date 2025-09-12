@@ -9,6 +9,7 @@ import {
   ClientReligionValues,
   ClientStatusValues
 } from '@/types/enums';
+import { phoneValidation, optionalPhoneValidation, emergencyPhoneValidation } from '@/lib/validation/phone';
 
 // Common enums using values from types
 export const genderEnum = z.enum(ClientGenderValues);
@@ -22,31 +23,7 @@ export const clientStatusEnum = z.enum(ClientStatusValues);
 export const guardianRelationshipEnum = z.enum(ClientGuardianRelationshipValues);
 export const guardianMaritalStatusEnum = z.enum(ClientGuardianMaritalStatusValues);
 
-// Reusable patterns
-const phoneIdPattern = /^(?:\+62|62|0)8[1-9][0-9]{6,10}$/; // e.g., +62812..., 0812...
-
-// Phone validation that allows empty strings for optional fields
-const optionalPhoneValidation = z.string().optional().or(z.literal('')).transform(v => (v === '' ? undefined : v));
-
-// Required phone validation for main phone field
-const requiredPhoneValidation = z
-  .string()
-  .regex(phoneIdPattern, 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)')
-  .min(10, 'Nomor telepon minimal 10 digit');
-
-// Optional phone validation for emergency contact details
-const optionalEmergencyPhoneValidation = z
-  .string()
-  .optional()
-  .or(z.literal(''))
-  .refine(
-    (val) => {
-      if (!val || val === '') return true; // Allow empty
-      return phoneIdPattern.test(val) && val.length >= 10;
-    },
-    { message: 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)' }
-  )
-  .transform(v => (v === '' ? undefined : v));
+// Phone validation patterns are now imported from @/lib/validation/phone
 
 // Individual emergency contact field validations
 const emergencyContactNameValidation = z.string().min(2, 'Nama kontak darurat minimal 2 karakter').optional();
@@ -64,7 +41,7 @@ export const clientBaseSchema = z.object({
   education: educationEnum,
   educationMajor: z.string().optional(),
   address: z.string().min(5, 'Alamat minimal 5 karakter'),
-  phone: requiredPhoneValidation,
+  phone: phoneValidation,
   email: z.string().email('Email tidak valid').optional().or(z.literal('')).transform(v => (v === '' ? '' : v)),
   hobbies: z.string().optional(),
   maritalStatus: maritalStatusEnum,
@@ -75,7 +52,7 @@ export const clientBaseSchema = z.object({
   previousVisitDetails: z.string().optional(),
   province: z.string().optional(),
   emergencyContactName: emergencyContactNameValidation,
-  emergencyContactPhone: optionalEmergencyPhoneValidation,
+  emergencyContactPhone: emergencyPhoneValidation,
   emergencyContactRelationship: emergencyContactRelationshipValidation,
   emergencyContactAddress: emergencyContactAddressValidation,
   notes: z.string().max(1000, 'Catatan maksimal 1000 karakter').optional(),

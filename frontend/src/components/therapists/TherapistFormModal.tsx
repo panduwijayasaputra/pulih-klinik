@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { phoneValidation } from '@/lib/validation/phone';
+import { licenseValidation } from '@/lib/validation/license';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,12 +30,13 @@ import { UserRole } from '@/types/auth';
 // Validation schema (NO PASSWORD FIELDS)
 const TherapistRegistrationSchema = z.object({
   // Personal Information
-  name: z.string().min(2, 'Nama minimal 2 karakter'),
+  fullName: z.string().min(2, 'Nama minimal 2 karakter'),
   email: z.string().email('Format email tidak valid'),
-  phone: z.string().regex(/^(?:\+62|62|0)8[1-9][0-9]{6,10}$/, 'Format nomor telepon tidak valid (gunakan +62 atau 08, 10-12 digit)'),
+  phone: phoneValidation,
+  avatarUrl: z.string().url('Format URL tidak valid').optional().or(z.literal('')),
 
   // Professional Information
-  licenseNumber: z.string().min(1, 'Nomor SIP wajib diisi'),
+  licenseNumber: licenseValidation,
   education: z.string().min(1, 'Pendidikan wajib diisi'),
   certifications: z.string().optional(),
 
@@ -103,8 +106,8 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
             
             // Reset with fetched therapist data
             reset({
-              name: therapistData.fullName || '',
-              email: therapistData.user?.email || '',
+              fullName: therapistData.name || '',
+              email: therapistData.email || '',
               phone: therapistData.phone || '',
               licenseNumber: therapistData.licenseNumber || '',
               education: therapistData.education || '',
@@ -121,7 +124,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
             });
             // Fallback to default values on error
             reset({
-              name: '',
+              fullName: '',
               email: '',
               phone: '',
               licenseNumber: '',
@@ -139,7 +142,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
       } else {
         // Reset form for create mode
         reset({
-          name: '',
+          fullName: '',
           email: '',
           phone: '',
           licenseNumber: '',
@@ -185,7 +188,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           <div className="bg-gray-50 rounded-lg p-4 space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Nama:</span>
-              <span className="text-sm font-semibold text-gray-900">{data.name}</span>
+              <span className="text-sm font-semibold text-gray-900">{data.fullName}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Email:</span>
@@ -228,8 +231,9 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
       if (mode === 'edit' && therapistId) {
         // Update existing therapist
         const result = await TherapistAPI.updateTherapist(therapistId, {
-          fullName: data.name,
+          fullName: data.fullName,
           phone: data.phone,
+          avatarUrl: data.avatarUrl,
           licenseNumber: data.licenseNumber,
           licenseType: data.licenseType,
           timezone: 'Asia/Jakarta',
@@ -262,9 +266,10 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
       } else {
         // Create new therapist
         const result = await TherapistAPI.createTherapist({
-          fullName: data.name,
+          fullName: data.fullName,
           email: data.email,
           phone: data.phone,
+          avatarUrl: data.avatarUrl,
           licenseNumber: data.licenseNumber,
           licenseType: data.licenseType,
           education: data.education,
@@ -353,27 +358,27 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
             </h3>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Nama Lengkap *</Label>
+                <Label htmlFor="fullName">Nama Lengkap *</Label>
                 <div className="relative">
                   <Input
-                    {...register('name')}
-                    id="name"
+                    {...register('fullName')}
+                    id="fullName"
                     placeholder="contoh: Dr. Budi Santoso"
                     className={`
-                      ${errors.name ? 'border-red-500 focus:border-red-500' : ''}
-                      ${touchedFields.name && !errors.name && watchedFormData.name ? 'border-green-500 focus:border-green-500' : ''}
+                      ${errors.fullName ? 'border-red-500 focus:border-red-500' : ''}
+                      ${touchedFields.fullName && !errors.fullName && watchedFormData.fullName ? 'border-green-500 focus:border-green-500' : ''}
                     `}
                   />
-                  {touchedFields.name && !errors.name && watchedFormData.name && (
+                  {touchedFields.fullName && !errors.fullName && watchedFormData.fullName && (
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                       <CheckCircleIcon className="w-4 h-4 text-green-600" />
                     </div>
                   )}
                 </div>
-                {errors.name && (
+                {errors.fullName && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <XCircleIcon className="w-3 h-3 mr-1" />
-                    {errors.name.message}
+                    {errors.fullName.message}
                   </p>
                 )}
               </div>
@@ -440,7 +445,7 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                   <Input
                     {...register('licenseNumber')}
                     id="licenseNumber"
-                    placeholder="SIP-123456"
+                    placeholder="SIP-123456 atau PSI-12345678"
                     className={`
                       ${errors.licenseNumber ? 'border-red-500 focus:border-red-500' : ''}
                       ${touchedFields.licenseNumber && !errors.licenseNumber && watchedFormData.licenseNumber ? 'border-green-500 focus:border-green-500' : ''}

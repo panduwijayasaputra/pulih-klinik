@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { useRegistrationStore } from '@/store/registration';
@@ -10,9 +10,9 @@ interface SubscriptionSelectorProps {
   isLoading?: boolean;
 }
 
-export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({ 
+export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
   onSubscriptionSelected,
-  isLoading = false 
+  isLoading = false
 }) => {
   const [selectedTier, setSelectedTier] = useState<string>('');
   const [subscriptionTiers, setSubscriptionTiers] = useState<SubscriptionTierData[]>([]);
@@ -89,8 +89,8 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
         </div>
         <div className="text-center py-12">
           <div className="text-red-600 mb-4">{tiersError}</div>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="text-blue-600 hover:text-blue-800 underline"
           >
             Coba lagi
@@ -118,8 +118,8 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
           <div
             key={tier.id}
             className={`relative rounded-lg border-2 p-6 cursor-pointer transition-all ${selectedTier === tier.code
-                ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500'
-                : 'border-gray-200 bg-white hover:border-gray-300'
+              ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500'
+              : 'border-gray-200 bg-white hover:border-gray-300'
               } ${tier.isRecommended ? 'ring-2 ring-blue-200' : ''}`}
             onClick={() => setSelectedTier(tier.code)}
           >

@@ -11,7 +11,7 @@ import * as crypto from 'crypto';
 import { User } from '../database/entities/user.entity';
 import { UserProfile } from '../database/entities/user-profile.entity';
 import { UserRole as UserRoleEntity } from '../database/entities/user-role.entity';
-import { UserRole } from '../common/enums/user-roles.enum';
+import { UserRole, UserStatus } from '../common/enums';
 import { EmailService } from '../lib/email/email.service';
 import {
   StartRegistrationDto,
@@ -99,7 +99,7 @@ export class RegistrationService {
     const user = new User();
     user.email = dto.email;
     user.passwordHash = hashedPassword;
-    user.isActive = false; // User is inactive until email is verified
+    user.status = UserStatus.PENDING_VERIFICATION; // User is pending verification until email is verified
     user.emailVerified = false;
     user.emailVerificationToken = verificationToken;
     user.emailVerificationCode = verificationCode;
@@ -181,7 +181,7 @@ export class RegistrationService {
     // Mark email as verified
     user.emailVerified = true;
     user.emailVerifiedAt = new Date();
-    user.isActive = true;
+    user.status = UserStatus.ACTIVE;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpires = undefined;
 
@@ -261,7 +261,7 @@ export class RegistrationService {
     // Mark email as verified by admin
     user.emailVerified = true;
     user.emailVerifiedAt = new Date();
-    user.isActive = true;
+    user.status = UserStatus.ACTIVE;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpires = undefined;
 

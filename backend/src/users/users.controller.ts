@@ -28,11 +28,13 @@ import {
   RequireSelfOrAdminAccess,
   RequireSelfOnlyAccess,
   RequireAdmin,
+  RequireAdminOrClinicAdmin,
 } from '../auth/decorators';
 import { ParseUuidPipe } from '../common/pipes';
 import { UsersService, UserProfileResponse } from './users.service';
 import { UpdateProfileDto } from './dto';
 import { ChangePasswordDto } from '../common/dto';
+import { UserStatus } from '../common/enums';
 import type { AuthUser } from '../auth/jwt.strategy';
 
 @ApiTags('Users')
@@ -360,6 +362,83 @@ export class UsersController {
     return {
       success: true,
       message: result.message,
+    };
+  }
+
+  @Put(':userId/status')
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Update user active status (admin or clinic admin)',
+    description: 'Enable or disable user account access',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({
+    description: 'User status update data',
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: Object.values(UserStatus),
+          description: 'New status for the user account',
+          example: UserStatus.ACTIVE,
+        },
+        reason: {
+          type: 'string',
+          description: 'Reason for status change (optional)',
+          example: 'Account reactivated after review',
+        },
+      },
+      required: ['status'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User status updated successfully',
+    schema: {
+      example: {
+        success: true,
+        message: 'User status updated successfully',
+        data: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          email: 'user@example.com',
+          isActive: true,
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({
+    description: 'Forbidden - Admin or clinic admin access required',
+  })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  async updateUserStatus(
+    @Param('userId', ParseUuidPipe) userId: string,
+    @Body() body: { status: UserStatus; reason?: string },
+    @CurrentUser() _currentUser: AuthUser,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: {
+      id: string;
+      email: string;
+      status: UserStatus;
+    };
+  }> {
+    const result = await this.usersService.updateUserStatus(
+      userId,
+      body.status,
+      body.reason,
+    );
+
+    return {
+      success: true,
+      message: result.message,
+      data: result.user,
     };
   }
 

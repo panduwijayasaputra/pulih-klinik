@@ -1,4 +1,5 @@
-import { TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from './enums';
+import { TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum } from './enums';
+import { UserStatusEnum } from './status';
 
 export interface TherapistSpecialization {
   id: string;
@@ -47,19 +48,21 @@ export interface TherapistContact {
 export interface Therapist {
   id: string;
   clinicId: string;
-  fullName: string; // Changed from 'name' to match API usage
+  clinicName: string;
+  userId: string;
   email: string;
-  phone: string;
-  avatar?: string;
+  name: string;
+  phone?: string;
+  avatarUrl?: string;
   
   // Professional Info
   licenseNumber: string;
   licenseType: EnumValue<typeof TherapistLicenseTypeEnum>;
-  education: TherapistEducation[];
-  certifications: TherapistCertification[];
+  education?: string;
+  certifications?: string;
   
   // Status & Availability
-  status: EnumValue<typeof TherapistStatusEnum>;
+  status: UserStatusEnum; // Unified user status (replaces both therapist.status and user.isActive)
   joinDate: string;
   
   // Assignment Info
@@ -85,9 +88,10 @@ export interface Therapist {
 }
 
 export interface TherapistFormData {
-  fullName: string; // Changed from 'name' to match Therapist interface
+  fullName: string; // This will map to profile.name
   email: string;
   phone: string;
+  avatarUrl?: string;
   licenseNumber: string;
   licenseType: Therapist['licenseType'];
   timezone?: string;
@@ -182,10 +186,13 @@ export const LICENSE_TYPES = [
 ] as const;
 
 export const THERAPIST_STATUS = [
-  { value: 'active', label: 'Aktif', color: 'green' },
-  { value: 'inactive', label: 'Tidak Aktif', color: 'gray' },
-  { value: 'on_leave', label: 'Cuti', color: 'yellow' },
-  { value: 'suspended', label: 'Suspended', color: 'red' }
+  { value: UserStatusEnum.ACTIVE, label: 'Aktif', color: 'green' },
+  { value: UserStatusEnum.INACTIVE, label: 'Tidak Aktif', color: 'gray' },
+  { value: UserStatusEnum.ON_LEAVE, label: 'Cuti', color: 'blue' },
+  { value: UserStatusEnum.SUSPENDED, label: 'Ditahan', color: 'red' },
+  { value: UserStatusEnum.PENDING_SETUP, label: 'Menunggu Setup', color: 'yellow' },
+  { value: UserStatusEnum.PENDING_VERIFICATION, label: 'Menunggu Verifikasi', color: 'yellow' },
+  { value: UserStatusEnum.DISABLED, label: 'Dinonaktifkan', color: 'red' },
 ] as const;
 
 // Therapist Registration Types

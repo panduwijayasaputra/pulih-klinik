@@ -20,6 +20,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { TherapistsService, TherapistResponse } from './therapists.service';
 import {
@@ -29,6 +30,7 @@ import {
   UpdateTherapistCapacityDto,
   TherapistQueryDto,
 } from './dto';
+import { VerifyResetTokenDto, ResetPasswordDto } from '../auth/dto';
 import {
   RequireAdmin,
   RequireAdminOrClinicAdmin,
@@ -90,7 +92,7 @@ export class TherapistsController {
       clinicId = currentUser.clinicId;
     }
 
-    return this.therapistsService.createTherapistWithUser(
+    return await this.therapistsService.createTherapistWithUser(
       clinicId,
       createTherapistDto,
       currentUser.id,
@@ -241,13 +243,7 @@ export class TherapistsController {
   @ApiQuery({
     name: 'sortBy',
     required: false,
-    enum: [
-      'fullName',
-      'joinDate',
-      'yearsOfExperience',
-      'currentLoad',
-      'status',
-    ],
+    enum: ['name', 'joinDate', 'yearsOfExperience', 'currentLoad', 'status'],
     description: 'Sort field',
   })
   @ApiQuery({
@@ -1243,5 +1239,63 @@ export class TherapistsController {
       body.duration,
       body.notes,
     );
+  }
+
+  @Post('verify-setup-token')
+  @ApiOperation({
+    summary: 'Verify therapist setup token',
+    description:
+      'Verify if a therapist setup token is valid and get therapist information',
+  })
+  @ApiBody({ type: VerifyResetTokenDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Token verification result',
+  })
+  async verifySetupToken(@Body() verifyTokenDto: VerifyResetTokenDto): Promise<{
+    success: boolean;
+    data: { valid: boolean; therapist?: any; error?: string };
+    message: string;
+  }> {
+    const result = await this.therapistsService.verifySetupToken(
+      verifyTokenDto.token,
+    );
+
+    return {
+      success: result.valid,
+      data: result,
+      message: result.valid
+        ? 'Token verification completed'
+        : 'Token verification failed',
+    };
+  }
+
+  @Post('complete-setup')
+  @ApiOperation({
+    summary: 'Complete therapist setup with password',
+    description:
+      'Complete therapist account setup by setting password using valid setup token',
+  })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Therapist setup completed successfully',
+  })
+  async completeSetup(@Body() resetPasswordDto: ResetPasswordDto): Promise<{
+    success: boolean;
+    data: { message: string; therapistId?: string };
+    message: string;
+  }> {
+    const result = await this.therapistsService.completeSetup(
+      resetPasswordDto.token,
+      resetPasswordDto.password,
+      resetPasswordDto.confirmPassword,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: 'Setup completed successfully',
+    };
   }
 }

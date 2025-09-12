@@ -1,4 +1,5 @@
-import { EmploymentTypeEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from '@/types/enums';
+import { EmploymentTypeEnum, TherapistLicenseTypeEnum } from '@/types/enums';
+import { UserStatusEnum } from '@/types/status';
 import { 
   Therapist, 
   TherapistCertification, 
@@ -93,7 +94,7 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 8,
     
     // Status & Availability
-    status: TherapistStatusEnum.Active,
+    status: UserStatusEnum.Active,
     joinDate: '2020-01-15',
     
     // Assignment Info
@@ -143,7 +144,7 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 6,
     
     // Status & Availability
-    status: TherapistStatusEnum.Active,
+    status: UserStatusEnum.Active,
     joinDate: '2021-03-20',
     
     // Assignment Info
@@ -191,7 +192,7 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 10,
     
     // Status & Availability
-    status: TherapistStatusEnum.PendingSetup,
+    status: UserStatusEnum.PendingSetup,
     joinDate: '2024-08-15',
     
     // Assignment Info
@@ -240,7 +241,7 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 4,
     
     // Status & Availability
-    status: TherapistStatusEnum.Inactive,
+    status: UserStatusEnum.Inactive,
     joinDate: '2022-06-10',
     
     // Assignment Info
@@ -285,7 +286,7 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 12,
     
     // Status & Availability
-    status: TherapistStatusEnum.Active,
+    status: UserStatusEnum.Active,
     joinDate: '2020-09-01',
     
     // Assignment Info
@@ -331,6 +332,6 @@ export const getMockTherapistsByClinicId = (clinicId: string): Therapist[] => {
 };
 
 // Function to get therapists by status
-export const getMockTherapistsByStatus = (status: TherapistStatusEnum): Therapist[] => {
+export const getMockTherapistsByStatus = (status: UserStatusEnum): Therapist[] => {
   return mockTherapists.filter(therapist => therapist.status === status);
 };

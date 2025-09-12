@@ -8,6 +8,7 @@ import {
 } from '@/types/clinic';
 import { ClinicAPI } from '@/lib/api/clinic';
 import { useAuthStore } from '@/store/auth';
+import { ClinicStatusEnum } from '@/types/status';
 
 interface UseClinicState {
   clinic: ClinicProfile | null;
@@ -159,7 +160,7 @@ export const useClinic = () => {
           setClinic({
             id: response.data.id,
             name: response.data.name,
-            isActive: true, // New clinics are active by default
+            status: ClinicStatusEnum.ACTIVE, // New clinics are active by default
             ...(response.data.subscriptionTier && { subscriptionTier: response.data.subscriptionTier })
           });
         }
@@ -432,7 +433,7 @@ export const useClinic = () => {
             setClinic({
               ...state.clinic,
               subscriptionTier: response.data.subscriptionTier || undefined as any,
-              isActive: true
+              status: ClinicStatusEnum.ACTIVE
             });
           }
         }

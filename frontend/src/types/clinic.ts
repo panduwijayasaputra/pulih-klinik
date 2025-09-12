@@ -1,4 +1,5 @@
-import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum, ClinicLanguageEnum, ClinicStatusEnum, ClinicSubscriptionTierEnum } from './enums';
+import { ClinicDocumentTypeEnum } from './enums';
+import { ClinicStatusEnum } from './status';
 import { Client } from './client';
 import { Therapist } from './therapist';
 

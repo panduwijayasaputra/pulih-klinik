@@ -55,28 +55,11 @@ export const useTherapist = () => {
         phone: therapistData.phone,
         licenseNumber: therapistData.licenseNumber,
         licenseType: therapistData.licenseType as any,
-        specializations: therapistData.specializations,
-        yearsOfExperience: therapistData.yearsExperience,
-        maxClients: 15, // Default value, can be made configurable
-        education: [{
-          degree: therapistData.education,
-          institution: '',
-          year: new Date().getFullYear(),
-          field: ''
-        }],
-        certifications: therapistData.certifications 
-          ? therapistData.certifications.split(',').map(cert => ({
-              name: cert.trim(),
-              issuingOrganization: '',
-              issueDate: new Date().toISOString().split('T')[0]!,
-              certificateNumber: ''
-            }))
-          : [],
+        education: therapistData.education, // Now a flat string field
+        ...(therapistData.certifications && { certifications: therapistData.certifications }),
+        ...(therapistData.adminNotes && { adminNotes: therapistData.adminNotes }),
         preferences: {
-          sessionDuration: 60,
-          maxSessionsPerDay: 8,
-          languages: ['Indonesian'],
-          workingDays: [1, 2, 3, 4, 5]
+          languages: ['Indonesian']
         }
       };
 
@@ -260,13 +243,17 @@ export const useTherapist = () => {
     setError(null);
 
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Call the real API
+      const result = await TherapistAPI.updateTherapistStatus(therapistId, status);
       
-      return {
-        success: true,
-        message: `Status therapist berhasil diubah menjadi ${status}`
-      };
+      if (result.success) {
+        return {
+          success: true,
+          message: `Status therapist berhasil diubah menjadi ${status}`
+        };
+      } else {
+        throw new Error(result.message || 'Gagal mengubah status therapist');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal mengubah status therapist';
       setError(errorMessage);
