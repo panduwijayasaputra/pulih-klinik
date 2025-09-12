@@ -9,52 +9,21 @@ export class Migration20250120000001 extends Migration {
     this.addSql('update "users" set "status" = case when "is_active" = true then \'active\' else \'inactive\' end;');
     
     // For therapists, we need to check their therapist status and update accordingly
-    // First, let's update therapists who are in pending_setup status
+    // Map old statuses to new simplified statuses
     this.addSql(`
       update "users" 
-      set "status" = 'pending_setup' 
-      where "id" in (
-        select u.id 
-        from "users" u 
-        join "therapists" t on u.id = t.user_id 
-        where t.status = 'pending_setup'
-      );
-    `);
-    
-    // Update therapists who are on_leave
-    this.addSql(`
-      update "users" 
-      set "status" = 'on_leave' 
-      where "id" in (
-        select u.id 
-        from "users" u 
-        join "therapists" t on u.id = t.user_id 
-        where t.status = 'on_leave'
-      );
-    `);
-    
-    // Update therapists who are suspended
-    this.addSql(`
-      update "users" 
-      set "status" = 'suspended' 
-      where "id" in (
-        select u.id 
-        from "users" u 
-        join "therapists" t on u.id = t.user_id 
-        where t.status = 'suspended'
-      );
-    `);
-    
-    // Update therapists who are inactive
-    this.addSql(`
-      update "users" 
-      set "status" = 'inactive' 
-      where "id" in (
-        select u.id 
-        from "users" u 
-        join "therapists" t on u.id = t.user_id 
-        where t.status = 'inactive'
-      );
+      set "status" = case 
+        when t.status = 'pending_setup' then 'pending'
+        when t.status = 'pending_verification' then 'pending'
+        when t.status = 'on_leave' then 'inactive'
+        when t.status = 'suspended' then 'inactive'
+        when t.status = 'disabled' then 'inactive'
+        when t.status = 'deleted' then 'deleted'
+        when t.status = 'inactive' then 'inactive'
+        else 'active'
+      end
+      from "therapists" t 
+      where "users".id = t.user_id;
     `);
     
     // Drop the old isActive column
@@ -84,10 +53,9 @@ export class Migration20250120000001 extends Migration {
     this.addSql(`
       update "therapists" 
       set "status" = case 
-        when u.status = 'pending_setup' then 'pending_setup'
-        when u.status = 'on_leave' then 'on_leave'
-        when u.status = 'suspended' then 'suspended'
+        when u.status = 'pending' then 'pending_setup'
         when u.status = 'inactive' then 'inactive'
+        when u.status = 'deleted' then 'deleted'
         else 'active'
       end
       from "users" u 

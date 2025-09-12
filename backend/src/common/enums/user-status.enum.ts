@@ -3,21 +3,10 @@
  * This replaces both user.isActive and therapist.status
  */
 export enum UserStatus {
-  // Active states
-  ACTIVE = 'active', // User can login and is fully functional
-  ON_LEAVE = 'on_leave', // User is temporarily unavailable (therapist specific)
-
-  // Inactive states
-  INACTIVE = 'inactive', // User cannot login (replaces isActive: false)
-  SUSPENDED = 'suspended', // User account is suspended (disciplinary)
-
-  // Setup states
-  PENDING_SETUP = 'pending_setup', // User needs to complete setup (therapist specific)
-  PENDING_VERIFICATION = 'pending_verification', // User needs to verify email
-
-  // System states
-  DISABLED = 'disabled', // User account is disabled by admin
-  DELETED = 'deleted', // User account is soft deleted
+  PENDING = 'pending', // User registered but email not verified or setup not completed
+  ACTIVE = 'active', // User can login and access the system
+  INACTIVE = 'inactive', // User access is blocked by clinic admin
+  DELETED = 'deleted', // User account is deleted (system admin only)
 }
 
 /**
@@ -35,28 +24,28 @@ export class UserStatusHelper {
    * Check if user is considered "active" (can perform their role)
    */
   static isActive(status: UserStatus): boolean {
-    return status === UserStatus.ACTIVE || status === UserStatus.ON_LEAVE;
+    return status === UserStatus.ACTIVE;
   }
 
   /**
-   * Check if user is in a setup/verification state
+   * Check if user is in a pending state (needs action)
    */
-  static needsSetup(status: UserStatus): boolean {
-    return (
-      status === UserStatus.PENDING_SETUP ||
-      status === UserStatus.PENDING_VERIFICATION
-    );
+  static isPending(status: UserStatus): boolean {
+    return status === UserStatus.PENDING;
   }
 
   /**
-   * Check if user is completely inactive
+   * Check if user is inactive (blocked by clinic admin)
    */
   static isInactive(status: UserStatus): boolean {
-    return (
-      status === UserStatus.INACTIVE ||
-      status === UserStatus.SUSPENDED ||
-      status === UserStatus.DISABLED
-    );
+    return status === UserStatus.INACTIVE;
+  }
+
+  /**
+   * Check if user is deleted (system admin only)
+   */
+  static isDeleted(status: UserStatus): boolean {
+    return status === UserStatus.DELETED;
   }
 
   /**
@@ -64,13 +53,9 @@ export class UserStatusHelper {
    */
   static getDisplayLabel(status: UserStatus): string {
     const labels: Record<UserStatus, string> = {
+      [UserStatus.PENDING]: 'Menunggu',
       [UserStatus.ACTIVE]: 'Aktif',
-      [UserStatus.ON_LEAVE]: 'Cuti',
       [UserStatus.INACTIVE]: 'Tidak Aktif',
-      [UserStatus.SUSPENDED]: 'Ditahan',
-      [UserStatus.PENDING_SETUP]: 'Menunggu Setup',
-      [UserStatus.PENDING_VERIFICATION]: 'Menunggu Verifikasi',
-      [UserStatus.DISABLED]: 'Dinonaktifkan',
       [UserStatus.DELETED]: 'Dihapus',
     };
     return labels[status] || status;
@@ -85,14 +70,9 @@ export class UserStatusHelper {
     switch (status) {
       case UserStatus.ACTIVE:
         return 'success';
-      case UserStatus.ON_LEAVE:
-        return 'info';
-      case UserStatus.PENDING_SETUP:
-      case UserStatus.PENDING_VERIFICATION:
+      case UserStatus.PENDING:
         return 'warning';
       case UserStatus.INACTIVE:
-      case UserStatus.SUSPENDED:
-      case UserStatus.DISABLED:
       case UserStatus.DELETED:
         return 'destructive';
       default:

@@ -37,12 +37,9 @@ const getStatusBadge = (status: UserStatusEnum) => {
   return (
     <Badge variant={variant}>
       {status === UserStatusEnum.ACTIVE && <CheckCircleIcon className="w-3 h-3 mr-1" />}
-      {status === UserStatusEnum.PENDING_SETUP && <ClockIcon className="w-3 h-3 mr-1" />}
+      {status === UserStatusEnum.PENDING && <ClockIcon className="w-3 h-3 mr-1" />}
       {status === UserStatusEnum.INACTIVE && <XMarkIcon className="w-3 h-3 mr-1" />}
-      {status === UserStatusEnum.ON_LEAVE && <ClockIcon className="w-3 h-3 mr-1" />}
-      {status === UserStatusEnum.SUSPENDED && <XMarkIcon className="w-3 h-3 mr-1" />}
-      {status === UserStatusEnum.PENDING_VERIFICATION && <ClockIcon className="w-3 h-3 mr-1" />}
-      {status === UserStatusEnum.DISABLED && <XMarkIcon className="w-3 h-3 mr-1" />}
+      {status === UserStatusEnum.DELETED && <XMarkIcon className="w-3 h-3 mr-1" />}
       {label}
     </Badge>
   );
@@ -280,7 +277,7 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                     )}
 
                     {/* Resend Email Button for Pending Setup */}
-                    {therapistData.status === UserStatusEnum.PENDING_SETUP && (() => {
+                    {therapistData.status === UserStatusEnum.PENDING && (() => {
                       const cooldown = resendCooldowns[therapistData.id];
                       const isInCooldown = Boolean(cooldown && cooldown > 0);
 

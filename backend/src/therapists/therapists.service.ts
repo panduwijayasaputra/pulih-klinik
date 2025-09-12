@@ -90,20 +90,59 @@ export class TherapistsService {
       throw new BadRequestException('Therapist email is already verified');
     }
 
+    // Check if user has reached max resend attempts
+    const MAX_RESEND_ATTEMPTS = 3;
+    if (therapist.user.emailResendAttempts >= MAX_RESEND_ATTEMPTS) {
+      throw new BadRequestException(
+        'Maximum email resend attempts reached. Please contact system administrator.',
+      );
+    }
+
+    // Check if user is in cooldown period
+    if (
+      therapist.user.emailResendCooldownUntil &&
+      therapist.user.emailResendCooldownUntil > new Date()
+    ) {
+      const remainingMs =
+        therapist.user.emailResendCooldownUntil.getTime() - Date.now();
+      const remainingMinutes = Math.ceil(remainingMs / (1000 * 60));
+      throw new BadRequestException(
+        `Please wait ${remainingMinutes} minute(s) before sending another email.`,
+      );
+    }
+
     // Generate verification code
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000,
     ).toString();
     const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    // Update user with verification code
+    // Update user with verification code and increment resend attempts
     therapist.user.emailVerificationCode = verificationCode;
     therapist.user.emailVerificationExpires = verificationExpires;
+    therapist.user.emailResendAttempts += 1;
+
+    // Set cooldown based on attempt number
+    const RESEND_COOLDOWNS = {
+      1: 1 * 60 * 1000, // 1 minute for first retry
+      2: 5 * 60 * 1000, // 5 minutes for second retry
+      3: 0, // No cooldown for third retry (max reached)
+    };
+
+    const cooldownMs =
+      RESEND_COOLDOWNS[
+        therapist.user.emailResendAttempts as keyof typeof RESEND_COOLDOWNS
+      ] || 0;
+    if (cooldownMs > 0) {
+      therapist.user.emailResendCooldownUntil = new Date(
+        Date.now() + cooldownMs,
+      );
+    }
 
     await this.em.persistAndFlush(therapist.user);
 
     // For therapists, send setup email instead of verification code
-    if (therapist.user.status === UserStatus.PENDING_SETUP) {
+    if (therapist.user.status === UserStatus.PENDING) {
       console.log('Generating setup token for therapist:', therapist.id);
       // Generate new setup token and link
       const setupToken = crypto.randomBytes(32).toString('hex');
@@ -194,7 +233,7 @@ export class TherapistsService {
       // Create user with therapist role
       const user = new User();
       user.email = createTherapistDto.email;
-      user.status = UserStatus.PENDING_SETUP; // Pending setup until email verified
+      user.status = UserStatus.PENDING; // Pending setup until email verified
       user.emailVerified = false; // Not verified yet
       user.passwordHash = 'temp-password-hash'; // Temporary password hash
       user.emailVerificationCode = verificationCode;
@@ -1376,10 +1415,10 @@ export class TherapistsService {
       console.log('Current time:', new Date().toISOString());
 
       // Find user with setup token (without expiration check first)
-      // Note: Therapist users are created with PENDING_SETUP status until setup is completed
+      // Note: Therapist users are created with PENDING status until setup is completed
       const user = await this.em.findOne(User, {
         passwordResetToken: token,
-        status: UserStatus.PENDING_SETUP, // Therapists are in pending setup until completed
+        status: UserStatus.PENDING, // Therapists are in pending setup until completed
       });
 
       console.log('Found user:', user ? user.email : 'null');
@@ -1432,7 +1471,7 @@ export class TherapistsService {
       }
 
       // Check if therapist is in pending setup status
-      if (therapist.user.status !== UserStatus.PENDING_SETUP) {
+      if (therapist.user.status !== UserStatus.PENDING) {
         return {
           valid: false,
           error: 'Therapist account is not in setup mode',
@@ -1458,6 +1497,48 @@ export class TherapistsService {
   }
 
   /**
+   * Get email resend status for a therapist
+   */
+  async getEmailResendStatus(therapistId: string): Promise<{
+    attempts: number;
+    maxAttempts: number;
+    cooldownUntil?: Date;
+    canResend: boolean;
+    remainingCooldownMs?: number;
+  }> {
+    const therapist = await this.em.findOne(
+      Therapist,
+      { id: therapistId },
+      {
+        populate: ['user'],
+      },
+    );
+
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
+    const MAX_RESEND_ATTEMPTS = 3;
+    const now = new Date();
+    const cooldownUntil = therapist.user.emailResendCooldownUntil;
+    const isInCooldown = cooldownUntil && cooldownUntil > now;
+    const remainingCooldownMs = isInCooldown
+      ? cooldownUntil.getTime() - now.getTime()
+      : 0;
+
+    return {
+      attempts: therapist.user.emailResendAttempts,
+      maxAttempts: MAX_RESEND_ATTEMPTS,
+      cooldownUntil: isInCooldown ? cooldownUntil : undefined,
+      canResend:
+        therapist.user.emailResendAttempts < MAX_RESEND_ATTEMPTS &&
+        !isInCooldown,
+      remainingCooldownMs:
+        remainingCooldownMs > 0 ? remainingCooldownMs : undefined,
+    };
+  }
+
+  /**
    * Complete therapist setup with password
    */
   async completeSetup(
@@ -1471,11 +1552,11 @@ export class TherapistsService {
     }
 
     // Find user with valid setup token
-    // Note: Therapist users are created with PENDING_SETUP status until setup is completed
+    // Note: Therapist users are created with PENDING status until setup is completed
     const user = await this.em.findOne(User, {
       passwordResetToken: token,
       passwordResetExpires: { $gt: new Date() },
-      status: UserStatus.PENDING_SETUP, // Therapists are in pending setup until completed
+      status: UserStatus.PENDING, // Therapists are in pending setup until completed
     });
 
     if (!user) {
@@ -1498,7 +1579,7 @@ export class TherapistsService {
     }
 
     // Check if therapist is in pending setup status
-    if (therapist.user.status !== UserStatus.PENDING_SETUP) {
+    if (therapist.user.status !== UserStatus.PENDING) {
       throw new BadRequestException('Therapist account is not in setup mode');
     }
 
@@ -1518,6 +1599,8 @@ export class TherapistsService {
           emailVerified: true,
           emailVerifiedAt: new Date(),
           status: UserStatus.ACTIVE, // Activate the user account
+          emailResendAttempts: 0, // Reset resend attempts
+          emailResendCooldownUntil: null, // Clear cooldown
         },
       );
 

@@ -186,13 +186,10 @@ export const LICENSE_TYPES = [
 ] as const;
 
 export const THERAPIST_STATUS = [
+  { value: UserStatusEnum.PENDING, label: 'Menunggu', color: 'yellow' },
   { value: UserStatusEnum.ACTIVE, label: 'Aktif', color: 'green' },
-  { value: UserStatusEnum.INACTIVE, label: 'Tidak Aktif', color: 'gray' },
-  { value: UserStatusEnum.ON_LEAVE, label: 'Cuti', color: 'blue' },
-  { value: UserStatusEnum.SUSPENDED, label: 'Ditahan', color: 'red' },
-  { value: UserStatusEnum.PENDING_SETUP, label: 'Menunggu Setup', color: 'yellow' },
-  { value: UserStatusEnum.PENDING_VERIFICATION, label: 'Menunggu Verifikasi', color: 'yellow' },
-  { value: UserStatusEnum.DISABLED, label: 'Dinonaktifkan', color: 'red' },
+  { value: UserStatusEnum.INACTIVE, label: 'Tidak Aktif', color: 'red' },
+  { value: UserStatusEnum.DELETED, label: 'Dihapus', color: 'gray' },
 ] as const;
 
 // Therapist Registration Types

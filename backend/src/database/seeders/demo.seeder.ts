@@ -260,6 +260,8 @@ export class DemoSeeder extends Seeder {
         emailVerified: true, // Demo users are pre-verified
         status: UserStatus.ACTIVE,
         clinic: userData.clinic || undefined,
+        emailResendAttempts: 0,
+        emailResendCooldownUntil: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
       });

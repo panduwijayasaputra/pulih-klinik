@@ -99,7 +99,7 @@ export class RegistrationService {
     const user = new User();
     user.email = dto.email;
     user.passwordHash = hashedPassword;
-    user.status = UserStatus.PENDING_VERIFICATION; // User is pending verification until email is verified
+    user.status = UserStatus.PENDING; // User is pending verification until email is verified
     user.emailVerified = false;
     user.emailVerificationToken = verificationToken;
     user.emailVerificationCode = verificationCode;

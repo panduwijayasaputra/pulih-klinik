@@ -4,21 +4,10 @@
 
 // User Status (replaces both user.isActive and therapist.status)
 export enum UserStatusEnum {
-  // Active states
-  ACTIVE = 'active',                    // User can login and is fully functional
-  ON_LEAVE = 'on_leave',               // User is temporarily unavailable (therapist specific)
-  
-  // Inactive states
-  INACTIVE = 'inactive',               // User cannot login (replaces isActive: false)
-  SUSPENDED = 'suspended',             // User account is suspended (disciplinary)
-  
-  // Setup states
-  PENDING_SETUP = 'pending_setup',     // User needs to complete setup (therapist specific)
-  PENDING_VERIFICATION = 'pending_verification', // User needs to verify email
-  
-  // System states
-  DISABLED = 'disabled',               // User account is disabled by admin
-  DELETED = 'deleted',                 // User account is soft deleted
+  PENDING = 'pending',                 // User registered but email not verified or setup not completed
+  ACTIVE = 'active',                   // User can login and access the system
+  INACTIVE = 'inactive',               // User access is blocked by clinic admin
+  DELETED = 'deleted',                 // User account is deleted (system admin only)
 }
 
 // Clinic Status (replaces both clinic.status and clinic.isActive)
@@ -50,23 +39,28 @@ export class UserStatusHelper {
    * Check if user is considered "active" (can perform their role)
    */
   static isActive(status: UserStatusEnum): boolean {
-    return status === UserStatusEnum.ACTIVE || status === UserStatusEnum.ON_LEAVE;
+    return status === UserStatusEnum.ACTIVE;
   }
 
   /**
-   * Check if user is in a setup/verification state
+   * Check if user is in a pending state (needs action)
    */
-  static needsSetup(status: UserStatusEnum): boolean {
-    return status === UserStatusEnum.PENDING_SETUP || status === UserStatusEnum.PENDING_VERIFICATION;
+  static isPending(status: UserStatusEnum): boolean {
+    return status === UserStatusEnum.PENDING;
   }
 
   /**
-   * Check if user is completely inactive
+   * Check if user is inactive (blocked by clinic admin)
    */
   static isInactive(status: UserStatusEnum): boolean {
-    return status === UserStatusEnum.INACTIVE || 
-           status === UserStatusEnum.SUSPENDED || 
-           status === UserStatusEnum.DISABLED;
+    return status === UserStatusEnum.INACTIVE;
+  }
+
+  /**
+   * Check if user is deleted (system admin only)
+   */
+  static isDeleted(status: UserStatusEnum): boolean {
+    return status === UserStatusEnum.DELETED;
   }
 
   /**
@@ -74,13 +68,9 @@ export class UserStatusHelper {
    */
   static getDisplayLabel(status: UserStatusEnum): string {
     const labels: Record<UserStatusEnum, string> = {
+      [UserStatusEnum.PENDING]: 'Menunggu',
       [UserStatusEnum.ACTIVE]: 'Aktif',
-      [UserStatusEnum.ON_LEAVE]: 'Cuti',
       [UserStatusEnum.INACTIVE]: 'Tidak Aktif',
-      [UserStatusEnum.SUSPENDED]: 'Ditahan',
-      [UserStatusEnum.PENDING_SETUP]: 'Menunggu Setup',
-      [UserStatusEnum.PENDING_VERIFICATION]: 'Menunggu Verifikasi',
-      [UserStatusEnum.DISABLED]: 'Dinonaktifkan',
       [UserStatusEnum.DELETED]: 'Dihapus',
     };
     return labels[status] || status;
@@ -93,14 +83,9 @@ export class UserStatusHelper {
     switch (status) {
       case UserStatusEnum.ACTIVE:
         return 'success';
-      case UserStatusEnum.ON_LEAVE:
-        return 'info';
-      case UserStatusEnum.PENDING_SETUP:
-      case UserStatusEnum.PENDING_VERIFICATION:
+      case UserStatusEnum.PENDING:
         return 'warning';
       case UserStatusEnum.INACTIVE:
-      case UserStatusEnum.SUSPENDED:
-      case UserStatusEnum.DISABLED:
       case UserStatusEnum.DELETED:
         return 'destructive';
       default:
@@ -183,13 +168,10 @@ export class ClinicStatusHelper {
 
 // Status options for UI components
 export const USER_STATUS_OPTIONS = [
+  { value: UserStatusEnum.PENDING, label: 'Menunggu', color: 'yellow' },
   { value: UserStatusEnum.ACTIVE, label: 'Aktif', color: 'green' },
-  { value: UserStatusEnum.ON_LEAVE, label: 'Cuti', color: 'blue' },
-  { value: UserStatusEnum.INACTIVE, label: 'Tidak Aktif', color: 'gray' },
-  { value: UserStatusEnum.SUSPENDED, label: 'Ditahan', color: 'red' },
-  { value: UserStatusEnum.PENDING_SETUP, label: 'Menunggu Setup', color: 'yellow' },
-  { value: UserStatusEnum.PENDING_VERIFICATION, label: 'Menunggu Verifikasi', color: 'yellow' },
-  { value: UserStatusEnum.DISABLED, label: 'Dinonaktifkan', color: 'red' },
+  { value: UserStatusEnum.INACTIVE, label: 'Tidak Aktif', color: 'red' },
+  { value: UserStatusEnum.DELETED, label: 'Dihapus', color: 'gray' },
 ] as const;
 
 export const CLINIC_STATUS_OPTIONS = [

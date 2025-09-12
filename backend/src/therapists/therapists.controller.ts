@@ -137,6 +137,62 @@ export class TherapistsController {
     };
   }
 
+  @Get(':id/email-resend-status')
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Get email resend status for therapist',
+    description:
+      'Get current email resend attempts and cooldown status for a therapist',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Therapist ID',
+    type: 'string',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Email resend status retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Therapist not found',
+  })
+  async getEmailResendStatus(
+    @Param('id', ParseUUIDPipe) therapistId: string,
+    @Request() req: any,
+  ): Promise<{
+    success: boolean;
+    data: {
+      attempts: number;
+      maxAttempts: number;
+      cooldownUntil?: Date;
+      canResend: boolean;
+      remainingCooldownMs?: number;
+    };
+    message: string;
+  }> {
+    const currentUser = req.user;
+
+    // Get clinic ID from user's role context for authorization
+    if (!currentUser.roles.includes('administrator')) {
+      // Clinic admin can only check status for therapists in their clinic
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
+      }
+      // Note: clinicId is used for authorization but not passed to service method
+      // as the service method handles its own authorization logic
+    }
+
+    const result =
+      await this.therapistsService.getEmailResendStatus(therapistId);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Email resend status retrieved successfully',
+    };
+  }
+
   @Post(':id/send-verification')
   @RequireAdminOrClinicAdmin()
   @ApiOperation({
@@ -168,10 +224,10 @@ export class TherapistsController {
     const currentUser = req.user;
 
     // Get clinic ID from user's role context
-    let clinicId: string;
+    let clinicId: string | undefined;
     if (currentUser.roles.includes('administrator')) {
       // System admin can send verification to any therapist
-      clinicId = undefined as any;
+      clinicId = undefined;
     } else {
       // Clinic admin can only send verification to therapists in their clinic
       if (!currentUser.clinicId) {

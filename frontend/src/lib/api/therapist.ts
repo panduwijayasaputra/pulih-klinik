@@ -352,6 +352,34 @@ export class TherapistAPI {
     };
   }
 
+  /**
+   * Get email resend status for therapist
+   */
+  static async getEmailResendStatus(therapistId: string): Promise<{
+    success: boolean;
+    data?: {
+      attempts: number;
+      maxAttempts: number;
+      cooldownUntil?: Date;
+      canResend: boolean;
+      remainingCooldownMs?: number;
+    };
+    message?: string;
+  }> {
+    try {
+      const response = await apiClient.get(`/therapists/${therapistId}/email-resend-status`);
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to get email resend status'
+      };
+    }
+  }
+
   static async sendEmailVerification(therapistId: string): Promise<StatusResponse> {
     try {
       const response = await apiClient.post(`/therapists/${therapistId}/send-verification`);
@@ -366,6 +394,7 @@ export class TherapistAPI {
       };
     }
   }
+
 
   static async updateTherapistStatus(therapistId: string, status: string, reason?: string): Promise<ItemResponse<Therapist>> {
     try {
