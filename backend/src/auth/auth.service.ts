@@ -9,7 +9,6 @@ import { EntityManager } from '@mikro-orm/core';
 import * as bcryptjs from 'bcryptjs';
 import * as crypto from 'crypto';
 import { User } from '../database/entities/user.entity';
-import { Therapist } from '../database/entities/therapist.entity';
 import { JwtPayload } from './jwt.strategy';
 import { UserStatus, UserStatusHelper } from '../common/enums';
 
@@ -38,7 +37,7 @@ export class AuthService {
   constructor(
     private readonly em: EntityManager,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.em.findOne(
@@ -67,7 +66,17 @@ export class AuthService {
     const user = await this.em.findOne(
       User,
       { email },
-      { populate: ['roles', 'clinic', 'clinic.subscriptionTier', 'profile', 'therapist', 'therapist.clinic', 'therapist.clinic.subscriptionTier'] },
+      {
+        populate: [
+          'roles',
+          'clinic',
+          'clinic.subscriptionTier',
+          'profile',
+          'therapist',
+          'therapist.clinic',
+          'therapist.clinic.subscriptionTier',
+        ],
+      },
     );
 
     if (!user) {
@@ -222,7 +231,10 @@ export class AuthService {
    * Send password reset email (token generation)
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const user = await this.em.findOne(User, { email, status: UserStatus.ACTIVE });
+    const user = await this.em.findOne(User, {
+      email,
+      status: UserStatus.ACTIVE,
+    });
 
     // Don't reveal whether user exists or not for security
     if (!user) {
@@ -335,7 +347,10 @@ export class AuthService {
     }
 
     // Find user
-    const user = await this.em.findOne(User, { id: userId, status: UserStatus.ACTIVE });
+    const user = await this.em.findOne(User, {
+      id: userId,
+      status: UserStatus.ACTIVE,
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

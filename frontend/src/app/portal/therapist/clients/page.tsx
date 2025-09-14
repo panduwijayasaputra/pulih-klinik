@@ -76,7 +76,7 @@ export default function TherapistClientsPage() {
   };
 
   // Calculate total clients for display
-  const totalClients = therapistClients.length;
+  const totalClients = therapistClients?.length || 0;
 
   return (
     <PageWrapper
@@ -84,7 +84,7 @@ export default function TherapistClientsPage() {
       description="Kelola klien yang ditugaskan kepada Anda"
     >
       <TherapistClientList
-        clients={therapistClients}
+        clients={therapistClients || []}
         totalClients={totalClients}
         loading={loading}
         error={error}

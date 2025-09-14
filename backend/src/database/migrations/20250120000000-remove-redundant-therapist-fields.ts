@@ -1,7 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20250120000000 extends Migration {
-
   async up(): Promise<void> {
     // Remove redundant columns from therapists table
     // These fields are now stored in user_profiles table
@@ -12,9 +11,12 @@ export class Migration20250120000000 extends Migration {
 
   async down(): Promise<void> {
     // Add back the columns if we need to rollback
-    this.addSql('alter table "therapists" add column "full_name" varchar(255);');
+    this.addSql(
+      'alter table "therapists" add column "full_name" varchar(255);',
+    );
     this.addSql('alter table "therapists" add column "phone" varchar(20);');
-    this.addSql('alter table "therapists" add column "avatar_url" varchar(500);');
+    this.addSql(
+      'alter table "therapists" add column "avatar_url" varchar(500);',
+    );
   }
-
 }

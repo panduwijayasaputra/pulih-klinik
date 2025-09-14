@@ -1,11 +1,10 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20250120000003 extends Migration {
-
   async up(): Promise<void> {
     // Fix users who have therapist records but no clinic relationship
     // This happens when therapists were created but the user.clinic relationship wasn't set
-    
+
     this.addSql(`
       UPDATE users 
       SET clinic_id = t.clinic_id
@@ -25,5 +24,4 @@ export class Migration20250120000003 extends Migration {
       -- Users with therapist records should keep their clinic relationships
     `);
   }
-
 }

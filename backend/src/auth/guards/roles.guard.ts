@@ -22,7 +22,7 @@ export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private em: EntityManager,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<RequiredRole[]>(
@@ -44,9 +44,7 @@ export class RolesGuard implements CanActivate {
     // Check if user has any of the required roles
     let hasRequiredRole = false;
     for (const requiredRole of requiredRoles) {
-      const userRole = user.roles.find(
-        (role) => role === requiredRole.role,
-      );
+      const userRole = user.roles.find((role) => role === requiredRole.role);
 
       if (!userRole) {
         continue;
@@ -66,7 +64,9 @@ export class RolesGuard implements CanActivate {
 
         // Check if the clinic actually exists in the database first
         if (requestedClinicId) {
-          const clinic = await this.em.findOne(Clinic, { id: requestedClinicId });
+          const clinic = await this.em.findOne(Clinic, {
+            id: requestedClinicId,
+          });
           if (!clinic) {
             throw new NotFoundException('Clinic not found');
           }

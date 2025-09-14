@@ -1,7 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20241220000000 extends Migration {
-
   async up(): Promise<void> {
     this.addSql('drop table if exists "therapist_specializations" cascade;');
   }
@@ -23,5 +22,4 @@ export class Migration20241220000000 extends Migration {
       foreign key ("therapist_id") references "therapists" ("id") on update cascade on delete cascade;
     `);
   }
-
 }

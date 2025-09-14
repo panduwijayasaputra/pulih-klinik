@@ -608,7 +608,6 @@ export class ClientsService {
     return { message: 'Client successfully archived' };
   }
 
-
   /**
    * Map Client entity to response format with current assignment
    */
@@ -686,7 +685,8 @@ export class ClientsService {
       primaryIssue: client.primaryIssue,
       // Flattened therapist assignment fields
       assignedTherapistId: currentAssignment?.therapist.id,
-      assignedTherapistName: currentAssignment?.therapist.user.profile?.name || undefined,
+      assignedTherapistName:
+        currentAssignment?.therapist.user.profile?.name || undefined,
       assignedDate: currentAssignment?.assignedDate,
       assignmentStatus: currentAssignment?.status,
       assignmentId: currentAssignment?.id,

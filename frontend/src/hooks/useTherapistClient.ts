@@ -76,15 +76,17 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       );
 
       if (response.success && response.data) {
-        setClients(response.data.items);
+        setClients(response.data.items || []);
       } else {
         setError(response.message || 'Failed to load clients');
+        setClients([]); // Reset clients on error
       }
     } catch (err) {
       const errorMessage = err instanceof TherapistClientAPIError
         ? err.message
         : 'Failed to load clients';
       setError(errorMessage);
+      setClients([]); // Reset clients on exception
     } finally {
       setLoading(false);
     }
@@ -202,12 +204,12 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       if (response.success && response.data) {
         // Update the client in the list
         setClients(prev => prev.map(client =>
-          client.id === clientId ? response.data : client
+          client.id === clientId ? response.data as TherapistClient : client
         ));
 
         // Update selected client if it's the same
         if (selectedClient?.id === clientId) {
-          setSelectedClient(response.data);
+          setSelectedClient(response.data as TherapistClient);
         }
 
         return true;
@@ -236,12 +238,12 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       if (response.success && response.data) {
         // Update the client in the list
         setClients(prev => prev.map(client =>
-          client.id === clientId ? response.data : client
+          client.id === clientId ? response.data as TherapistClient : client
         ));
 
         // Update selected client if it's the same
         if (selectedClient?.id === clientId) {
-          setSelectedClient(response.data);
+          setSelectedClient(response.data as TherapistClient);
         }
 
         return true;
@@ -270,12 +272,12 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       if (response.success && response.data) {
         // Update the client in the list
         setClients(prev => prev.map(client =>
-          client.id === clientId ? response.data : client
+          client.id === clientId ? response.data as TherapistClient : client
         ));
 
         // Update selected client if it's the same
         if (selectedClient?.id === clientId) {
-          setSelectedClient(response.data);
+          setSelectedClient(response.data as TherapistClient);
         }
 
         // Reload stats to reflect the change

@@ -239,8 +239,6 @@ export class AuthController {
     };
   }
 
-
-
   @Get('validate')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

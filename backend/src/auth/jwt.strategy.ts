@@ -51,7 +51,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.em.findOne(
       User,
       { id: userId, email, status: UserStatus.ACTIVE },
-      { populate: ['roles', 'clinic', 'profile', 'therapist', 'therapist.clinic', 'therapist.clinic.subscriptionTier'] },
+      {
+        populate: [
+          'roles',
+          'clinic',
+          'profile',
+          'therapist',
+          'therapist.clinic',
+          'therapist.clinic.subscriptionTier',
+        ],
+      },
     );
 
     if (!user) {
@@ -64,8 +73,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Check if JWT roles are a subset of current database roles
     // This allows for role additions (like adding therapist role) without requiring re-login
-    const jwtRolesValid = jwtRoles.every(jwtRole => currentRoles.includes(jwtRole as any));
-    
+    const jwtRolesValid = jwtRoles.every((jwtRole) =>
+      currentRoles.includes(jwtRole as any),
+    );
+
     if (!jwtRolesValid) {
       throw new UnauthorizedException(
         'User roles have been removed, please re-login',

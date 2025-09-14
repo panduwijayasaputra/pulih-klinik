@@ -4,15 +4,15 @@
  */
 export enum ClinicStatus {
   // Active states
-  ACTIVE = 'active',                    // Clinic is operational and can access system
-  PENDING = 'pending',                  // New clinic awaiting approval (can't access system yet)
-  
+  ACTIVE = 'active', // Clinic is operational and can access system
+  PENDING = 'pending', // New clinic awaiting approval (can't access system yet)
+
   // Inactive states
-  SUSPENDED = 'suspended',              // Clinic temporarily suspended (payment issues, etc.)
-  INACTIVE = 'inactive',                // Clinic permanently closed or disabled
-  
+  SUSPENDED = 'suspended', // Clinic temporarily suspended (payment issues, etc.)
+  INACTIVE = 'inactive', // Clinic permanently closed or disabled
+
   // System states
-  DISABLED = 'disabled',                // Clinic completely disabled from system access
+  DISABLED = 'disabled', // Clinic completely disabled from system access
 }
 
 /**
@@ -44,9 +44,11 @@ export class ClinicStatusHelper {
    * Check if clinic is completely inactive
    */
   static isInactive(status: ClinicStatus): boolean {
-    return status === ClinicStatus.INACTIVE || 
-           status === ClinicStatus.SUSPENDED || 
-           status === ClinicStatus.DISABLED;
+    return (
+      status === ClinicStatus.INACTIVE ||
+      status === ClinicStatus.SUSPENDED ||
+      status === ClinicStatus.DISABLED
+    );
   }
 
   /**

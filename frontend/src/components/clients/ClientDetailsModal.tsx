@@ -2,23 +2,23 @@
 
 import React, { useEffect, useState } from 'react';
 import { XMarkIcon, UserIcon, PhoneIcon, EnvelopeIcon, MapPinIcon, BriefcaseIcon, AcademicCapIcon, CalendarIcon, ChartBarIcon, ChatBubbleLeftRightIcon, PencilIcon, UserPlusIcon } from '@heroicons/react/24/outline';
-import { Client } from '@/types/client';
 import { ClientEducationLabels, ClientGuardianMaritalStatusLabels, ClientGuardianRelationshipLabels, ClientMaritalStatusLabels, ClientRelationshipWithSpouseLabels, ClientReligionLabels, ClientStatusEnum, ClientStatusLabels, UserRoleEnum } from '@/types/enums';
 import { ClientStatusBadge } from './ClientStatusBadge';
 import { ClientAPI } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
+import { TherapistClient } from '@/types/therapistClient';
 
 interface ClientDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   clientId?: string | undefined; // Use ID instead of full client object
   isTherapist: boolean;
-  onEdit: (client: Client) => void;
+  onEdit: (client: TherapistClient) => void;
   onAssign: (clientId: string) => void;
   onConsultation: (clientId: string) => void;
 }
 
-const getStatusBadge = (status: Client['status']) => {
+const getStatusBadge = (status: TherapistClient['status']) => {
   return <ClientStatusBadge status={status as ClientStatusEnum} />;
 };
 
@@ -32,7 +32,7 @@ export const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
   onConsultation,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [clientData, setClientData] = useState<Client | null>(null);
+  const [clientData, setClientData] = useState<TherapistClient | null>(null);
 
   // Fetch client data when modal opens
   useEffect(() => {
@@ -43,7 +43,7 @@ export const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
         try {
           const response = await ClientAPI.getClient(clientId);
           if (response.success && response.data) {
-            setClientData(response.data);
+            setClientData(response.data as TherapistClient);
           }
         } catch (error) {
           console.error('Failed to fetch client details:', error);

@@ -1108,21 +1108,23 @@ export class TherapistsController {
 
     // Authorization: Only therapists can access their own clients, or clinic admins can access any therapist's clients
     let clinicId: string | undefined;
-    if (!currentUser.isAdmin) {
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
+    if (!currentUser.roles.includes('administrator')) {
+      // Check if user has clinic association
+      if (!currentUser.clinicId) {
         throw new BadRequestException(
           'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
         );
       }
-      clinicId = userRole.clinicId;
+      clinicId = currentUser.clinicId;
 
       // If user is a therapist, they can only see their own clients
-      const therapistRole = currentUser.roles.find(
-        (role: any) => role === 'therapist',
-      );
-      if (therapistRole && currentUser.id !== therapistId) {
-        throw new Error('Therapists can only access their own clients');
+      if (
+        currentUser.roles.includes('therapist') &&
+        currentUser.id !== therapistId
+      ) {
+        throw new BadRequestException(
+          'Therapists can only access their own clients',
+        );
       }
     }
 
@@ -1167,20 +1169,23 @@ export class TherapistsController {
 
     // Authorization check
     let clinicId: string | undefined;
-    if (!currentUser.isAdmin) {
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
+    if (!currentUser.roles.includes('administrator')) {
+      // Check if user has clinic association
+      if (!currentUser.clinicId) {
         throw new BadRequestException(
           'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
         );
       }
-      clinicId = userRole.clinicId;
+      clinicId = currentUser.clinicId;
 
-      const therapistRole = currentUser.roles.find(
-        (role: any) => role === 'therapist',
-      );
-      if (therapistRole && currentUser.id !== therapistId) {
-        throw new Error('Therapists can only access their own clients');
+      // If user is a therapist, they can only access their own clients
+      if (
+        currentUser.roles.includes('therapist') &&
+        currentUser.id !== therapistId
+      ) {
+        throw new BadRequestException(
+          'Therapists can only access their own clients',
+        );
       }
     }
 
@@ -1223,11 +1228,13 @@ export class TherapistsController {
 
     // Authorization: Only the assigned therapist can update their client's notes
     if (!currentUser.roles.includes('administrator')) {
-      const therapistRole = currentUser.roles.find(
-        (role: any) => role === 'therapist',
-      );
-      if (therapistRole && currentUser.id !== therapistId) {
-        throw new Error("Therapists can only update their own clients' notes");
+      if (
+        currentUser.roles.includes('therapist') &&
+        currentUser.id !== therapistId
+      ) {
+        throw new BadRequestException(
+          "Therapists can only update their own clients' notes",
+        );
       }
     }
 
@@ -1287,20 +1294,23 @@ export class TherapistsController {
 
     // Authorization
     let clinicId: string | undefined;
-    if (!currentUser.isAdmin) {
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
+    if (!currentUser.roles.includes('administrator')) {
+      // Check if user has clinic association
+      if (!currentUser.clinicId) {
         throw new BadRequestException(
           'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
         );
       }
-      clinicId = userRole.clinicId;
+      clinicId = currentUser.clinicId;
 
-      const therapistRole = currentUser.roles.find(
-        (role: any) => role === 'therapist',
-      );
-      if (therapistRole && currentUser.id !== therapistId) {
-        throw new Error('Therapists can only access their own statistics');
+      // If user is a therapist, they can only access their own statistics
+      if (
+        currentUser.roles.includes('therapist') &&
+        currentUser.id !== therapistId
+      ) {
+        throw new BadRequestException(
+          'Therapists can only access their own statistics',
+        );
       }
     }
 
@@ -1344,11 +1354,11 @@ export class TherapistsController {
 
     // Authorization
     if (!currentUser.roles.includes('administrator')) {
-      const therapistRole = currentUser.roles.find(
-        (role: any) => role === 'therapist',
-      );
-      if (therapistRole && currentUser.id !== therapistId) {
-        throw new Error(
+      if (
+        currentUser.roles.includes('therapist') &&
+        currentUser.id !== therapistId
+      ) {
+        throw new BadRequestException(
           'Therapists can only schedule sessions for their own clients',
         );
       }

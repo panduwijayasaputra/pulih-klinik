@@ -92,8 +92,7 @@ export class SelfOrClinicAdminGuard implements CanActivate {
     if (requestedClinicId) {
       const hasClinicAdminAccess = user.roles.some(
         (role) =>
-          role === UserRole.CLINIC_ADMIN &&
-          user.clinicId === requestedClinicId,
+          role === UserRole.CLINIC_ADMIN && user.clinicId === requestedClinicId,
       );
       if (hasClinicAdminAccess) {
         return true;

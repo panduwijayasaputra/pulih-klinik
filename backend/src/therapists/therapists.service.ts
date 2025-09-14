@@ -1204,7 +1204,7 @@ export class TherapistsService {
    * Get therapist's assigned clients with filtering and pagination
    */
   async getTherapistClients(
-    therapistId: string,
+    therapistUserId: string,
     options: {
       status?: string;
       search?: string;
@@ -1213,8 +1213,8 @@ export class TherapistsService {
       clinicId?: string;
     },
   ) {
-    // Validate therapist exists and clinic access
-    const whereConditions: any = { id: therapistId };
+    // Find therapist by user ID and validate clinic access
+    const whereConditions: any = { user: therapistUserId };
     if (options.clinicId) {
       whereConditions.clinic = options.clinicId;
     }
@@ -1231,7 +1231,7 @@ export class TherapistsService {
     const assignments = await this.em.find(
       ClientTherapistAssignment,
       {
-        therapist: therapistId,
+        therapist: therapist.id,
         status: AssignmentStatus.ACTIVE,
       },
       {
@@ -1285,10 +1285,15 @@ export class TherapistsService {
       return {
         id: client.id,
         fullName: client.fullName,
+        email: client.email,
+        phone: client.phone,
         status: client.status,
+        joinDate: client.createdAt, // Use client creation date as join date
         assignedDate: assignment?.assignedDate,
         lastSessionDate: client.lastSessionDate,
+        lastSession: client.lastSessionDate, // Map for frontend compatibility
         sessionCount: client.totalSessions,
+        totalSessions: client.totalSessions, // Map for frontend compatibility
         progress: client.progress,
         notes: assignment?.notes,
       };
@@ -1307,12 +1312,12 @@ export class TherapistsService {
    * Get specific client for therapist with detailed information
    */
   async getTherapistClient(
-    therapistId: string,
+    therapistUserId: string,
     clientId: string,
     clinicId?: string,
   ) {
-    // Validate therapist
-    const whereConditions: any = { id: therapistId };
+    // Find therapist by user ID and validate clinic access
+    const whereConditions: any = { user: therapistUserId };
     if (clinicId) {
       whereConditions.clinic = clinicId;
     }
@@ -1326,7 +1331,7 @@ export class TherapistsService {
     const assignment = await this.em.findOne(
       ClientTherapistAssignment,
       {
-        therapist: therapistId,
+        therapist: therapist.id,
         client: clientId,
         status: AssignmentStatus.ACTIVE,
       },
@@ -1362,13 +1367,21 @@ export class TherapistsService {
    * Update client notes for therapist
    */
   async updateClientNotes(
-    therapistId: string,
+    therapistUserId: string,
     clientId: string,
     notes: string,
   ) {
+    // Find therapist by user ID
+    const therapist = await this.em.findOne(Therapist, {
+      user: therapistUserId,
+    });
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
     // Find the assignment
     const assignment = await this.em.findOne(ClientTherapistAssignment, {
-      therapist: therapistId,
+      therapist: therapist.id,
       client: clientId,
       status: AssignmentStatus.ACTIVE,
     });
@@ -1386,9 +1399,9 @@ export class TherapistsService {
   /**
    * Get comprehensive therapist statistics
    */
-  async getTherapistStats(therapistId: string, clinicId?: string) {
-    // Validate therapist
-    const whereConditions: any = { id: therapistId };
+  async getTherapistStats(therapistUserId: string, clinicId?: string) {
+    // Find therapist by user ID and validate clinic access
+    const whereConditions: any = { user: therapistUserId };
     if (clinicId) {
       whereConditions.clinic = clinicId;
     }
@@ -1402,7 +1415,7 @@ export class TherapistsService {
     const assignments = await this.em.find(
       ClientTherapistAssignment,
       {
-        therapist: therapistId,
+        therapist: therapist.id,
       },
       {
         populate: ['client'],
@@ -1478,15 +1491,23 @@ export class TherapistsService {
    * Schedule a session for a client
    */
   async scheduleClientSession(
-    therapistId: string,
+    therapistUserId: string,
     clientId: string,
     scheduledAt: Date,
     duration?: number,
     notes?: string,
   ) {
+    // Find therapist by user ID
+    const therapist = await this.em.findOne(Therapist, {
+      user: therapistUserId,
+    });
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
     // Validate assignment exists
     const assignment = await this.em.findOne(ClientTherapistAssignment, {
-      therapist: therapistId,
+      therapist: therapist.id,
       client: clientId,
       status: AssignmentStatus.ACTIVE,
     });

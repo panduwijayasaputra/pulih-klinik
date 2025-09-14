@@ -29,12 +29,24 @@ export class EmailService {
     // Debug logging for environment variables
     this.logger.log('🔧 Environment Debug:');
     this.logger.log(`🔧 NODE_ENV: ${process.env.NODE_ENV}`);
-    this.logger.log(`🔧 RESEND_API_KEY from process.env: ${!!process.env.RESEND_API_KEY}`);
-    this.logger.log(`🔧 RESEND_API_KEY from config: ${!!environmentConfig.RESEND_API_KEY}`);
-    this.logger.log(`🔧 DEV_EMAIL_ENABLED from process.env: ${process.env.DEV_EMAIL_ENABLED}`);
-    this.logger.log(`🔧 DEV_EMAIL_ENABLED from config: ${environmentConfig.DEV_EMAIL_ENABLED}`);
-    this.logger.log(`🔧 DEV_EMAIL_RECIPIENT from process.env: ${process.env.DEV_EMAIL_RECIPIENT}`);
-    this.logger.log(`🔧 DEV_EMAIL_RECIPIENT from config: ${environmentConfig.DEV_EMAIL_RECIPIENT}`);
+    this.logger.log(
+      `🔧 RESEND_API_KEY from process.env: ${!!process.env.RESEND_API_KEY}`,
+    );
+    this.logger.log(
+      `🔧 RESEND_API_KEY from config: ${!!environmentConfig.RESEND_API_KEY}`,
+    );
+    this.logger.log(
+      `🔧 DEV_EMAIL_ENABLED from process.env: ${process.env.DEV_EMAIL_ENABLED}`,
+    );
+    this.logger.log(
+      `🔧 DEV_EMAIL_ENABLED from config: ${environmentConfig.DEV_EMAIL_ENABLED}`,
+    );
+    this.logger.log(
+      `🔧 DEV_EMAIL_RECIPIENT from process.env: ${process.env.DEV_EMAIL_RECIPIENT}`,
+    );
+    this.logger.log(
+      `🔧 DEV_EMAIL_RECIPIENT from config: ${environmentConfig.DEV_EMAIL_RECIPIENT}`,
+    );
 
     this.resendConfig = {
       apiKey: process.env.RESEND_API_KEY || '',
@@ -104,7 +116,9 @@ export class EmailService {
 
     // Debug logging
     this.logger.log(`📧 Attempting to send therapist setup email to: ${email}`);
-    this.logger.log(`🔧 Resend API Key configured: ${!!this.resendConfig.apiKey}`);
+    this.logger.log(
+      `🔧 Resend API Key configured: ${!!this.resendConfig.apiKey}`,
+    );
     this.logger.log(`🔧 From Email: ${this.resendConfig.fromEmail}`);
     this.logger.log(`🔧 From Name: ${this.resendConfig.fromName}`);
 
@@ -122,7 +136,12 @@ export class EmailService {
       const actualRecipient = this.getActualRecipient(email);
 
       // Send email via Resend
-      await this.sendTherapistSetupViaResend(actualRecipient, name, setupLink, clinicName);
+      await this.sendTherapistSetupViaResend(
+        actualRecipient,
+        name,
+        setupLink,
+        clinicName,
+      );
       this.logger.log(
         `✅ Therapist setup email sent successfully to ${actualRecipient}${actualRecipient !== email ? ` (redirected from ${email})` : ''}`,
       );
@@ -218,7 +237,9 @@ export class EmailService {
       html: this.generateTherapistSetupEmailHtml(name, setupLink, clinicName),
     };
 
-    this.logger.log(`📤 Sending therapist setup email via Resend API to: ${email}`);
+    this.logger.log(
+      `📤 Sending therapist setup email via Resend API to: ${email}`,
+    );
     this.logger.log(`📤 Email data:`, JSON.stringify(emailData, null, 2));
 
     // Use fetch to call Resend API directly
@@ -244,7 +265,9 @@ export class EmailService {
     }
 
     const result = await response.json();
-    this.logger.log(`📧 Therapist setup email sent via Resend. ID: ${result.id}`);
+    this.logger.log(
+      `📧 Therapist setup email sent via Resend. ID: ${result.id}`,
+    );
     this.logger.log(`📧 Resend response:`, JSON.stringify(result, null, 2));
   }
 
@@ -256,7 +279,12 @@ export class EmailService {
     this.logger.log(`   ---`);
   }
 
-  private logToConsoleTherapistSetup(email: string, name: string, setupLink: string, clinicName: string): void {
+  private logToConsoleTherapistSetup(
+    email: string,
+    name: string,
+    setupLink: string,
+    clinicName: string,
+  ): void {
     this.logger.log(`📧 Therapist Setup Email for ${email}:`);
     this.logger.log(`   Name: ${name}`);
     this.logger.log(`   Clinic: ${clinicName}`);
@@ -330,7 +358,11 @@ export class EmailService {
     `;
   }
 
-  private generateTherapistSetupEmailHtml(name: string, setupLink: string, clinicName: string): string {
+  private generateTherapistSetupEmailHtml(
+    name: string,
+    setupLink: string,
+    clinicName: string,
+  ): string {
     return `
       <!DOCTYPE html>
       <html>

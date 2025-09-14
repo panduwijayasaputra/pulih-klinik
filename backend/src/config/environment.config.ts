@@ -30,7 +30,7 @@ const environmentSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().email().default('onboarding@resend.dev'),
   RESEND_FROM_NAME: z.string().default('Pulih Klinik'),
-  
+
   // Development email configuration
   DEV_EMAIL_ENABLED: z.coerce.boolean().default(false),
   DEV_EMAIL_RECIPIENT: z.string().email().optional(),
