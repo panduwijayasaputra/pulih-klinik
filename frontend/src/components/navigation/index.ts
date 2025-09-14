@@ -3,3 +3,4 @@ export { Breadcrumbs } from './Breadcrumbs';
 export { RoleBasedNavigation } from './RoleBasedNavigation';
 export { RoleSelector } from './RoleSelector';
 export { UserInfo } from './UserInfo';
+export { ClinicInfo } from './ClinicInfo';

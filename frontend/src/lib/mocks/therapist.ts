@@ -1,4 +1,5 @@
-import { EmploymentTypeEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from '@/types/enums';
+import { EmploymentTypeEnum, TherapistLicenseTypeEnum } from '@/types/enums';
+import { UserStatusEnum } from '@/types/status';
 import { 
   Therapist, 
   TherapistCertification, 
@@ -93,13 +94,11 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 8,
     
     // Status & Availability
-    status: TherapistStatusEnum.Active,
-    employmentType: EmploymentTypeEnum.FullTime,
+    status: UserStatusEnum.Active,
     joinDate: '2020-01-15',
     
     // Assignment Info
     assignedClients: ['client-001', 'client-002', 'client-003'],
-    maxClients: 15,
     currentLoad: 12,
     
     // Schedule
@@ -115,7 +114,6 @@ export const mockTherapists: Therapist[] = [
     // Settings
     preferences: {
       sessionDuration: 60,
-      breakBetweenSessions: 15,
       maxSessionsPerDay: 8,
       languages: ['Indonesian', 'English'],
       workingDays: [1, 2, 3, 4, 5]
@@ -145,13 +143,11 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 6,
     
     // Status & Availability
-    status: TherapistStatusEnum.Active,
-    employmentType: EmploymentTypeEnum.PartTime,
+    status: UserStatusEnum.Active,
     joinDate: '2021-03-20',
     
     // Assignment Info
     assignedClients: ['client-004', 'client-005'],
-    maxClients: 10,
     currentLoad: 8,
     
     // Schedule
@@ -165,7 +161,6 @@ export const mockTherapists: Therapist[] = [
     // Settings
     preferences: {
       sessionDuration: 45,
-      breakBetweenSessions: 10,
       maxSessionsPerDay: 6,
       languages: ['Indonesian'],
       workingDays: [1, 3, 5]
@@ -182,7 +177,7 @@ export const mockTherapists: Therapist[] = [
     id: 'th-003',
     clinicId: 'clinic-001',
     fullName: 'Dr. Maya Sari, M.Psi, Psikolog',
-    email: 'maya.sari@smarttherapy.id',
+    email: 'maya.sari@pulihklinik.id',
     phone: '+628345678901',
     avatar: '/avatars/maya-sari.jpg',
     
@@ -195,13 +190,11 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 10,
     
     // Status & Availability
-    status: TherapistStatusEnum.PendingSetup,
-    employmentType: EmploymentTypeEnum.Contract,
+    status: UserStatusEnum.PendingSetup,
     joinDate: '2024-08-15',
     
     // Assignment Info
     assignedClients: [],
-    maxClients: 12,
     currentLoad: 0,
     
     // Schedule
@@ -216,7 +209,6 @@ export const mockTherapists: Therapist[] = [
     // Settings
     preferences: {
       sessionDuration: 60,
-      breakBetweenSessions: 20,
       maxSessionsPerDay: 7,
       languages: ['Indonesian', 'English', 'Mandarin'],
       workingDays: [1, 2, 3, 4]
@@ -233,7 +225,7 @@ export const mockTherapists: Therapist[] = [
     id: 'th-004',
     clinicId: 'clinic-001',
     fullName: 'Rina Kartika, S.Psi',
-    email: 'rina.kartika@smarttherapy.id',
+    email: 'rina.kartika@pulihklinik.id',
     phone: '+628456789012',
     avatar: '/avatars/rina-kartika.jpg',
     
@@ -246,13 +238,11 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 4,
     
     // Status & Availability
-    status: TherapistStatusEnum.Inactive,
-    employmentType: EmploymentTypeEnum.Freelance,
+    status: UserStatusEnum.Inactive,
     joinDate: '2022-06-10',
     
     // Assignment Info
     assignedClients: ['client-006'],
-    maxClients: 8,
     currentLoad: 1,
     
     // Schedule
@@ -266,7 +256,6 @@ export const mockTherapists: Therapist[] = [
     // Settings
     preferences: {
       sessionDuration: 90,
-      breakBetweenSessions: 30,
       maxSessionsPerDay: 4,
       languages: ['Indonesian'],
       workingDays: [2, 4, 6]
@@ -280,7 +269,7 @@ export const mockTherapists: Therapist[] = [
     id: 'th-005',
     clinicId: 'clinic-001',
     fullName: 'Dr. Budi Santoso, M.Psi, Psikolog',
-    email: 'budi.santoso@smarttherapy.id',
+    email: 'budi.santoso@pulihklinik.id',
     phone: '+628567890123',
     avatar: '/avatars/budi-santoso.jpg',
     
@@ -293,13 +282,11 @@ export const mockTherapists: Therapist[] = [
     yearsOfExperience: 12,
     
     // Status & Availability
-    status: TherapistStatusEnum.Active,
-    employmentType: EmploymentTypeEnum.FullTime,
+    status: UserStatusEnum.Active,
     joinDate: '2020-09-01',
     
     // Assignment Info
     assignedClients: ['client-007', 'client-008', 'client-009', 'client-010'],
-    maxClients: 18,
     currentLoad: 15,
     
     // Schedule
@@ -315,7 +302,6 @@ export const mockTherapists: Therapist[] = [
     // Settings
     preferences: {
       sessionDuration: 50,
-      breakBetweenSessions: 10,
       maxSessionsPerDay: 10,
       languages: ['Indonesian', 'English', 'Javanese'],
       workingDays: [1, 2, 3, 4, 5]
@@ -341,6 +327,6 @@ export const getMockTherapistsByClinicId = (clinicId: string): Therapist[] => {
 };
 
 // Function to get therapists by status
-export const getMockTherapistsByStatus = (status: TherapistStatusEnum): Therapist[] => {
+export const getMockTherapistsByStatus = (status: UserStatusEnum): Therapist[] => {
   return mockTherapists.filter(therapist => therapist.status === status);
 };

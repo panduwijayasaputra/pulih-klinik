@@ -7,13 +7,19 @@ import {
 import { EntityManager } from '@mikro-orm/core';
 import { User } from '../database/entities/user.entity';
 import { AuthService } from '../auth/auth.service';
-import { UpdateProfileDto, ChangePasswordDto } from './dto';
-import { UserRole, UserRoleType } from '../common/enums';
+import { UpdateProfileDto } from './dto';
+import { ChangePasswordDto } from '../common/dto';
+import {
+  UserRole,
+  UserRoleType,
+  UserStatus,
+  UserStatusHelper,
+} from '../common/enums';
 
 export interface UserProfileResponse {
   id: string;
   email: string;
-  isActive: boolean;
+  status: UserStatus;
   profile: {
     id: string;
     name: string;
@@ -27,10 +33,10 @@ export interface UserProfileResponse {
   roles: Array<{
     id: string;
     role: string;
-    clinicId?: string;
-    clinicName?: string;
     createdAt: Date;
   }>;
+  clinicId?: string;
+  clinicName?: string;
 }
 
 @Injectable()
@@ -46,8 +52,8 @@ export class UsersService {
   async getUserProfile(userId: string): Promise<UserProfileResponse> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
-      { populate: ['profile', 'roles', 'roles.clinic'] },
+      { id: userId, status: UserStatus.ACTIVE },
+      { populate: ['profile', 'roles', 'clinic'] },
     );
 
     if (!user) {
@@ -61,7 +67,7 @@ export class UsersService {
     return {
       id: user.id,
       email: user.email,
-      isActive: user.isActive,
+      status: user.status,
       profile: {
         id: user.profile.id,
         name: user.profile.name,
@@ -75,10 +81,10 @@ export class UsersService {
       roles: user.roles.map((role) => ({
         id: role.id,
         role: role.role,
-        clinicId: role.clinicId,
-        clinicName: role.clinic?.name,
         createdAt: role.createdAt,
       })),
+      clinicId: user.clinic?.id,
+      clinicName: user.clinic?.name,
     };
   }
 
@@ -91,7 +97,7 @@ export class UsersService {
   ): Promise<{ message: string; profile: UserProfileResponse['profile'] }> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['profile'] },
     );
 
@@ -163,8 +169,8 @@ export class UsersService {
   ): Promise<boolean> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
-      { populate: ['roles'] },
+      { id: userId, status: UserStatus.ACTIVE },
+      { populate: ['roles', 'clinic'] },
     );
 
     if (!user) {
@@ -179,12 +185,12 @@ export class UsersService {
       return true;
     }
 
-    // Check if user has required role for the specific clinic
+    // Check if user has required role and belongs to the specific clinic
     const hasAccess = user.roles
       .toArray()
       .some(
         (role) =>
-          requiredRoles.includes(role.role) && role.clinicId === clinicId,
+          requiredRoles.includes(role.role) && user.clinic?.id === clinicId,
       );
 
     if (!hasAccess) {
@@ -205,7 +211,7 @@ export class UsersService {
   ): Promise<boolean> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
+      { id: userId, status: UserStatus.ACTIVE },
       { populate: ['roles'] },
     );
 
@@ -232,8 +238,8 @@ export class UsersService {
   async getUserClinicIds(userId: string): Promise<string[]> {
     const user = await this.em.findOne(
       User,
-      { id: userId, isActive: true },
-      { populate: ['roles'] },
+      { id: userId, status: UserStatus.ACTIVE },
+      { populate: ['roles', 'clinic'] },
     );
 
     if (!user) {
@@ -248,14 +254,8 @@ export class UsersService {
       return [];
     }
 
-    // Return clinic IDs for clinic admin and therapist roles
-    const clinicIds = user.roles
-      .toArray()
-      .filter((role) => role.clinicId)
-      .map((role) => role.clinicId!)
-      .filter((id, index, array) => array.indexOf(id) === index); // Remove duplicates
-
-    return clinicIds;
+    // Return clinic ID for the user's clinic
+    return user.clinic?.id ? [user.clinic.id] : [];
   }
 
   /**
@@ -298,7 +298,7 @@ export class UsersService {
     }
 
     const [users, total] = await this.em.findAndCount(User, whereConditions, {
-      populate: ['profile', 'roles', 'roles.clinic'],
+      populate: ['profile', 'roles', 'clinic'],
       orderBy: { createdAt: 'DESC' },
       limit,
       offset,
@@ -310,7 +310,7 @@ export class UsersService {
       .map((user) => ({
         id: user.id,
         email: user.email,
-        isActive: user.isActive,
+        status: user.status,
         profile: {
           id: user.profile!.id,
           name: user.profile!.name,
@@ -324,10 +324,10 @@ export class UsersService {
         roles: user.roles.toArray().map((role) => ({
           id: role.id,
           role: role.role,
-          clinicId: role.clinicId,
-          clinicName: role.clinic?.name,
           createdAt: role.createdAt,
         })),
+        clinicId: user.clinic?.id,
+        clinicName: user.clinic?.name,
       }));
 
     return {
@@ -336,6 +336,46 @@ export class UsersService {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async updateUserStatus(
+    userId: string,
+    status: UserStatus,
+    reason?: string,
+  ): Promise<{
+    message: string;
+    user: {
+      id: string;
+      email: string;
+      status: UserStatus;
+    };
+  }> {
+    const user = await this.em.findOne(User, { id: userId });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Update user status
+    user.status = status;
+    user.updatedAt = new Date();
+
+    await this.em.persistAndFlush(user);
+
+    const action = UserStatusHelper.isActive(status)
+      ? 'activated'
+      : 'deactivated';
+    const message = reason
+      ? `User account ${action}. Reason: ${reason}`
+      : `User account ${action} successfully`;
+
+    return {
+      message,
+      user: {
+        id: user.id,
+        email: user.email,
+        status: user.status,
+      },
     };
   }
 }

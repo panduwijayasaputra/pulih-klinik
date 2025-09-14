@@ -1,38 +1,44 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { AuthPageWrapper } from '@/components/layout/AuthPageWrapper';
+import { useAuthStore } from '@/store/auth';
 import { useAuth } from '@/hooks/useAuth';
-import { getDefaultRouteForUser } from '@/lib/route-protection';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const { clearError } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const { isAuthenticated, isLoading, user } = useAuth();
 
+  // Clear any error state when visiting login page
   useEffect(() => {
-    if (isAuthenticated && user) {
-      const defaultRoute = getDefaultRouteForUser(user);
-      router.push(defaultRoute as any);
+    clearError();
+  }, [clearError]);
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push('/portal');
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, isLoading, router]);
 
-  const handleLoginSuccess = () => {
-    // Redirect is handled by the useEffect above
-  };
-
-  // Only show loading if we're actually checking authentication
-  // and we might have a user (avoid showing loader on first visit)
-  if (isLoading && (user || isAuthenticated)) {
+  // Show loading state while checking authentication
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-2 text-gray-600">Memeriksa status login...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="mt-2 text-muted-foreground">Memeriksa autentikasi...</p>
         </div>
       </div>
     );
+  }
+
+  // Don't render login form if user is already authenticated
+  if (isAuthenticated) {
+    return null;
   }
 
   return (
@@ -40,7 +46,7 @@ export default function LoginPage() {
       title="Terapintar"
       description="Sistem AI Hipnoterapi Indonesia"
     >
-      <LoginForm onSuccess={handleLoginSuccess} />
+      <LoginForm />
     </AuthPageWrapper>
   );
 }

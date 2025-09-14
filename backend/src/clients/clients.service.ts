@@ -10,7 +10,6 @@ import {
   ClientStatus,
   MaritalStatus,
 } from '../database/entities/client.entity';
-import { ClientStatusTransition } from '../database/entities/client-status-transition.entity';
 import {
   ClientTherapistAssignment,
   AssignmentStatus,
@@ -49,7 +48,6 @@ export interface ClientResponse {
   relationshipWithSpouse?: string;
   firstVisit: boolean;
   previousVisitDetails?: string;
-  province?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   emergencyContactRelationship?: string;
@@ -72,15 +70,12 @@ export interface ClientResponse {
   progress: number;
   notes?: string;
   primaryIssue?: string;
-  currentAssignment?: {
-    id: string;
-    therapist: {
-      id: string;
-      fullName: string;
-    };
-    assignedDate: Date;
-    status: string;
-  };
+  // Flattened therapist assignment fields
+  assignedTherapistId?: string;
+  assignedTherapistName?: string;
+  assignedDate?: Date;
+  assignmentStatus?: string;
+  assignmentId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -180,7 +175,6 @@ export class ClientsService {
     client.relationshipWithSpouse = createClientDto.relationshipWithSpouse;
     client.firstVisit = createClientDto.firstVisit ?? true;
     client.previousVisitDetails = createClientDto.previousVisitDetails;
-    client.province = createClientDto.province;
     client.emergencyContactName = createClientDto.emergencyContactName;
     client.emergencyContactPhone = createClientDto.emergencyContactPhone;
     client.emergencyContactRelationship =
@@ -285,10 +279,6 @@ export class ClientsService {
 
     if (query.maritalStatus) {
       whereConditions.maritalStatus = query.maritalStatus;
-    }
-
-    if (query.province) {
-      whereConditions.province = { $ilike: `%${query.province}%` };
     }
 
     if (query.isMinor !== undefined) {
@@ -515,28 +505,7 @@ export class ClientsService {
       throw new NotFoundException('Updating user not found');
     }
 
-    // Validate status transition
-    const validTransitions = this.getValidStatusTransitions(client.status);
-    if (!validTransitions.includes(updateStatusDto.status)) {
-      throw new BadRequestException(
-        `Invalid status transition from ${client.status} to ${updateStatusDto.status}. Valid transitions are: ${validTransitions.join(', ')}`,
-      );
-    }
-
-    const oldStatus = client.status;
-
-    // Create status transition record
-    const transition = new ClientStatusTransition();
-    transition.client = client;
-    transition.fromStatus = oldStatus;
-    transition.toStatus = updateStatusDto.status;
-    transition.reason = updateStatusDto.reason;
-    transition.notes = updateStatusDto.notes;
-    transition.changedBy = updatedByUser;
-    transition.previousTherapistId = updateStatusDto.previousTherapistId;
-    transition.newTherapistId = updateStatusDto.newTherapistId;
-
-    await this.em.persistAndFlush(transition);
+    // Simply update the status without transition tracking
 
     // Update client status
     client.status = updateStatusDto.status;
@@ -633,55 +602,6 @@ export class ClientsService {
   }
 
   /**
-   * Get client's status transition history
-   */
-  async getClientStatusHistory(
-    clientId: string,
-    clinicId?: string,
-  ): Promise<ClientStatusTransition[]> {
-    // Validate client exists and clinic access
-    const whereConditions: any = { id: clientId };
-    if (clinicId) {
-      whereConditions.clinic = clinicId;
-    }
-
-    const client = await this.em.findOne(Client, whereConditions);
-    if (!client) {
-      throw new NotFoundException('Client not found');
-    }
-
-    return this.em.find(
-      ClientStatusTransition,
-      { client: clientId },
-      {
-        populate: ['changedBy'],
-        orderBy: { changedAt: 'DESC' },
-      },
-    );
-  }
-
-  /**
-   * Get valid status transitions based on current status
-   */
-  private getValidStatusTransitions(
-    currentStatus: ClientStatus,
-  ): ClientStatus[] {
-    const transitions: Record<ClientStatus, ClientStatus[]> = {
-      [ClientStatus.NEW]: [ClientStatus.ASSIGNED],
-      [ClientStatus.ASSIGNED]: [ClientStatus.CONSULTATION, ClientStatus.NEW],
-      [ClientStatus.CONSULTATION]: [
-        ClientStatus.THERAPY,
-        ClientStatus.DONE,
-        ClientStatus.ASSIGNED,
-      ],
-      [ClientStatus.THERAPY]: [ClientStatus.DONE, ClientStatus.ASSIGNED],
-      [ClientStatus.DONE]: [ClientStatus.THERAPY], // Allow reopening if needed
-    };
-
-    return transitions[currentStatus] || [];
-  }
-
-  /**
    * Map Client entity to response format with current assignment
    */
   private async mapToResponse(client: Client): Promise<ClientResponse> {
@@ -705,7 +625,7 @@ export class ClientsService {
         status: AssignmentStatus.ACTIVE,
       },
       {
-        populate: ['therapist'],
+        populate: ['therapist', 'therapist.user', 'therapist.user.profile'],
       },
     );
 
@@ -733,7 +653,6 @@ export class ClientsService {
       relationshipWithSpouse: client.relationshipWithSpouse,
       firstVisit: client.firstVisit,
       previousVisitDetails: client.previousVisitDetails,
-      province: client.province,
       emergencyContactName: client.emergencyContactName,
       emergencyContactPhone: client.emergencyContactPhone,
       emergencyContactRelationship: client.emergencyContactRelationship,
@@ -756,17 +675,13 @@ export class ClientsService {
       progress: client.progress,
       notes: client.notes,
       primaryIssue: client.primaryIssue,
-      currentAssignment: currentAssignment
-        ? {
-            id: currentAssignment.id,
-            therapist: {
-              id: currentAssignment.therapist.id,
-              fullName: currentAssignment.therapist.fullName,
-            },
-            assignedDate: currentAssignment.assignedDate,
-            status: currentAssignment.status,
-          }
-        : undefined,
+      // Flattened therapist assignment fields
+      assignedTherapistId: currentAssignment?.therapist.id,
+      assignedTherapistName:
+        currentAssignment?.therapist.user.profile?.name || undefined,
+      assignedDate: currentAssignment?.assignedDate,
+      assignmentStatus: currentAssignment?.status,
+      assignmentId: currentAssignment?.id,
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     };

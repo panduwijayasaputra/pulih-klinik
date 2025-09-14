@@ -1,4 +1,7 @@
-import { PaymentMethodEnum, RegistrationStepEnum } from './enums';
+import { 
+  RegistrationStepEnum, 
+  BillingCycleEnum, 
+} from './enums';
 
 type EnumValue<T> = T[keyof T];
 
@@ -14,40 +17,43 @@ export interface VerificationData {
   verified: boolean;
 }
 
-// Form data types (imported from schemas)
-import { ClinicDataFormData, PaymentFormData } from '@/schemas/registrationSchema';
-
-// Re-export the form data types
-export type { ClinicDataFormData, PaymentFormData };
-
-// Token package type
-export interface TokenPackage {
-  registrationFee: number;
-  includedTokens: number;
-  tokenPrice: number;
-  totalValue: number;
-  description: string;
+// User form data interface
+export interface UserFormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
 }
 
-// Business rules type
-export interface BusinessRules {
-  maxTherapists: number;
-  maxDailyClients: number;
-  tokenPerSession: number;
-  tokenExpirationDays: number;
-  description: string;
+// Email status from backend
+export interface EmailStatus {
+  status: 'available' | 'exists' | 'needs_verification';
+  message: string;
+  email: string;
 }
 
-// Payment method type
-export type PaymentMethod = EnumValue<typeof PaymentMethodEnum>;
+// Registration status from backend
+export interface RegistrationStatus {
+  id: string;
+  email: string;
+  status: string;
+  currentStep: RegistrationStep;
+  completedSteps: RegistrationStep[];
+  createdAt: Date;
+  expiresAt?: Date;
+  userData?: any;
+  clinicData?: any;
+  subscriptionData?: any;
+  paymentData?: any;
+  emailVerified: boolean;
+  emailVerifiedAt?: Date;
+  paymentStatus: string;
+}
 
 // Complete registration data
 export interface RegistrationData {
-  clinic: ClinicDataFormData;
+  user: UserFormData;
   verification: VerificationData;
-  payment: PaymentFormData;
-  tokenPackage: TokenPackage;
-  businessRules: BusinessRules;
 }
 
 // Registration state
@@ -55,51 +61,11 @@ export interface RegistrationState {
   currentStep: RegistrationStep;
   data: Partial<RegistrationData>;
   verificationData: VerificationData;
+  emailStatus: EmailStatus | null;
   isLoading: boolean;
   error: string | null;
   verifiedEmails: string[];
 }
 
-// Token package constants
-export const TOKEN_PACKAGE: TokenPackage = {
-  registrationFee: 100000,
-  includedTokens: 3,
-  tokenPrice: 20000,
-  totalValue: 160000,
-  description: 'Paket registrasi termasuk 3 token sesi terapi'
-};
+// Subscription tier information
 
-// Business rules constants
-export const BUSINESS_RULES: BusinessRules = {
-  maxTherapists: 3,
-  maxDailyClients: 5,
-  tokenPerSession: 1,
-  tokenExpirationDays: 365,
-  description: 'Batas maksimal 3 therapist dan 5 klien baru per hari'
-};
-
-// Mock registration completion data
-export const mockRegistrationResult = {
-  success: true,
-  clinicId: 'clinic-new-001',
-  userId: 'user-new-001',
-  subscriptionId: 'sub-new-001',
-  paymentStatus: 'pending',
-  nextSteps: [
-    'Konfirmasi pembayaran dalam 24 jam',
-    'Setup akun therapist pertama',
-    'Import data klien (opsional)',
-    'Mulai sesi hipnoterapi pertama'
-  ]
-};
-
-// Indonesian provinces list
-export const indonesianProvinces = [
-  'Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Kepulauan Riau', 
-  'Jambi', 'Sumatera Selatan', 'Bangka Belitung', 'Bengkulu', 'Lampung',
-  'DKI Jakarta', 'Jawa Barat', 'Jawa Tengah', 'DI Yogyakarta', 'Jawa Timur',
-  'Banten', 'Bali', 'Nusa Tenggara Barat', 'Nusa Tenggara Timur', 'Kalimantan Barat',
-  'Kalimantan Tengah', 'Kalimantan Selatan', 'Kalimantan Timur', 'Kalimantan Utara',
-  'Sulawesi Utara', 'Sulawesi Tengah', 'Sulawesi Selatan', 'Sulawesi Tenggara',
-  'Gorontalo', 'Sulawesi Barat', 'Maluku', 'Maluku Utara', 'Papua', 'Papua Barat'
-];

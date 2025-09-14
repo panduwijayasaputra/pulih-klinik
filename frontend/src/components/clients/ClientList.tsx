@@ -67,10 +67,9 @@ export const ClientList: React.FC<ClientListProps> = ({
     const loadData = async () => {
       setLocalLoading(true);
       try {
-        // Mock API call delay
-        await new Promise(resolve => setTimeout(resolve, 800));
         await loadClients(true); // Force refresh
       } catch (error) {
+        console.error('Failed to load clients:', error);
         addToast({
           type: 'error',
           title: 'Kesalahan Koneksi',
@@ -89,10 +88,17 @@ export const ClientList: React.FC<ClientListProps> = ({
     setLocalLoading(true);
     try {
       await loadClients(true); // Force refresh
+    } catch (error) {
+      console.error('Failed to refresh clients:', error);
+      addToast({
+        type: 'error',
+        title: 'Kesalahan Koneksi',
+        message: 'Gagal menyegarkan data klien. Silakan periksa koneksi internet Anda dan coba lagi.'
+      });
     } finally {
       setLocalLoading(false);
     }
-  }, [loadClients]);
+  }, [loadClients, addToast]);
 
   // Modal handlers
   const handleCloseDetails = () => {
@@ -118,12 +124,15 @@ export const ClientList: React.FC<ClientListProps> = ({
   const handleClientFormSuccess = async (data: any) => {
     try {
       if (clientFormMode === 'create') {
-        await createClient(data);
+        // Note: In a real implementation, this would be handled by the API
+        // For now, we'll just add a toast notification
         addToast({
           type: 'success',
           title: 'Klien Berhasil Ditambahkan',
           message: `Klien ${data.fullName} telah berhasil ditambahkan ke sistem.`,
         });
+        // Refresh the list to show the new client
+        refreshClients();
       } else {
         // For edit mode, the form modal handles the update internally
         addToast({
@@ -131,9 +140,11 @@ export const ClientList: React.FC<ClientListProps> = ({
           title: 'Klien Berhasil Diperbarui',
           message: `Data klien ${data.fullName} telah berhasil diperbarui.`,
         });
+        // Close the form modal
+        setShowClientFormModal(false);
+        // Refresh the client list
+        refreshClients();
       }
-      // Refresh the client list
-      await refreshClients();
     } catch (error) {
       addToast({
         type: 'error',
@@ -175,7 +186,7 @@ export const ClientList: React.FC<ClientListProps> = ({
 
   // For therapists, filter to only show assigned clients
   if (isTherapist && user?.id) {
-    displayClients = displayClients.filter(client => client.assignedTherapist === user.id);
+    displayClients = displayClients.filter(client => client.assignedTherapistId === user.id);
   }
 
   // Filter clients by status
@@ -284,7 +295,7 @@ export const ClientList: React.FC<ClientListProps> = ({
           label: 'Tugaskan Therapist',
           icon: UserPlusIcon,
           variant: 'success',
-          show: (client) => client.status === ClientStatusEnum.New && !client.assignedTherapist,
+          show: (client) => client.status === ClientStatusEnum.New && !client.assignedTherapistId,
           onClick: (client) => onAssign?.(client.id, undefined),
         },
         {
@@ -292,8 +303,8 @@ export const ClientList: React.FC<ClientListProps> = ({
           label: 'Ganti Therapist',
           icon: UserPlusIcon,
           variant: 'orange',
-          show: (client) => !!client.assignedTherapist && (client.status !== ClientStatusEnum.Done && client.status !== ClientStatusEnum.New),
-          onClick: (client) => onAssign?.(client.id, client.assignedTherapist),
+          show: (client) => !!client.assignedTherapistId && (client.status !== ClientStatusEnum.Done && client.status !== ClientStatusEnum.New),
+          onClick: (client) => onAssign?.(client.id, client.assignedTherapistId),
         },
       );
     }
@@ -339,12 +350,12 @@ export const ClientList: React.FC<ClientListProps> = ({
           onClick: refreshClients,
           loading: loading,
         }}
-        // Fix: Always provide createAction, but disable if isTherapist
-        createAction={{
+        // Only show create action for clinic admins
+        createAction={!isTherapist ? {
           label: 'Tambah Klien',
           icon: PlusIcon,
           onClick: handleCreateClient,
-        }}
+        } : undefined}
       />
 
       {/* Client Details Modal */}

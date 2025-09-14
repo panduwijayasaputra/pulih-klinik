@@ -10,18 +10,48 @@ import { useNavigation } from '@/hooks/useNavigation';
 import { UserRole } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
 
-// Helper function to get role-based path
+// Helper function to get role-based path with robust role matching
 const getRoleBasedPath = (role: UserRole): string => {
-  switch (role) {
-    case UserRoleEnum.Administrator:
-      return '/portal/admin';
-    case UserRoleEnum.ClinicAdmin:
-      return '/portal/clinic';
-    case UserRoleEnum.Therapist:
-      return '/portal/therapist';
-    default:
-      return '/portal';
+  // Normalize role to lowercase string for comparison
+  const normalizedRole = String(role).toLowerCase().trim();
+  
+  // Create a comprehensive role mapping
+  const rolePathMap: Record<string, string> = {
+    // Administrator variations
+    'administrator': '/portal/admin',
+    'admin': '/portal/admin',
+    
+    // Clinic Admin variations
+    'clinic_admin': '/portal/clinic',
+    'clinicadmin': '/portal/clinic',
+    'clinic': '/portal/clinic',
+    
+    // Therapist variations
+    'therapist': '/portal/therapist',
+    'therapists': '/portal/therapist',
+  };
+  
+  // Add enum values to the map
+  rolePathMap[UserRoleEnum.Administrator] = '/portal/admin';
+  rolePathMap[UserRoleEnum.ClinicAdmin] = '/portal/clinic';
+  rolePathMap[UserRoleEnum.Therapist] = '/portal/therapist';
+  
+  // Try exact match first
+  if (rolePathMap[normalizedRole]) {
+    return rolePathMap[normalizedRole];
   }
+  
+  // Try partial matching for edge cases
+  if (normalizedRole.includes('admin') && !normalizedRole.includes('clinic')) {
+    return '/portal/admin';
+  } else if (normalizedRole.includes('clinic')) {
+    return '/portal/clinic';
+  } else if (normalizedRole.includes('therapist')) {
+    return '/portal/therapist';
+  }
+  
+  // Fallback to generic portal
+  return '/portal';
 };
 
 interface RoleSelectorProps {
@@ -41,32 +71,43 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
     switchToRole,
     getRoleDisplayInfo,
     isMultiRole,
+    isRoleSwitching,
   } = useNavigation();
 
   const [showRoleSelector, setShowRoleSelector] = useState(false);
-  const [isSwitching, setIsSwitching] = useState(false);
 
   const handleRoleSwitch = useCallback(async (role: string) => {
-    if (isSwitching) return; // Prevent rapid switching
+    if (isRoleSwitching) return; // Prevent rapid switching
     
-    setIsSwitching(true);
     setShowRoleSelector(false);
     
     try {
       const selectedRole = role as UserRole;
+      
+      // Set loading state FIRST, then navigate
       switchToRole(selectedRole);
+      
+      // Small delay to ensure loading state is visible
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Navigate to role-specific page
+      const roleBasedPath = getRoleBasedPath(selectedRole);
+      
+      // Ensure the path is a valid string before navigation
+      if (typeof roleBasedPath === 'string' && roleBasedPath.startsWith('/')) {
+        router.push(roleBasedPath as any);
+      } else {
+        // Fallback to generic portal
+        router.push('/portal' as any);
+      }
+      
+      // Call the role change callback if provided
       onRoleChange?.(selectedRole);
       
-      // Navigate to role-specific page instead of generic portal
-      const roleBasedPath = getRoleBasedPath(selectedRole);
-      router.push(roleBasedPath as any);
-      
-      // Small delay to prevent glitches
-      await new Promise(resolve => setTimeout(resolve, 100));
-    } finally {
-      setIsSwitching(false);
+    } catch (error) {
+      console.error('Error switching role:', error);
     }
-  }, [isSwitching, switchToRole, onRoleChange, router]);
+  }, [isRoleSwitching, switchToRole, onRoleChange, router, availableRoles, activeRole, user?.roles]);
 
   // Early return after all hooks are called
   if (!user?.roles || !isMultiRole) {
@@ -84,7 +125,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
         variant="outline"
         className="w-full justify-between text-left shadow-none min-w-0"
         size="sm"
-        disabled={isSwitching}
+        disabled={isRoleSwitching}
       >
           <div className="flex items-center space-x-2 min-w-0 flex-1">
           {currentRoleInfo?.icon ? (
@@ -106,16 +147,17 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
           <div className="p-2 space-y-1">
             {availableRoles.map((role) => {
               const roleInfo = getRoleDisplayInfo(role);
+              
               return (
                 <button
                   key={role}
                   onClick={() => handleRoleSwitch(role)}
-                  disabled={isSwitching}
+                  disabled={isRoleSwitching}
                   className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-2 min-w-0 ${
                     currentRole === role 
                       ? 'bg-primary text-primary-foreground' 
                       : 'hover:bg-muted'
-                  } ${isSwitching ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${isRoleSwitching ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {roleInfo?.icon ? (
                     <roleInfo.icon className="h-4 w-4 flex-shrink-0" />

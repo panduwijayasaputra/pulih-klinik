@@ -1,4 +1,5 @@
-import { ClinicDocumentStatusEnum, ClinicDocumentTypeEnum, ClinicLanguageEnum, ClinicStatusEnum, ClinicSubscriptionTierEnum } from './enums';
+import { ClinicDocumentTypeEnum } from './enums';
+import { ClinicStatusEnum } from './status';
 import { Client } from './client';
 import { Therapist } from './therapist';
 
@@ -46,7 +47,7 @@ export interface ClinicProfile {
   branding: ClinicBranding;
   settings: ClinicSettings;
   documents?: ClinicDocument[];
-  subscriptionTier: EnumValue<typeof ClinicSubscriptionTierEnum>;
+  subscriptionTier?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,8 +70,6 @@ export interface ClinicProfileFormData {
   logo?: File;
 }
 
-// Keep legacy ClinicFormData interface for backward compatibility
-export interface ClinicFormData extends ClinicProfileFormData {}
 
 // Form validation types (schemas are now in /schemas/clinicSchema.ts)
 export type { 

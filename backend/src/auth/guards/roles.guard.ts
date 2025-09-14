@@ -4,10 +4,13 @@ import {
   ExecutionContext,
   ForbiddenException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthUser } from '../jwt.strategy';
 import { UserRole, UserRoleType } from '../../common/enums';
+import { EntityManager } from '@mikro-orm/core';
+import { Clinic } from '../../database/entities';
 
 export interface RequiredRole {
   role: UserRoleType;
@@ -16,9 +19,12 @@ export interface RequiredRole {
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private em: EntityManager,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<RequiredRole[]>(
       'roles',
       [context.getHandler(), context.getClass()],
@@ -36,13 +42,12 @@ export class RolesGuard implements CanActivate {
     }
 
     // Check if user has any of the required roles
-    const hasRequiredRole = requiredRoles.some((requiredRole) => {
-      const userRole = user.roles.find(
-        (role) => role.role === requiredRole.role,
-      );
+    let hasRequiredRole = false;
+    for (const requiredRole of requiredRoles) {
+      const userRole = user.roles.find((role) => role === requiredRole.role);
 
       if (!userRole) {
-        return false;
+        continue;
       }
 
       // If clinic scope is required, check if user has clinic access
@@ -52,23 +57,35 @@ export class RolesGuard implements CanActivate {
         const requestedClinicId = clinicIdFromParams || clinicIdFromQuery;
 
         // Administrator role can access all clinics
-        if (userRole.role === UserRole.ADMINISTRATOR) {
-          return true;
+        if (userRole === UserRole.ADMINISTRATOR) {
+          hasRequiredRole = true;
+          break;
+        }
+
+        // Check if the clinic actually exists in the database first
+        if (requestedClinicId) {
+          const clinic = await this.em.findOne(Clinic, {
+            id: requestedClinicId,
+          });
+          if (!clinic) {
+            throw new NotFoundException('Clinic not found');
+          }
         }
 
         // For clinic_admin and therapist, they must have matching clinicId
-        if (requestedClinicId && userRole.clinicId !== requestedClinicId) {
-          return false;
+        if (requestedClinicId && user.clinicId !== requestedClinicId) {
+          continue;
         }
 
         // If no specific clinic requested, user must have a clinic assigned
-        if (!requestedClinicId && !userRole.clinicId) {
-          return false;
+        if (!requestedClinicId && !user.clinicId) {
+          continue;
         }
       }
 
-      return true;
-    });
+      hasRequiredRole = true;
+      break;
+    }
 
     if (!hasRequiredRole) {
       throw new ForbiddenException(

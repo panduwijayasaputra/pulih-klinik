@@ -12,7 +12,7 @@ const environmentSchema = z.object({
   DB_PORT: z.coerce.number().min(1).max(65535).default(5432),
   DB_USERNAME: z.string().default('postgres'),
   DB_PASSWORD: z.string().default(''),
-  DB_NAME: z.string().default('smart_therapy_dev'),
+  DB_NAME: z.string().default('pulihklinik_dev'),
   DB_SSL: z.coerce.boolean().default(false),
 
   // JWT configuration
@@ -25,6 +25,15 @@ const environmentSchema = z.object({
   // Rate limiting
   THROTTLE_TTL: z.coerce.number().positive().default(60000),
   THROTTLE_LIMIT: z.coerce.number().positive().default(100),
+
+  // Email configuration (Resend)
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().email().default('onboarding@resend.dev'),
+  RESEND_FROM_NAME: z.string().default('Pulih Klinik'),
+
+  // Development email configuration
+  DEV_EMAIL_ENABLED: z.coerce.boolean().default(false),
+  DEV_EMAIL_RECIPIENT: z.string().email().optional(),
 });
 
 export type EnvironmentConfig = z.infer<typeof environmentSchema>;

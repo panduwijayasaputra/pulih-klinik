@@ -4,210 +4,198 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-The Smart Therapy project is an Indonesian Hypnotherapy AI System designed to transform manual 2-hour session planning into 15-minute AI-assisted workflows for licensed Indonesian hypnotherapists. The system provides assessment analysis, culturally-appropriate technique recommendations, and automated script generation.
+Pulih Klinik is an Indonesian Hypnotherapy AI System built with a modern full-stack architecture:
+- **Backend**: NestJS with TypeScript, MikroORM (PostgreSQL), and Zod validation
+- **Frontend**: Next.js 15 with React 19, TypeScript, TailwindCSS, and Zod validation
+- **Purpose**: Platform for therapist clinics to manage hypnotherapy sessions, clients, and consultations
 
-## Architecture Overview
+## Common Development Commands
 
-**Tech Stack:**
-- **Frontend**: Next.js 15 + TypeScript + Tailwind CSS + shadcn/ui + Zod + Zustand + React Hook Form
-- **Backend**: NestJS + TypeScript + MikroORM + PostgreSQL (planned)
-- **Database**: PostgreSQL + Redis (caching, planned)
-- **AI**: OpenAI API + Custom TypeScript algorithms (planned)
-
-**Current Status**: Frontend application is actively developed with authentication, client management, therapist management, and clinic management features. Backend development is planned.
-
-## Development Commands
-
-### Workspace Commands (from root)
+### Backend Commands (run from `backend/` directory)
 ```bash
 # Development
-pnpm dev                    # Start frontend development server
-pnpm dev:frontend           # Start frontend only
-pnpm dev:backend           # Start backend only (when implemented)
-pnpm dev:all               # Start both frontend and backend
+npm run start:dev              # Start development server with hot reload
+npm run build                  # Build for production
+npm run start:prod             # Run production build
 
-# Building
-pnpm build                 # Build both frontend and backend
-pnpm build:frontend        # Build frontend only
-pnpm build:backend         # Build backend only (when implemented)
+# Database & Migrations
+npm run migration:create       # Create new migration
+npm run migration:up           # Run pending migrations
+npm run migration:down         # Rollback last migration
+npm run db:fresh               # Drop, recreate schema, and seed database
 
-# Production
-pnpm start                 # Start production servers
-pnpm start:frontend        # Start frontend production server
-pnpm start:backend         # Start backend production server (when implemented)
+# Testing & Code Quality
+npm run test                   # Run unit tests
+npm run test:e2e              # Run e2e tests
+npm run lint                   # Lint and fix code
+npm run format                 # Format code with Prettier
 
-# Quality Assurance
-pnpm lint                  # Run linting on all workspaces
-pnpm lint:fix              # Fix linting issues on all workspaces
-pnpm format                # Format code on all workspaces
-pnpm format:check          # Check formatting on all workspaces
-pnpm type-check            # Run TypeScript checks on all workspaces
-pnpm test                  # Run tests on all workspaces
-pnpm test:watch            # Run tests in watch mode
-
-# Maintenance
-pnpm clean                 # Clean all node_modules and build artifacts
-pnpm clean:cache           # Clean build caches
-pnpm setup                 # Install all dependencies
-pnpm reset                 # Clean and reinstall everything
-pnpm pre-commit            # Run pre-commit checks (lint:fix, format, type-check)
+# Run specific test file
+npm run test -- src/auth/auth.service.spec.ts
 ```
 
-### Frontend Specific Commands (from frontend/ directory)
+### Frontend Commands (run from `frontend/` directory)
 ```bash
 # Development
-npm run dev                # Start development server
-npm run dev:turbo          # Start development server with turbo
-npm run dev:debug          # Start development server with debugging
-
-# Building & Production
-npm run build              # Build for production
-npm run build:analyze      # Build with bundle analyzer
-npm run start              # Start production server
-npm run export             # Export static site
+npm run dev                    # Start Next.js dev server
+npm run build                  # Build for production
+npm run start                  # Run production build
 
 # Code Quality
-npm run lint               # Run ESLint
-npm run lint:fix           # Fix ESLint issues
-npm run lint:strict        # Run ESLint with max warnings 0
-npm run format             # Format code with Prettier
-npm run format:check       # Check code formatting
-npm run type-check         # Run TypeScript checks
-npm run type-check:watch   # Run TypeScript checks in watch mode
+npm run lint                   # Lint code
+npm run lint:fix               # Lint and fix
+npm run format                 # Format with Prettier
+npm run type-check             # TypeScript type checking
 
-# Maintenance
-npm run clean              # Clean build artifacts
-npm run clean:cache        # Clean Next.js cache
-npm run pre-commit         # Run pre-commit checks
+# Pre-commit (runs all checks)
+npm run pre-commit
 ```
 
-## Project Structure
+## High-Level Architecture
 
-```
-smart-therapy/
-├── frontend/                    # Next.js 15 application (active development)
-│   ├── src/
-│   │   ├── app/                # Next.js App Router pages
-│   │   │   ├── (auth)/         # Authentication pages
-│   │   │   └── portal/         # Main application portal
-│   │   ├── components/         # React components
-│   │   │   ├── ui/             # Shared UI components (shadcn/ui)
-│   │   │   ├── auth/           # Authentication components
-│   │   │   ├── clients/        # Client management components
-│   │   │   ├── clinic/         # Clinic management components
-│   │   │   ├── therapists/     # Therapist management components
-│   │   │   ├── layout/         # Layout components
-│   │   │   ├── navigation/     # Navigation components
-│   │   │   ├── payment/        # Payment components
-│   │   │   └── portal/         # Dashboard components
-│   │   ├── hooks/              # Custom React hooks
-│   │   ├── lib/                # Utility functions and configurations
-│   │   ├── store/              # Zustand state management
-│   │   ├── types/              # TypeScript type definitions
-│   │   └── schemas/            # Zod validation schemas
-│   ├── SHARED_COMPONENTS_RULES.md  # Component usage guidelines
-│   ├── COLORS.md               # Design system colors
-│   └── QUICK_REFERENCE.md      # Development quick reference
-├── backend/                    # NestJS API server (planned)
-├── docs/                       # Project documentation
-└── templates/                  # Development templates
-```
+### Backend Architecture (NestJS)
 
-## Core Architectural Patterns
+1. **Module Structure**: Each feature has its own module in `backend/src/`
+   - `auth/` - JWT authentication, login, password reset
+   - `users/` - User management and profiles
+   - `clinics/` - Clinic registration and management
+   - `therapists/` - Therapist accounts and specializations
+   - `clients/` - Client management and assignments
+   - `sessions/` - Therapy session tracking
+   - `consultations/` - Consultation forms and data
+   - `registration/` - Multi-step registration flow with email verification
+   - `upload/` - File upload handling
 
-### 1. Component Architecture
-- **Page Wrappers**: Use `PortalPageWrapper` for consistent portal pages, `PageWrapper` for base layouts
-- **Shared Components**: DataTable for lists, FormModal for forms, consistent UI components from shadcn/ui
-- **Feature Organization**: Components grouped by feature (auth, clients, therapists, clinic)
+2. **Database Layer**: MikroORM with PostgreSQL
+   - Entities in `database/entities/`
+   - Migrations in `database/migrations/`
+   - Seeders in `database/seeders/`
+   - Relations: User -> Clinic -> Therapists -> Clients -> Sessions
 
-### 2. State Management
-- **Zustand**: Global state management with persistence
-- **React Hook Form**: Form state management with Zod validation
-- **Custom Hooks**: Feature-specific hooks for data fetching and business logic
+3. **Authentication & Authorization**:
+   - JWT-based authentication with refresh tokens
+   - Role-based access control (Admin, Clinic, Therapist)
+   - Guards: `JwtAuthGuard`, `RolesGuard`, `SelfOrAdminGuard`
+   - Decorators: `@RequireRole()`, `@CurrentUser()`
 
-### 3. Data Validation
-- **Zod Schemas**: All forms and API data validated with Zod
-- **Type Safety**: TypeScript strict mode with `z.infer<>` for type inference
+4. **Validation**: Zod schemas for all DTOs
+   - Schema files alongside DTOs
+   - Custom `ZodValidationPipe` for request validation
+   - Type inference with `z.infer<>`
 
-### 4. Styling
-- **Tailwind CSS**: Utility-first CSS framework
-- **shadcn/ui**: Pre-built component library
-- **Component Variants**: Using `class-variance-authority` for component variants
+5. **Global Configuration**:
+   - Response interceptor for consistent API responses
+   - Global exception filter for error handling
+   - Validation pipe for request validation
+   - Throttling for rate limiting
 
-## Key Development Guidelines
+### Frontend Architecture (Next.js)
 
-### Frontend Development
-- Use React functional components with TypeScript strict mode
-- Follow the shared component rules defined in `frontend/SHARED_COMPONENTS_RULES.md`
-- Implement proper error handling with toast notifications
-- Use Zustand for global state, React state for local component state
-- Follow Indonesian cultural considerations in UI/UX (formal language, cultural sensitivity)
+1. **App Router Structure** (`src/app/`):
+   - `(auth)/` - Public authentication pages
+   - `portal/` - Protected dashboard area
+     - `admin/` - Admin-only pages
+     - `clinic/` - Clinic management pages
+     - `therapist/` - Therapist pages
+   - `onboarding/` - New user onboarding flow
 
-### Cultural Requirements
-- All content must be in formal Indonesian language
-- Consider client demographics (age, gender, religion, province)
-- Implement cultural adaptation in AI recommendations
-- Respect Indonesian professional standards and ethics
+2. **Component Organization** (`src/components/`):
+   - `ui/` - Reusable shadcn/ui components
+   - `auth/` - Authentication components
+   - `clients/`, `therapists/`, `clinic/` - Feature-specific components
+   - `layout/` - Layout components (Sidebar, Navigation)
+   - `forms/` - Form components
 
-### Code Organization
-- Use absolute imports with `@/` prefix
-- Follow strict import order: React → Third-party → Internal → Types → Icons
-- Implement proper TypeScript typing for all functions and components
-- Use Zod schemas for all form validation and API data validation
+3. **State Management**:
+   - Zustand stores in `src/store/` for client state
+   - React Query for server state management
+   - Custom hooks in `src/hooks/` for business logic
 
-### Authentication & Authorization
-- Role-based access control (Administrator, ClinicAdmin, Therapist)
-- JWT-based authentication with Zustand persistence
-- Route protection with role guards
-- User context managed through auth store
+4. **API Integration** (`src/lib/api/`):
+   - Typed API client functions
+   - Axios with interceptors for auth
+   - Mock implementations for development
 
-### Data Management Patterns
-- API client functions in `lib/api/` with proper error handling
-- Custom hooks for feature-specific data operations
-- Zustand stores with persistence for global state
-- TypeScript interfaces for all data structures
+5. **Validation**: Zod schemas in `src/schemas/`
+   - Form validation with react-hook-form + zodResolver
+   - Shared validation logic between frontend and API calls
 
-## Important Files to Reference
+## Key Patterns & Conventions
 
-- `frontend/SHARED_COMPONENTS_RULES.md` - Comprehensive component usage guidelines
-- `frontend/COLORS.md` - Design system color palette
-- `frontend/QUICK_REFERENCE.md` - Development quick reference
-- `docs/prd/prd-indonesian-hypnotherapy-ai-system.md` - Product requirements
-- `src/lib/navigation-config.ts` - Navigation and role-based routing configuration
-- `src/types/` - TypeScript type definitions for all entities
+### Backend Patterns
+- Use dependency injection for all services
+- Keep controllers thin - business logic in services
+- Use Zod for validation, not class-validator
+- Always use transactions for multi-table operations
+- Return consistent API responses via interceptor
+
+### Frontend Patterns
+- Server Components by default, Client Components when needed
+- Use React Query for all data fetching
+- Form handling with react-hook-form + Zod
+- Error boundaries for error handling
+- Responsive-first design with TailwindCSS
+
+### Security Considerations
+- JWT tokens stored in httpOnly cookies
+- CORS configured for frontend URL only
+- Rate limiting on all endpoints
+- Input validation on both frontend and backend
+- SQL injection prevention via ORM
+- XSS prevention via React's built-in protections
+
+## Important Cursor Rules Integration
+
+### Backend Development (from .cursor/rules/backend-specific.mdc)
+- Use Zod for all validation and type generation
+- Follow NestJS modular architecture
+- Use kebab-case for file names
+- Keep business logic in services
+- Use dependency injection
+- No `any` types - use Zod inference
+
+### Frontend Development (from .cursor/rules/frontend_specific.mdc)
+- Functional components only
+- TypeScript strict mode required
+- TailwindCSS for styling
+- Zod validation for forms
+- React Query for data fetching
+- Proper error boundaries
+
+### Project Boundaries (from .cursor/rules/project_boundary.mdc)
+- **CRITICAL**: Never modify files outside `/Users/panduwijaya/Development/pulih-klinik`
+- All operations must stay within project root
+- No system-wide installations or global modifications
+
+## Database Schema Overview
+
+Key entities and relationships:
+- **User**: Base authentication entity
+- **Clinic**: Has many therapists and clients
+- **Therapist**: Belongs to clinic, has many clients
+- **Client**: Belongs to clinic, assigned to therapists
+- **TherapySession**: Tracks sessions between therapist and client
+- **Consultation**: Initial consultation data for clients
 
 ## Testing Strategy
-When implementing tests:
-- Write unit tests for utility functions and custom hooks
-- Write integration tests for complex components
-- Test error scenarios and edge cases
-- Mock external dependencies and API calls
 
-## Security & Privacy
-- End-to-end encryption for all client data
-- GDPR-level privacy controls
-- Compliance with Indonesian data protection laws
-- Role-based access controls with proper route protection
-- Secure API endpoints with rate limiting (when backend is implemented)
+### Backend Testing
+- Unit tests for services with mocked dependencies
+- E2E tests for API endpoints
+- Test database migrations in isolation
+- Mock external services (email, file upload)
 
-## Performance Considerations
-- Use React.memo for expensive components
-- Implement proper loading states for all async operations
-- Use pagination for large datasets (DataTable component)
-- Optimize bundle size with dynamic imports where appropriate
+### Frontend Testing
+- Component testing with React Testing Library
+- Integration tests for critical user flows
+- Mock API responses for consistent testing
+- Accessibility testing for all components
 
-## Common Development Patterns
+## Environment Variables
 
-### List Page Pattern
-Use `PortalPageWrapper` + `DataTable` combination for consistent list interfaces with search, filtering, and actions.
-
-### Form Modal Pattern  
-Use `FormModal` wrapper with React Hook Form and Zod validation for all forms.
-
-### API Integration Pattern
-Create dedicated API client functions with proper error handling and TypeScript typing.
-
-### State Management Pattern
-Use Zustand stores with persistence and custom hooks for feature-specific data operations.
-
-The project is currently in active frontend development phase with comprehensive authentication, user management, and portal features implemented. Backend development and AI features are planned for future phases.
+Required environment variables:
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - JWT signing secret
+- `FRONTEND_URL` - Frontend URL for CORS
+- `NODE_ENV` - development/production
+- `PORT` - Server port (default: 3001 for backend, 3000 for frontend)

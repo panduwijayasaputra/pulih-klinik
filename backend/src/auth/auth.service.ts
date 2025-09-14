@@ -10,6 +10,7 @@ import * as bcryptjs from 'bcryptjs';
 import * as crypto from 'crypto';
 import { User } from '../database/entities/user.entity';
 import { JwtPayload } from './jwt.strategy';
+import { UserStatus, UserStatusHelper } from '../common/enums';
 
 export interface LoginResult {
   accessToken: string;
@@ -18,13 +19,11 @@ export interface LoginResult {
     id: string;
     email: string;
     name: string;
-    isActive: boolean;
-    roles: Array<{
-      id: string;
-      role: string;
-      clinicId?: string;
-      clinicName?: string;
-    }>;
+    status: UserStatus;
+    roles: string[];
+    clinicId?: string;
+    clinicName?: string;
+    subscriptionTier?: string;
   };
 }
 
@@ -43,8 +42,8 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.em.findOne(
       User,
-      { email, isActive: true },
-      { populate: ['roles', 'roles.clinic', 'profile'] },
+      { email, status: UserStatus.ACTIVE },
+      { populate: ['roles', 'clinic', 'clinic.subscriptionTier', 'profile'] },
     );
 
     if (!user) {
@@ -59,21 +58,80 @@ export class AuthService {
     return user;
   }
 
-  async login(email: string, password: string): Promise<LoginResult> {
-    const user = await this.validateUser(email, password);
+  async validateUserWithDetailedError(
+    email: string,
+    password: string,
+  ): Promise<{ user: User | null; error?: string }> {
+    // First check if user exists
+    const user = await this.em.findOne(
+      User,
+      { email },
+      {
+        populate: [
+          'roles',
+          'clinic',
+          'clinic.subscriptionTier',
+          'profile',
+          'therapist',
+          'therapist.clinic',
+          'therapist.clinic.subscriptionTier',
+        ],
+      },
+    );
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      return { user: null, error: 'User not found' };
     }
+
+    // Check password
+    const isPasswordValid = await bcryptjs.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return { user: null, error: 'Invalid password' };
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      return { user: null, error: 'Email not verified' };
+    }
+
+    // Check if user can login
+    if (!UserStatusHelper.canLogin(user.status)) {
+      return { user: null, error: 'Account disabled' };
+    }
+
+    return { user, error: undefined };
+  }
+
+  async login(email: string, password: string): Promise<LoginResult> {
+    const validation = await this.validateUserWithDetailedError(
+      email,
+      password,
+    );
+
+    if (!validation.user) {
+      // For security, we still return a generic message for user not found
+      // but we can provide more specific messages for other cases
+      if (validation.error === 'User not found') {
+        throw new UnauthorizedException('Invalid credentials');
+      } else {
+        throw new UnauthorizedException(
+          validation.error || 'Invalid credentials',
+        );
+      }
+    }
+
+    const user = validation.user;
+
+    // Get clinic info from user.clinic or fallback to therapist.clinic
+    const clinic = user.clinic || user.therapist.getItems()[0]?.clinic;
 
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      roles: user.roles.map((role) => ({
-        id: role.id,
-        role: role.role,
-        clinicId: role.clinicId,
-      })),
+      roles: user.roles.map((role) => role.role),
+      clinicId: clinic?.id,
+      clinicName: clinic?.name,
+      subscriptionTier: clinic?.subscriptionTier?.code,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -91,13 +149,11 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.profile?.name || 'Unknown User',
-        isActive: user.isActive,
-        roles: user.roles.map((role) => ({
-          id: role.id,
-          role: role.role,
-          clinicId: role.clinicId,
-          clinicName: role.clinic?.name,
-        })),
+        status: user.status,
+        roles: user.roles.map((role) => role.role),
+        clinicId: clinic?.id,
+        clinicName: clinic?.name,
+        subscriptionTier: clinic?.subscriptionTier?.code,
       },
     };
   }
@@ -109,8 +165,8 @@ export class AuthService {
       // Verify user still exists and is active
       const user = await this.em.findOne(
         User,
-        { id: payload.sub, isActive: true },
-        { populate: ['roles'] },
+        { id: payload.sub, status: UserStatus.ACTIVE },
+        { populate: ['roles', 'clinic', 'clinic.subscriptionTier'] },
       );
 
       if (!user) {
@@ -120,11 +176,10 @@ export class AuthService {
       const newPayload: JwtPayload = {
         sub: user.id,
         email: user.email,
-        roles: user.roles.map((role) => ({
-          id: role.id,
-          role: role.role,
-          clinicId: role.clinicId,
-        })),
+        roles: user.roles.map((role) => role.role),
+        clinicId: user.clinic?.id,
+        clinicName: user.clinic?.name,
+        subscriptionTier: user.clinic?.subscriptionTier?.code,
       };
 
       const newAccessToken = this.jwtService.sign(newPayload);
@@ -156,8 +211,8 @@ export class AuthService {
   async getUserWithRoles(userId: string): Promise<User | null> {
     return this.em.findOne(
       User,
-      { id: userId, isActive: true },
-      { populate: ['roles', 'roles.clinic'] },
+      { id: userId, status: UserStatus.ACTIVE },
+      { populate: ['roles', 'clinic'] },
     );
   }
 
@@ -176,7 +231,10 @@ export class AuthService {
    * Send password reset email (token generation)
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const user = await this.em.findOne(User, { email, isActive: true });
+    const user = await this.em.findOne(User, {
+      email,
+      status: UserStatus.ACTIVE,
+    });
 
     // Don't reveal whether user exists or not for security
     if (!user) {
@@ -186,9 +244,9 @@ export class AuthService {
       };
     }
 
-    // Generate reset token and set expiry (15 minutes)
+    // Generate reset token and set expiry (10 minutes)
     const resetToken = this.generateResetToken();
-    const resetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const resetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Save token to database
     await this.em.nativeUpdate(
@@ -220,7 +278,7 @@ export class AuthService {
     const user = await this.em.findOne(User, {
       passwordResetToken: token,
       passwordResetExpires: { $gt: new Date() },
-      isActive: true,
+      status: UserStatus.ACTIVE,
     });
 
     if (!user) {
@@ -247,7 +305,7 @@ export class AuthService {
     const user = await this.em.findOne(User, {
       passwordResetToken: token,
       passwordResetExpires: { $gt: new Date() },
-      isActive: true,
+      status: UserStatus.ACTIVE,
     });
 
     if (!user) {
@@ -289,7 +347,10 @@ export class AuthService {
     }
 
     // Find user
-    const user = await this.em.findOne(User, { id: userId, isActive: true });
+    const user = await this.em.findOne(User, {
+      id: userId,
+      status: UserStatus.ACTIVE,
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

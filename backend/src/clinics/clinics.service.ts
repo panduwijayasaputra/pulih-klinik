@@ -6,9 +6,18 @@ import {
 } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
 import { Clinic } from '../database/entities/clinic.entity';
-import { UserRole as UserRoleEntity } from '../database/entities/user-role.entity';
-import { UpdateClinicDto, UpdateBrandingDto, UpdateSettingsDto } from './dto';
-import { UserRole } from '../common/enums';
+import { User } from '../database/entities/user.entity';
+import { SubscriptionTier } from '../database/entities/subscription-tier.entity';
+import { Therapist } from '../database/entities/therapist.entity';
+import { Client, ClientStatus } from '../database/entities/client.entity';
+import { TherapySession } from '../database/entities/therapy-session.entity';
+import {
+  CreateClinicDto,
+  UpdateClinicDto,
+  UpdateBrandingDto,
+  UpdateSettingsDto,
+} from './dto';
+import { UserRole, UserStatus, ClinicStatus } from '../common/enums';
 
 export interface ClinicProfileResponse {
   id: string;
@@ -34,8 +43,8 @@ export interface ClinicProfileResponse {
   pushNotifications: boolean;
 
   // Status & Subscription
-  status: 'active' | 'suspended' | 'pending' | 'inactive';
-  subscriptionTier: 'alpha' | 'beta' | 'theta' | 'delta';
+  status: ClinicStatus;
+  subscriptionTier: string | undefined;
   subscriptionExpires?: Date;
 
   // Timestamps
@@ -54,6 +63,47 @@ export interface ClinicDocumentPlaceholder {
 @Injectable()
 export class ClinicsService {
   constructor(private readonly em: EntityManager) {}
+
+  /**
+   * Create a new clinic
+   */
+  async createClinic(
+    createClinicDto: CreateClinicDto,
+    createdByUserId: string,
+  ): Promise<ClinicProfileResponse> {
+    // Check if clinic with same name or email already exists
+    const existingClinic = await this.em.findOne(Clinic, {
+      $or: [{ name: createClinicDto.name }, { email: createClinicDto.email }],
+    });
+
+    if (existingClinic) {
+      throw new BadRequestException(
+        'A clinic with the same name or email already exists',
+      );
+    }
+
+    // Create new clinic
+    const clinic = new Clinic();
+    clinic.name = createClinicDto.name;
+    clinic.address = createClinicDto.address;
+    clinic.phone = createClinicDto.phone;
+    clinic.email = createClinicDto.email;
+    clinic.website = createClinicDto.website || undefined;
+    clinic.description = createClinicDto.description || undefined;
+    clinic.workingHours = createClinicDto.workingHours || undefined;
+    clinic.status = ClinicStatus.PENDING; // New clinics start as pending
+
+    await this.em.persistAndFlush(clinic);
+
+    // Associate the clinic with the user who created it
+    const user = await this.em.findOne(User, { id: createdByUserId });
+    if (user) {
+      user.clinic = clinic;
+      await this.em.persistAndFlush(user);
+    }
+
+    return this.mapClinicToResponse(clinic);
+  }
 
   /**
    * Get clinic profile by ID
@@ -165,16 +215,43 @@ export class ClinicsService {
     userId: string,
     clinicId: string,
   ): Promise<boolean> {
-    // Check if user has clinic_admin role for this clinic or is system administrator
-    const userRole = await this.em.findOne(UserRoleEntity, {
-      userId,
-      $or: [
-        { role: UserRole.ADMINISTRATOR }, // System admin can access any clinic
-        { role: UserRole.CLINIC_ADMIN, clinicId }, // Clinic admin for specific clinic
-      ],
-    });
+    // First check if the clinic exists
+    const clinic = await this.em.findOne(Clinic, { id: clinicId });
+    if (!clinic) {
+      throw new NotFoundException('Clinic not found');
+    }
 
-    if (!userRole) {
+    // Check if user has clinic_admin role for this clinic or is system administrator
+    const user = await this.em.findOne(
+      User,
+      {
+        id: userId,
+        status: UserStatus.ACTIVE,
+      },
+      { populate: ['roles', 'clinic'] },
+    );
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // System administrator can access any clinic
+    const isAdmin = user.roles
+      .toArray()
+      .some((role) => role.role === UserRole.ADMINISTRATOR);
+    if (isAdmin) {
+      return true;
+    }
+
+    // Clinic admin can only access their own clinic
+    const hasClinicAdminAccess = user.roles
+      .toArray()
+      .some(
+        (role) =>
+          role.role === UserRole.CLINIC_ADMIN && user.clinic?.id === clinicId,
+      );
+
+    if (!hasClinicAdminAccess) {
       throw new ForbiddenException(
         'You do not have permission to manage this clinic',
       );
@@ -184,27 +261,98 @@ export class ClinicsService {
   }
 
   /**
+   * Get all available subscription tiers
+   */
+  async getSubscriptionTiers(): Promise<any[]> {
+    const tiers = await this.em.find(
+      SubscriptionTier,
+      { isActive: true },
+      { orderBy: { sortOrder: 'ASC' } },
+    );
+
+    return tiers.map((tier) => ({
+      id: tier.id,
+      name: tier.name,
+      code: tier.code,
+      description: tier.description,
+      monthlyPrice: tier.monthlyPrice,
+      yearlyPrice: tier.yearlyPrice,
+      therapistLimit: tier.therapistLimit,
+      newClientsPerDayLimit: tier.newClientsPerDayLimit,
+      isRecommended: tier.isRecommended,
+      isActive: tier.isActive,
+      sortOrder: tier.sortOrder,
+    }));
+  }
+
+  /**
+   * Update clinic subscription tier
+   */
+  async updateClinicSubscription(
+    clinicId: string,
+    subscriptionTierCode: string,
+  ): Promise<{
+    id: string;
+    subscriptionTier: string;
+    subscriptionExpires: string;
+  }> {
+    const clinic = await this.em.findOne(Clinic, { id: clinicId });
+
+    if (!clinic) {
+      throw new NotFoundException('Clinic not found');
+    }
+
+    // Find the subscription tier by code
+    const subscriptionTier = await this.em.findOne(SubscriptionTier, {
+      code: subscriptionTierCode,
+    });
+
+    if (!subscriptionTier) {
+      throw new NotFoundException('Subscription tier not found');
+    }
+
+    // Update subscription tier
+    clinic.subscriptionTier = subscriptionTier;
+
+    // Set subscription expiration to 1 year from now
+    const expirationDate = new Date();
+    expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+    clinic.subscriptionExpires = expirationDate;
+
+    await this.em.persistAndFlush(clinic);
+
+    return {
+      id: clinic.id,
+      subscriptionTier: subscriptionTier.code,
+      subscriptionExpires: clinic.subscriptionExpires.toISOString(),
+    };
+  }
+
+  /**
    * Get clinics accessible by user (based on roles)
    */
   async getUserAccessibleClinics(userId: string): Promise<string[]> {
-    const userRoles = await this.em.find(UserRoleEntity, { userId });
+    const user = await this.em.findOne(
+      User,
+      { id: userId, status: UserStatus.ACTIVE },
+      { populate: ['roles', 'clinic'] },
+    );
+
+    if (!user) {
+      return [];
+    }
 
     // System administrator can access all clinics
-    const isAdmin = userRoles.some(
-      (role) => role.role === UserRole.ADMINISTRATOR,
-    );
+    const isAdmin = user.roles
+      .toArray()
+      .some((role) => role.role === UserRole.ADMINISTRATOR);
     if (isAdmin) {
       const allClinics = await this.em.find(Clinic, {});
       return allClinics.map((clinic) => clinic.id);
     }
 
-    // Get clinic IDs for clinic_admin and therapist roles
-    const clinicIds = userRoles
-      .filter((role) => role.clinicId)
-      .map((role) => role.clinicId!)
-      .filter((id, index, array) => array.indexOf(id) === index); // Remove duplicates
-
-    return clinicIds;
+    // Return user's clinic ID
+    return user.clinic?.id ? [user.clinic.id] : [];
   }
 
   /**
@@ -304,7 +452,7 @@ export class ClinicsService {
 
       // Status & Subscription
       status: clinic.status,
-      subscriptionTier: clinic.subscriptionTier,
+      subscriptionTier: clinic.subscriptionTier?.code,
       subscriptionExpires: clinic.subscriptionExpires,
 
       // Timestamps
@@ -389,7 +537,7 @@ export class ClinicsService {
 
       // Status & Subscription
       status: clinic.status,
-      subscriptionTier: clinic.subscriptionTier,
+      subscriptionTier: clinic.subscriptionTier?.code,
       subscriptionExpires: clinic.subscriptionExpires,
 
       // Timestamps
@@ -404,5 +552,108 @@ export class ClinicsService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  /**
+   * Get clinic statistics
+   */
+  async getClinicStats(clinicId: string): Promise<{
+    therapists: number;
+    clients: number;
+    sessions: number;
+    documents: number;
+    activeTherapists: number;
+    activeClients: number;
+    thisMonthSessions: number;
+    thisMonthDocuments: number;
+  }> {
+    // Verify clinic exists
+    const clinicExists = await this.clinicExists(clinicId);
+    if (!clinicExists) {
+      throw new NotFoundException('Clinic not found');
+    }
+
+    // Get current date for this month calculations
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    // Get therapists count
+    const [totalTherapists, activeTherapists] = await Promise.all([
+      this.em.count(Therapist, { clinic: clinicId }),
+      this.em.count(Therapist, {
+        clinic: clinicId,
+        user: { status: UserStatus.ACTIVE },
+      }),
+    ]);
+
+    // Get clients count
+    const [totalClients, activeClients] = await Promise.all([
+      this.em.count(Client, { clinic: clinicId }),
+      this.em.count(Client, { clinic: clinicId, status: ClientStatus.THERAPY }),
+    ]);
+
+    // Get sessions count
+    const [totalSessions, thisMonthSessions] = await Promise.all([
+      this.em.count(TherapySession, {
+        client: { clinic: clinicId },
+      }),
+      this.em.count(TherapySession, {
+        client: { clinic: clinicId },
+        createdAt: {
+          $gte: startOfMonth,
+          $lte: endOfMonth,
+        },
+      }),
+    ]);
+
+    // Get documents count (placeholder - will be implemented when document system is ready)
+    const [totalDocuments, thisMonthDocuments] = await Promise.all([
+      // TODO: Implement when document system is ready
+      Promise.resolve(0),
+      Promise.resolve(0),
+    ]);
+
+    return {
+      therapists: totalTherapists,
+      clients: totalClients,
+      sessions: totalSessions,
+      documents: totalDocuments,
+      activeTherapists,
+      activeClients,
+      thisMonthSessions,
+      thisMonthDocuments,
+    };
+  }
+
+  /**
+   * Upload clinic logo
+   */
+  async uploadClinicLogo(
+    clinicId: string,
+    _logoFile: any,
+  ): Promise<{ logoUrl: string }> {
+    // Verify clinic exists
+    const clinicExists = await this.clinicExists(clinicId);
+    if (!clinicExists) {
+      throw new NotFoundException('Clinic not found');
+    }
+
+    // TODO: Implement actual file upload logic
+    // For now, return a placeholder URL
+    const logoUrl = `https://example.com/uploads/logos/clinic-${clinicId}-logo.png`;
+
+    // Update clinic with new logo URL
+    await this.em.nativeUpdate('Clinic', { id: clinicId }, { logoUrl });
+
+    return { logoUrl };
   }
 }

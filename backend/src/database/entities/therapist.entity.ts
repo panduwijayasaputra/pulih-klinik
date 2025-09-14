@@ -3,13 +3,10 @@ import {
   PrimaryKey,
   Property,
   ManyToOne,
-  OneToMany,
-  Collection,
   Unique,
 } from '@mikro-orm/core';
 import { User } from './user.entity';
 import { Clinic } from './clinic.entity';
-import { TherapistSpecialization } from './therapist-specialization.entity';
 
 export enum LicenseType {
   PSYCHOLOGIST = 'psychologist',
@@ -18,20 +15,7 @@ export enum LicenseType {
   HYPNOTHERAPIST = 'hypnotherapist',
 }
 
-export enum TherapistStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ON_LEAVE = 'on_leave',
-  SUSPENDED = 'suspended',
-  PENDING_SETUP = 'pending_setup',
-}
-
-export enum EmploymentType {
-  FULL_TIME = 'full_time',
-  PART_TIME = 'part_time',
-  CONTRACT = 'contract',
-  FREELANCE = 'freelance',
-}
+// TherapistStatus enum moved to UserStatus in common/enums/user-status.enum.ts
 
 @Entity({ tableName: 'therapists' })
 @Unique({ properties: ['clinic', 'licenseNumber'] })
@@ -45,15 +29,7 @@ export class Therapist {
   @ManyToOne(() => User, { onDelete: 'cascade' })
   user!: User;
 
-  // Basic info
-  @Property({ type: 'varchar', length: 255 })
-  fullName!: string;
-
-  @Property({ type: 'varchar', length: 20 })
-  phone!: string;
-
-  @Property({ type: 'varchar', length: 500, nullable: true })
-  avatarUrl?: string;
+  // Basic info is now stored in UserProfile
 
   // Professional info
   @Property({ type: 'varchar', length: 100 })
@@ -62,26 +38,10 @@ export class Therapist {
   @Property({ type: 'varchar', length: 50 })
   licenseType!: LicenseType;
 
-  @Property({ type: 'integer', default: 0 })
-  yearsOfExperience: number = 0;
-
-  // Status & employment
-  @Property({
-    type: 'varchar',
-    length: 20,
-    default: TherapistStatus.PENDING_SETUP,
-  })
-  status: TherapistStatus = TherapistStatus.PENDING_SETUP;
-
-  @Property({ type: 'varchar', length: 20 })
-  employmentType!: EmploymentType;
+  // Status is now managed by User.status field
 
   @Property({ type: 'date' })
   joinDate!: Date;
-
-  // Capacity
-  @Property({ type: 'integer', default: 10 })
-  maxClients: number = 10;
 
   @Property({ type: 'integer', default: 0 })
   currentLoad: number = 0;
@@ -90,13 +50,14 @@ export class Therapist {
   @Property({ type: 'varchar', length: 50, default: 'Asia/Jakarta' })
   timezone: string = 'Asia/Jakarta';
 
-  @Property({
-    type: 'integer',
-    default: 60,
-    comment: 'Session duration in minutes',
-  })
-  sessionDuration: number = 60;
+  // Education and certifications (stored as text)
+  @Property({ type: 'text', nullable: true })
+  education?: string;
 
+  @Property({ type: 'text', nullable: true })
+  certifications?: string;
+
+  // Session scheduling preferences
   @Property({
     type: 'integer',
     default: 15,
@@ -117,13 +78,6 @@ export class Therapist {
   // Admin notes
   @Property({ type: 'text', nullable: true })
   adminNotes?: string;
-
-  // Relationships
-  @OneToMany(
-    () => TherapistSpecialization,
-    (specialization) => specialization.therapist,
-  )
-  specializations = new Collection<TherapistSpecialization>(this);
 
   @Property({ type: 'timestamp', defaultRaw: 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();

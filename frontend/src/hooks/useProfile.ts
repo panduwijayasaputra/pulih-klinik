@@ -22,6 +22,7 @@ export const useProfile = (userId?: string) => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
+      setProfile(null); // Explicitly set profile to null when error occurs
     } finally {
       setLoading(false);
     }

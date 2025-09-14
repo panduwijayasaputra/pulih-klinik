@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -13,7 +13,7 @@ import { FormModal } from '@/components/ui/form-modal';
 import ConfirmationDialog, { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
 
-import { createClientSchema } from '@/schemas/clientSchema';
+import { createClientSchema, clientSchemaWithRefinements, type ClientCreateData } from '@/schemas/clientSchema';
 import type { ClientFormData } from '@/types/client';
 import { useClient } from '@/hooks/useClient';
 import { ClientAPI } from '@/lib/api/client';
@@ -33,6 +33,10 @@ import {
   ClientReligionEnum,
   ClientReligionLabels
 } from '@/types/enums';
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+} from '@heroicons/react/24/outline';
 
 export interface ClientFormModalProps {
   open: boolean;
@@ -54,9 +58,21 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   onCancel,
 }) => {
   const [isLoadingClient, setIsLoadingClient] = useState(mode === 'edit');
+  const [useGuardianAsEmergencyContact, setUseGuardianAsEmergencyContact] = useState(false);
   const { openDialog, isOpen: dialogIsOpen, config: dialogConfig, closeDialog } = useConfirmationDialog();
   const { addToast } = useToast();
   const { createClient, loading: clientLoading } = useClient();
+
+  // Create dynamic schema based on isMinor value
+  const createDynamicSchema = React.useCallback((isMinor: boolean) => {
+    if (isMinor) {
+      // Use schema with refinements when isMinor is true
+      return clientSchemaWithRefinements;
+    } else {
+      // Use base schema when isMinor is false
+      return createClientSchema;
+    }
+  }, []);
 
   const {
     register,
@@ -65,17 +81,20 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
     watch,
     formState: { errors, isSubmitting, isDirty, isValid },
     reset,
-  } = useForm<ClientFormData>({
-    resolver: zodResolver(createClientSchema),
-    mode: mode === 'edit' ? 'onSubmit' : 'onChange',
+    trigger,
+    setError,
+    clearErrors,
+  } = useForm<ClientCreateData>({
+    resolver: zodResolver(createDynamicSchema(false)), // Initial schema for non-minor
+    mode: 'onChange',
     defaultValues: {
       fullName: '',
-      gender: ClientGenderEnum.Male,
+      gender: 'Male' as const,
       birthPlace: '',
       birthDate: '',
-      religion: ClientReligionEnum.Islam,
+      religion: 'Islam' as const,
       occupation: '',
-      education: ClientEducationEnum.Bachelor,
+      education: 'Bachelor' as const,
       educationMajor: '',
       address: '',
       phone: '',
@@ -83,7 +102,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       hobbies: '',
       maritalStatus: ClientMaritalStatusEnum.Single,
       spouseName: '',
-      relationshipWithSpouse: undefined,
+      relationshipWithSpouse: null,
 
       firstVisit: true,
       previousVisitDetails: '',
@@ -91,24 +110,28 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       school: '',
       grade: '',
       guardianFullName: '',
-      guardianRelationship: undefined,
+      guardianRelationship: null,
       guardianPhone: '',
       guardianAddress: '',
       guardianOccupation: '',
-      guardianMaritalStatus: undefined,
+      guardianMaritalStatus: null,
       guardianLegalCustody: false,
       guardianCustodyDocsAttached: false,
       emergencyContactName: '',
       emergencyContactPhone: '',
       emergencyContactRelationship: '',
       emergencyContactAddress: '',
+      primaryIssue: '',
       ...defaultValues,
     },
   });
 
   // Reset form when modal opens/closes or defaultValues change
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
+      // Reset checkbox state
+      setUseGuardianAsEmergencyContact(false);
+      
       if (mode === 'edit' && clientId) {
         // Load client data for edit mode
         const loadClientData = async () => {
@@ -118,16 +141,16 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             const response = await ClientAPI.getClient(clientId);
             if (response.success && response.data) {
               const clientData = response.data;
-              
+
               // Reset with fetched client data
               reset({
                 fullName: clientData.fullName || clientData.name || '',
-                gender: clientData.gender || ClientGenderEnum.Male,
+                gender: clientData.gender || 'Male' as const,
                 birthPlace: clientData.birthPlace || '',
-                birthDate: clientData.birthDate || '',
-                religion: clientData.religion || ClientReligionEnum.Islam,
+                birthDate: clientData.birthDate ? new Date(clientData.birthDate).toISOString().split('T')[0] : '',
+                religion: clientData.religion || 'Islam' as const,
                 occupation: clientData.occupation || '',
-                education: clientData.education || ClientEducationEnum.Bachelor,
+                education: clientData.education || 'Bachelor' as const,
                 educationMajor: clientData.educationMajor || '',
                 address: clientData.address || '',
                 phone: clientData.phone || '',
@@ -136,7 +159,6 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 maritalStatus: clientData.maritalStatus || ClientMaritalStatusEnum.Single,
                 spouseName: clientData.spouseName || '',
                 relationshipWithSpouse: clientData.relationshipWithSpouse,
-
                 firstVisit: clientData.firstVisit ?? true,
                 previousVisitDetails: clientData.previousVisitDetails || '',
                 isMinor: clientData.isMinor ?? false,
@@ -154,17 +176,18 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 emergencyContactPhone: clientData.emergencyContactPhone || '',
                 emergencyContactRelationship: clientData.emergencyContactRelationship || '',
                 emergencyContactAddress: clientData.emergencyContactAddress || '',
+                primaryIssue: clientData.primaryIssue || '',
               });
             } else {
               // Fallback to default values if API fails
               reset({
                 fullName: '',
-                gender: ClientGenderEnum.Male,
+                gender: 'Male' as const,
                 birthPlace: '',
                 birthDate: '',
-                religion: ClientReligionEnum.Islam,
+                religion: 'Islam' as const,
                 occupation: '',
-                education: ClientEducationEnum.Bachelor,
+                education: 'Bachelor' as const,
                 educationMajor: '',
                 address: '',
                 phone: '',
@@ -172,7 +195,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 hobbies: '',
                 maritalStatus: ClientMaritalStatusEnum.Single,
                 spouseName: '',
-                relationshipWithSpouse: undefined,
+                relationshipWithSpouse: null,
 
                 firstVisit: true,
                 previousVisitDetails: '',
@@ -180,17 +203,18 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 school: '',
                 grade: '',
                 guardianFullName: '',
-                guardianRelationship: undefined,
+                guardianRelationship: null,
                 guardianPhone: '',
                 guardianAddress: '',
                 guardianOccupation: '',
-                guardianMaritalStatus: undefined,
+                guardianMaritalStatus: null,
                 guardianLegalCustody: false,
                 guardianCustodyDocsAttached: false,
                 emergencyContactName: '',
                 emergencyContactPhone: '',
                 emergencyContactRelationship: '',
                 emergencyContactAddress: '',
+                primaryIssue: '',
                 ...defaultValues,
               });
             }
@@ -199,12 +223,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             // Fallback to default values on error
             reset({
               fullName: '',
-              gender: ClientGenderEnum.Male,
+              gender: 'Male' as const,
               birthPlace: '',
               birthDate: '',
-              religion: ClientReligionEnum.Islam,
+              religion: 'Islam' as const,
               occupation: '',
-              education: ClientEducationEnum.Bachelor,
+              education: 'Bachelor' as const,
               educationMajor: '',
               address: '',
               phone: '',
@@ -212,7 +236,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               hobbies: '',
               maritalStatus: ClientMaritalStatusEnum.Single,
               spouseName: '',
-              relationshipWithSpouse: undefined,
+              relationshipWithSpouse: null,
 
               firstVisit: true,
               previousVisitDetails: '',
@@ -220,17 +244,18 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               school: '',
               grade: '',
               guardianFullName: '',
-              guardianRelationship: undefined,
+              guardianRelationship: null,
               guardianPhone: '',
               guardianAddress: '',
               guardianOccupation: '',
-              guardianMaritalStatus: undefined,
+              guardianMaritalStatus: null,
               guardianLegalCustody: false,
               guardianCustodyDocsAttached: false,
               emergencyContactName: '',
               emergencyContactPhone: '',
               emergencyContactRelationship: '',
               emergencyContactAddress: '',
+              primaryIssue: '',
               ...defaultValues,
             });
           } finally {
@@ -243,12 +268,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
         // Reset form for create mode
         reset({
           fullName: '',
-          gender: ClientGenderEnum.Male,
+          gender: 'Male' as const,
           birthPlace: '',
           birthDate: '',
-          religion: ClientReligionEnum.Islam,
+          religion: 'Islam' as const,
           occupation: '',
-          education: ClientEducationEnum.Bachelor,
+          education: 'Bachelor' as const,
           educationMajor: '',
           address: '',
           phone: '',
@@ -256,7 +281,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
           hobbies: '',
           maritalStatus: ClientMaritalStatusEnum.Single,
           spouseName: '',
-          relationshipWithSpouse: undefined,
+          relationshipWithSpouse: null,
 
           firstVisit: true,
           previousVisitDetails: '',
@@ -264,25 +289,26 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
           school: '',
           grade: '',
           guardianFullName: '',
-          guardianRelationship: undefined,
+          guardianRelationship: null,
           guardianPhone: '',
           guardianAddress: '',
           guardianOccupation: '',
-          guardianMaritalStatus: undefined,
+          guardianMaritalStatus: null,
           guardianLegalCustody: false,
           guardianCustodyDocsAttached: false,
           emergencyContactName: '',
           emergencyContactPhone: '',
           emergencyContactRelationship: '',
           emergencyContactAddress: '',
+          primaryIssue: '',
           ...defaultValues,
         });
         setIsLoadingClient(false);
       }
     }
-  }, [open, mode, defaultValues, reset]);
+  }, [open, mode, clientId, defaultValues, reset]);
 
-  const onSubmit = (data: ClientFormData) => {
+  const onSubmit = async (data: ClientFormData) => {
     const titleText = mode === 'edit' ? 'Perbarui Data Klien' : 'Tambah Klien Baru';
     const confirmText = mode === 'edit' ? 'Perbarui Data' : 'Tambah Klien';
 
@@ -329,20 +355,23 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
   const submitForm = async (data: ClientFormData) => {
     try {
-      if (mode === 'edit') {
-        // Mock update API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (mode === 'edit' && clientId) {
+        // Call actual update API
+        const response = await ClientAPI.updateClient(clientId, data);
 
-        // Show success toast for edit mode
-        addToast({
-          type: 'success',
-          title: 'Data Klien Berhasil Diperbarui!',
-          message: `Data klien ${data.fullName} telah berhasil diperbarui.`,
-          duration: 5000,
-        });
+        if (response.success) {
+          addToast({
+            type: 'success',
+            title: 'Data Klien Berhasil Diperbarui!',
+            message: `Data klien ${data.fullName} telah berhasil diperbarui.`,
+            duration: 5000,
+          });
 
-        onSubmitSuccess?.(data);
-        onOpenChange(false);
+          onSubmitSuccess?.(data);
+          onOpenChange(false);
+        } else {
+          throw new Error(response.message || 'Gagal memperbarui data klien');
+        }
       } else {
         // Create new client using the API
         const result = await createClient(data);
@@ -384,9 +413,430 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
     ? 'Update informasi klien yang sudah ada'
     : 'Tambahkan klien baru ke dalam sistem';
 
-  // Watch isMinor to conditionally show fields
+  // Watch isMinor and firstVisit to conditionally show fields
   const isMinor = watch('isMinor');
+  const firstVisit = watch('firstVisit');
 
+  // Update schema resolver when isMinor changes
+  React.useEffect(() => {
+    // Update the form resolver based on isMinor value
+    const newSchema = createDynamicSchema(isMinor);
+    // Note: We can't directly update the resolver in react-hook-form, 
+    // but the validation will be handled by our custom validation logic
+  }, [isMinor, createDynamicSchema]);
+
+  // Clear minor-specific fields when isMinor becomes false
+  useEffect(() => {
+    if (!isMinor) {
+      // Clear school fields
+      setValue('school', '', { shouldValidate: true });
+      setValue('grade', '', { shouldValidate: true });
+
+      // Clear guardian fields
+      setValue('guardianFullName', '', { shouldValidate: true });
+      setValue('guardianRelationship', null, { shouldValidate: true });
+      setValue('guardianPhone', '', { shouldValidate: true });
+      setValue('guardianAddress', '', { shouldValidate: true });
+      setValue('guardianOccupation', '', { shouldValidate: true });
+      setValue('guardianMaritalStatus', null, { shouldValidate: true });
+      setValue('guardianLegalCustody', false, { shouldValidate: true });
+      setValue('guardianCustodyDocsAttached', false, { shouldValidate: true });
+    }
+  }, [isMinor, setValue]);
+
+  // Clear spouse relationship field when marital status is not married
+  const maritalStatus = watch('maritalStatus');
+  React.useEffect(() => {
+    if (maritalStatus !== ClientMaritalStatusEnum.Married) {
+      setValue('relationshipWithSpouse', null, { shouldValidate: true });
+      setValue('spouseName', '', { shouldValidate: true });
+    }
+  }, [maritalStatus, setValue]);
+
+  // Sync guardian data with emergency contact when checkbox is checked
+  React.useEffect(() => {
+    if (useGuardianAsEmergencyContact && isMinor) {
+      const guardianFullName = watch('guardianFullName');
+      const guardianPhone = watch('guardianPhone');
+      const guardianRelationship = watch('guardianRelationship');
+      const guardianAddress = watch('guardianAddress');
+
+      // Update emergency contact fields with guardian data
+      setValue('emergencyContactName', guardianFullName || '', { shouldValidate: true });
+      setValue('emergencyContactPhone', guardianPhone || '', { shouldValidate: true });
+      setValue('emergencyContactRelationship', guardianRelationship ? ClientGuardianRelationshipLabels[guardianRelationship as keyof typeof ClientGuardianRelationshipLabels] : '', { shouldValidate: true });
+      setValue('emergencyContactAddress', guardianAddress || '', { shouldValidate: true });
+    }
+  }, [useGuardianAsEmergencyContact, isMinor, watch, setValue]);
+
+  // Custom validation for conditional fields when isMinor changes
+  React.useEffect(() => {
+    const validateConditionalFields = () => {
+      if (isMinor) {
+        // Validate required fields for minors
+        const schoolValue = watch('school');
+        const gradeValue = watch('grade');
+        const guardianFullNameValue = watch('guardianFullName');
+        const guardianRelationshipValue = watch('guardianRelationship');
+        const guardianPhoneValue = watch('guardianPhone');
+        const guardianOccupationValue = watch('guardianOccupation');
+
+        // School validation
+        if (!schoolValue || schoolValue.trim().length < 2) {
+          setError('school', {
+            type: 'manual',
+            message: 'Nama sekolah minimal 2 karakter'
+          });
+        } else {
+          clearErrors('school');
+        }
+
+        // Grade validation
+        if (!gradeValue || gradeValue.trim().length < 1) {
+          setError('grade', {
+            type: 'manual',
+            message: 'Kelas harus diisi'
+          });
+        } else {
+          clearErrors('grade');
+        }
+
+        // Guardian full name validation
+        if (!guardianFullNameValue || guardianFullNameValue.trim().length < 2) {
+          setError('guardianFullName', {
+            type: 'manual',
+            message: 'Nama lengkap wali minimal 2 karakter'
+          });
+        } else {
+          clearErrors('guardianFullName');
+        }
+
+        // Guardian relationship validation
+        if (!guardianRelationshipValue) {
+          setError('guardianRelationship', {
+            type: 'manual',
+            message: 'Hubungan dengan klien harus dipilih'
+          });
+        } else {
+          clearErrors('guardianRelationship');
+        }
+
+        // Guardian phone validation
+        if (!guardianPhoneValue || guardianPhoneValue.trim().length < 10) {
+          setError('guardianPhone', {
+            type: 'manual',
+            message: 'Nomor telepon wali minimal 10 digit'
+          });
+        } else {
+          clearErrors('guardianPhone');
+        }
+
+        // Guardian occupation validation
+        if (!guardianOccupationValue || guardianOccupationValue.trim().length < 2) {
+          setError('guardianOccupation', {
+            type: 'manual',
+            message: 'Pekerjaan wali minimal 2 karakter'
+          });
+        } else {
+          clearErrors('guardianOccupation');
+        }
+
+        // Guardian address validation
+        const guardianAddressValue = watch('guardianAddress');
+        if (!guardianAddressValue || guardianAddressValue.trim().length < 5) {
+          setError('guardianAddress', {
+            type: 'manual',
+            message: 'Alamat wali minimal 5 karakter'
+          });
+        } else {
+          clearErrors('guardianAddress');
+        }
+      } else {
+        // Clear all conditional errors when isMinor is false
+        clearErrors(['school', 'grade', 'guardianFullName', 'guardianRelationship', 'guardianPhone', 'guardianOccupation', 'guardianAddress']);
+      }
+
+      // Validate spouse fields when married
+      if (maritalStatus === ClientMaritalStatusEnum.Married) {
+        const spouseNameValue = watch('spouseName');
+        const relationshipWithSpouseValue = watch('relationshipWithSpouse');
+
+        // Spouse name validation
+        if (!spouseNameValue || spouseNameValue.trim().length < 2) {
+          setError('spouseName', {
+            type: 'manual',
+            message: 'Nama pasangan minimal 2 karakter'
+          });
+        } else {
+          clearErrors('spouseName');
+        }
+
+        // Spouse relationship validation
+        if (!relationshipWithSpouseValue) {
+          setError('relationshipWithSpouse', {
+            type: 'manual',
+            message: 'Hubungan dengan pasangan harus dipilih'
+          });
+        } else {
+          clearErrors('relationshipWithSpouse');
+        }
+      } else {
+        // Clear spouse errors when not married
+        clearErrors(['spouseName', 'relationshipWithSpouse']);
+      }
+
+      // Validate emergency contact fields when isMinor is true
+      if (isMinor) {
+        const emergencyContactPhoneValue = watch('emergencyContactPhone');
+        const emergencyContactAddressValue = watch('emergencyContactAddress');
+
+        // Emergency contact phone validation
+        if (!emergencyContactPhoneValue || emergencyContactPhoneValue.trim().length < 10) {
+          setError('emergencyContactPhone', {
+            type: 'manual',
+            message: 'Nomor telepon kontak darurat minimal 10 digit'
+          });
+        } else {
+          clearErrors('emergencyContactPhone');
+        }
+
+        // Emergency contact address validation
+        if (!emergencyContactAddressValue || emergencyContactAddressValue.trim().length < 5) {
+          setError('emergencyContactAddress', {
+            type: 'manual',
+            message: 'Alamat kontak darurat minimal 5 karakter'
+          });
+        } else {
+          clearErrors('emergencyContactAddress');
+        }
+      } else {
+        // Clear emergency contact errors when not minor
+        clearErrors(['emergencyContactPhone', 'emergencyContactAddress']);
+      }
+
+      // Validate previous visit details when not first visit
+      if (!firstVisit) {
+        const previousVisitDetailsValue = watch('previousVisitDetails');
+        if (!previousVisitDetailsValue || previousVisitDetailsValue.trim().length < 5) {
+          setError('previousVisitDetails', {
+            type: 'manual',
+            message: 'Detail kunjungan sebelumnya minimal 5 karakter'
+          });
+        } else {
+          clearErrors('previousVisitDetails');
+        }
+      } else {
+        // Clear previous visit details errors when first visit
+        clearErrors(['previousVisitDetails']);
+      }
+    };
+
+    validateConditionalFields();
+  }, [isMinor, maritalStatus, firstVisit, watch, setError, clearErrors]);
+
+  // Also validate when the actual field values change
+  const schoolValue = watch('school');
+  const gradeValue = watch('grade');
+  const guardianFullNameValue = watch('guardianFullName');
+  const guardianRelationshipValue = watch('guardianRelationship');
+  const guardianPhoneValue = watch('guardianPhone');
+  const guardianOccupationValue = watch('guardianOccupation');
+  const guardianAddressValue = watch('guardianAddress');
+  const emergencyContactPhoneValue = watch('emergencyContactPhone');
+  const emergencyContactAddressValue = watch('emergencyContactAddress');
+  const previousVisitDetailsValue = watch('previousVisitDetails');
+  const spouseNameValue = watch('spouseName');
+  const relationshipWithSpouseValue = watch('relationshipWithSpouse');
+
+  // Watch guardian fields and sync with emergency contact when checkbox is checked
+  React.useEffect(() => {
+    if (useGuardianAsEmergencyContact && isMinor) {
+      // Update emergency contact fields when guardian data changes
+      setValue('emergencyContactName', guardianFullNameValue || '', { shouldValidate: true });
+      setValue('emergencyContactPhone', guardianPhoneValue || '', { shouldValidate: true });
+      setValue('emergencyContactRelationship', guardianRelationshipValue ? ClientGuardianRelationshipLabels[guardianRelationshipValue as keyof typeof ClientGuardianRelationshipLabels] : '', { shouldValidate: true });
+      setValue('emergencyContactAddress', guardianAddressValue || '', { shouldValidate: true });
+    }
+  }, [useGuardianAsEmergencyContact, isMinor, guardianFullNameValue, guardianPhoneValue, guardianRelationshipValue, guardianAddressValue, setValue]);
+
+  React.useEffect(() => {
+    if (isMinor) {
+      // Re-validate when field values change and isMinor is true
+      const validateField = () => {
+        // School validation
+        if (!schoolValue || schoolValue.trim().length < 2) {
+          setError('school', {
+            type: 'manual',
+            message: 'Nama sekolah minimal 2 karakter'
+          });
+        } else {
+          clearErrors('school');
+        }
+
+        // Grade validation
+        if (!gradeValue || gradeValue.trim().length < 1) {
+          setError('grade', {
+            type: 'manual',
+            message: 'Kelas harus diisi'
+          });
+        } else {
+          clearErrors('grade');
+        }
+
+        // Guardian full name validation
+        if (!guardianFullNameValue || guardianFullNameValue.trim().length < 2) {
+          setError('guardianFullName', {
+            type: 'manual',
+            message: 'Nama lengkap wali minimal 2 karakter'
+          });
+        } else {
+          clearErrors('guardianFullName');
+        }
+
+        // Guardian relationship validation
+        if (!guardianRelationshipValue) {
+          setError('guardianRelationship', {
+            type: 'manual',
+            message: 'Hubungan dengan klien harus dipilih'
+          });
+        } else {
+          clearErrors('guardianRelationship');
+        }
+
+        // Guardian phone validation
+        if (!guardianPhoneValue || guardianPhoneValue.trim().length < 10) {
+          setError('guardianPhone', {
+            type: 'manual',
+            message: 'Nomor telepon wali minimal 10 digit'
+          });
+        } else {
+          clearErrors('guardianPhone');
+        }
+
+        // Guardian occupation validation
+        if (!guardianOccupationValue || guardianOccupationValue.trim().length < 2) {
+          setError('guardianOccupation', {
+            type: 'manual',
+            message: 'Pekerjaan wali minimal 2 karakter'
+          });
+        } else {
+          clearErrors('guardianOccupation');
+        }
+
+        // Guardian address validation
+        if (!guardianAddressValue || guardianAddressValue.trim().length < 5) {
+          setError('guardianAddress', {
+            type: 'manual',
+            message: 'Alamat wali minimal 5 karakter'
+          });
+        } else {
+          clearErrors('guardianAddress');
+        }
+
+        // Emergency contact phone validation
+        if (!emergencyContactPhoneValue || emergencyContactPhoneValue.trim().length < 10) {
+          setError('emergencyContactPhone', {
+            type: 'manual',
+            message: 'Nomor telepon kontak darurat minimal 10 digit'
+          });
+        } else {
+          clearErrors('emergencyContactPhone');
+        }
+
+        // Emergency contact address validation
+        if (!emergencyContactAddressValue || emergencyContactAddressValue.trim().length < 5) {
+          setError('emergencyContactAddress', {
+            type: 'manual',
+            message: 'Alamat kontak darurat minimal 5 karakter'
+          });
+        } else {
+          clearErrors('emergencyContactAddress');
+        }
+      };
+
+      validateField();
+    }
+
+    // Validate spouse fields when married and field values change
+    if (maritalStatus === ClientMaritalStatusEnum.Married) {
+      const validateSpouseFields = () => {
+        // Spouse name validation
+        if (!spouseNameValue || spouseNameValue.trim().length < 2) {
+          setError('spouseName', {
+            type: 'manual',
+            message: 'Nama pasangan minimal 2 karakter'
+          });
+        } else {
+          clearErrors('spouseName');
+        }
+
+        // Spouse relationship validation
+        if (!relationshipWithSpouseValue) {
+          setError('relationshipWithSpouse', {
+            type: 'manual',
+            message: 'Hubungan dengan pasangan harus dipilih'
+          });
+        } else {
+          clearErrors('relationshipWithSpouse');
+        }
+      };
+
+      validateSpouseFields();
+    }
+
+    // Validate previous visit details when not first visit and field values change
+    if (!firstVisit) {
+      const validatePreviousVisitDetails = () => {
+        if (!previousVisitDetailsValue || previousVisitDetailsValue.trim().length < 5) {
+          setError('previousVisitDetails', {
+            type: 'manual',
+            message: 'Detail kunjungan sebelumnya minimal 5 karakter'
+          });
+        } else {
+          clearErrors('previousVisitDetails');
+        }
+      };
+
+      validatePreviousVisitDetails();
+    }
+  }, [isMinor, maritalStatus, firstVisit, schoolValue, gradeValue, guardianFullNameValue, guardianRelationshipValue, guardianPhoneValue, guardianOccupationValue, guardianAddressValue, emergencyContactPhoneValue, emergencyContactAddressValue, previousVisitDetailsValue, spouseNameValue, relationshipWithSpouseValue, setError, clearErrors]);
+
+  // Custom validation check for button enable/disable
+  const isFormValid = React.useMemo(() => {
+    // Check base form validation
+    if (!isValid) return false;
+    
+    // If isMinor is true, check if the dynamic validations pass
+    if (isMinor) {
+      // Check school fields
+      if (!schoolValue || schoolValue.trim().length < 2) return false;
+      if (!gradeValue || gradeValue.trim().length < 1) return false;
+      
+      // Check guardian fields
+      if (!guardianFullNameValue || guardianFullNameValue.trim().length < 2) return false;
+      if (!guardianRelationshipValue) return false;
+      if (!guardianPhoneValue || guardianPhoneValue.trim().length < 10) return false;
+      if (!guardianOccupationValue || guardianOccupationValue.trim().length < 2) return false;
+      if (!guardianAddressValue || guardianAddressValue.trim().length < 5) return false;
+      
+      // Check emergency contact fields
+      if (!emergencyContactPhoneValue || emergencyContactPhoneValue.trim().length < 10) return false;
+      if (!emergencyContactAddressValue || emergencyContactAddressValue.trim().length < 5) return false;
+    }
+
+    // If married, check spouse fields
+    if (maritalStatus === ClientMaritalStatusEnum.Married) {
+      if (!spouseNameValue || spouseNameValue.trim().length < 2) return false;
+      if (!relationshipWithSpouseValue) return false;
+    }
+
+    // If not first visit, check previous visit details
+    if (!firstVisit) {
+      if (!previousVisitDetailsValue || previousVisitDetailsValue.trim().length < 5) return false;
+    }
+    
+    return true;
+  }, [isValid, isMinor, maritalStatus, firstVisit, schoolValue, gradeValue, guardianFullNameValue, guardianRelationshipValue, guardianPhoneValue, guardianOccupationValue, guardianAddressValue, emergencyContactPhoneValue, emergencyContactAddressValue, previousVisitDetailsValue, spouseNameValue, relationshipWithSpouseValue]);
 
   if (isLoadingClient) {
     return (
@@ -422,9 +872,17 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="fullName">Nama Lengkap *</Label>
-                <Input id="fullName" placeholder="Nama lengkap klien" {...register('fullName')} />
+                <Input 
+                  id="fullName" 
+                  placeholder="Nama lengkap klien" 
+                  {...register('fullName')}
+                  className={errors.fullName ? 'border-red-500 focus:border-red-500' : ''}
+                />
                 {errors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.fullName.message}
+                  </p>
                 )}
               </div>
               <div>
@@ -443,7 +901,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   </SelectContent>
                 </Select>
                 {errors.gender && (
-                  <p className="mt-1 text-sm text-red-600">{(errors.gender as any).message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {(errors.gender as any).message}
+                  </p>
                 )}
               </div>
             </div>
@@ -451,16 +912,32 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
                 <Label htmlFor="birthPlace">Tempat Lahir *</Label>
-                <Input id="birthPlace" placeholder="Contoh: Jakarta" {...register('birthPlace')} />
+                <Input 
+                  id="birthPlace" 
+                  placeholder="Contoh: Jakarta" 
+                  {...register('birthPlace')}
+                  className={errors.birthPlace ? 'border-red-500 focus:border-red-500' : ''}
+                />
                 {errors.birthPlace && (
-                  <p className="mt-1 text-sm text-red-600">{errors.birthPlace.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.birthPlace.message}
+                  </p>
                 )}
               </div>
               <div>
                 <Label htmlFor="birthDate">Tanggal Lahir *</Label>
-                <Input id="birthDate" type="date" {...register('birthDate')} />
+                <Input 
+                  id="birthDate" 
+                  type="date" 
+                  {...register('birthDate')}
+                  className={errors.birthDate ? 'border-red-500 focus:border-red-500' : ''}
+                />
                 {errors.birthDate && (
-                  <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.birthDate.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -482,7 +959,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   </SelectContent>
                 </Select>
                 {errors.religion && (
-                  <p className="mt-1 text-sm text-red-600">{(errors.religion as any).message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {(errors.religion as any).message}
+                  </p>
                 )}
               </div>
               <div className="flex items-center space-x-2">
@@ -508,16 +988,32 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="school">Nama Sekolah *</Label>
-                    <Input id="school" placeholder="Nama sekolah" {...register('school')} />
+                    <Input 
+                      id="school" 
+                      placeholder="Nama sekolah" 
+                      {...register('school')}
+                      className={errors.school ? 'border-red-500 focus:border-red-500' : ''}
+                    />
                     {errors.school && (
-                      <p className="mt-1 text-sm text-red-600">{errors.school.message}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.school.message}
+                  </p>
                     )}
                   </div>
                   <div>
                     <Label htmlFor="grade">Kelas *</Label>
-                    <Input id="grade" placeholder="Contoh: Kelas 3 SD, Kelas 1 SMA" {...register('grade')} />
+                    <Input 
+                      id="grade" 
+                      placeholder="Contoh: Kelas 3 SD, Kelas 1 SMA" 
+                      {...register('grade')}
+                      className={errors.grade ? 'border-red-500 focus:border-red-500' : ''}
+                    />
                     {errors.grade && (
-                      <p className="mt-1 text-sm text-red-600">{errors.grade.message}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.grade.message}
+                  </p>
                     )}
                   </div>
                 </div>
@@ -529,9 +1025,17 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="guardianFullName">Nama Lengkap Wali *</Label>
-                    <Input id="guardianFullName" placeholder="Nama lengkap wali" {...register('guardianFullName')} />
+                    <Input 
+                      id="guardianFullName" 
+                      placeholder="Nama lengkap wali" 
+                      {...register('guardianFullName')}
+                      className={errors.guardianFullName ? 'border-red-500 focus:border-red-500' : ''}
+                    />
                     {errors.guardianFullName && (
-                      <p className="mt-1 text-sm text-red-600">{errors.guardianFullName.message}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.guardianFullName.message}
+                  </p>
                     )}
                   </div>
                   <div>
@@ -540,7 +1044,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       value={watch('guardianRelationship') || ''}
                       onValueChange={val => setValue('guardianRelationship', val as ClientFormData['guardianRelationship'], { shouldDirty: true, shouldValidate: true })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.guardianRelationship ? 'border-red-500 focus:border-red-500' : ''}>
                         <SelectValue placeholder="Pilih hubungan" />
                       </SelectTrigger>
                       <SelectContent>
@@ -552,7 +1056,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       </SelectContent>
                     </Select>
                     {errors.guardianRelationship && (
-                      <p className="mt-1 text-sm text-red-600">{(errors.guardianRelationship as any).message}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {(errors.guardianRelationship as any).message}
+                  </p>
                     )}
                   </div>
                 </div>
@@ -560,16 +1067,32 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div>
                     <Label htmlFor="guardianPhone">Nomor Telepon Wali *</Label>
-                    <Input id="guardianPhone" placeholder="+6281234567890" {...register('guardianPhone')} />
+                    <Input 
+                      id="guardianPhone" 
+                      placeholder="+6281234567890" 
+                      {...register('guardianPhone')}
+                      className={errors.guardianPhone ? 'border-red-500 focus:border-red-500' : ''}
+                    />
                     {errors.guardianPhone && (
-                      <p className="mt-1 text-sm text-red-600">{errors.guardianPhone.message}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.guardianPhone.message}
+                  </p>
                     )}
                   </div>
                   <div>
                     <Label htmlFor="guardianOccupation">Pekerjaan Wali *</Label>
-                    <Input id="guardianOccupation" placeholder="Pekerjaan wali" {...register('guardianOccupation')} />
+                    <Input 
+                      id="guardianOccupation" 
+                      placeholder="Pekerjaan wali" 
+                      {...register('guardianOccupation')}
+                      className={errors.guardianOccupation ? 'border-red-500 focus:border-red-500' : ''}
+                    />
                     {errors.guardianOccupation && (
-                      <p className="mt-1 text-sm text-red-600">{errors.guardianOccupation.message}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.guardianOccupation.message}
+                  </p>
                     )}
                   </div>
                 </div>
@@ -581,7 +1104,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       value={watch('guardianMaritalStatus') || ''}
                       onValueChange={val => setValue('guardianMaritalStatus', val as ClientFormData['guardianMaritalStatus'], { shouldDirty: true, shouldValidate: true })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.guardianMaritalStatus ? 'border-red-500 focus:border-red-500' : ''}>
                         <SelectValue placeholder="Pilih status pernikahan" />
                       </SelectTrigger>
                       <SelectContent>
@@ -593,14 +1116,25 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       </SelectContent>
                     </Select>
                     {errors.guardianMaritalStatus && (
-                      <p className="mt-1 text-sm text-red-600">{(errors.guardianMaritalStatus as any).message}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {(errors.guardianMaritalStatus as any).message}
+                  </p>
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="guardianAddress">Alamat Wali</Label>
-                    <Input id="guardianAddress" placeholder="Alamat wali (opsional)" {...register('guardianAddress')} />
+                    <Label htmlFor="guardianAddress">Alamat Wali *</Label>
+                    <Input 
+                      id="guardianAddress" 
+                      placeholder="Alamat wali" 
+                      {...register('guardianAddress')}
+                      className={errors.guardianAddress ? 'border-red-500 focus:border-red-500' : ''}
+                    />
                     {errors.guardianAddress && (
-                      <p className="mt-1 text-sm text-red-600">{errors.guardianAddress.message}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.guardianAddress.message}
+                  </p>
                     )}
                   </div>
                 </div>
@@ -636,7 +1170,9 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     <input
                       type="checkbox"
                       id="useGuardianAsEmergencyContact"
+                      checked={useGuardianAsEmergencyContact}
                       onChange={(e) => {
+                        setUseGuardianAsEmergencyContact(e.target.checked);
                         if (e.target.checked) {
                           // Fill emergency contact fields with guardian data
                           setValue('emergencyContactName', watch('guardianFullName') || '', { shouldDirty: true, shouldValidate: true });
@@ -663,25 +1199,50 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="phone">Nomor Telepon *</Label>
-                <Input id="phone" placeholder="+6281234567890" {...register('phone')} />
+                <Input 
+                  id="phone" 
+                  placeholder="+6281234567890" 
+                  {...register('phone')}
+                  className={errors.phone ? 'border-red-500 focus:border-red-500' : ''}
+                />
                 {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.phone.message}
+                  </p>
                 )}
               </div>
               <div>
                 <Label htmlFor="email">Alamat Email</Label>
-                <Input id="email" type="email" placeholder="email@example.com" {...register('email')} />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="email@example.com" 
+                  {...register('email')}
+                  className={errors.email ? 'border-red-500 focus:border-red-500' : ''}
+                />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.email.message}
+                  </p>
                 )}
               </div>
             </div>
 
             <div className="mt-6">
               <Label htmlFor="address">Alamat Lengkap *</Label>
-              <Textarea id="address" placeholder="Alamat lengkap klien" {...register('address')} />
+              <Textarea 
+                id="address" 
+                placeholder="Alamat lengkap klien" 
+                {...register('address')}
+                className={errors.address ? 'border-red-500 focus:border-red-500' : ''}
+              />
               {errors.address && (
-                <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <XCircleIcon className="w-3 h-3 mr-1" />
+                  {errors.address.message}
+                </p>
               )}
             </div>
           </div>
@@ -693,9 +1254,17 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="occupation">Pekerjaan *</Label>
-                <Input id="occupation" placeholder="Pekerjaan" {...register('occupation')} />
+                <Input 
+                  id="occupation" 
+                  placeholder="Pekerjaan" 
+                  {...register('occupation')}
+                  className={errors.occupation ? 'border-red-500 focus:border-red-500' : ''}
+                />
                 {errors.occupation && (
-                  <p className="mt-1 text-sm text-red-600">{errors.occupation.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.occupation.message}
+                  </p>
                 )}
               </div>
               <div>
@@ -714,10 +1283,56 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   </SelectContent>
                 </Select>
                 {errors.maritalStatus && (
-                  <p className="mt-1 text-sm text-red-600">{(errors.maritalStatus as any).message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {(errors.maritalStatus as any).message}
+                  </p>
                 )}
               </div>
             </div>
+
+            {/* Spouse Information - Only show if married */}
+            {watch('maritalStatus') === ClientMaritalStatusEnum.Married && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <Label htmlFor="spouseName">Nama Pasangan *</Label>
+                  <Input 
+                    id="spouseName" 
+                    placeholder="Nama pasangan" 
+                    {...register('spouseName')}
+                    className={errors.spouseName ? 'border-red-500 focus:border-red-500' : ''}
+                  />
+                  {errors.spouseName && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <XCircleIcon className="w-3 h-3 mr-1" />
+                      {errors.spouseName.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label>Hubungan dengan Pasangan *</Label>
+                  <Select
+                    value={watch('relationshipWithSpouse') || ''}
+                    onValueChange={val => setValue('relationshipWithSpouse', val as ClientFormData['relationshipWithSpouse'], { shouldDirty: true, shouldValidate: true })}
+                  >
+                    <SelectTrigger className={errors.relationshipWithSpouse ? 'border-red-500 focus:border-red-500' : ''}>
+                      <SelectValue placeholder="Pilih hubungan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(ClientRelationshipWithSpouseEnum).map(rel => (
+                        <SelectItem key={rel} value={rel}>{ClientRelationshipWithSpouseLabels[rel]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.relationshipWithSpouse && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <XCircleIcon className="w-3 h-3 mr-1" />
+                      {(errors.relationshipWithSpouse as any).message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
@@ -736,14 +1351,20 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   </SelectContent>
                 </Select>
                 {errors.education && (
-                  <p className="mt-1 text-sm text-red-600">{(errors.education as any).message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {(errors.education as any).message}
+                  </p>
                 )}
               </div>
               <div>
                 <Label htmlFor="educationMajor">Jurusan/Program Studi</Label>
                 <Input id="educationMajor" placeholder="Contoh: Teknik Informatika, Manajemen" {...register('educationMajor')} />
                 {errors.educationMajor && (
-                  <p className="mt-1 text-sm text-red-600">{errors.educationMajor.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.educationMajor.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -753,48 +1374,32 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 <Label htmlFor="hobbies">Hobi</Label>
                 <Input id="hobbies" placeholder="Hobi (opsional)" {...register('hobbies')} />
                 {errors.hobbies && (
-                  <p className="mt-1 text-sm text-red-600">{errors.hobbies.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.hobbies.message}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Spouse Information - Only show if married */}
-            {watch('maritalStatus') === ClientMaritalStatusEnum.Married && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <div>
-                  <Label htmlFor="spouseName">Nama Pasangan</Label>
-                  <Input id="spouseName" placeholder="Nama pasangan" {...register('spouseName')} />
-                  {errors.spouseName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.spouseName.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label>Hubungan dengan Pasangan</Label>
-                  <Select
-                    value={watch('relationshipWithSpouse') || ''}
-                    onValueChange={val => setValue('relationshipWithSpouse', val as ClientFormData['relationshipWithSpouse'], { shouldDirty: true, shouldValidate: true })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih hubungan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(ClientRelationshipWithSpouseEnum).map(rel => (
-                        <SelectItem key={rel} value={rel}>{ClientRelationshipWithSpouseLabels[rel]}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.relationshipWithSpouse && (
-                    <p className="mt-1 text-sm text-red-600">{(errors.relationshipWithSpouse as any).message}</p>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Emergency Contact Information Section */}
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Informasi Kontak Darurat</h3>
-            <p className="text-sm text-gray-600 mb-4">Data kontak darurat untuk keadaan darurat</p>
+            <p className="text-sm text-gray-600 mb-4">
+              {useGuardianAsEmergencyContact && isMinor 
+                ? 'Data kontak darurat menggunakan informasi wali (otomatis tersinkronisasi)'
+                : 'Data kontak darurat untuk keadaan darurat'
+              }
+            </p>
+            {useGuardianAsEmergencyContact && isMinor && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  ℹ️ Data kontak darurat akan otomatis menggunakan informasi wali yang telah diisi di atas.
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="emergencyContactName">Nama Kontak Darurat *</Label>
@@ -802,20 +1407,32 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   id="emergencyContactName"
                   placeholder="Nama lengkap kontak darurat"
                   {...register('emergencyContactName')}
+                  readOnly={useGuardianAsEmergencyContact && isMinor}
+                  className={useGuardianAsEmergencyContact && isMinor ? 'bg-gray-50 cursor-not-allowed' : ''}
                 />
                 {errors.emergencyContactName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.emergencyContactName.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.emergencyContactName.message}
+                  </p>
                 )}
               </div>
               <div>
-                <Label htmlFor="emergencyContactPhone">Nomor Telepon Kontak Darurat</Label>
+                <Label htmlFor="emergencyContactPhone">
+                  Nomor Telepon Kontak Darurat {isMinor ? '*' : ''}
+                </Label>
                 <Input
                   id="emergencyContactPhone"
                   placeholder="+6281234567890"
                   {...register('emergencyContactPhone')}
+                  readOnly={useGuardianAsEmergencyContact && isMinor}
+                  className={`${useGuardianAsEmergencyContact && isMinor ? 'bg-gray-50 cursor-not-allowed' : ''} ${errors.emergencyContactPhone ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
                 {errors.emergencyContactPhone && (
-                  <p className="mt-1 text-sm text-red-600">{errors.emergencyContactPhone.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.emergencyContactPhone.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -827,25 +1444,37 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   id="emergencyContactRelationship"
                   placeholder="Contoh: Suami, Istri, Anak, Orang Tua"
                   {...register('emergencyContactRelationship')}
+                  readOnly={useGuardianAsEmergencyContact && isMinor}
+                  className={useGuardianAsEmergencyContact && isMinor ? 'bg-gray-50 cursor-not-allowed' : ''}
                 />
                 {errors.emergencyContactRelationship && (
-                  <p className="mt-1 text-sm text-red-600">{errors.emergencyContactRelationship.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.emergencyContactRelationship.message}
+                  </p>
                 )}
               </div>
               <div>
-                <Label htmlFor="emergencyContactAddress">Alamat Kontak Darurat</Label>
+                <Label htmlFor="emergencyContactAddress">
+                  Alamat Kontak Darurat {isMinor ? '*' : ''}
+                </Label>
                 <Input
                   id="emergencyContactAddress"
-                  placeholder="Alamat kontak darurat (opsional)"
+                  placeholder={isMinor ? "Alamat kontak darurat" : "Alamat kontak darurat (opsional)"}
                   {...register('emergencyContactAddress')}
+                  readOnly={useGuardianAsEmergencyContact && isMinor}
+                  className={`${useGuardianAsEmergencyContact && isMinor ? 'bg-gray-50 cursor-not-allowed' : ''} ${errors.emergencyContactAddress ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
                 {errors.emergencyContactAddress && (
-                  <p className="mt-1 text-sm text-red-600">{errors.emergencyContactAddress.message}</p>
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <XCircleIcon className="w-3 h-3 mr-1" />
+                    {errors.emergencyContactAddress.message}
+                  </p>
                 )}
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label>Kunjungan Pertama *</Label>
@@ -862,21 +1491,48 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 </SelectContent>
               </Select>
               {errors.firstVisit && (
-                <p className="mt-1 text-sm text-red-600">{(errors.firstVisit as any).message}</p>
+                <p className="mt-1 text-sm text-red-600">{(errors.firstVisit as any).message}
+                  </p>
               )}
             </div>
           </div>
 
           {!watch('firstVisit') && (
             <div>
-              <Label htmlFor="previousVisitDetails">Detail Kunjungan Sebelumnya</Label>
-              <Textarea id="previousVisitDetails" rows={3} placeholder="Jelaskan detail kunjungan sebelumnya" {...register('previousVisitDetails')} />
+              <Label htmlFor="previousVisitDetails">Detail Kunjungan Sebelumnya *</Label>
+              <Textarea 
+                id="previousVisitDetails" 
+                rows={3} 
+                placeholder="Jelaskan detail kunjungan sebelumnya" 
+                {...register('previousVisitDetails')}
+                className={errors.previousVisitDetails ? 'border-red-500 focus:border-red-500' : ''}
+              />
               {errors.previousVisitDetails && (
-                <p className="mt-1 text-sm text-red-600">{errors.previousVisitDetails.message}</p>
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                <XCircleIcon className="w-3 h-3 mr-1" />
+                {errors.previousVisitDetails.message}
+                  </p>
               )}
             </div>
           )}
 
+          {/* Primary Issue Section */}
+          <div>
+            <Label htmlFor="primaryIssue">Isu Utama / Keluhan Utama *</Label>
+            <Textarea
+              id="primaryIssue"
+              rows={3}
+              placeholder="Jelaskan isu utama atau keluhan utama yang ingin dibahas dalam terapi"
+              {...register('primaryIssue')}
+              className={errors.primaryIssue ? 'border-red-500 focus:border-red-500' : ''}
+            />
+            {errors.primaryIssue && (
+              <p className="mt-1 text-sm text-red-600 flex items-center">
+                <XCircleIcon className="w-3 h-3 mr-1" />
+                {errors.primaryIssue.message}
+                  </p>
+            )}
+          </div>
 
 
           <div className="flex justify-between items-center pt-6 border-t border-gray-200">
@@ -892,8 +1548,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               disabled={
                 clientLoading ||
                 isSubmitting ||
-                !isValid ||
-                !isDirty
+                !isFormValid ||
+                (mode === 'create' && !isDirty)
               }
             >
               {clientLoading || isSubmitting ? (
@@ -901,7 +1557,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                   {mode === 'edit' ? 'Menyimpan...' : 'Menyimpan...'}
                 </>
-              ) : !isValid || !isDirty ? (
+              ) : !isValid || (mode === 'create' && !isDirty) ? (
                 mode === 'edit' ? 'Lengkapi Form untuk Update' : 'Lengkapi Form untuk Melanjutkan'
               ) : (
                 mode === 'edit' ? 'Simpan Perubahan' : 'Simpan Klien'

@@ -52,16 +52,12 @@ export const CurrentUserClinicIds = createParamDecorator(
     }
 
     // Administrators can access all clinics, return empty array to indicate no restriction
-    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
+    if (user.roles.some((role) => role === UserRole.ADMINISTRATOR)) {
       return [];
     }
 
-    // Extract unique clinic IDs from user roles
-    const clinicIds = user.roles
-      .map((role) => role.clinicId)
-      .filter((id): id is string => id !== undefined);
-
-    return [...new Set(clinicIds)];
+    // Return user's clinic ID
+    return user.clinicId ? [user.clinicId] : [];
   },
 );
 
@@ -77,7 +73,7 @@ export const HasRole = createParamDecorator(
       return false;
     }
 
-    return user.roles.some((role) => role.role === requiredRole);
+    return user.roles.some((role) => role === requiredRole);
   },
 );
 
@@ -93,7 +89,7 @@ export const IsAdmin = createParamDecorator(
       return false;
     }
 
-    return user.roles.some((role) => role.role === UserRole.ADMINISTRATOR);
+    return user.roles.some((role) => role === UserRole.ADMINISTRATOR);
   },
 );
 
@@ -110,11 +106,11 @@ export const CanAccessClinic = createParamDecorator(
     }
 
     // Administrators can access all clinics
-    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
+    if (user.roles.some((role) => role === UserRole.ADMINISTRATOR)) {
       return true;
     }
 
-    // Check if user has a role in the specific clinic
-    return user.roles.some((role) => role.clinicId === clinicId);
+    // Check if user has access to the specific clinic
+    return user.clinicId === clinicId;
   },
 );

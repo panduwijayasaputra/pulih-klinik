@@ -36,7 +36,6 @@ export const mockTherapistClients: TherapistClient[] = [
     lastSession: '2024-02-20',
     progress: 75,
     notes: 'Showing good progress in managing work stress',
-    province: 'DKI Jakarta',
     // Therapist-specific fields
     assignedDate: '2024-01-15',
     lastSessionDate: '2024-02-20',
@@ -73,7 +72,6 @@ export const mockTherapistClients: TherapistClient[] = [
     lastSession: '2024-02-15',
     progress: 30,
     notes: 'New client, initial consultation completed',
-    province: 'Jawa Barat',
     // Therapist-specific fields
     assignedDate: '2024-02-01',
     lastSessionDate: '2024-02-15',
@@ -112,7 +110,6 @@ export const mockTherapistClients: TherapistClient[] = [
     lastSession: '2024-01-30',
     progress: 100,
     notes: 'Successfully completed therapy program',
-    province: 'Jawa Timur',
     // Therapist-specific fields
     assignedDate: '2023-11-01',
     lastSessionDate: '2024-01-30',
@@ -147,7 +144,6 @@ export const mockTherapistClients: TherapistClient[] = [
     totalSessions: 0,
     progress: 0,
     notes: 'New client, awaiting first session',
-    province: 'Sumatera Utara',
     // Therapist-specific fields
     assignedDate: '2024-02-10',
     nextSessionDate: '2024-02-25',
@@ -183,7 +179,6 @@ export const mockTherapistClients: TherapistClient[] = [
     lastSession: '2024-02-18',
     progress: 60,
     notes: 'Making steady progress in self-confidence building',
-    province: 'Jawa Tengah',
     // Therapist-specific fields
     assignedDate: '2024-01-20',
     lastSessionDate: '2024-02-18',
@@ -223,7 +218,6 @@ export const mockTherapistClients: TherapistClient[] = [
     lastSession: '2024-08-18',
     progress: 75,
     notes: 'Showing good progress in managing work stress',
-    province: 'DKI Jakarta',
     // Therapist-specific fields
     assignedDate: '2024-01-15',
     lastSessionDate: '2024-08-18',
@@ -266,18 +260,13 @@ export const mockTherapistClients: TherapistClient[] = [
     lastSession: '2024-07-15',
     progress: 100,
     notes: 'Terapi selesai dengan hasil memuaskan. Follow-up setiap 3 bulan.',
-    province: 'DI Yogyakarta',
     // Therapist-specific fields
     assignedDate: '2024-02-10',
     lastSessionDate: '2024-07-15',
     nextSessionDate: '2024-10-15',
     sessionCount: 12,
     progressNotes: 'Client has successfully completed therapy for burnout syndrome. All goals achieved.',
-    therapistNotes: 'Client is ready for maintenance phase. Schedule follow-up in 3 months.',
-    emergencyContactName: 'Dr. Andi Wijaya',
-    emergencyContactPhone: '08567890127',
-    emergencyContactRelationship: 'Suami',
-    emergencyContactAddress: 'Jl. Malioboro No. 156, Yogyakarta'
+    therapistNotes: 'Client is ready for maintenance phase. Schedule follow-up in 3 months.'
   },
   {
     id: 'client-007',
@@ -306,18 +295,13 @@ export const mockTherapistClients: TherapistClient[] = [
     lastSession: '2024-08-12',
     progress: 45,
     notes: 'Klien dengan isu kecemasan sosial, menunjukkan kemajuan',
-    province: 'Sumatera Selatan',
     // Therapist-specific fields
     assignedDate: '2024-07-20',
     lastSessionDate: '2024-08-12',
     nextSessionDate: '2024-08-19',
     sessionCount: 3,
     progressNotes: 'Client is dealing with social anxiety and work pressure. Initial assessment shows good potential for improvement.',
-    therapistNotes: 'Focus on social skills training and stress management. Consider group therapy sessions.',
-    emergencyContactName: 'Ibu Prasetyo',
-    emergencyContactPhone: '08567890129',
-    emergencyContactRelationship: 'Ibu',
-    emergencyContactAddress: 'Jl. Jendral Sudirman No. 89, Palembang'
+    therapistNotes: 'Focus on social skills training and stress management. Consider group therapy sessions.'
   }
 ];
 

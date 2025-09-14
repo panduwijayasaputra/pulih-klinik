@@ -28,15 +28,22 @@ import {
   CurrentUser,
   RequireClinicAccess,
   RequireAdminOrClinicAdmin,
+  RequireAdminOrClinicAdminForCreation,
   RequireAdmin,
 } from '../auth/decorators';
 import { ParseUuidPipe } from '../common/pipes';
+import { ClinicStatus } from '../common/enums';
 import {
   ClinicsService,
   ClinicProfileResponse,
   ClinicDocumentPlaceholder,
 } from './clinics.service';
-import { UpdateClinicDto, UpdateBrandingDto, UpdateSettingsDto } from './dto';
+import {
+  UpdateClinicDto,
+  UpdateBrandingDto,
+  UpdateSettingsDto,
+  CreateClinicDto,
+} from './dto';
 import type { AuthUser } from '../auth/jwt.strategy';
 
 @ApiTags('Clinics')
@@ -44,6 +51,67 @@ import type { AuthUser } from '../auth/jwt.strategy';
 @ApiBearerAuth()
 export class ClinicsController {
   constructor(private readonly clinicsService: ClinicsService) {}
+
+  @Post()
+  @RequireAdminOrClinicAdminForCreation()
+  @ApiOperation({
+    summary: 'Create a new clinic',
+    description:
+      'Create a new clinic profile. Only clinic admins and system admins can create clinics.',
+  })
+  @ApiBody({
+    type: CreateClinicDto,
+    description: 'Clinic creation data',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Clinic created successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'Wellness Therapy Center',
+          address: 'Jl. Sudirman No. 123, Jakarta',
+          phone: '+628123456789',
+          email: 'contact@wellness.com',
+          status: 'pending',
+          createdAt: '2024-01-01T00:00:00.000Z',
+        },
+        message: 'Clinic created successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or missing required fields',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Clinic with same name or email already exists',
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions',
+  })
+  async createClinic(
+    @Body() createClinicDto: CreateClinicDto,
+    @CurrentUser() currentUser: AuthUser,
+  ): Promise<{
+    success: boolean;
+    data: ClinicProfileResponse;
+    message: string;
+  }> {
+    const clinic = await this.clinicsService.createClinic(
+      createClinicDto,
+      currentUser.id,
+    );
+    return {
+      success: true,
+      data: clinic,
+      message: 'Clinic created successfully',
+    };
+  }
 
   @Get()
   @RequireAdmin()
@@ -76,7 +144,7 @@ export class ClinicsController {
   @ApiQuery({
     name: 'status',
     required: false,
-    enum: ['active', 'inactive', 'suspended'],
+    enum: Object.values(ClinicStatus),
     description: 'Filter clinics by status',
     example: 'active',
   })
@@ -187,6 +255,75 @@ export class ClinicsController {
       success: true,
       data: result,
       message: 'Clinics retrieved successfully',
+    };
+  }
+
+  @Get(':clinicId/stats')
+  @RequireClinicAccess()
+  @ApiOperation({
+    summary: 'Get clinic statistics',
+    description:
+      'Get clinic statistics including therapists, clients, sessions, and documents count',
+  })
+  @ApiParam({
+    name: 'clinicId',
+    description: 'Clinic ID (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Clinic statistics retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          therapists: 5,
+          clients: 120,
+          sessions: 450,
+          documents: 8,
+          activeTherapists: 4,
+          activeClients: 95,
+          thisMonthSessions: 45,
+          thisMonthDocuments: 2,
+        },
+        message: 'Clinic statistics retrieved successfully',
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing JWT token' })
+  @ApiForbiddenResponse({
+    description: 'Insufficient permissions to access this clinic',
+  })
+  @ApiNotFoundResponse({ description: 'Clinic not found' })
+  async getClinicStats(
+    @Param('clinicId', ParseUuidPipe) clinicId: string,
+    @CurrentUser() currentUser: AuthUser,
+  ): Promise<{
+    success: boolean;
+    data: {
+      therapists: number;
+      clients: number;
+      sessions: number;
+      documents: number;
+      activeTherapists: number;
+      activeClients: number;
+      thisMonthSessions: number;
+      thisMonthDocuments: number;
+    };
+    message: string;
+  }> {
+    // Validate user has access to this clinic
+    await this.clinicsService.validateClinicAdminAccess(
+      currentUser.id,
+      clinicId,
+    );
+
+    const stats = await this.clinicsService.getClinicStats(clinicId);
+
+    return {
+      success: true,
+      data: stats,
+      message: 'Clinic statistics retrieved successfully',
     };
   }
 
@@ -510,6 +647,77 @@ export class ClinicsController {
     }
   }
 
+  @Post(':clinicId/logo')
+  @RequireClinicAccess()
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Upload clinic logo',
+    description: 'Upload or update clinic logo image',
+  })
+  @ApiParam({
+    name: 'clinicId',
+    description: 'Clinic ID (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({
+    description: 'Logo file upload',
+    schema: {
+      type: 'object',
+      properties: {
+        logo: {
+          type: 'string',
+          format: 'binary',
+          description: 'Logo image file (PNG, JPG, JPEG, max 5MB)',
+        },
+      },
+      required: ['logo'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Logo uploaded successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          logoUrl: 'https://example.com/uploads/logos/clinic-123-logo.png',
+        },
+        message: 'Logo uploaded successfully',
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing JWT token' })
+  @ApiForbiddenResponse({
+    description: 'Insufficient permissions to access this clinic',
+  })
+  @ApiNotFoundResponse({ description: 'Clinic not found' })
+  async uploadClinicLogo(
+    @Param('clinicId', ParseUuidPipe) clinicId: string,
+    @CurrentUser() currentUser: AuthUser,
+    @Body() body: { logo: any },
+  ): Promise<{
+    success: boolean;
+    data: { logoUrl: string };
+    message: string;
+  }> {
+    // Validate user has access to this clinic
+    await this.clinicsService.validateClinicAdminAccess(
+      currentUser.id,
+      clinicId,
+    );
+
+    const result = await this.clinicsService.uploadClinicLogo(
+      clinicId,
+      body.logo,
+    );
+
+    return {
+      success: true,
+      data: { logoUrl: result.logoUrl },
+      message: 'Logo uploaded successfully',
+    };
+  }
+
   @Post(':clinicId/documents')
   @RequireAdminOrClinicAdmin()
   @HttpCode(HttpStatus.CREATED)
@@ -655,5 +863,77 @@ export class ClinicsController {
         message: (error as Error).message,
       };
     }
+  }
+
+  @Put(':clinicId/subscription')
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Update clinic subscription',
+    description: 'Update the subscription tier for a clinic',
+  })
+  @ApiParam({
+    name: 'clinicId',
+    description: 'Clinic ID (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({
+    description: 'Subscription update data',
+    schema: {
+      type: 'object',
+      properties: {
+        subscriptionTier: {
+          type: 'string',
+          description: 'Subscription tier code (e.g., beta, alpha, theta)',
+        },
+      },
+      required: ['subscriptionTier'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription updated successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          subscriptionTier: 'alpha',
+          subscriptionExpires: '2024-12-31T23:59:59.000Z',
+        },
+        message: 'Subscription updated successfully',
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing JWT token' })
+  @ApiForbiddenResponse({
+    description:
+      'Insufficient permissions to update subscription for this clinic',
+  })
+  @ApiNotFoundResponse({ description: 'Clinic not found' })
+  async updateClinicSubscription(
+    @Param('clinicId', ParseUuidPipe) clinicId: string,
+    @Body() updateData: { subscriptionTier: string },
+    @CurrentUser() currentUser: AuthUser,
+  ): Promise<{
+    success: boolean;
+    data: { id: string; subscriptionTier: string; subscriptionExpires: string };
+    message: string;
+  }> {
+    // Validate user has access to this clinic
+    await this.clinicsService.validateClinicAdminAccess(
+      currentUser.id,
+      clinicId,
+    );
+
+    const result = await this.clinicsService.updateClinicSubscription(
+      clinicId,
+      updateData.subscriptionTier,
+    );
+
+    return {
+      success: true,
+      data: result,
+      message: 'Subscription updated successfully',
+    };
   }
 }

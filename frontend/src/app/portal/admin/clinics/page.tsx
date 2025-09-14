@@ -19,7 +19,7 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline';
 import { Clinic } from '@/types/clinic';
-import { ClinicStatusEnum } from '@/types/enums';
+import { ClinicStatusEnum, ClinicStatusHelper } from '@/types/status';
 
 function AdminClinicsPageContent() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,21 +27,18 @@ function AdminClinicsPageContent() {
   // Mock clinics data
   const mockClinics: Clinic[] = [];
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: { color: 'bg-green-100 text-green-800', icon: CheckCircleIcon, label: 'Aktif' },
-      suspended: { color: 'bg-red-100 text-red-800', icon: XCircleIcon, label: 'Suspended' },
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: ExclamationTriangleIcon, label: 'Pending' },
-      inactive: { color: 'bg-gray-100 text-gray-800', icon: XCircleIcon, label: 'Tidak Aktif' }
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
-    const IconComponent = config.icon;
-
+  const getStatusBadge = (status: ClinicStatusEnum) => {
+    const variant = ClinicStatusHelper.getBadgeVariant(status);
+    const label = ClinicStatusHelper.getDisplayLabel(status);
+    
     return (
-      <Badge variant="outline" className={config.color}>
-        <IconComponent className="w-3 h-3 mr-1" />
-        {config.label}
+      <Badge variant={variant}>
+        {status === ClinicStatusEnum.ACTIVE && <CheckCircleIcon className="w-3 h-3 mr-1" />}
+        {status === ClinicStatusEnum.PENDING && <ExclamationTriangleIcon className="w-3 h-3 mr-1" />}
+        {status === ClinicStatusEnum.SUSPENDED && <XCircleIcon className="w-3 h-3 mr-1" />}
+        {status === ClinicStatusEnum.INACTIVE && <XCircleIcon className="w-3 h-3 mr-1" />}
+        {status === ClinicStatusEnum.DISABLED && <XCircleIcon className="w-3 h-3 mr-1" />}
+        {label}
       </Badge>
     );
   };
@@ -176,8 +173,8 @@ function AdminClinicsPageContent() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
                       <h4 className="font-medium">{clinic.name}</h4>
-                      {getStatusBadge(clinic.status as ClinicStatusEnum)}
-                      {getTierBadge(clinic.subscriptionTier)}
+                      {getStatusBadge(clinic.status)}
+                      {getTierBadge(clinic.subscriptionTier || 'free')}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
@@ -210,7 +207,7 @@ function AdminClinicsPageContent() {
                   <Button variant="outline" size="sm">
                     Lihat Detail
                   </Button>
-                  {clinic.status === ClinicStatusEnum.Pending && (
+                  {clinic.status === ClinicStatusEnum.PENDING && (
                     <>
                       <Button size="sm">
                         Approve
@@ -220,12 +217,12 @@ function AdminClinicsPageContent() {
                       </Button>
                     </>
                   )}
-                  {clinic.status === ClinicStatusEnum.Active && (
+                  {clinic.status === ClinicStatusEnum.ACTIVE && (
                     <Button variant="outline" size="sm">
                       Suspend
                     </Button>
                   )}
-                  {clinic.status === ClinicStatusEnum.Suspended && (
+                  {clinic.status === ClinicStatusEnum.SUSPENDED && (
                     <Button size="sm">
                       Aktifkan
                     </Button>

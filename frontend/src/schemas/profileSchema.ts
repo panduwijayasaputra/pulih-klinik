@@ -1,7 +1,5 @@
 import { z } from 'zod';
-
-// Phone validation pattern for Indonesian numbers
-const phonePattern = /^(?:\+62|62|0)8[1-9][0-9]{6,10}$/;
+import { optionalPhoneValidation } from '@/lib/validation/phone';
 
 export const profileSchema = z.object({
   name: z.string()
@@ -13,7 +11,7 @@ export const profileSchema = z.object({
     .email('Format email tidak valid')
     .min(1, 'Email harus diisi'),
   
-  phone: z.string().optional().or(z.literal('')),
+  phone: optionalPhoneValidation,
   
   address: z.string().optional().or(z.literal('')),
   

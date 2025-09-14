@@ -44,9 +44,9 @@ function ProfilePageContent() {
     defaultValues: {
       name: '',
       email: '',
-      phone: '',
-      address: '',
-      bio: ''
+      phone: undefined,
+      address: undefined,
+      bio: undefined
     }
   });
 
@@ -118,7 +118,15 @@ function ProfilePageContent() {
 
     setIsSaving(true);
     try {
-      await updateProfile(data);
+      // Filter out undefined values
+      const cleanData = {
+        name: data.name,
+        email: data.email,
+        ...(data.phone && { phone: data.phone }),
+        ...(data.address && { address: data.address }),
+        ...(data.bio && { bio: data.bio }),
+      };
+      await updateProfile(cleanData);
       addToast({
         type: 'success',
         title: "Profil Berhasil Diperbarui",

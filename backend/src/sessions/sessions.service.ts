@@ -10,10 +10,7 @@ import {
   SessionStatus,
 } from '../database/entities/therapy-session.entity';
 import { Client, ClientStatus } from '../database/entities/client.entity';
-import {
-  Therapist,
-  TherapistStatus,
-} from '../database/entities/therapist.entity';
+import { Therapist } from '../database/entities/therapist.entity';
 import {
   ClientTherapistAssignment,
   AssignmentStatus,
@@ -26,6 +23,7 @@ import {
   SessionQueryDto,
   SessionStatsQueryDto,
 } from './dto';
+import { UserStatus } from '../common/enums';
 
 export interface SessionResponse {
   id: string;
@@ -41,7 +39,6 @@ export interface SessionResponse {
       fullName: string;
       email: string;
     };
-    specializations: string[];
   };
   sessionNumber: number;
   title: string;
@@ -106,9 +103,9 @@ export class SessionsService {
       {
         id: createSessionDto.therapistId,
         clinic: clinicId,
-        status: TherapistStatus.ACTIVE,
+        user: { status: UserStatus.ACTIVE },
       },
-      { populate: ['user', 'specializations'] },
+      { populate: ['user'] },
     );
 
     if (!therapist) {
@@ -281,12 +278,7 @@ export class SessionsService {
       TherapySession,
       whereConditions,
       {
-        populate: [
-          'client',
-          'therapist',
-          'therapist.user',
-          'therapist.specializations',
-        ],
+        populate: ['client', 'therapist', 'therapist.user'],
         orderBy,
         limit,
         offset,
@@ -305,12 +297,9 @@ export class SessionsService {
         therapist: {
           id: session.therapist.id,
           user: {
-            fullName: session.therapist.fullName,
+            fullName: session.therapist.user.profile?.name || 'Unknown User',
             email: session.therapist.user.email,
           },
-          specializations: session.therapist.specializations
-            .getItems()
-            .map((s) => s.specialization),
         },
         sessionNumber: session.sessionNumber,
         title: session.title,
@@ -352,7 +341,7 @@ export class SessionsService {
           'client',
           'therapist',
           'therapist.user',
-          'therapist.specializations',
+          'therapist.user.profile',
         ],
       },
     );
@@ -381,7 +370,7 @@ export class SessionsService {
           'client',
           'therapist',
           'therapist.user',
-          'therapist.specializations',
+          'therapist.user.profile',
         ],
       },
     );
@@ -420,7 +409,7 @@ export class SessionsService {
           'client',
           'therapist',
           'therapist.user',
-          'therapist.specializations',
+          'therapist.user.profile',
         ],
       },
     );
@@ -614,12 +603,9 @@ export class SessionsService {
       therapist: {
         id: therapist.id,
         user: {
-          fullName: therapist.fullName,
+          fullName: therapist.user.profile?.name || 'Unknown User',
           email: therapist.user.email,
         },
-        specializations: therapist.specializations
-          .getItems()
-          .map((s) => s.specialization),
       },
       sessionNumber: session.sessionNumber,
       title: session.title,

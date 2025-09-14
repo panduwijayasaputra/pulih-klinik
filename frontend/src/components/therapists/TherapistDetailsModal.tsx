@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ConfirmationDialog, useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Therapist } from '@/types/therapist';
 import { THERAPIST_SPECIALIZATIONS } from '@/types/therapist';
-import { TherapistStatusEnum, UserRoleEnum } from '@/types/enums';
+import { UserRoleEnum } from '@/types/enums';
+import { UserStatusEnum, UserStatusHelper } from '@/types/status';
 import { TherapistAPI } from '@/lib/api/therapist';
 
 interface TherapistDetailsModalProps {
@@ -29,32 +30,19 @@ const getSpecializationNameById = (id: string): string => {
   return spec ? spec.name : id; // Return id as fallback
 };
 
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case TherapistStatusEnum.Active:
-      return (
-        <Badge variant="success">
-          <CheckCircleIcon className="w-3 h-3 mr-1" />
-          Aktif
-        </Badge>
-      );
-    case TherapistStatusEnum.PendingSetup:
-      return (
-        <Badge variant="warning">
-          <ClockIcon className="w-3 h-3 mr-1" />
-          Menunggu Setup
-        </Badge>
-      );
-    case TherapistStatusEnum.Inactive:
-      return (
-        <Badge variant="destructive">
-          <XMarkIcon className="w-3 h-3 mr-1" />
-          Tidak Aktif
-        </Badge>
-      );
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
+const getStatusBadge = (status: UserStatusEnum) => {
+  const variant = UserStatusHelper.getBadgeVariant(status);
+  const label = UserStatusHelper.getDisplayLabel(status);
+  
+  return (
+    <Badge variant={variant}>
+      {status === UserStatusEnum.ACTIVE && <CheckCircleIcon className="w-3 h-3 mr-1" />}
+      {status === UserStatusEnum.PENDING && <ClockIcon className="w-3 h-3 mr-1" />}
+      {status === UserStatusEnum.INACTIVE && <XMarkIcon className="w-3 h-3 mr-1" />}
+      {status === UserStatusEnum.DELETED && <XMarkIcon className="w-3 h-3 mr-1" />}
+      {label}
+    </Badge>
+  );
 };
 
 export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
@@ -102,8 +90,8 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
     if (!therapistData) return;
     
     openDialog({
-      title: 'Kirim Ulang Email Registrasi',
-      description: `Yakin ingin mengirim ulang email registrasi ke ${therapistData.email}? Therapist akan menerima link setup yang baru.`,
+      title: 'Kirim Ulang Email Verifikasi',
+      description: `Yakin ingin mengirim ulang email verifikasi ke ${therapistData.email}? Therapist akan menerima kode verifikasi yang baru untuk menyelesaikan pendaftaran.`,
       confirmText: 'Kirim Ulang',
       cancelText: 'Batal',
       variant: 'info',
@@ -152,7 +140,7 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                    <p className="mt-1 text-sm text-gray-900">{therapistData.fullName}</p>
+                    <p className="mt-1 text-sm text-gray-900">{therapistData.name}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Alamat Email</label>
@@ -180,21 +168,9 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                     <p className="mt-1 text-sm text-gray-900">{therapistData.licenseNumber}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Spesialisasi</label>
-                    <p className="mt-1 text-sm text-gray-900">{therapistData.specializations.map(id => getSpecializationNameById(id)).join(', ')}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Tahun Pengalaman</label>
-                    <p className="mt-1 text-sm text-gray-900">{therapistData.yearsOfExperience} tahun</p>
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium text-gray-700">Pendidikan</label>
                     <div className="mt-1 text-sm text-gray-900">
-                      {therapistData.education.map((edu, index) => (
-                        <div key={index} className="mb-1">
-                          {edu.degree} {edu.field} - {edu.institution} ({edu.year})
-                        </div>
-                      ))}
+                      {therapistData.education || 'Tidak ada informasi pendidikan'}
                     </div>
                   </div>
                 </div>
@@ -202,11 +178,7 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700">Sertifikasi</label>
                     <div className="mt-1 text-sm text-gray-900">
-                      {therapistData.certifications.map((cert, index) => (
-                        <div key={index} className="mb-1">
-                          {cert.name} - {cert.issuingOrganization} ({cert.certificateNumber})
-                        </div>
-                      ))}
+                      {therapistData.certifications}
                     </div>
                   </div>
                 )}
@@ -220,12 +192,6 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700">Klien Aktif</span>
                       <span className="text-2xl font-bold text-blue-600">{therapistData.currentLoad}</span>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Maksimal Klien</span>
-                      <span className="text-2xl font-bold text-green-600">{therapistData.maxClients}</span>
                     </div>
                   </div>
                 </div>
@@ -311,7 +277,7 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                     )}
 
                     {/* Resend Email Button for Pending Setup */}
-                    {therapistData.status === TherapistStatusEnum.PendingSetup && (() => {
+                    {therapistData.status === UserStatusEnum.PENDING && (() => {
                       const cooldown = resendCooldowns[therapistData.id];
                       const isInCooldown = Boolean(cooldown && cooldown > 0);
 
@@ -330,12 +296,12 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
                           ) : isInCooldown ? (
                             <>
                               <ClockIcon className="w-4 h-4" />
-                              Kirim Ulang Email dalam {formatCountdown(cooldown || 0)}
+                              Kirim Ulang Email Verifikasi dalam {formatCountdown(cooldown || 0)}
                             </>
                           ) : (
                             <>
                               <EnvelopeIcon className="w-4 h-4" />
-                              Kirim Ulang Email
+                              Kirim Ulang Email Verifikasi
                             </>
                           )}
                         </Button>

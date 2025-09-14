@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { UserIcon } from '@heroicons/react/24/outline';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './useAuth';
@@ -30,11 +30,13 @@ const getRoleBasedPath = (role: UserRole): string => {
 export const useNavigation = () => {
   const { user } = useAuth();
   const pathname = usePathname();
+  const isManualRoleSwitch = useRef(false);
   const {
     activeRole,
     availableRoles,
     menuCollapsed,
     breadcrumbs,
+    isRoleSwitching,
     setActiveRole,
     setAvailableRoles,
     toggleMenu,
@@ -43,12 +45,19 @@ export const useNavigation = () => {
     addBreadcrumb,
     clearBreadcrumbs,
     resetNavigation,
+    setRoleSwitching,
   } = useNavigationStore();
 
   // Normalize legacy roles to enum values for compatibility
   const effectiveUserRoles = useMemo<UserRole[]>(() => {
     const roles = user?.roles ?? [];
 
+    // If roles are already enum values, use them directly
+    if (roles.length > 0 && Object.values(UserRoleEnum).includes(roles[0] as UserRoleEnum)) {
+      return roles as UserRole[];
+    }
+
+    // Legacy normalization for old role formats
     const legacyToEnumMap: Record<string, UserRole> = {
       administrator: UserRoleEnum.Administrator,
       clinic_admin: UserRoleEnum.ClinicAdmin,
@@ -85,35 +94,75 @@ export const useNavigation = () => {
   useEffect(() => {
     if (effectiveUserRoles.length === 0) return;
     
-    // Determine role based on current path
-    let roleFromPath: UserRole | null = null;
+    // COMPLETELY DISABLE automatic role detection
+    // Let manual role switching handle all role changes
+    return;
     
-    if (pathname.startsWith('/portal/admin')) {
-      roleFromPath = UserRoleEnum.Administrator;
-    } else if (pathname.startsWith('/portal/clinic')) {
-      roleFromPath = UserRoleEnum.ClinicAdmin;
-    } else if (pathname.startsWith('/portal/therapist')) {
-      roleFromPath = UserRoleEnum.Therapist;
-    }
+    // OLD CODE - DISABLED
+    // Skip automatic role detection if we're in the middle of a manual role switch
+    // if (isManualRoleSwitch.current) {
+    //   console.log('⏭️ Skipping auto role detection - manual switch in progress');
+    //   return;
+    // }
     
-    // Only auto-set role if:
-    // 1. No active role is currently set, OR
-    // 2. Current role doesn't have permission for the current path
-    if (roleFromPath && effectiveUserRoles.includes(roleFromPath)) {
-      // If there's no active role, set it
-      if (!activeRole) {
-        setActiveRole(roleFromPath);
-      }
-      // If current active role doesn't match the required role for this path, change it
-      else if (activeRole !== roleFromPath) {
-        setActiveRole(roleFromPath);
-      }
-    }
-    // If no specific role path and no active role, set to primary role
-    else if (!activeRole && effectiveUserRoles.length > 0) {
-      setActiveRole(effectiveUserRoles[0] as UserRole);
-    }
+    // // COMPLETELY DISABLE automatic role switching when there's an active role
+    // // This prevents conflicts with manual role switches
+    // if (activeRole) {
+    //   console.log('⏭️ Skipping auto role detection - active role exists:', activeRole);
+    //   return;
+    // }
+    
+    // // Only run automatic role detection when there's no active role
+    // // Determine role based on current path
+    // let roleFromPath: UserRole | null = null;
+    
+    // if (pathname.startsWith('/portal/admin')) {
+    //   roleFromPath = UserRoleEnum.Administrator;
+    // } else if (pathname.startsWith('/portal/clinic')) {
+    //   roleFromPath = UserRoleEnum.ClinicAdmin;
+    // } else if (pathname.startsWith('/portal/therapist')) {
+    //   roleFromPath = UserRoleEnum.Therapist;
+    // }
+    
+    // console.log('🔍 Role from path:', roleFromPath);
+    
+    // // Set initial role based on path
+    // if (roleFromPath && effectiveUserRoles.includes(roleFromPath)) {
+    //   console.log('✅ Setting initial active role:', roleFromPath);
+    //   setActiveRole(roleFromPath);
+    // }
+    // // If no specific role path, set to primary role
+    // else if (effectiveUserRoles.length > 0) {
+    //   console.log('✅ Setting primary role:', effectiveUserRoles[0]);
+    //   setActiveRole(effectiveUserRoles[0] as UserRole);
+    // }
   }, [pathname, effectiveUserRoles, activeRole, setActiveRole]);
+
+  // Initial role setting - only runs once when user roles are available
+  useEffect(() => {
+    if (effectiveUserRoles.length === 0) return;
+    
+    // Only set initial role if there's no active role
+    if (!activeRole) {
+      // Determine role based on current path
+      let roleFromPath: UserRole | null = null;
+
+      if (pathname.startsWith('/portal/admin')) {
+        roleFromPath = UserRoleEnum.Administrator;
+      } else if (pathname.startsWith('/portal/clinic')) {
+        roleFromPath = UserRoleEnum.ClinicAdmin;
+      } else if (pathname.startsWith('/portal/therapist')) {
+        roleFromPath = UserRoleEnum.Therapist;
+      }
+
+      // Set initial role based on path or first available role
+      if (roleFromPath && effectiveUserRoles.includes(roleFromPath)) {
+        setActiveRole(roleFromPath);
+      } else {
+        setActiveRole(effectiveUserRoles[0] as UserRole);
+      }
+    }
+  }, [effectiveUserRoles]); // Only depend on effectiveUserRoles, not pathname or activeRole
 
   // Get navigation items for current user
   const navigationItems = useMemo(() => {
@@ -156,11 +205,22 @@ export const useNavigation = () => {
   // Role switching functions with validation
   const switchToRole = useCallback((role: UserRole) => {
     if (availableRoles.includes(role)) {
+      // Set loading state and flag to prevent automatic role detection during manual switch
+      setRoleSwitching(true);
+      isManualRoleSwitch.current = true;
+      
+      // Set the active role immediately
       setActiveRole(role);
+      
+      // Reset the flag and loading state after a short delay
+      setTimeout(() => {
+        isManualRoleSwitch.current = false;
+        setRoleSwitching(false);
+      }, 1500); // Reduced timeout for better UX
     } else {
       console.warn(`Cannot switch to role ${role}: not available for current user`);
     }
-  }, [availableRoles, setActiveRole]);
+  }, [availableRoles, setActiveRole, activeRole, setRoleSwitching]);
 
   const clearActiveRole = useCallback(() => {
     setActiveRole(null);
@@ -222,24 +282,48 @@ export const useNavigation = () => {
       return breadcrumbs;
     }
 
+    // Helper function to find matching breadcrumb mapping for dynamic routes
+    const findBreadcrumbMapping = (path: string) => {
+      // First try exact match
+      if (portalBreadcrumbMapping[path]) {
+        return { mapping: portalBreadcrumbMapping[path], matchedPath: path };
+      }
+      
+      // Then try pattern matching for dynamic routes
+      for (const [pattern, mapping] of Object.entries(portalBreadcrumbMapping)) {
+        if (pattern.includes('[') && pattern.includes(']')) {
+          // Convert pattern to regex (replace [param] with [^/]+)
+          const patternRegex = pattern.replace(/\[.*?\]/g, '[^/]+');
+          const regex = new RegExp(`^${patternRegex}$`);
+          if (regex.test(path)) {
+            return { mapping, matchedPath: pattern };
+          }
+        }
+      }
+      
+      return null;
+    };
+
     // Use the portal breadcrumb mapping for portal routes
-    const mapping = portalBreadcrumbMapping[pathname];
-    if (mapping) {
+    const mappingResult = findBreadcrumbMapping(pathname);
+    if (mappingResult) {
+      const { mapping } = mappingResult;
       // Build breadcrumb chain
       const chain: BreadcrumbItem[] = [];
       let currentPath = pathname;
       let counter = 0;
       
       while (currentPath && counter < 10) { // Prevent infinite loops
-        const pathMapping = portalBreadcrumbMapping[currentPath];
-        if (pathMapping) {
+        const pathMappingResult = findBreadcrumbMapping(currentPath);
+        if (pathMappingResult) {
+          const { mapping } = pathMappingResult;
           chain.unshift({
             id: `breadcrumb-${counter}`,
-            label: pathMapping.label,
+            label: mapping.label,
             href: currentPath,
             isActive: currentPath === pathname,
           });
-          currentPath = pathMapping.parent || '';
+          currentPath = mapping.parent || '';
         } else {
           break;
         }
@@ -300,6 +384,7 @@ export const useNavigation = () => {
     availableRoles,
     menuCollapsed,
     breadcrumbs,
+    isRoleSwitching,
     navigationItems,
     filteredNavigationItems,
     activeNavigationItem,

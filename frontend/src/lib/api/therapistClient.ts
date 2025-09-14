@@ -1,5 +1,6 @@
 import { TherapistClient, TherapistClientStats, TherapistClientSession, TherapistClientProgress, TherapistClientFilters } from '@/types/therapistClient';
 import { ApiResponse, PaginatedResponse } from './types';
+import { apiClient } from '../http-client';
 import { 
   getTherapistClients, 
   getTherapistClientById, 
@@ -26,61 +27,36 @@ export const TherapistClientAPI = {
     filters?: TherapistClientFilters
   ): Promise<PaginatedResponse<TherapistClient>> => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      let clients = getTherapistClients(therapistId, {
-        status: filters?.status,
-        search: filters?.search,
-        sortBy: filters?.sortBy,
-        sortOrder: filters?.sortOrder
-      });
-
-      // Apply date filters if provided
-      if (filters?.assignedDate) {
-        clients = clients.filter(client => {
-          const assignedDate = new Date(client.assignedDate);
-          const fromDate = new Date(filters.assignedDate.from);
-          const toDate = new Date(filters.assignedDate.to);
-          return assignedDate >= fromDate && assignedDate <= toDate;
-        });
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', pageSize.toString());
+      
+      if (filters?.status && filters.status !== 'all') {
+        params.append('status', filters.status);
+      }
+      if (filters?.search) {
+        params.append('search', filters.search);
       }
 
-      if (filters?.lastSessionDate) {
-        clients = clients.filter(client => {
-          if (!client.lastSessionDate) return false;
-          const lastSessionDate = new Date(client.lastSessionDate);
-          const fromDate = new Date(filters.lastSessionDate.from);
-          const toDate = new Date(filters.lastSessionDate.to);
-          return lastSessionDate >= fromDate && lastSessionDate <= toDate;
-        });
-      }
-
-      if (filters?.sessionCount) {
-        clients = clients.filter(client => 
-          client.sessionCount >= filters.sessionCount!.min && 
-          client.sessionCount <= filters.sessionCount!.max
-        );
-      }
-
-      // Apply pagination
-      const startIndex = (page - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      const paginatedClients = clients.slice(startIndex, endIndex);
-
+      const response = await apiClient.get(`/therapists/${therapistId}/clients?${params.toString()}`);
+      
+      // The response is wrapped by ResponseInterceptor: { success: true, data: { items, total, page, limit, totalPages }, message: "..." }
+      const backendData = response.data.data;
+      
       return {
         success: true,
         data: {
-          items: paginatedClients,
-          total: clients.length,
-          page,
-          pageSize,
-          totalPages: Math.ceil(clients.length / pageSize)
+          items: backendData.items,
+          total: backendData.total,
+          page: backendData.page,
+          pageSize: backendData.limit,
+          totalPages: backendData.totalPages
         }
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching therapist clients:', error);
-      throw new TherapistClientAPIError('Failed to fetch therapist clients');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch therapist clients';
+      throw new TherapistClientAPIError(errorMessage);
     }
   },
 
@@ -92,25 +68,40 @@ export const TherapistClientAPI = {
     clientId: string
   ): Promise<ApiResponse<TherapistClient>> => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const client = getTherapistClientById(therapistId, clientId);
+      // Use the regular client endpoint to get full client data
+      // The backend should validate therapist assignment in the future
+      const response = await apiClient.get(`/clients/${clientId}`);
       
-      if (!client) {
+      // The response is wrapped by ResponseInterceptor
+      const clientData = response.data.data;
+      
+      // Transform the ClientResponse to TherapistClient format
+      const therapistClient: TherapistClient = {
+        ...clientData,
+        // Map any missing fields or add therapist-specific fields
+        assignedDate: clientData.assignedDate || new Date().toISOString(),
+        lastSessionDate: clientData.lastSessionDate,
+        sessionCount: clientData.totalSessions || 0,
+        progressNotes: clientData.notes,
+        therapistNotes: clientData.notes, // This might need to come from assignment
+      };
+      
+      return {
+        success: true,
+        data: therapistClient
+      };
+    } catch (error: any) {
+      console.error('Error fetching therapist client:', error);
+      
+      if (error.response?.status === 404) {
         return {
           success: false,
           message: 'Client not found or not assigned to this therapist'
         };
       }
-
-      return {
-        success: true,
-        data: client
-      };
-    } catch (error) {
-      console.error('Error fetching therapist client:', error);
-      throw new TherapistClientAPIError('Failed to fetch therapist client');
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch therapist client';
+      throw new TherapistClientAPIError(errorMessage);
     }
   },
 
@@ -119,18 +110,17 @@ export const TherapistClientAPI = {
    */
   getTherapistClientStats: async (therapistId: string): Promise<ApiResponse<TherapistClientStats>> => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const response = await apiClient.get(`/therapists/${therapistId}/stats`);
 
-      const stats = getTherapistClientStats(therapistId);
-
+      // The response is wrapped by ResponseInterceptor  
       return {
         success: true,
-        data: stats
+        data: response.data.data
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching therapist client stats:', error);
-      throw new TherapistClientAPIError('Failed to fetch therapist client statistics');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch therapist client statistics';
+      throw new TherapistClientAPIError(errorMessage);
     }
   },
 
@@ -200,32 +190,30 @@ export const TherapistClientAPI = {
     }
   ): Promise<ApiResponse<TherapistClient>> => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const client = getTherapistClientById(therapistId, clientId);
+      // Use combined notes field for backend compatibility
+      const notesString = [notes.progressNotes, notes.therapistNotes].filter(Boolean).join('\n\n');
       
-      if (!client) {
+      const response = await apiClient.put(`/therapists/${therapistId}/clients/${clientId}/notes`, {
+        notes: notesString
+      });
+
+      // The response is wrapped by ResponseInterceptor
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Error updating therapist client notes:', error);
+      
+      if (error.response?.status === 404) {
         return {
           success: false,
           message: 'Client not found or not assigned to this therapist'
         };
       }
-
-      // In a real implementation, this would update the database
-      const updatedClient: TherapistClient = {
-        ...client,
-        progressNotes: notes.progressNotes || client.progressNotes,
-        therapistNotes: notes.therapistNotes || client.therapistNotes,
-      };
-
-      return {
-        success: true,
-        data: updatedClient
-      };
-    } catch (error) {
-      console.error('Error updating therapist client notes:', error);
-      throw new TherapistClientAPIError('Failed to update therapist client notes');
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update therapist client notes';
+      throw new TherapistClientAPIError(errorMessage);
     }
   },
 
@@ -238,31 +226,28 @@ export const TherapistClientAPI = {
     sessionDate: string
   ): Promise<ApiResponse<TherapistClient>> => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await apiClient.post(`/therapists/${therapistId}/clients/${clientId}/schedule`, {
+        scheduledAt: sessionDate,
+        notes: 'Session scheduled via therapist portal'
+      });
 
-      const client = getTherapistClientById(therapistId, clientId);
+      // The response is wrapped by ResponseInterceptor
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Error scheduling next session:', error);
       
-      if (!client) {
+      if (error.response?.status === 404) {
         return {
           success: false,
           message: 'Client not found or not assigned to this therapist'
         };
       }
-
-      // In a real implementation, this would update the database
-      const updatedClient: TherapistClient = {
-        ...client,
-        nextSessionDate: sessionDate,
-      };
-
-      return {
-        success: true,
-        data: updatedClient
-      };
-    } catch (error) {
-      console.error('Error scheduling next session:', error);
-      throw new TherapistClientAPIError('Failed to schedule next session');
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to schedule next session';
+      throw new TherapistClientAPIError(errorMessage);
     }
   },
 
@@ -287,7 +272,7 @@ export const TherapistClientAPI = {
         };
       }
 
-      // In a real implementation, this would update the database
+      // For the mock implementation, we'll simulate an update
       const updatedClient: TherapistClient = {
         ...client,
         status: status as any,

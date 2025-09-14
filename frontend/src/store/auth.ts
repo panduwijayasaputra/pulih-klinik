@@ -1,111 +1,176 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AuthState, LoginFormData, User } from '@/types/auth';
-import { AuthAPI } from '@/lib/api/auth';
+import { AuthState, User, Clinic } from '@/types/auth';
 
 interface AuthStore extends AuthState {
-  login: (credentials: LoginFormData) => Promise<boolean>;
-  logout: () => Promise<void>;
+  // Core auth actions
+  login: (data: { user: User; clinic?: Clinic; accessToken: string; refreshToken: string }) => void;
+  logout: () => void;
   clearError: () => void;
-  checkAuth: () => Promise<void>;
+  
+  // User and clinic management
+  setUser: (user: User | null) => void;
+  setClinic: (clinic: Clinic | null) => void;
+  setTokens: (accessToken: string, refreshToken: string) => void;
+  
+  // Loading and error states
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  
+  // Token management
+  updateTokens: (accessToken: string, refreshToken?: string) => void;
+  refreshTokens: () => Promise<boolean>;
+  
+  // Data validation
+  setLastValidated: (date: Date) => void;
+  isDataStale: () => boolean;
+  isValidating: boolean;
+  setValidating: (validating: boolean) => void;
+  
+  // Helper methods
+  hasRole: (role: string) => boolean;
+  isAdmin: () => boolean;
+  isClinicAdmin: () => boolean;
+  isTherapist: () => boolean;
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set, _get) => ({
-      user: null,
-      isLoading: false,
-      error: null,
-      isAuthenticated: false,
+    (set, get) => ({
+      // Initial state
+              user: null,
+        clinic: null,
+        isLoading: false,
+        error: null,
+        isAuthenticated: false,
+        accessToken: null,
+        refreshToken: null,
+        lastValidated: new Date(),
+        isValidating: false,
 
-      login: async (credentials: LoginFormData) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await AuthAPI.login(credentials);
-          
-          if (response.success && response.user) {
-            set({
-              user: response.user,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-            });
-            
-            return true;
-          } else {
-            set({
-              error: response.message || 'Login gagal',
-              isLoading: false,
-            });
-            return false;
-          }
-        } catch {
-          set({
-            error: 'Terjadi kesalahan saat login',
-            isLoading: false,
-          });
-          return false;
-        }
+      // Core auth actions
+      login: (data: { user: User; clinic?: Clinic; accessToken: string; refreshToken: string }) => {
+        set({
+          user: data.user,
+          clinic: data.clinic || null,
+          isAuthenticated: true,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          lastValidated: new Date(),
+          error: null,
+        });
       },
 
-      logout: async () => {
-        set({ isLoading: true });
+      logout: () => {
+        set({
+          user: null,
+          clinic: null,
+          isAuthenticated: false,
+          accessToken: null,
+          refreshToken: null,
+          lastValidated: new Date(),
+          error: null,
+        });
         
-        try {
-          await AuthAPI.logout();
-          
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: null,
-          });
-          
-          // Redirect to landing page after logout
-          if (typeof window !== 'undefined') {
-            window.location.href = '/';
-          }
-        } catch {
-          set({ isLoading: false });
+        // Redirect to landing page after logout
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
         }
       },
 
       clearError: () => set({ error: null }),
 
-      checkAuth: async () => {
-        set({ isLoading: true });
-        
-        try {
-          const response = await AuthAPI.getCurrentUser();
-          
-          if (response.success && response.data) {
-            set({
-              user: response.data as User,
-              isAuthenticated: true,
-              isLoading: false,
-            });
-          } else {
-            set({
-              user: null,
-              isAuthenticated: false,
-              isLoading: false,
-            });
-          }
-        } catch {
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-          });
+      // User and clinic management
+      setUser: (user: User | null) => {
+        set({ user });
+        if (user) {
+          set({ lastValidated: new Date() });
         }
       },
+
+      setClinic: (clinic: Clinic | null) => {
+        set({ clinic });
+        if (clinic) {
+          set({ lastValidated: new Date() });
+        }
+      },
+
+      setTokens: (accessToken: string, refreshToken: string) => {
+        set({ 
+          accessToken, 
+          refreshToken,
+          lastValidated: new Date()
+        });
+      },
+
+      // Loading and error states
+      setLoading: (loading: boolean) => set({ isLoading: loading }),
+      setError: (error: string | null) => set({ error }),
+
+      // Token management
+      updateTokens: (accessToken: string, refreshToken?: string) => {
+        set({
+          accessToken,
+          refreshToken: refreshToken || get().refreshToken,
+          lastValidated: new Date(),
+        });
+      },
+
+      refreshTokens: async (): Promise<boolean> => {
+        const { refreshToken } = get();
+        if (!refreshToken) return false;
+
+        try {
+          // This will be implemented in the auth hook
+          // For now, just return false to indicate no refresh happened
+          return false;
+        } catch (error) {
+          set({ error: 'Failed to refresh tokens' });
+          return false;
+        }
+      },
+
+      // Data validation
+      setLastValidated: (date: Date) => set({ lastValidated: date }),
+      setValidating: (validating: boolean) => set({ isValidating: validating }),
+      
+      isDataStale: (): boolean => {
+        const { lastValidated } = get();
+        if (!lastValidated) return true;
+        
+        // Consider data stale after 5 minutes
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        return lastValidated < fiveMinutesAgo;
+      },
+
+      // Helper methods
+      hasRole: (role: string): boolean => {
+        const { user } = get();
+        return user?.roles.includes(role as any) || false;
+      },
+
+      isAdmin: (): boolean => {
+        return get().hasRole('administrator');
+      },
+
+      isClinicAdmin: (): boolean => {
+        return get().hasRole('clinic_admin');
+      },
+
+      isTherapist: (): boolean => {
+        return get().hasRole('therapist');
+      },
+
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({ 
-        user: state.user, 
-        isAuthenticated: state.isAuthenticated 
+        user: state.user,
+        clinic: state.clinic,
+        isAuthenticated: state.isAuthenticated,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        lastValidated: state.lastValidated,
       }),
       onRehydrateStorage: () => (state) => {
         // After rehydration, make sure loading is false

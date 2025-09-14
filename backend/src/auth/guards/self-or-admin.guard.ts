@@ -23,7 +23,7 @@ export class SelfOrAdminGuard implements CanActivate {
     }
 
     // Admin can access any user's data
-    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
+    if (user.roles.some((role) => role === UserRole.ADMINISTRATOR)) {
       return true;
     }
 
@@ -79,7 +79,7 @@ export class SelfOrClinicAdminGuard implements CanActivate {
     }
 
     // Admin can access any user's data
-    if (user.roles.some((role) => role.role === UserRole.ADMINISTRATOR)) {
+    if (user.roles.some((role) => role === UserRole.ADMINISTRATOR)) {
       return true;
     }
 
@@ -92,8 +92,7 @@ export class SelfOrClinicAdminGuard implements CanActivate {
     if (requestedClinicId) {
       const hasClinicAdminAccess = user.roles.some(
         (role) =>
-          role.role === UserRole.CLINIC_ADMIN &&
-          role.clinicId === requestedClinicId,
+          role === UserRole.CLINIC_ADMIN && user.clinicId === requestedClinicId,
       );
       if (hasClinicAdminAccess) {
         return true;

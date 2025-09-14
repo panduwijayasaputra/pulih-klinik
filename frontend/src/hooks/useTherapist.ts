@@ -18,7 +18,6 @@ interface TherapistAccountCreationData {
   
   // Enum fields
   licenseType: string;
-  employmentType: string;
   
   // Admin fields
   adminNotes?: string | undefined;
@@ -56,30 +55,11 @@ export const useTherapist = () => {
         phone: therapistData.phone,
         licenseNumber: therapistData.licenseNumber,
         licenseType: therapistData.licenseType as any,
-        specializations: therapistData.specializations,
-        yearsOfExperience: therapistData.yearsExperience,
-        employmentType: therapistData.employmentType as any,
-        maxClients: 15, // Default value, can be made configurable
-        education: [{
-          degree: therapistData.education,
-          institution: '',
-          year: new Date().getFullYear(),
-          field: ''
-        }],
-        certifications: therapistData.certifications 
-          ? therapistData.certifications.split(',').map(cert => ({
-              name: cert.trim(),
-              issuingOrganization: '',
-              issueDate: new Date().toISOString().split('T')[0]!,
-              certificateNumber: ''
-            }))
-          : [],
+        education: therapistData.education, // Now a flat string field
+        ...(therapistData.certifications && { certifications: therapistData.certifications }),
+        ...(therapistData.adminNotes && { adminNotes: therapistData.adminNotes }),
         preferences: {
-          sessionDuration: 60,
-          breakBetweenSessions: 15,
-          maxSessionsPerDay: 8,
-          languages: ['Indonesian'],
-          workingDays: [1, 2, 3, 4, 5]
+          languages: ['Indonesian']
         }
       };
 
@@ -93,11 +73,11 @@ export const useTherapist = () => {
         
         console.warn('Sending therapist registration email:', {
           to: therapistData.email,
-          subject: '🔐 Complete Your Therapist Registration - Smart Therapy',
+          subject: '🔐 Complete Your Therapist Registration - Pulih Klinik',
           emailTemplate: {
             greeting: `Selamat datang, ${therapistData.name}!`,
-            introduction: 'Anda telah berhasil didaftarkan sebagai therapist di Smart Therapy.',
-            clinicInfo: 'Smart Therapy Clinic',
+            introduction: 'Anda telah berhasil didaftarkan sebagai therapist di Pulih Klinik.',
+            clinicInfo: 'Pulih Klinik',
             instructions: [
               'Klik tautan di bawah untuk mengatur password Anda',
               'Tautan ini akan berlaku selama 24 jam',
@@ -107,7 +87,7 @@ export const useTherapist = () => {
             securityNote: 'Untuk keamanan, tautan ini hanya dapat digunakan sekali.',
             supportInfo: {
               helpText: 'Jika Anda memerlukan bantuan, silakan hubungi administrator klinik Anda.',
-              supportEmail: 'admin@smarttherapy.id'
+              supportEmail: 'admin@pulihklinik.id'
             }
           },
           expiresIn: '24 hours',
@@ -263,13 +243,17 @@ export const useTherapist = () => {
     setError(null);
 
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Call the real API
+      const result = await TherapistAPI.updateTherapistStatus(therapistId, status);
       
-      return {
-        success: true,
-        message: `Status therapist berhasil diubah menjadi ${status}`
-      };
+      if (result.success) {
+        return {
+          success: true,
+          message: `Status therapist berhasil diubah menjadi ${status}`
+        };
+      } else {
+        throw new Error(result.message || 'Gagal mengubah status therapist');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal mengubah status therapist';
       setError(errorMessage);

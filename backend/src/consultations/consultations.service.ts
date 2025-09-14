@@ -10,10 +10,7 @@ import {
   FormType,
 } from '../database/entities/consultation.entity';
 import { Client, ClientStatus } from '../database/entities/client.entity';
-import {
-  Therapist,
-  TherapistStatus,
-} from '../database/entities/therapist.entity';
+import { Therapist } from '../database/entities/therapist.entity';
 import {
   ClientTherapistAssignment,
   AssignmentStatus,
@@ -26,6 +23,7 @@ import {
   UpdateConsultationDto,
   ConsultationQueryDto,
 } from './dto/create-consultation.dto';
+import { UserStatus } from 'src/common/enums';
 
 export interface ConsultationResponse {
   id: string;
@@ -41,7 +39,6 @@ export interface ConsultationResponse {
       fullName: string;
       email: string;
     };
-    specializations: string[];
   };
   formType: FormType;
   status: ConsultationStatus;
@@ -109,9 +106,9 @@ export class ConsultationsService {
       {
         id: createConsultationDto.therapistId,
         clinic: clinicId,
-        status: TherapistStatus.ACTIVE,
+        user: { status: UserStatus.ACTIVE },
       },
-      { populate: ['user', 'specializations'] },
+      { populate: ['user', 'user.profile'] },
     );
 
     if (!therapist) {
@@ -271,12 +268,7 @@ export class ConsultationsService {
       Consultation,
       whereConditions,
       {
-        populate: [
-          'client',
-          'therapist',
-          'therapist.user',
-          'therapist.specializations',
-        ],
+        populate: ['client', 'therapist', 'therapist.user'],
         orderBy,
         limit,
         offset,
@@ -305,12 +297,7 @@ export class ConsultationsService {
       Consultation,
       { id, client: { clinic: clinicId } },
       {
-        populate: [
-          'client',
-          'therapist',
-          'therapist.user',
-          'therapist.specializations',
-        ],
+        populate: ['client', 'therapist', 'therapist.user'],
       },
     );
 
@@ -334,12 +321,7 @@ export class ConsultationsService {
       Consultation,
       { id, client: { clinic: clinicId } },
       {
-        populate: [
-          'client',
-          'therapist',
-          'therapist.user',
-          'therapist.specializations',
-        ],
+        populate: ['client', 'therapist', 'therapist.user'],
       },
     );
 
@@ -396,12 +378,7 @@ export class ConsultationsService {
       Consultation,
       { id, client: { clinic: clinicId } },
       {
-        populate: [
-          'client',
-          'therapist',
-          'therapist.user',
-          'therapist.specializations',
-        ],
+        populate: ['client', 'therapist', 'therapist.user'],
       },
     );
 
@@ -648,12 +625,9 @@ export class ConsultationsService {
       therapist: {
         id: therapist.id,
         user: {
-          fullName: therapist.fullName,
+          fullName: therapist.user.profile?.name || 'Unknown User',
           email: therapist.user.email,
         },
-        specializations: therapist.specializations
-          .getItems()
-          .map((s) => s.specialization),
       },
       formType: consultation.formType,
       status: consultation.status,

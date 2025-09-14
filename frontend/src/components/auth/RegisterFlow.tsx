@@ -1,13 +1,19 @@
 'use client';
+
 import { useRegistrationStore } from '@/store/registration';
-import { ClinicForm } from './ClinicForm';
+import { EmailCheck } from './EmailCheck';
+import { UserForm } from './UserForm';
 import { EmailVerification } from './EmailVerification';
-import { RegistrationSummary } from './RegistrationSummary';
-import { PaymentModal } from '../payment/PaymentModal';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { RegistrationStepEnum } from '@/types/enums';
-import { stepDescriptions, stepTitles } from '@/lib/constants/registration';
+
+const stepDescriptions = {
+  [RegistrationStepEnum.EmailCheck]: 'Periksa ketersediaan email Anda',
+  [RegistrationStepEnum.UserForm]: 'Masukkan informasi admin klinik Anda',
+  [RegistrationStepEnum.EmailVerification]: 'Verifikasi email Anda untuk melanjutkan',
+  [RegistrationStepEnum.Complete]: 'Registrasi berhasil diselesaikan',
+};
 
 export const RegisterFlow: React.FC = () => {
   const { 
@@ -17,22 +23,18 @@ export const RegisterFlow: React.FC = () => {
     clearError,
     resetRegistration,
     data,
-    nextStep,
-    setStep
+    isLoading
   } = useRegistrationStore();
 
+  const stepOrder = [
+    RegistrationStepEnum.EmailCheck,
+    RegistrationStepEnum.UserForm,
+    RegistrationStepEnum.EmailVerification,
+    RegistrationStepEnum.Complete,
+  ];
+
   const getStepNumber = () => {
-    const steps = [RegistrationStepEnum.Clinic, RegistrationStepEnum.Verification, RegistrationStepEnum.Summary, RegistrationStepEnum.Payment, RegistrationStepEnum.Complete];
-    return steps.indexOf(currentStep) + 1;
-  };
-
-  const canGoBack = currentStep !== RegistrationStepEnum.Clinic && 
-                    currentStep !== RegistrationStepEnum.Complete && 
-                    currentStep !== RegistrationStepEnum.Verification;
-
-  const handleBack = () => {
-    clearError();
-    prevStep();
+    return stepOrder.indexOf(currentStep) + 1;
   };
 
   const handleStartOver = () => {
@@ -40,35 +42,22 @@ export const RegisterFlow: React.FC = () => {
   };
 
   const handleGoToLogin = () => {
-    resetRegistration(); // Clear registration data
+    resetRegistration();
     window.location.href = '/login';
   };
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case RegistrationStepEnum.Clinic:
-        return <ClinicForm />;
-      case RegistrationStepEnum.Verification:
+      case RegistrationStepEnum.EmailCheck:
+        return <EmailCheck />;
+      case RegistrationStepEnum.UserForm:
+        return <UserForm />;
+      case RegistrationStepEnum.EmailVerification:
         return (
           <EmailVerification
-            email={data.clinic?.adminEmail || ''}
-            onVerificationSuccess={() => nextStep()}
-            onResendEmail={async () => {
-              // Mock resend email functionality
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }}
+            email={data.user?.email || ''}
           />
         );
-      case RegistrationStepEnum.Summary:
-          return (
-            <RegistrationSummary
-              clinicData={data.clinic}
-              onEditClinic={() => setStep(RegistrationStepEnum.Clinic)}
-              onProceedToPayment={() => nextStep()}
-            />
-          );
-      case RegistrationStepEnum.Payment:
-        return <PaymentModal />;
       case RegistrationStepEnum.Complete:
         return (
           <div className="text-center py-8">
@@ -77,7 +66,7 @@ export const RegisterFlow: React.FC = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Registrasi Berhasil!</h2>
             <p className="text-gray-600 mb-6">
-              Akun klinik Anda telah berhasil dibuat. Silakan login untuk mulai menggunakan Terapintar.
+              Akun Anda telah berhasil dibuat. Silakan login untuk melengkapi setup klinik dan memulai menggunakan Pulih Klinik.
             </p>
             <div className="space-y-3">
               <Button
@@ -91,7 +80,7 @@ export const RegisterFlow: React.FC = () => {
                 variant="outline"
                 className="w-full"
               >
-                Daftar Klinik Lain
+                Daftar Akun Lain
               </Button>
             </div>
           </div>
@@ -102,114 +91,80 @@ export const RegisterFlow: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="absolute inset-0 bg-white/30" />
-      <div className="relative z-10 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Daftar Klinik Baru
-            </h1>
-            <p className="text-gray-600">
-              Bergabunglah dengan Terapintar untuk memulai transformasi digital klinik hipnoterapi Anda
-            </p>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Daftar Klinik
+          </h1>
+          <p className="text-gray-600">
+            {stepDescriptions[currentStep as keyof typeof stepDescriptions] || ''}
+          </p>
+        </div>
+      </div>
 
-          {/* Progress Bar */}
-          <div className="mb-8 flex items-center justify-center">
-            <div className="w-full flex justify-center">
-              <div className="flex flex-row items-center w-full max-w-2xl mx-auto">
-                {/* 
-                  To center step 3, use fixed width for the progress bar container and 
-                  flex-grow only for the connecting lines, not the step circles.
-                  Each step circle is fixed width, so step 3 will always be in the center.
-                */}
-                {[1, 2, 3, 4, 5].map((step, idx) => (
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Progress Steps */}
+        {currentStep !== RegistrationStepEnum.Complete && (
+          <div className="mb-8">
+            <div className="flex items-center justify-center">
+              {stepOrder.slice(0, -1).map((step, index) => (
+                <div key={step} className="flex items-center">
                   <div
-                    key={step}
-                    className={`flex items-center ${idx !== 0 ? 'flex-1' : ''} ${idx === 0 ? 'justify-end' : idx === 4 ? 'justify-start' : 'justify-center'}`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      stepOrder.indexOf(currentStep) >= index
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}
                   >
-                    {/* Connecting Line (before circle, except for first) */}
-                    {idx !== 0 && (
-                      <div
-                        className={`flex-1 h-1 transition-colors ${
-                          getStepNumber() > step
-                            ? 'bg-green-500'
-                            : getStepNumber() === step
-                            ? 'bg-blue-300'
-                            : 'bg-gray-300'
-                        }`}
-                      />
-                    )}
-                    {/* Step Circle */}
-                    <div className="flex flex-col items-center z-10">
-                      <div
-                        className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${
-                          getStepNumber() === step
-                            ? 'bg-blue-600 border-blue-600 text-white'
-                            : getStepNumber() > step
-                            ? 'bg-green-500 border-green-500 text-white'
-                            : 'bg-white border-gray-300 text-gray-500'
-                        } font-semibold transition-colors`}
-                      >
-                        {step}
-                      </div>
-                    </div>
+                    {index + 1}
                   </div>
-                ))}
-              </div>
+                  {index < stepOrder.length - 2 && (
+                    <div
+                      className={`w-16 h-1 mx-2 ${
+                        stepOrder.indexOf(currentStep) > index
+                          ? 'bg-blue-600'
+                          : 'bg-gray-200'
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 text-center">
+              <span className="text-sm text-gray-600">
+                Langkah {getStepNumber()} dari {stepOrder.length - 1}
+              </span>
             </div>
           </div>
+        )}
 
-          {/* Step Title */}
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-1">
-              {stepTitles[currentStep]}
-            </h2>
-            <p className="text-gray-600">
-              {stepDescriptions[currentStep]}
-            </p>
-          </div>
-
-          {/* Error Message */}
+        {/* Main Content */}
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
-          {/* Main Content */}
-          <div className="bg-white shadow-lg rounded-lg">
-            <div className="p-6 sm:p-8">
-              {/* Back Button */}
-              {canGoBack && (
-                <div className="mb-6">
-                  <Button
-                    onClick={handleBack}
-                    variant="ghost"
-                    className="p-2 h-auto text-gray-600 hover:text-gray-900"
-                  >
-                    <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                    Kembali
-                  </Button>
-                </div>
-              )}
+          {renderCurrentStep()}
 
-              {/* Step Content */}
-              {renderCurrentStep()}
-            </div>
-          </div>
+        </div>
 
-          {/* Footer */}
-          <div className="text-center mt-8 text-sm text-gray-500">
-            <p>
-              Sudah memiliki akun?{' '}
-              <a href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
-                Masuk di sini
-              </a>
-            </p>
-          </div>
+        {/* Footer */}
+        <div className="mt-8 text-center flex flex-col justify-center items-center gap-2">
+          <p className="text-sm text-gray-600">
+            Sudah punya akun?{' '}
+            <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              Masuk di sini
+            </a>
+          </p>
+          <p className="text-sm text-gray-600">
+            atau{' '}
+            <a href="/" className="font-medium text-blue-600 hover:text-blue-500">
+              Kembali ke Beranda
+            </a>
+          </p>
         </div>
       </div>
     </div>

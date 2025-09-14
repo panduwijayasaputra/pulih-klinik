@@ -41,7 +41,6 @@ export const mockClients: Client[] = [
     lastSession: '2024-08-18',
     progress: 75,
     notes: 'Klien menunjukkan perkembangan yang baik dalam mengelola kecemasan',
-    province: 'DKI Jakarta'
   },
   {
     id: 'client-002', 
@@ -73,7 +72,6 @@ export const mockClients: Client[] = [
     lastSession: '2024-08-10',
     progress: 30,
     notes: 'Klien baru, sedang dalam tahap assessment awal',
-    province: 'Jawa Timur'
   },
   {
     id: 'client-003',
@@ -101,7 +99,6 @@ export const mockClients: Client[] = [
     totalSessions: 0,
     progress: 0,
     notes: 'Klien baru mendaftar, belum ada assignment therapist',
-    province: 'Jawa Barat'
   },
   {
     id: 'client-004',
@@ -141,7 +138,6 @@ export const mockClients: Client[] = [
     lastSession: '2024-08-16',
     progress: 15,
     notes: 'Klien remaja dengan isu akademik dan sosial. Perlu pendekatan khusus.',
-    province: 'Sumatera Utara'
   },
   {
     id: 'client-005',
@@ -174,7 +170,6 @@ export const mockClients: Client[] = [
     lastSession: '2024-07-15',
     progress: 100,
     notes: 'Terapi selesai dengan hasil memuaskan. Follow-up setiap 3 bulan.',
-    province: 'DI Yogyakarta'
   },
   {
     id: 'client-006',
@@ -201,7 +196,6 @@ export const mockClients: Client[] = [
     totalSessions: 0,
     progress: 0,
     notes: 'Klien baru, belum ada assignment therapist',
-    province: 'Jawa Tengah'
   },
   {
     id: 'client-007',
@@ -231,7 +225,6 @@ export const mockClients: Client[] = [
     lastSession: '2024-08-12',
     progress: 45,
     notes: 'Klien dengan isu kecemasan sosial, menunjukkan kemajuan',
-    province: 'Sumatera Selatan'
   },
   {
     id: 'client-008',
@@ -257,7 +250,6 @@ export const mockClients: Client[] = [
     totalSessions: 0,
     progress: 0,
     notes: 'Klien baru tanpa data kontak darurat',
-    province: 'Jawa Timur'
   }
 ];
 

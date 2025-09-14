@@ -23,6 +23,7 @@ export interface UseTherapistClientReturn {
 
   // Actions
   loadClients: (forceRefresh?: boolean) => Promise<void>;
+  loadClient: (clientId: string) => Promise<TherapistClient | null>;
   loadStats: () => Promise<void>;
   loadClientSessions: (clientId: string) => Promise<void>;
   loadClientProgress: (clientId: string) => Promise<void>;
@@ -76,15 +77,17 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       );
 
       if (response.success && response.data) {
-        setClients(response.data.items);
+        setClients(response.data.items || []);
       } else {
         setError(response.message || 'Failed to load clients');
+        setClients([]); // Reset clients on error
       }
     } catch (err) {
       const errorMessage = err instanceof TherapistClientAPIError
         ? err.message
         : 'Failed to load clients';
       setError(errorMessage);
+      setClients([]); // Reset clients on exception
     } finally {
       setLoading(false);
     }
@@ -165,6 +168,34 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
     }
   }, [therapistId]);
 
+  // Load single client
+  const loadClient = useCallback(async (clientId: string): Promise<TherapistClient | null> => {
+    if (!therapistId) return null;
+
+    try {
+      setError(null);
+      setLoading(true);
+
+      const response = await TherapistClientAPI.getTherapistClient(therapistId, clientId);
+
+      if (response.success && response.data) {
+        setSelectedClient(response.data);
+        return response.data;
+      } else {
+        setError(response.message || 'Failed to load client details');
+        return null;
+      }
+    } catch (err) {
+      const errorMessage = err instanceof TherapistClientAPIError
+        ? err.message
+        : 'Failed to load client details';
+      setError(errorMessage);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [therapistId]);
+
   // Select client
   const selectClient = useCallback(async (clientId: string) => {
     if (!therapistId) return;
@@ -202,12 +233,12 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       if (response.success && response.data) {
         // Update the client in the list
         setClients(prev => prev.map(client =>
-          client.id === clientId ? response.data : client
+          client.id === clientId ? response.data as TherapistClient : client
         ));
 
         // Update selected client if it's the same
         if (selectedClient?.id === clientId) {
-          setSelectedClient(response.data);
+          setSelectedClient(response.data as TherapistClient);
         }
 
         return true;
@@ -236,12 +267,12 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       if (response.success && response.data) {
         // Update the client in the list
         setClients(prev => prev.map(client =>
-          client.id === clientId ? response.data : client
+          client.id === clientId ? response.data as TherapistClient : client
         ));
 
         // Update selected client if it's the same
         if (selectedClient?.id === clientId) {
-          setSelectedClient(response.data);
+          setSelectedClient(response.data as TherapistClient);
         }
 
         return true;
@@ -270,12 +301,12 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       if (response.success && response.data) {
         // Update the client in the list
         setClients(prev => prev.map(client =>
-          client.id === clientId ? response.data : client
+          client.id === clientId ? response.data as TherapistClient : client
         ));
 
         // Update selected client if it's the same
         if (selectedClient?.id === clientId) {
-          setSelectedClient(response.data);
+          setSelectedClient(response.data as TherapistClient);
         }
 
         // Reload stats to reflect the change
@@ -340,6 +371,7 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
 
     // Actions
     loadClients,
+    loadClient,
     loadStats,
     loadClientSessions,
     loadClientProgress,

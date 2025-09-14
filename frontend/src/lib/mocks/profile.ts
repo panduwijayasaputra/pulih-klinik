@@ -5,7 +5,7 @@ export const mockProfiles: Profile[] = [
     id: 'profile-001',
     userId: 'user-001',
     name: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@smarttherapy.com',
+    email: 'sarah.johnson@pulihklinik.com',
     phone: '+62-812-3456-7890',
     address: 'Jl. Sudirman No. 123, Jakarta Pusat, DKI Jakarta',
     bio: 'Psikolog klinis dengan pengalaman 8 tahun dalam menangani gangguan kecemasan dan depresi. Berpengalaman dalam terapi kognitif behavioral (CBT) dan terapi penerimaan dan komitmen (ACT).',
@@ -50,7 +50,7 @@ export const mockProfiles: Profile[] = [
     id: 'profile-004',
     userId: 'user-004',
     name: 'Ahmad Rizki',
-    email: 'ahmad.rizki@smarttherapy.com',
+    email: 'ahmad.rizki@pulihklinik.com',
     phone: '+62-815-2345-6789',
     address: 'Jl. Rasuna Said No. 321, Jakarta Selatan, DKI Jakarta',
     bio: 'Konselor dengan fokus pada terapi keluarga dan pernikahan. Berpengalaman dalam menangani konflik interpersonal dan masalah komunikasi.',
@@ -65,7 +65,7 @@ export const mockProfiles: Profile[] = [
     id: 'profile-005',
     userId: 'user-005',
     name: 'Dewi Kusuma',
-    email: 'dewi.kusuma@smarttherapy.com',
+    email: 'dewi.kusuma@pulihklinik.com',
     phone: '+62-816-8765-4321',
     address: 'Jl. Sudirman No. 654, Jakarta Pusat, DKI Jakarta',
     bio: 'Hipnoterapis tersertifikasi dengan pengalaman dalam menangani fobia, kebiasaan buruk, dan masalah kepercayaan diri.',
@@ -105,5 +105,20 @@ export const mockProfiles: Profile[] = [
     specializations: 'System Administration, Database Management, Security, Healthcare IT Integration',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 'profile-008',
+    userId: '27e08b9c-9ae5-449a-8a42-66441db393a4',
+    name: 'Admin Klinik Sehat',
+    email: 'admin@kliniksehat.com',
+    phone: '+62-813-9876-5432',
+    address: 'Jl. Klinik Sehat Sejahtera No. 123, Jakarta Selatan, DKI Jakarta',
+    bio: 'Administrator klinik dengan pengalaman dalam manajemen fasilitas kesehatan mental. Fokus pada pengembangan sistem dan peningkatan kualitas layanan.',
+    avatar: '',
+    licenseNumber: 'CERT-HEALTH-002',
+    experience: '5',
+    specializations: 'Healthcare Management, Quality Assurance, Patient Care, Facility Operations',
+    createdAt: '2024-01-10T09:15:00Z',
+    updatedAt: '2024-01-10T09:15:00Z'
   }
 ];

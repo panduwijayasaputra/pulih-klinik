@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { getDefaultRouteForUser } from '@/lib/route-protection';
+import { useNavigation } from '@/hooks/useNavigation';
+import { getRoutingDecision } from '@/lib/routing-logic';
 
 interface RouteGuardProps {
   children: React.ReactNode;
@@ -11,59 +12,35 @@ interface RouteGuardProps {
 }
 
 export const RouteGuard: React.FC<RouteGuardProps> = ({ 
-  children
+  children,
+  fallback
 }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, clinic, isAuthenticated, isLoading, error } = useAuth();
+  const { activeRole } = useNavigation();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Development mode - bypass auth for client management and edit routes
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const isClientRoute = pathname.startsWith('/portal/clients');
-  const isEditRoute = pathname.startsWith('/portal/therapists/edit');
 
-  // Handle redirects for authenticated users accessing auth pages
+  // Handle route protection and redirects using unified logic
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
-      const authPages = ['/login', '/register', '/thankyou'];
-      if (authPages.includes(pathname)) {
-        const defaultRoute = getDefaultRouteForUser(user);
-        router.push(defaultRoute as any);
-        return;
-      }
-    }
+    const userState = {
+      isAuthenticated,
+      user,
+      clinic,
+      isLoading,
+      activeRole
+    };
 
-    // Handle redirects for unauthenticated users accessing landing page
-    if (!isLoading && !isAuthenticated) {
-      if (pathname === '/') {
-        // Stay on landing page if not authenticated
-        return;
-      }
-      
-      // In development, allow direct access to client routes and edit routes
-      if (isDevelopment && (isClientRoute || isEditRoute)) {
-        return;
-      }
-      
-      // Redirect to login for protected routes
-      const protectedRoutes = ['/portal'];
-      const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-      
-      if (isProtectedRoute) {
-        router.push('/login');
-        return;
-      }
-    }
-  }, [isAuthenticated, isLoading, user, pathname, router]);
+    const decision = getRoutingDecision(pathname, userState);
 
-  // In development mode, allow client routes and edit routes without auth
-  if (isDevelopment && (isClientRoute || isEditRoute)) {
-    return <>{children}</>;
-  }
+    if (decision.shouldRedirect && decision.redirectPath) {
+      router.push(decision.redirectPath as any);
+    }
+  }, [isLoading, isAuthenticated, user, clinic, pathname, router, activeRole]);
 
   // Show loading state while checking permissions
   if (isLoading) {
-    return (
+    return fallback || (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
@@ -73,25 +50,23 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
     );
   }
 
+  // Show error state if there's an authentication error
+  if (error && !isAuthenticated) {
+    return fallback || (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-destructive">Terjadi kesalahan autentikasi</p>
+          <button 
+            onClick={() => router.push('/login')}
+            className="mt-2 text-primary hover:underline"
+          >
+            Kembali ke halaman login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // User has access, render children
   return <>{children}</>;
-};
-
-// HOC for protecting specific routes
-export const withRouteGuard = <P extends object>(
-  Component: React.ComponentType<P>,
-  fallback?: React.ReactNode
-) => {
-  const WrappedComponent: React.FC<P> = (props) => {
-    return (
-      <RouteGuard fallback={fallback}>
-        <Component {...props} />
-      </RouteGuard>
-    );
-  };
-
-  WrappedComponent.displayName = `withRouteGuard(${Component.displayName || Component.name})`;
-  
-  return WrappedComponent;
 };

@@ -1,4 +1,4 @@
-import { User, UserRole } from '@/types/auth';
+import { User } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
 import { RouteConfig } from '@/types/navigation';
 
@@ -9,13 +9,20 @@ export const routeConfigs: RouteConfig[] = [
   { path: '/login', allowPublic: true, requiredRoles: [] },
   { path: '/register', allowPublic: true, requiredRoles: [] },
   { path: '/thankyou', allowPublic: true, requiredRoles: [] },
+  
+  // Onboarding route - requires authentication and clinic admin role
+  { 
+    path: '/onboarding', 
+    requiredRoles: [UserRoleEnum.ClinicAdmin]
+  },
+
+  // Authenticated routes (require login but no specific role)
 
 
   // Portal routes - Clinic Admin only
   { 
     path: '/portal/clinic/manage', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal/clinic'
+    requiredRoles: [UserRoleEnum.ClinicAdmin]
   },
   { 
     path: '/portal/clinic/therapists', 
@@ -55,9 +62,9 @@ export const routeConfigs: RouteConfig[] = [
     redirectTo: '/portal/therapist/clients'
   },
   { 
-    path: '/portal/therapist/therapy/[client-id]', 
+    path: '/portal/therapist/clients/[client-id]', 
     requiredRoles: [UserRoleEnum.Therapist],
-    redirectTo: '/portal/therapist'
+    redirectTo: '/portal/therapist/clients'
   },
   { 
     path: '/portal/therapist/sessions/[session-id]', 
@@ -83,18 +90,15 @@ export const routeConfigs: RouteConfig[] = [
   // Role-specific dashboard routes
   { 
     path: '/portal/admin', 
-    requiredRoles: [UserRoleEnum.Administrator],
-    redirectTo: '/portal'
+    requiredRoles: [UserRoleEnum.Administrator]
   },
   { 
     path: '/portal/clinic', 
-    requiredRoles: [UserRoleEnum.ClinicAdmin],
-    redirectTo: '/portal'
+    requiredRoles: [UserRoleEnum.ClinicAdmin]
   },
   { 
     path: '/portal/therapist', 
-    requiredRoles: [UserRoleEnum.Therapist],
-    redirectTo: '/portal'
+    requiredRoles: [UserRoleEnum.Therapist]
   },
 
   // Admin routes
@@ -118,20 +122,20 @@ export const routeConfigs: RouteConfig[] = [
 ];
 
 // Check if user has required role
-export const hasRequiredRole = (user: User | null, requiredRoles: UserRole[]): boolean => {
+export const hasRequiredRole = (user: User | null, requiredRoles: string[]): boolean => {
   if (!user || !user.roles) return false;
   if (requiredRoles.length === 0) return true; // No roles required
 
   // Normalize legacy roles in case persisted data uses old strings
-  const legacyToEnumMap: Record<string, UserRole> = {
+  const legacyToEnumMap: Record<string, string> = {
     administrator: UserRoleEnum.Administrator,
     clinic_admin: UserRoleEnum.ClinicAdmin,
     therapist: UserRoleEnum.Therapist,
-  } as const as Record<string, UserRole>;
+  };
 
-  const normalizedUserRoles: UserRole[] = user.roles.map((role) => {
+  const normalizedUserRoles: string[] = user.roles.map((role) => {
     const key = String(role).toLowerCase();
-    return legacyToEnumMap[key] ?? (role as UserRole);
+    return legacyToEnumMap[key] ?? role;
   });
 
   // Check if user has any of the required roles
@@ -202,7 +206,8 @@ export const getDefaultRouteForUser = (user: User | null): string => {
     return '/login';
   }
 
-  // All authenticated users now go to the unified portal page
+
+  // All authenticated users with clinics go to the unified portal page
   return '/portal';
 };
 

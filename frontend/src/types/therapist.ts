@@ -1,4 +1,5 @@
-import { EmploymentTypeEnum, TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum, TherapistStatusEnum } from './enums';
+import { TherapistAssignmentStatusEnum, TherapistLicenseTypeEnum } from './enums';
+import { UserStatusEnum } from './status';
 
 export interface TherapistSpecialization {
   id: string;
@@ -47,27 +48,25 @@ export interface TherapistContact {
 export interface Therapist {
   id: string;
   clinicId: string;
-  fullName: string; // Changed from 'name' to match API usage
+  clinicName: string;
+  userId: string;
   email: string;
-  phone: string;
-  avatar?: string;
+  name: string;
+  phone?: string;
+  avatarUrl?: string;
   
   // Professional Info
   licenseNumber: string;
   licenseType: EnumValue<typeof TherapistLicenseTypeEnum>;
-  specializations: string[];
-  education: TherapistEducation[];
-  certifications: TherapistCertification[];
-  yearsOfExperience: number;
+  education?: string;
+  certifications?: string;
   
   // Status & Availability
-  status: EnumValue<typeof TherapistStatusEnum>;
-  employmentType: EnumValue<typeof EmploymentTypeEnum>;
+  status: UserStatusEnum; // Unified user status (replaces both therapist.status and user.isActive)
   joinDate: string;
   
   // Assignment Info
   assignedClients: string[]; // Client IDs
-  maxClients: number;
   currentLoad: number; // Current number of active clients
   
   // Schedule
@@ -76,11 +75,7 @@ export interface Therapist {
   
   // Settings
   preferences: {
-    sessionDuration: number; // in minutes
-    breakBetweenSessions: number; // in minutes
-    maxSessionsPerDay: number;
     languages: string[];
-    workingDays: number[]; // 0-6 (Sunday-Saturday)
   };
     
   // Admin Notes
@@ -93,28 +88,25 @@ export interface Therapist {
 }
 
 export interface TherapistFormData {
-  fullName: string; // Changed from 'name' to match Therapist interface
+  fullName: string; // This will map to profile.name
   email: string;
   phone: string;
+  avatarUrl?: string;
   licenseNumber: string;
   licenseType: Therapist['licenseType'];
-  specializations: string[];
-  yearsOfExperience: number;
-  employmentType: Therapist['employmentType'];
-  maxClients: number;
-  education: TherapistEducation[];
-  certifications: Omit<TherapistCertification, 'id' | 'status'>[];
+  timezone?: string;
+  adminNotes?: string;
+  education?: string;
+  certifications?: string;
   preferences: Therapist['preferences'];
 }
 
 export interface TherapistFilters {
   status?: Therapist['status'];
-  specializations?: string[];
-  employmentType?: Therapist['employmentType'];
   licenseType?: Therapist['licenseType'];
   search?: string; // Added 'search' field that API expects
   searchQuery?: string; // Keep for backward compatibility
-  maxLoad?: number;
+  hasAvailableCapacity?: boolean;
   sortBy?: 'name' | 'joinDate' | 'clientCount';
   sortOrder?: 'asc' | 'desc';
 }
@@ -192,18 +184,11 @@ export const LICENSE_TYPES = [
   { value: 'hypnotherapist', label: 'Hipnoterapis' }
 ] as const;
 
-export const EMPLOYMENT_TYPES = [
-  { value: 'full_time', label: 'Penuh Waktu' },
-  { value: 'part_time', label: 'Paruh Waktu' },
-  { value: 'contract', label: 'Kontrak' },
-  { value: 'freelance', label: 'Freelance' }
-] as const;
-
 export const THERAPIST_STATUS = [
-  { value: 'active', label: 'Aktif', color: 'green' },
-  { value: 'inactive', label: 'Tidak Aktif', color: 'gray' },
-  { value: 'on_leave', label: 'Cuti', color: 'yellow' },
-  { value: 'suspended', label: 'Suspended', color: 'red' }
+  { value: UserStatusEnum.PENDING, label: 'Menunggu', color: 'yellow' },
+  { value: UserStatusEnum.ACTIVE, label: 'Aktif', color: 'green' },
+  { value: UserStatusEnum.INACTIVE, label: 'Tidak Aktif', color: 'red' },
+  { value: UserStatusEnum.DELETED, label: 'Dihapus', color: 'gray' },
 ] as const;
 
 // Therapist Registration Types

@@ -9,11 +9,15 @@ export enum UserRoleEnum {
   Therapist = 'therapist',
 }
 
-export enum AuthSubscriptionTierEnum {
-  Alpha = 'alpha',
+export enum SubscriptionTierEnum {
   Beta = 'beta',
-  Gamma = 'gamma',
+  Alpha = 'alpha',
+  Theta = 'theta',
 }
+
+// Aliases for backward compatibility
+export const AuthSubscriptionTierEnum = SubscriptionTierEnum;
+export const ClinicSubscriptionTierEnum = SubscriptionTierEnum;
 
 // Client
 export enum ClientGenderEnum {
@@ -151,12 +155,12 @@ export enum ClinicDocumentStatusEnum {
   Rejected = 'rejected',
 }
 
-export enum ClinicSubscriptionTierEnum {
-  Alpha = 'alpha',
-  Beta = 'beta',
-  Theta = 'theta',
-  Delta = 'delta',
-}
+// Subscription tier labels for display purposes
+export const SubscriptionTierLabels: Record<SubscriptionTierEnum, string> = {
+  [SubscriptionTierEnum.Beta]: 'Beta',
+  [SubscriptionTierEnum.Alpha]: 'Alpha',
+  [SubscriptionTierEnum.Theta]: 'Theta',
+};
 
 export enum ClinicLanguageEnum {
   Indonesian = 'id',
@@ -171,13 +175,7 @@ export enum TherapistLicenseTypeEnum {
   Hypnotherapist = 'hypnotherapist',
 }
 
-export enum TherapistStatusEnum {
-  Active = 'active',
-  Inactive = 'inactive',
-  OnLeave = 'on_leave',
-  Suspended = 'suspended',
-  PendingSetup = 'pending_setup',
-}
+// TherapistStatusEnum moved to unified UserStatusEnum in ./status.ts
 
 export enum EmploymentTypeEnum {
   FullTime = 'full_time',
@@ -212,17 +210,16 @@ export enum SortOrderEnum {
 
 // Registration
 export enum RegistrationStepEnum {
-  Clinic = 'clinic',
-  Verification = 'verification',
-  Summary = 'summary',
-  Payment = 'payment',
+  EmailCheck = 'email_check',
+  UserForm = 'user_form',
+  EmailVerification = 'email_verification',
   Complete = 'complete',
 }
 
-export enum PaymentMethodEnum {
-  BankTransfer = 'bank_transfer',
-  CreditCard = 'credit_card',
-  Ewallet = 'ewallet',
+
+export enum BillingCycleEnum {
+  Monthly = 'monthly',
+  Yearly = 'yearly',
 }
 
 // Therapy
@@ -294,13 +291,7 @@ export enum ConsultationFormTypeEnum {
   Minor = 'minor',
 }
 
-// Clinic status enum values
-export enum ClinicStatusEnum {
-  Active = 'active',
-  Suspended = 'suspended',
-  Pending = 'pending',
-  Inactive = 'inactive',
-}
+// ClinicStatusEnum moved to unified ClinicStatusEnum in ./status.ts
 
 
 

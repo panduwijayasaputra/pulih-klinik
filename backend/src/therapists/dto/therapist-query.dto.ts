@@ -8,11 +8,9 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import {
-  LicenseType,
-  TherapistStatus,
-  EmploymentType,
-} from '../../database/entities/therapist.entity';
+import { Transform } from 'class-transformer';
+import { LicenseType } from '../../database/entities/therapist.entity';
+import { UserStatus } from 'src/common/enums';
 
 export class TherapistQueryDto {
   @ApiProperty({
@@ -22,6 +20,7 @@ export class TherapistQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Page must be an integer' })
   @Min(1, { message: 'Page must be at least 1' })
   page?: number = 1;
@@ -34,6 +33,7 @@ export class TherapistQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Limit must be an integer' })
   @Min(1, { message: 'Limit must be at least 1' })
   @Max(100, { message: 'Limit cannot exceed 100' })
@@ -50,16 +50,16 @@ export class TherapistQueryDto {
 
   @ApiProperty({
     description: 'Filter by therapist status',
-    enum: TherapistStatus,
-    example: TherapistStatus.ACTIVE,
+    enum: UserStatus,
+    example: UserStatus.ACTIVE,
     required: false,
   })
   @IsOptional()
-  @IsEnum(TherapistStatus, {
+  @IsEnum(UserStatus, {
     message:
-      'Status must be one of: active, inactive, on_leave, suspended, pending_setup',
+      'Status must be one of: active, inactive, on_leave, suspended, pending_setup, pending_verification, disabled, deleted',
   })
-  status?: TherapistStatus;
+  status?: UserStatus;
 
   @ApiProperty({
     description: 'Filter by license type',
@@ -75,28 +75,6 @@ export class TherapistQueryDto {
   licenseType?: LicenseType;
 
   @ApiProperty({
-    description: 'Filter by employment type',
-    enum: EmploymentType,
-    example: EmploymentType.FULL_TIME,
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(EmploymentType, {
-    message:
-      'Employment type must be one of: full_time, part_time, contract, freelance',
-  })
-  employmentType?: EmploymentType;
-
-  @ApiProperty({
-    description: 'Filter by specialization area',
-    example: 'anxiety',
-    required: false,
-  })
-  @IsOptional()
-  @IsString({ message: 'Specialization must be a string' })
-  specialization?: string;
-
-  @ApiProperty({
     description: 'Filter by minimum years of experience',
     example: 3,
     minimum: 0,
@@ -104,6 +82,7 @@ export class TherapistQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Min experience must be an integer' })
   @Min(0, { message: 'Min experience cannot be negative' })
   @Max(50, { message: 'Min experience cannot exceed 50' })
@@ -115,30 +94,22 @@ export class TherapistQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true')
   @IsBoolean({ message: 'Available capacity must be a boolean' })
   hasAvailableCapacity?: boolean;
 
   @ApiProperty({
     description: 'Sort field',
-    enum: [
-      'fullName',
-      'joinDate',
-      'yearsOfExperience',
-      'currentLoad',
-      'status',
-    ],
-    example: 'fullName',
+    enum: ['name', 'joinDate', 'yearsOfExperience', 'currentLoad', 'status'],
+    example: 'name',
     required: false,
   })
   @IsOptional()
-  @IsEnum(
-    ['fullName', 'joinDate', 'yearsOfExperience', 'currentLoad', 'status'],
-    {
-      message:
-        'Sort by must be one of: fullName, joinDate, yearsOfExperience, currentLoad, status',
-    },
-  )
-  sortBy?: string = 'fullName';
+  @IsEnum(['name', 'joinDate', 'yearsOfExperience', 'currentLoad', 'status'], {
+    message:
+      'Sort by must be one of: name, joinDate, yearsOfExperience, currentLoad, status',
+  })
+  sortBy?: string = 'name';
 
   @ApiProperty({
     description: 'Sort direction',

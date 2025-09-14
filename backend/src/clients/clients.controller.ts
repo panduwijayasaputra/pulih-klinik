@@ -11,6 +11,7 @@ import {
   Request,
   HttpStatus,
   ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -33,7 +34,6 @@ import {
   RequireAdminOrClinicAdmin,
   RequireAuth,
 } from '../auth/decorators/require-role.decorator';
-import { ClientStatusTransition } from '../database/entities/client-status-transition.entity';
 
 @ApiTags('Clients')
 @ApiBearerAuth()
@@ -77,19 +77,18 @@ export class ClientsController {
 
     // Get clinic ID from user's role context
     let clinicId: string;
-    if (currentUser.isAdmin) {
+    if (currentUser.roles.includes('administrator')) {
       // System admin needs to specify clinic in body or we use the first available clinic
       // For now, we'll require clinic ID to be passed differently for admins
       throw new Error('System admin must specify target clinic');
     } else {
       // Clinic admin can only create clients in their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.clientsService.createClient(
@@ -169,12 +168,6 @@ export class ClientsController {
     required: false,
     enum: ['Single', 'Married', 'Widowed'],
     description: 'Filter by marital status',
-  })
-  @ApiQuery({
-    name: 'province',
-    required: false,
-    type: 'string',
-    description: 'Filter by province',
   })
   @ApiQuery({
     name: 'minAge',
@@ -303,19 +296,20 @@ export class ClientsController {
     // Determine clinic scope based on user role
     let clinicId: string | undefined;
 
-    if (currentUser.isAdmin) {
+    if (currentUser.roles.includes('administrator')) {
       // System admin can specify clinic or see all
       clinicId = query.clinicId;
     } else {
       // Non-admin users are restricted to their clinic
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+      if (!currentUser.clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = userRole.clinicId;
+      clinicId = currentUser.clinicId;
 
       // Therapists can only see their assigned clients
-      if (userRole.role === 'therapist') {
+      if (currentUser.roles.includes('therapist')) {
         // TODO: Implement therapist profile lookup
         // For now, therapists see all clients in their clinic
         // query.therapistId = therapistProfile.id;
@@ -344,7 +338,6 @@ export class ClientsController {
   @ApiQuery({ name: 'religion', required: false, type: 'string' })
   @ApiQuery({ name: 'education', required: false, type: 'string' })
   @ApiQuery({ name: 'maritalStatus', required: false, type: 'string' })
-  @ApiQuery({ name: 'province', required: false, type: 'string' })
   @ApiQuery({ name: 'minAge', required: false, type: 'number' })
   @ApiQuery({ name: 'maxAge', required: false, type: 'number' })
   @ApiQuery({ name: 'isMinor', required: false, type: 'boolean' })
@@ -401,13 +394,14 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
+      if (!currentUser.clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = userRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
     // Admin can access any client (clinicId remains undefined)
 
@@ -454,15 +448,14 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
     // Admin can update any client (clinicId remains undefined)
 
@@ -513,15 +506,14 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.clientsService.updateClientStatus(
@@ -572,15 +564,14 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.clientsService.updateClientProgress(
@@ -634,60 +625,16 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const clinicRole = currentUser.roles.find(
-        (role: any) => role.role === 'clinic_admin',
-      );
-      if (!clinicRole?.clinicId) {
-        throw new Error('Clinic admin role without clinic ID');
+      if (!currentUser.clinicId) {
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
-      clinicId = clinicRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
 
     return this.clientsService.deleteClient(clientId, clinicId);
-  }
-
-  @Get(':id/status-history')
-  @RequireAuth()
-  @ApiOperation({
-    summary: 'Get client status transition history',
-    description:
-      'Get the complete history of status changes for a client with timestamps and reasons.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Client ID',
-    type: 'string',
-    format: 'uuid',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Status history retrieved successfully',
-    type: [Object],
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Client not found',
-  })
-  async getClientStatusHistory(
-    @Param('id', ParseUUIDPipe) clientId: string,
-    @Request() req: any,
-  ): Promise<ClientStatusTransition[]> {
-    const currentUser = req.user;
-
-    // Determine clinic scope for access control
-    let clinicId: string | undefined;
-
-    if (!currentUser.isAdmin) {
-      // Non-admin users are restricted to their clinic
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
-        throw new Error('User not associated with any clinic');
-      }
-      clinicId = userRole.clinicId;
-    }
-
-    return this.clientsService.getClientStatusHistory(clientId, clinicId);
   }
 }
