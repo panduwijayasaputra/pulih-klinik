@@ -57,6 +57,24 @@ export class Therapist {
   @Property({ type: 'text', nullable: true })
   certifications?: string;
 
+  // Session scheduling preferences
+  @Property({
+    type: 'integer',
+    default: 15,
+    comment: 'Break between sessions in minutes',
+  })
+  breakBetweenSessions: number = 15;
+
+  @Property({ type: 'integer', default: 8 })
+  maxSessionsPerDay: number = 8;
+
+  @Property({
+    type: 'json',
+    defaultRaw: "'[1,2,3,4,5]'",
+    comment: 'Working days (1=Monday to 7=Sunday)',
+  })
+  workingDays: number[] = [1, 2, 3, 4, 5];
+
   // Admin notes
   @Property({ type: 'text', nullable: true })
   adminNotes?: string;
