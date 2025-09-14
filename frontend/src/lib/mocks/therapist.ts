@@ -99,7 +99,6 @@ export const mockTherapists: Therapist[] = [
     
     // Assignment Info
     assignedClients: ['client-001', 'client-002', 'client-003'],
-    maxClients: 15,
     currentLoad: 12,
     
     // Schedule
@@ -149,7 +148,6 @@ export const mockTherapists: Therapist[] = [
     
     // Assignment Info
     assignedClients: ['client-004', 'client-005'],
-    maxClients: 10,
     currentLoad: 8,
     
     // Schedule
@@ -197,7 +195,6 @@ export const mockTherapists: Therapist[] = [
     
     // Assignment Info
     assignedClients: [],
-    maxClients: 12,
     currentLoad: 0,
     
     // Schedule
@@ -246,7 +243,6 @@ export const mockTherapists: Therapist[] = [
     
     // Assignment Info
     assignedClients: ['client-006'],
-    maxClients: 8,
     currentLoad: 1,
     
     // Schedule
@@ -291,7 +287,6 @@ export const mockTherapists: Therapist[] = [
     
     // Assignment Info
     assignedClients: ['client-007', 'client-008', 'client-009', 'client-010'],
-    maxClients: 18,
     currentLoad: 15,
     
     // Schedule

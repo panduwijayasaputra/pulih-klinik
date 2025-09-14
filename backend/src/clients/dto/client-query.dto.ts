@@ -9,6 +9,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import {
   Gender,
   Religion,
@@ -25,6 +26,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Page must be an integer' })
   @Min(1, { message: 'Page must be at least 1' })
   page?: number = 1;
@@ -37,6 +39,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Limit must be an integer' })
   @Min(1, { message: 'Limit must be at least 1' })
   @Max(100, { message: 'Limit cannot exceed 100' })
@@ -129,6 +132,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Min age must be an integer' })
   @Min(0, { message: 'Min age cannot be negative' })
   @Max(150, { message: 'Min age cannot exceed 150' })
@@ -142,6 +146,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Max age must be an integer' })
   @Min(0, { message: 'Max age cannot be negative' })
   @Max(150, { message: 'Max age cannot exceed 150' })
@@ -153,6 +158,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean({ message: 'Is minor must be a boolean' })
   isMinor?: boolean;
 
@@ -162,6 +168,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean({ message: 'First visit must be a boolean' })
   firstVisit?: boolean;
 
@@ -173,6 +180,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Min progress must be an integer' })
   @Min(0, { message: 'Min progress cannot be negative' })
   @Max(100, { message: 'Min progress cannot exceed 100' })
@@ -186,6 +194,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Max progress must be an integer' })
   @Min(0, { message: 'Max progress cannot be negative' })
   @Max(100, { message: 'Max progress cannot exceed 100' })
@@ -198,6 +207,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt({ message: 'Min sessions must be an integer' })
   @Min(0, { message: 'Min sessions cannot be negative' })
   minSessions?: number;
@@ -259,6 +269,7 @@ export class ClientQueryDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean({ message: 'Has emergency contact must be a boolean' })
   hasEmergencyContact?: boolean;
 

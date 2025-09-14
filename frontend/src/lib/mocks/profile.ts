@@ -105,5 +105,20 @@ export const mockProfiles: Profile[] = [
     specializations: 'System Administration, Database Management, Security, Healthcare IT Integration',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 'profile-008',
+    userId: '27e08b9c-9ae5-449a-8a42-66441db393a4',
+    name: 'Admin Klinik Sehat',
+    email: 'admin@kliniksehat.com',
+    phone: '+62-813-9876-5432',
+    address: 'Jl. Klinik Sehat Sejahtera No. 123, Jakarta Selatan, DKI Jakarta',
+    bio: 'Administrator klinik dengan pengalaman dalam manajemen fasilitas kesehatan mental. Fokus pada pengembangan sistem dan peningkatan kualitas layanan.',
+    avatar: '',
+    licenseNumber: 'CERT-HEALTH-002',
+    experience: '5',
+    specializations: 'Healthcare Management, Quality Assurance, Patient Care, Facility Operations',
+    createdAt: '2024-01-10T09:15:00Z',
+    updatedAt: '2024-01-10T09:15:00Z'
   }
 ];

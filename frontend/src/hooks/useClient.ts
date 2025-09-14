@@ -121,7 +121,7 @@ export const useClient = () => {
     const originalClient = { ...client };
     const optimisticClient = {
       ...client,
-      assignedTherapist: therapistId,
+      assignedTherapistId: therapistId,
       status: ClientStatusEnum.Assigned,
     };
     updateClient(clientId, optimisticClient);
@@ -129,7 +129,8 @@ export const useClient = () => {
     try {
       const res = await ClientAPI.assignClientToTherapist(clientId, therapistId);
       if (res.success) {
-        // Keep optimistic update if successful
+        // Refresh client data to get updated status from backend
+        await loadClients();
         return;
       } else {
         // Rollback on error
@@ -141,7 +142,7 @@ export const useClient = () => {
       updateClient(clientId, originalClient);
       throw error;
     }
-  }, [getClientById, updateClient]);
+  }, [getClientById, updateClient, loadClients]);
 
   const unassignTherapist = useCallback(async (clientId: string): Promise<void> => {
     const client = getClientById(clientId);
@@ -151,7 +152,8 @@ export const useClient = () => {
     const originalClient = { ...client };
     const optimisticClient = {
       ...client,
-      assignedTherapist: undefined,
+      assignedTherapistId: undefined,
+      assignedTherapistName: undefined,
       status: ClientStatusEnum.New,
     };
     updateClient(clientId, optimisticClient);
@@ -159,7 +161,8 @@ export const useClient = () => {
     try {
       const res = await ClientAPI.unassignClient(clientId);
       if (res.success) {
-        // Keep optimistic update if successful
+        // Refresh client data to get updated status from backend
+        await loadClients();
         return;
       } else {
         // Rollback on error
@@ -171,7 +174,7 @@ export const useClient = () => {
       updateClient(clientId, originalClient);
       throw error;
     }
-  }, [getClientById, updateClient]);
+  }, [getClientById, updateClient, loadClients]);
 
   return {
     // state

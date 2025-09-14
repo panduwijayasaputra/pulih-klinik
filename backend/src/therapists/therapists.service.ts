@@ -12,7 +12,7 @@ import { Therapist } from '../database/entities/therapist.entity';
 import { User } from '../database/entities/user.entity';
 import { UserProfile } from '../database/entities/user-profile.entity';
 import { Clinic } from '../database/entities/clinic.entity';
-import { Client } from '../database/entities/client.entity';
+import { Client, ClientStatus } from '../database/entities/client.entity';
 import {
   ClientTherapistAssignment,
   AssignmentStatus,
@@ -389,6 +389,105 @@ export class TherapistsService {
   }
 
   /**
+   * Create therapist record for existing user
+   */
+  async createTherapistForExistingUser(
+    clinicId: string,
+    userId: string,
+    licenseNumber: string,
+    licenseType: string,
+    joinDate?: string,
+    education?: string,
+    certifications?: string,
+    adminNotes?: string,
+  ): Promise<TherapistResponse> {
+    // Check if user exists
+    const user = await this.em.findOne(
+      User,
+      { id: userId },
+      {
+        populate: ['profile', 'roles', 'therapist'],
+      },
+    );
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if user already has a therapist record
+    const existingTherapist = await this.em.findOne(Therapist, {
+      user: userId,
+    });
+    if (existingTherapist) {
+      throw new ConflictException('User already has a therapist record');
+    }
+
+    // Check if user has therapist role OR clinic admin role (for self-creation)
+    const hasTherapistRole = user.roles
+      .getItems()
+      .some((role) => role.role === UserRole.THERAPIST);
+    const hasClinicAdminRole = user.roles
+      .getItems()
+      .some((role) => role.role === UserRole.CLINIC_ADMIN);
+
+    if (!hasTherapistRole && !hasClinicAdminRole) {
+      throw new BadRequestException(
+        'User must have therapist role or clinic admin role to create therapist profile',
+      );
+    }
+
+    // Get clinic
+    const clinic = await this.em.findOne(Clinic, { id: clinicId });
+    if (!clinic) {
+      throw new NotFoundException('Clinic not found');
+    }
+
+    // Check if license number already exists in this clinic
+    const existingLicense = await this.em.findOne(Therapist, {
+      clinic: clinicId,
+      licenseNumber,
+    });
+    if (existingLicense) {
+      throw new ConflictException(
+        'License number already exists in this clinic',
+      );
+    }
+
+    // Create therapist record
+    const therapist = new Therapist();
+    therapist.clinic = clinic;
+    therapist.user = user;
+    therapist.licenseNumber = licenseNumber;
+    therapist.licenseType = licenseType as any;
+    therapist.joinDate = joinDate ? new Date(joinDate) : new Date();
+    therapist.timezone = 'Asia/Jakarta';
+    therapist.education = education;
+    therapist.certifications = certifications;
+    therapist.adminNotes = adminNotes;
+
+    await this.em.persistAndFlush(therapist);
+
+    // If user doesn't have therapist role yet, add it (for clinic admins creating their own profile)
+    if (!hasTherapistRole && hasClinicAdminRole) {
+      const therapistRole = new UserRoleEntity();
+      therapistRole.role = UserRole.THERAPIST;
+      therapistRole.user = user;
+      therapistRole.userId = user.id;
+
+      await this.em.persistAndFlush(therapistRole);
+    }
+
+    const response = this.mapToResponse(therapist);
+
+    // Add a flag to indicate that user roles have changed and frontend should refresh
+    if (!hasTherapistRole && hasClinicAdminRole) {
+      (response as any).rolesChanged = true;
+    }
+
+    return response;
+  }
+
+  /**
    * Get therapist by ID with clinic access validation
    */
   async getTherapistById(
@@ -752,7 +851,13 @@ export class TherapistsService {
     notes?: string,
   ): Promise<ClientTherapistAssignment> {
     // Validate therapist exists and has capacity
-    const therapist = await this.em.findOne(Therapist, { id: therapistId });
+    const therapist = await this.em.findOne(
+      Therapist,
+      { id: therapistId },
+      {
+        populate: ['user'],
+      },
+    );
     if (!therapist) {
       throw new NotFoundException('Therapist not found');
     }
@@ -798,6 +903,11 @@ export class TherapistsService {
     assignment.notes = notes;
     assignment.status = AssignmentStatus.ACTIVE;
 
+    // Update client status to assigned when assigned to therapist
+    if (client.status === ClientStatus.NEW) {
+      client.status = ClientStatus.ASSIGNED;
+    }
+
     await this.em.persistAndFlush(assignment);
 
     // Update therapist's current load
@@ -839,9 +949,15 @@ export class TherapistsService {
     }
 
     // Validate new therapist
-    const newTherapist = await this.em.findOne(Therapist, {
-      id: newTherapistId,
-    });
+    const newTherapist = await this.em.findOne(
+      Therapist,
+      {
+        id: newTherapistId,
+      },
+      {
+        populate: ['user'],
+      },
+    );
     if (!newTherapist) {
       throw new NotFoundException('New therapist not found');
     }
@@ -872,6 +988,11 @@ export class TherapistsService {
       notes ||
       `Transferred from therapist ${currentAssignment.therapist.user.profile?.name || 'Unknown'}: ${transferReason}`;
     newAssignment.status = AssignmentStatus.ACTIVE;
+
+    // Update client status when transferred to new therapist
+    if (currentAssignment.client.status === ClientStatus.THERAPY) {
+      currentAssignment.client.status = ClientStatus.ASSIGNED;
+    }
 
     await this.em.persistAndFlush([currentAssignment, newAssignment]);
 
@@ -920,6 +1041,14 @@ export class TherapistsService {
         (assignment.notes || '') + `\n[Completion] ${completionNotes}`;
     }
 
+    // Update client status to done when assignment is completed
+    if (
+      assignment.client.status === ClientStatus.THERAPY ||
+      assignment.client.status === ClientStatus.ASSIGNED
+    ) {
+      assignment.client.status = ClientStatus.DONE;
+    }
+
     await this.em.persistAndFlush(assignment);
 
     // Update therapist's current load
@@ -962,6 +1091,14 @@ export class TherapistsService {
     assignment.status = AssignmentStatus.CANCELLED;
     assignment.endDate = new Date();
     assignment.transferReason = cancellationReason;
+
+    // Update client status back to new when assignment is cancelled
+    if (
+      assignment.client.status === ClientStatus.ASSIGNED ||
+      assignment.client.status === ClientStatus.THERAPY
+    ) {
+      assignment.client.status = ClientStatus.NEW;
+    }
 
     await this.em.persistAndFlush(assignment);
 

@@ -27,6 +27,7 @@ export interface Client {
   firstVisit: boolean;
   previousVisitDetails?: string;
   assignedTherapist?: string | undefined;
+  assignedTherapistId?: string | undefined;
   assignedTherapistName?: string | undefined;
   status: EnumValue<typeof ClientStatusEnum>;
   joinDate: string;
@@ -56,6 +57,8 @@ export interface Client {
   guardianMaritalStatus?: EnumValue<typeof ClientGuardianMaritalStatusEnum>;
   guardianLegalCustody?: boolean;
   guardianCustodyDocsAttached?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ClientFilters {
@@ -68,6 +71,9 @@ export interface ClientFilters {
   };
   primaryIssue?: string;
   province?: string;
+  gender?: Client['gender'];
+  religion?: Client['religion'];
+  maritalStatus?: Client['maritalStatus'];
 }
 
 export interface ClientFormData {
@@ -107,6 +113,7 @@ export interface ClientFormData {
   guardianMaritalStatus?: Client['guardianMaritalStatus'];
   guardianLegalCustody?: boolean;
   guardianCustodyDocsAttached?: boolean;
+  primaryIssue?: string;
 }
 
 export interface UsageMetrics {

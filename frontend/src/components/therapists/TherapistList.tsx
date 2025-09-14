@@ -13,6 +13,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   EnvelopeIcon,
+  ExclamationTriangleIcon,
   EyeIcon,
   PencilIcon,
   PlusIcon,
@@ -202,6 +203,7 @@ export const TherapistList: React.FC = () => {
   };
 
   const handleTherapistFormSuccess = async (data: any) => {
+    console.log('Therapist form success:', data);
     try {
       if (therapistFormMode === 'create') {
         // Note: In a real implementation, this would be handled by the API
@@ -209,7 +211,7 @@ export const TherapistList: React.FC = () => {
         addToast({
           type: 'success',
           title: 'Therapist Berhasil Ditambahkan',
-          message: `Therapist ${data.name} telah berhasil ditambahkan ke sistem.`,
+          message: `Therapist ${data.fullName} telah berhasil ditambahkan ke sistem.`,
         });
         // Refresh the list to show the new therapist
         refreshTherapists();
@@ -218,7 +220,7 @@ export const TherapistList: React.FC = () => {
         addToast({
           type: 'success',
           title: 'Therapist Berhasil Diperbarui',
-          message: `Data therapist ${data.name} telah berhasil diperbarui.`,
+          message: `Data therapist ${data.fullName} telah berhasil diperbarui.`,
         });
         // Close the form modal
         setShowTherapistFormModal(false);
@@ -345,6 +347,44 @@ export const TherapistList: React.FC = () => {
         type: 'error',
         title: 'Therapist Not Found',
         message: 'The selected therapist could not be found. Please refresh the page and try again.'
+      });
+      return;
+    }
+
+    // Check if therapist has active clients when trying to set to inactive
+    if (newStatus === 'inactive' && therapist.currentLoad > 0) {
+      openDialog({
+        variant: 'warning',
+        title: 'Tidak Dapat Menonaktifkan Therapist',
+        description: `Therapist ${therapist.name} memiliki ${therapist.currentLoad} klien aktif.`,
+        confirmText: 'Tutup',
+        cancelText: '',
+        children: (
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <ExclamationTriangleIcon className="w-5 h-5 text-amber-600" />
+                <span className="text-sm font-medium text-amber-800">Aksi Tidak Dapat Dilakukan</span>
+              </div>
+              <div className="text-sm text-amber-700 space-y-2">
+                <p>
+                  <strong>Therapist {therapist.name}</strong> saat ini memiliki <strong>{therapist.currentLoad} klien aktif</strong> yang sedang dalam proses terapi.
+                </p>
+                <p>
+                  Untuk menonaktifkan therapist ini, Anda harus:
+                </p>
+                <ul className="list-disc list-inside ml-4 space-y-1">
+                  <li>Memindahkan semua klien aktif ke therapist lain</li>
+                  <li>Atau menyelesaikan semua sesi terapi yang sedang berlangsung</li>
+                </ul>
+                <p className="mt-3 font-medium">
+                  Silakan kelola penugasan klien terlebih dahulu sebelum menonaktifkan therapist.
+                </p>
+              </div>
+            </div>
+          </div>
+        ),
+        onConfirm: () => { } // Just close the dialog
       });
       return;
     }
@@ -482,6 +522,15 @@ export const TherapistList: React.FC = () => {
       ),
     },
     {
+      key: 'activeClients',
+      header: 'Klien Aktif',
+      render: (therapist) => (
+        <span className="text-sm font-medium text-gray-900">
+          {therapist.currentLoad || 0}
+        </span>
+      ),
+    },
+    {
       key: 'status',
       header: 'Status',
       render: (therapist) => getStatusBadge(therapist.status),
@@ -525,7 +574,7 @@ export const TherapistList: React.FC = () => {
         if (resendStatus.remainingCooldownMs && resendStatus.remainingCooldownMs > 0) {
           return `Kirim Email Setup (${formatCountdown(resendStatus.remainingCooldownMs)})`;
         }
-        
+
         const nextAttempt = resendStatus.attempts + 1;
         return `Kirim Email Setup (${nextAttempt}/${resendStatus.maxAttempts})`;
       },

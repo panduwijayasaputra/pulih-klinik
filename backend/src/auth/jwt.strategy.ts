@@ -58,13 +58,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    // Validate that JWT roles still match current database roles
+    // Validate that JWT roles are still valid (database can have additional roles)
     const currentRoles = user.roles.map((role) => role.role).sort();
     const jwtRoles = roles.sort();
 
-    if (JSON.stringify(currentRoles) !== JSON.stringify(jwtRoles)) {
+    // Check if JWT roles are a subset of current database roles
+    // This allows for role additions (like adding therapist role) without requiring re-login
+    const jwtRolesValid = jwtRoles.every(jwtRole => currentRoles.includes(jwtRole as any));
+    
+    if (!jwtRolesValid) {
       throw new UnauthorizedException(
-        'User roles have changed, please re-login',
+        'User roles have been removed, please re-login',
       );
     }
 

@@ -106,7 +106,6 @@ export interface TherapistFilters {
   licenseType?: Therapist['licenseType'];
   search?: string; // Added 'search' field that API expects
   searchQuery?: string; // Keep for backward compatibility
-  maxLoad?: number;
   hasAvailableCapacity?: boolean;
   sortBy?: 'name' | 'joinDate' | 'clientCount';
   sortOrder?: 'asc' | 'desc';

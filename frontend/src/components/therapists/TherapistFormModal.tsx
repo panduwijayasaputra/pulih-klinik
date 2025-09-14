@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,8 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { useAuthStore } from '@/store/auth';
 import { TherapistAPI } from '@/lib/api/therapist';
 import ConfirmationDialog, { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
@@ -31,7 +33,7 @@ import { UserRole } from '@/types/auth';
 const TherapistRegistrationSchema = z.object({
   // Personal Information
   fullName: z.string().min(2, 'Nama minimal 2 karakter'),
-  email: z.string().email('Format email tidak valid'),
+  email: z.string().email('Format email tidak valid').optional().or(z.literal('')),
   phone: phoneValidation,
   avatarUrl: z.string().url('Format URL tidak valid').optional().or(z.literal('')),
 
@@ -73,7 +75,10 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingTherapist, setIsLoadingTherapist] = useState(mode === 'edit');
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const [createOwnTherapist, setCreateOwnTherapist] = useState(false);
+  const [currentTherapistData, setCurrentTherapistData] = useState<any>(null);
+  const { user, checkAuth } = useAuth();
+  const { profile, loading: profileLoading } = useProfile(user?.id);
   const { openDialog, isOpen: dialogIsOpen, config: dialogConfig, closeDialog } = useConfirmationDialog();
   const { addToast } = useToast();
 
@@ -92,10 +97,83 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
 
   const watchedFormData = watch();
 
+  // Check if current user is clinic admin without therapist profile
+  const isClinicAdminWithoutTherapist = useMemo(() => {
+    if (!user?.roles || !user?.id) return false;
+    
+    const hasClinicAdminRole = user.roles.some(role => 
+      role === 'clinic_admin' || role === 'CLINIC_ADMIN'
+    );
+    const hasTherapistRole = user.roles.some(role => 
+      role === 'therapist' || role === 'THERAPIST'
+    );
+    
+    // User is clinic admin but doesn't have therapist role
+    return hasClinicAdminRole && !hasTherapistRole;
+  }, [user?.roles, user?.id]);
+
+  // Prefill form data when creating own therapist profile
+  useEffect(() => {
+    if (createOwnTherapist && isClinicAdminWithoutTherapist && user) {
+      console.log('Prefilling form with profile data:', { 
+        profile, 
+        user, 
+        profileLoading,
+        profilePhone: profile?.phone,
+        userName: user.name,
+        userEmail: user.email 
+      });
+      
+      // Prefill form with user's existing data
+      const fullName = profile?.name || user.name || user.email?.split('@')[0] || '';
+      // For phone, we'll use a placeholder since profile is null
+      const phone = profile?.phone || '';
+      const email = user.email || '';
+      
+      console.log('About to set form values:', { fullName, phone, email });
+      
+      // Use setTimeout to ensure the form is ready
+      setTimeout(() => {
+        setValue('fullName', fullName, { shouldValidate: true, shouldDirty: true });
+        setValue('phone', phone, { shouldValidate: true, shouldDirty: true });
+        setValue('email', email, { shouldValidate: true, shouldDirty: true });
+        
+        console.log('Form values set after timeout:', { fullName, phone, email });
+      }, 100);
+      
+      // Set default values for professional fields if not already set
+      if (!watch('licenseNumber')) {
+        setValue('licenseNumber', '', { shouldValidate: false });
+      }
+      if (!watch('education')) {
+        setValue('education', '', { shouldValidate: false });
+      }
+    } else if (!createOwnTherapist && isClinicAdminWithoutTherapist) {
+      // Clear prefilled data when unchecking the checkbox
+      setValue('fullName', '', { shouldValidate: false });
+      setValue('phone', '', { shouldValidate: false });
+      setValue('email', '', { shouldValidate: false });
+    }
+  }, [createOwnTherapist, isClinicAdminWithoutTherapist, user, profile, profileLoading, setValue, watch]);
+
+  // Additional effect to handle profile loading after checkbox is checked
+  useEffect(() => {
+    if (createOwnTherapist && isClinicAdminWithoutTherapist && profile && !profileLoading) {
+      console.log('Profile loaded, updating phone field:', profile.phone);
+      if (profile.phone) {
+        setValue('phone', profile.phone, { shouldValidate: true, shouldDirty: true });
+        console.log('Phone field updated with profile phone:', profile.phone);
+      }
+    }
+  }, [profile, profileLoading, createOwnTherapist, isClinicAdminWithoutTherapist, setValue]);
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (open) {
+      // Reset createOwnTherapist state and clear therapist data
+      setCreateOwnTherapist(false);
+      setCurrentTherapistData(null);
+      
       if (mode === 'edit' && therapistId) {
         // Load therapist data for edit mode
         const loadTherapistData = async () => {
@@ -103,6 +181,9 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           try {
             // Fetch fresh therapist data from API
             const therapistData = await TherapistAPI.getRawTherapist(therapistId);
+            
+            // Store therapist data for later use
+            setCurrentTherapistData(therapistData);
             
             // Reset with fetched therapist data
             reset({
@@ -172,13 +253,18 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
       return;
     }
 
-    const titleText = mode === 'edit' ? 'Perbarui Akun Therapist' : 'Buat Akun Therapist';
-    const confirmText = mode === 'edit' ? 'Perbarui Akun' : 'Buat Akun';
+    const isCreatingOwnProfile = createOwnTherapist && isClinicAdminWithoutTherapist;
+    const titleText = mode === 'edit' ? 'Perbarui Akun Therapist' : 
+                     isCreatingOwnProfile ? 'Buat Profil Therapist Saya' : 'Buat Akun Therapist';
+    const confirmText = mode === 'edit' ? 'Perbarui Akun' : 
+                       isCreatingOwnProfile ? 'Buat Profil Saya' : 'Buat Akun';
 
     openDialog({
       title: titleText,
       description: mode === 'edit' 
         ? `Apakah Anda yakin ingin memperbarui data therapist berikut?`
+        : isCreatingOwnProfile
+        ? `Apakah Anda yakin ingin membuat profil therapist untuk diri sendiri dengan data berikut?`
         : `Apakah Anda yakin ingin membuat akun therapist baru dengan data berikut?`,
       confirmText: confirmText,
       cancelText: 'Tinjau Kembali',
@@ -205,6 +291,8 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           <div className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
             {mode === 'edit' 
               ? '✏️ Perubahan akan diterapkan segera setelah dikonfirmasi.'
+              : isCreatingOwnProfile
+              ? '👤 Profil therapist akan dibuat untuk akun Anda. Anda akan dapat ditugaskan sebagai therapist untuk klien.'
               : `📧 Email registrasi akan dikirim ke ${data.email} dengan tautan aman untuk menyelesaikan pengaturan kata sandi.`
             }
           </div>
@@ -246,12 +334,32 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         } as Partial<TherapistFormData>);
 
         if (result.success) {
-          addToast({
-            type: 'success',
-            title: 'Data Therapist Berhasil Diperbarui!',
-            message: 'Informasi therapist telah berhasil diperbarui.',
-            duration: 5000,
-          });
+          // Check if user is editing their own therapist profile
+          const isEditingOwnProfile = currentTherapistData && currentTherapistData.userId === user.id;
+          
+          if (isEditingOwnProfile) {
+            // Update auth store with new user data
+            const { setUser } = useAuthStore.getState();
+            const updatedUser = {
+              ...user,
+              name: data.fullName, // Update name in auth store
+            };
+            setUser(updatedUser);
+            
+            addToast({
+              type: 'success',
+              title: 'Data Therapist Berhasil Diperbarui!',
+              message: 'Informasi therapist dan profil Anda telah berhasil diperbarui.',
+              duration: 5000,
+            });
+          } else {
+            addToast({
+              type: 'success',
+              title: 'Data Therapist Berhasil Diperbarui!',
+              message: 'Informasi therapist telah berhasil diperbarui.',
+              duration: 5000,
+            });
+          }
 
           onSubmitSuccess?.(data);
           onOpenChange(false);
@@ -265,38 +373,118 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         }
       } else {
         // Create new therapist
-        const result = await TherapistAPI.createTherapist({
-          fullName: data.fullName,
-          email: data.email,
-          phone: data.phone,
-          avatarUrl: data.avatarUrl,
-          licenseNumber: data.licenseNumber,
-          licenseType: data.licenseType,
-          education: data.education,
-          certifications: data.certifications,
-          adminNotes: data.adminNotes,
-          preferences: {
-            languages: ['Indonesian']
+        if (createOwnTherapist && isClinicAdminWithoutTherapist) {
+          // Create therapist profile for current user
+          const result = await TherapistAPI.createTherapistForExistingUser(
+            user.id,
+            data.licenseNumber,
+            data.licenseType,
+            new Date().toISOString(),
+            data.education,
+            data.certifications,
+            data.adminNotes
+          );
+
+          if (result.success) {
+            console.log('✅ Therapist creation successful');
+            console.log('API Response:', result);
+            console.log('Roles changed flag:', (result as any).rolesChanged);
+            
+            addToast({
+              type: 'success',
+              title: 'Profil Therapist Berhasil Dibuat!',
+              message: 'Profil therapist Anda telah berhasil dibuat. Silakan login ulang untuk menggunakan fitur therapist.',
+              duration: 8000,
+            });
+
+            // Check if roles have changed and update user data
+            if ((result as any).rolesChanged) {
+              try {
+                console.log('🔄 Roles changed detected, updating user roles...');
+                console.log('Current user roles:', user?.roles);
+                console.log('User has therapist role:', user?.roles.includes('therapist'));
+                
+                // Update user roles in the store directly
+                if (user && !user.roles.includes('therapist')) {
+                  const updatedUser = {
+                    ...user,
+                    roles: [...user.roles, 'therapist']
+                  };
+                  console.log('Updated user roles:', updatedUser.roles);
+                  
+                  // Update the user in the auth store
+                  const { setUser } = useAuthStore.getState();
+                  setUser(updatedUser);
+                  
+                  console.log('✅ User roles updated in auth store');
+                } else {
+                  console.log('ℹ️ User already has therapist role or no user found');
+                }
+                
+                addToast({
+                  type: 'info',
+                  title: 'Peran Diperbarui',
+                  message: 'Peran therapist telah ditambahkan ke akun Anda. Silakan login ulang untuk menggunakan fitur therapist.',
+                  duration: 6000,
+                });
+              } catch (error) {
+                console.error('❌ Failed to update user roles after therapist creation:', error);
+                addToast({
+                  type: 'warning',
+                  title: 'Perhatian',
+                  message: 'Profil therapist berhasil dibuat. Silakan login ulang untuk menggunakan fitur therapist.',
+                  duration: 6000,
+                });
+              }
+            } else {
+              console.log('ℹ️ No roles changed detected');
+            }
+
+            onSubmitSuccess?.(data);
+            onOpenChange(false);
+          } else {
+            addToast({
+              type: 'error',
+              title: 'Pembuatan Profil Gagal',
+              message: result.message || 'Gagal membuat profil therapist. Silakan coba lagi.'
+            });
+            setError('root', { message: result.message || 'Gagal membuat profil therapist' });
           }
-        } as TherapistFormData);
-
-        if (result.success) {
-          addToast({
-            type: 'success',
-            title: 'Akun Therapist Berhasil Dibuat!',
-            message: `Email registrasi telah dikirim ke ${data.email}. Therapist akan menerima tautan aman untuk menyelesaikan pendaftaran.`,
-            duration: 8000,
-          });
-
-          onSubmitSuccess?.(data);
-          onOpenChange(false);
         } else {
-          addToast({
-            type: 'error',
-            title: 'Pembuatan Gagal',
-            message: result.message || 'Gagal membuat akun therapist. Silakan coba lagi.'
-          });
-          setError('root', { message: result.message || 'Gagal membuat akun therapist' });
+          // Create new therapist (normal flow)
+          const result = await TherapistAPI.createTherapist({
+            fullName: data.fullName,
+            email: data.email,
+            phone: data.phone,
+            avatarUrl: data.avatarUrl,
+            licenseNumber: data.licenseNumber,
+            licenseType: data.licenseType,
+            education: data.education,
+            certifications: data.certifications,
+            adminNotes: data.adminNotes,
+            preferences: {
+              languages: ['Indonesian']
+            }
+          } as TherapistFormData);
+
+          if (result.success) {
+            addToast({
+              type: 'success',
+              title: 'Akun Therapist Berhasil Dibuat!',
+              message: `Email registrasi telah dikirim ke ${data.email}. Therapist akan menerima tautan aman untuk menyelesaikan pendaftaran.`,
+              duration: 8000,
+            });
+
+            onSubmitSuccess?.(data);
+            onOpenChange(false);
+          } else {
+            addToast({
+              type: 'error',
+              title: 'Pembuatan Gagal',
+              message: result.message || 'Gagal membuat akun therapist. Silakan coba lagi.'
+            });
+            setError('root', { message: result.message || 'Gagal membuat akun therapist' });
+          }
         }
       }
     } catch (error) {
@@ -358,15 +546,22 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
             </h3>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="fullName">Nama Lengkap *</Label>
+                <Label htmlFor="fullName">
+                  Nama Lengkap *
+                  {createOwnTherapist && watchedFormData.fullName && (
+                    <span className="ml-2 text-xs text-green-600">(Diisi otomatis)</span>
+                  )}
+                </Label>
                 <div className="relative">
                   <Input
                     {...register('fullName')}
                     id="fullName"
                     placeholder="contoh: Dr. Budi Santoso"
+                    disabled={createOwnTherapist}
                     className={`
                       ${errors.fullName ? 'border-red-500 focus:border-red-500' : ''}
                       ${touchedFields.fullName && !errors.fullName && watchedFormData.fullName ? 'border-green-500 focus:border-green-500' : ''}
+                      ${createOwnTherapist ? 'bg-gray-100 cursor-not-allowed' : ''}
                     `}
                   />
                   {touchedFields.fullName && !errors.fullName && watchedFormData.fullName && (
@@ -385,18 +580,23 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
 
               <div>
                 <Label htmlFor="email">
-                  Alamat Email *
+                  Alamat Email {!createOwnTherapist ? '*' : '(Opsional)'}
                 </Label>
                 <div className="relative">
                   <Input
                     {...register('email')}
                     id="email"
                     type="email"
-                    placeholder="therapist@contoh.com"
-                    disabled={mode === 'edit'}
-                    className={mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
+                    placeholder={createOwnTherapist ? "Email akan menggunakan email akun Anda" : "therapist@contoh.com"}
+                    disabled={mode === 'edit' || createOwnTherapist}
+                    className={mode === 'edit' || createOwnTherapist ? 'bg-gray-100 cursor-not-allowed' : ''}
                   />
                 </div>
+                {createOwnTherapist && (
+                  <p className="mt-1 text-xs text-blue-600">
+                    Email akan menggunakan email akun Anda: {user?.email}
+                  </p>
+                )}
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.email?.message}
@@ -405,15 +605,22 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               </div>
 
               <div>
-                <Label htmlFor="phone">Nomor Telepon *</Label>
+                <Label htmlFor="phone">
+                  Nomor Telepon *
+                  {createOwnTherapist && watchedFormData.phone && (
+                    <span className="ml-2 text-xs text-green-600">(Diisi otomatis)</span>
+                  )}
+                </Label>
                 <div className="relative">
                   <Input
                     {...register('phone')}
                     id="phone"
                     placeholder="+62-812-3456-7890"
+                    disabled={!!(createOwnTherapist && profile?.phone)}
                     className={`
                       ${errors.phone ? 'border-red-500 focus:border-red-500' : ''}
                       ${touchedFields.phone && !errors.phone && watchedFormData.phone ? 'border-green-500 focus:border-green-500' : ''}
+                      ${createOwnTherapist && profile?.phone ? 'bg-gray-100 cursor-not-allowed' : ''}
                     `}
                   />
                   {touchedFields.phone && !errors.phone && watchedFormData.phone && (
@@ -422,6 +629,16 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                     </div>
                   )}
                 </div>
+                {createOwnTherapist && profile?.phone && (
+                  <p className="mt-1 text-xs text-green-600">
+                    📞 Nomor telepon diisi dari profil Anda
+                  </p>
+                )}
+                {createOwnTherapist && !profile?.phone && (
+                  <p className="mt-1 text-xs text-blue-600">
+                    ℹ️ Silakan isi nomor telepon secara manual
+                  </p>
+                )}
                 {errors.phone && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <XCircleIcon className="w-3 h-3 mr-1" />
@@ -431,6 +648,32 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Create Own Therapist Checkbox */}
+          {isClinicAdminWithoutTherapist && mode === 'create' && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="createOwnTherapist"
+                  checked={createOwnTherapist}
+                  onChange={(e) => setCreateOwnTherapist(e.target.checked)}
+                  disabled={profileLoading}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                />
+                <div className="flex-1">
+                  <label htmlFor="createOwnTherapist" className="text-sm font-medium text-blue-900 cursor-pointer">
+                    Buat profil therapist untuk diri saya sendiri
+                    {profileLoading && <span className="ml-2 text-xs text-gray-500">(Memuat data profil...)</span>}
+                  </label>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Centang jika Anda ingin membuat profil therapist untuk diri sendiri. 
+                    Ini akan memungkinkan Anda untuk ditugaskan sebagai therapist untuk klien.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Professional Information Section */}
           <div>

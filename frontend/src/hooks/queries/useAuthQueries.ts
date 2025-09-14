@@ -51,7 +51,7 @@ export const useLoginMutation = () => {
       if (data.user) {
         storeLogin({
           user: data.user,
-          token: data.token || undefined,
+          accessToken: data.accessToken || undefined,
           refreshToken: data.refreshToken || undefined,
         });
       }

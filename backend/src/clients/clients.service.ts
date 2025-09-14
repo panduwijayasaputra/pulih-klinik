@@ -71,15 +71,12 @@ export interface ClientResponse {
   progress: number;
   notes?: string;
   primaryIssue?: string;
-  currentAssignment?: {
-    id: string;
-    therapist: {
-      id: string;
-      fullName: string;
-    };
-    assignedDate: Date;
-    status: string;
-  };
+  // Flattened therapist assignment fields
+  assignedTherapistId?: string;
+  assignedTherapistName?: string;
+  assignedDate?: Date;
+  assignmentStatus?: string;
+  assignmentId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -687,17 +684,12 @@ export class ClientsService {
       progress: client.progress,
       notes: client.notes,
       primaryIssue: client.primaryIssue,
-      currentAssignment: currentAssignment
-        ? {
-            id: currentAssignment.id,
-            therapist: {
-              id: currentAssignment.therapist.id,
-              fullName: currentAssignment.therapist.user.profile?.name || 'Unknown User',
-            },
-            assignedDate: currentAssignment.assignedDate,
-            status: currentAssignment.status,
-          }
-        : undefined,
+      // Flattened therapist assignment fields
+      assignedTherapistId: currentAssignment?.therapist.id,
+      assignedTherapistName: currentAssignment?.therapist.user.profile?.name || undefined,
+      assignedDate: currentAssignment?.assignedDate,
+      assignmentStatus: currentAssignment?.status,
+      assignmentId: currentAssignment?.id,
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     };

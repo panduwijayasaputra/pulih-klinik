@@ -153,6 +153,39 @@ export class TherapistAPI {
     }
   }
 
+  static async createTherapistForExistingUser(
+    userId: string,
+    licenseNumber: string,
+    licenseType: string,
+    joinDate?: string,
+    education?: string,
+    certifications?: string,
+    adminNotes?: string
+  ): Promise<ItemResponse<Therapist>> {
+    try {
+      const response = await apiClient.post('/therapists/create-for-existing-user', {
+        userId,
+        licenseNumber,
+        licenseType,
+        joinDate,
+        education,
+        certifications,
+        adminNotes
+      });
+      
+      return {
+        success: true,
+        data: mapBackendTherapistToFrontend(response.data.data)
+      };
+    } catch (error: any) {
+      console.error('Failed to create therapist for existing user:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to create therapist record'
+      };
+    }
+  }
+
   static async getTherapist(therapistId: string): Promise<ItemResponse<Therapist>> {
     try {
       const response = await apiClient.get(`/therapists/${therapistId}`);
@@ -336,12 +369,74 @@ export class TherapistAPI {
   }
 
 
-  static async assignClientToTherapist(therapistId: string, clientId: string): Promise<ItemResponse<TherapistAssignment>> {
-    // TODO: Implement actual API call
-    return {
-      success: false,
-      message: 'API not implemented yet'
-    };
+  static async assignClientToTherapist(therapistId: string, clientId: string, notes?: string): Promise<ItemResponse<TherapistAssignment>> {
+    try {
+      const response = await apiClient.post(`/therapists/assignments/${therapistId}/clients/${clientId}`, {
+        notes: notes || 'Assigned via therapist management interface'
+      });
+      
+      return {
+        success: true,
+        message: response.data.message || 'Client successfully assigned to therapist',
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Failed to assign client to therapist:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to assign client to therapist'
+      };
+    }
+  }
+
+  static async getClientAssignment(clientId: string): Promise<ItemResponse<TherapistAssignment>> {
+    try {
+      const response = await apiClient.get(`/therapists/clients/${clientId}/assignments`);
+      
+      // The response returns an array of assignments, we need the active one
+      const assignments = response.data.data || response.data;
+      const activeAssignment = assignments.find((assignment: any) => assignment.status === 'active');
+      
+      if (!activeAssignment) {
+        return {
+          success: false,
+          message: 'No active assignment found for this client'
+        };
+      }
+      
+      return {
+        success: true,
+        message: response.data.message || 'Client assignment retrieved successfully',
+        data: activeAssignment
+      };
+    } catch (error: any) {
+      console.error('Failed to get client assignment:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to get client assignment'
+      };
+    }
+  }
+
+  static async transferClient(assignmentId: string, newTherapistId: string, reason: string, notes?: string): Promise<ItemResponse<TherapistAssignment>> {
+    try {
+      const response = await apiClient.put(`/therapists/assignments/${assignmentId}/transfer/${newTherapistId}`, {
+        reason,
+        notes: notes || 'Transferred via client management interface'
+      });
+      
+      return {
+        success: true,
+        message: response.data.message || 'Client successfully transferred to new therapist',
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Failed to transfer client to new therapist:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to transfer client to new therapist'
+      };
+    }
   }
 
   static async removeClientFromTherapist(therapistId: string, clientId: string): Promise<StatusResponse> {

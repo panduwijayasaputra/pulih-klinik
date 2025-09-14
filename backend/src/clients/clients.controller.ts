@@ -84,7 +84,9 @@ export class ClientsController {
     } else {
       // Clinic admin can only create clients in their clinic
       if (!currentUser.clinicId) {
-        throw new Error('Clinic admin without clinic ID');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = currentUser.clinicId;
     }
@@ -305,16 +307,15 @@ export class ClientsController {
       clinicId = query.clinicId;
     } else {
       // Non-admin users are restricted to their clinic
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
+      if (!currentUser.clinicId) {
         throw new BadRequestException(
           'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
         );
       }
-      clinicId = userRole.clinicId;
+      clinicId = currentUser.clinicId;
 
       // Therapists can only see their assigned clients
-      if (userRole.role === 'therapist') {
+      if (currentUser.roles.includes('therapist')) {
         // TODO: Implement therapist profile lookup
         // For now, therapists see all clients in their clinic
         // query.therapistId = therapistProfile.id;
@@ -400,15 +401,14 @@ export class ClientsController {
     // Determine clinic scope for access control
     let clinicId: string | undefined;
 
-    if (!currentUser.isAdmin) {
+    if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
-      const userRole = currentUser.roles.find((role: any) => role.clinicId);
-      if (!userRole?.clinicId) {
+      if (!currentUser.clinicId) {
         throw new BadRequestException(
           'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
         );
       }
-      clinicId = userRole.clinicId;
+      clinicId = currentUser.clinicId;
     }
     // Admin can access any client (clinicId remains undefined)
 
@@ -458,7 +458,9 @@ export class ClientsController {
     if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
       if (!currentUser.clinicId) {
-        throw new Error('Clinic admin without clinic ID');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = currentUser.clinicId;
     }
@@ -514,7 +516,9 @@ export class ClientsController {
     if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
       if (!currentUser.clinicId) {
-        throw new Error('Clinic admin without clinic ID');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = currentUser.clinicId;
     }
@@ -570,7 +574,9 @@ export class ClientsController {
     if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
       if (!currentUser.clinicId) {
-        throw new Error('Clinic admin without clinic ID');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = currentUser.clinicId;
     }
@@ -629,7 +635,9 @@ export class ClientsController {
     if (!currentUser.roles.includes('administrator')) {
       // Non-admin users are restricted to their clinic
       if (!currentUser.clinicId) {
-        throw new Error('Clinic admin without clinic ID');
+        throw new BadRequestException(
+          'User not associated with any clinic. Please contact your administrator to assign you to a clinic.',
+        );
       }
       clinicId = currentUser.clinicId;
     }

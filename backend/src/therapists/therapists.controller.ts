@@ -137,6 +137,72 @@ export class TherapistsController {
     };
   }
 
+  @Post('create-for-existing-user')
+  @RequireAdminOrClinicAdmin()
+  @ApiOperation({
+    summary: 'Create therapist record for existing user',
+    description:
+      'Create a therapist record for an existing user who has therapist role but no therapist record',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Therapist record created successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or user not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Therapist record already exists for this user',
+  })
+  async createTherapistForExistingUser(
+    @Body()
+    body: {
+      userId: string;
+      licenseNumber: string;
+      licenseType: string;
+      joinDate?: string;
+      education?: string;
+      certifications?: string;
+      adminNotes?: string;
+    },
+    @Request() req: any,
+  ): Promise<TherapistResponse> {
+    const currentUser = req.user;
+    const {
+      userId,
+      licenseNumber,
+      licenseType,
+      joinDate,
+      education,
+      certifications,
+      adminNotes,
+    } = body;
+
+    // Get clinic ID from user's role context
+    let clinicId: string;
+    if (currentUser.roles.includes('administrator')) {
+      throw new Error('System admin must specify target clinic');
+    } else {
+      if (!currentUser.clinicId) {
+        throw new Error('Clinic admin without clinic ID');
+      }
+      clinicId = currentUser.clinicId;
+    }
+
+    return await this.therapistsService.createTherapistForExistingUser(
+      clinicId,
+      userId,
+      licenseNumber,
+      licenseType,
+      joinDate,
+      education,
+      certifications,
+      adminNotes,
+    );
+  }
+
   @Get(':id/email-resend-status')
   @RequireAdminOrClinicAdmin()
   @ApiOperation({

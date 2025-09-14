@@ -1,5 +1,6 @@
 import { LoginApiData, LoginResponse, User } from '@/types/auth';
 import { UserRoleEnum } from '@/types/enums';
+import { UserStatusEnum } from '@/types/status';
 import { ItemResponse } from './types';
 import { httpClient, handleApiResponse, handleApiError } from '@/lib/http-client';
 import { 
@@ -31,23 +32,11 @@ export class AuthAPI {
       if (data.success && data.data?.accessToken) {
         authToken = data.data.accessToken;
         
-        // Store token in localStorage for persistence
-        if (typeof window !== 'undefined') {
-          const authStorage = {
-            state: {
-              token: authToken,
-              user: data.data.user,
-              isAuthenticated: true,
-            },
-          };
-          localStorage.setItem('auth-storage', JSON.stringify(authStorage));
-        }
-        
         // Map the user data to match frontend interface
         const mappedUser: User = {
           ...data.data.user,
           // Handle status field - backend now returns unified status
-          status: data.data.user.status || data.data.user.isActive ? 'active' : 'inactive',
+          status: data.data.user.status || UserStatusEnum.ACTIVE,
           roles: (() => {
             const validRoles = Array.isArray(data.data.user.roles) 
               ? data.data.user.roles
