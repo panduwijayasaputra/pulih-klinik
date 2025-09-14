@@ -276,12 +276,6 @@ export const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
                       <p className="mt-1 text-sm text-gray-900">{clientData.hobbies}</p>
                     </div>
                   )}
-                  {clientData.province && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Provinsi</label>
-                      <p className="mt-1 text-sm text-gray-900">{clientData.province}</p>
-                    </div>
-                  )}
                 </div>
               </div>
 

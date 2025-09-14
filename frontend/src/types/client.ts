@@ -35,7 +35,6 @@ export interface Client {
   lastSession?: string | undefined;
   progress: number;
   notes?: string | undefined;
-  province?: string | undefined;
   // Legacy fields for backward compatibility
   name?: string;
   age?: number;
@@ -70,7 +69,6 @@ export interface ClientFilters {
     to: string;
   };
   primaryIssue?: string;
-  province?: string;
   gender?: Client['gender'];
   religion?: Client['religion'];
   maritalStatus?: Client['maritalStatus'];
@@ -94,7 +92,6 @@ export interface ClientFormData {
   relationshipWithSpouse?: Client['relationshipWithSpouse'];
   firstVisit: boolean;
   previousVisitDetails?: string;
-  province?: Client['province'];
   notes?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;

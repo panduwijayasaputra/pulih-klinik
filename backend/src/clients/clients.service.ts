@@ -48,7 +48,6 @@ export interface ClientResponse {
   relationshipWithSpouse?: string;
   firstVisit: boolean;
   previousVisitDetails?: string;
-  province?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   emergencyContactRelationship?: string;
@@ -176,7 +175,6 @@ export class ClientsService {
     client.relationshipWithSpouse = createClientDto.relationshipWithSpouse;
     client.firstVisit = createClientDto.firstVisit ?? true;
     client.previousVisitDetails = createClientDto.previousVisitDetails;
-    client.province = createClientDto.province;
     client.emergencyContactName = createClientDto.emergencyContactName;
     client.emergencyContactPhone = createClientDto.emergencyContactPhone;
     client.emergencyContactRelationship =
@@ -281,10 +279,6 @@ export class ClientsService {
 
     if (query.maritalStatus) {
       whereConditions.maritalStatus = query.maritalStatus;
-    }
-
-    if (query.province) {
-      whereConditions.province = { $ilike: `%${query.province}%` };
     }
 
     if (query.isMinor !== undefined) {
@@ -512,7 +506,6 @@ export class ClientsService {
     }
 
     // Simply update the status without transition tracking
-    const oldStatus = client.status;
 
     // Update client status
     client.status = updateStatusDto.status;
@@ -660,7 +653,6 @@ export class ClientsService {
       relationshipWithSpouse: client.relationshipWithSpouse,
       firstVisit: client.firstVisit,
       previousVisitDetails: client.previousVisitDetails,
-      province: client.province,
       emergencyContactName: client.emergencyContactName,
       emergencyContactPhone: client.emergencyContactPhone,
       emergencyContactRelationship: client.emergencyContactRelationship,

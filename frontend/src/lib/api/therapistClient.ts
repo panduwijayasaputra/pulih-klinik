@@ -68,12 +68,27 @@ export const TherapistClientAPI = {
     clientId: string
   ): Promise<ApiResponse<TherapistClient>> => {
     try {
-      const response = await apiClient.get(`/therapists/${therapistId}/clients/${clientId}`);
+      // Use the regular client endpoint to get full client data
+      // The backend should validate therapist assignment in the future
+      const response = await apiClient.get(`/clients/${clientId}`);
       
       // The response is wrapped by ResponseInterceptor
+      const clientData = response.data.data;
+      
+      // Transform the ClientResponse to TherapistClient format
+      const therapistClient: TherapistClient = {
+        ...clientData,
+        // Map any missing fields or add therapist-specific fields
+        assignedDate: clientData.assignedDate || new Date().toISOString(),
+        lastSessionDate: clientData.lastSessionDate,
+        sessionCount: clientData.totalSessions || 0,
+        progressNotes: clientData.notes,
+        therapistNotes: clientData.notes, // This might need to come from assignment
+      };
+      
       return {
         success: true,
-        data: response.data.data
+        data: therapistClient
       };
     } catch (error: any) {
       console.error('Error fetching therapist client:', error);

@@ -115,14 +115,6 @@ export class ClientQueryDto {
   })
   maritalStatus?: MaritalStatus;
 
-  @ApiProperty({
-    description: 'Filter by province',
-    example: 'DKI Jakarta',
-    required: false,
-  })
-  @IsOptional()
-  @IsString({ message: 'Province must be a string' })
-  province?: string;
 
   @ApiProperty({
     description: 'Filter by age range - minimum age',

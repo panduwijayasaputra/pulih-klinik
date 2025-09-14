@@ -49,7 +49,25 @@ import {
   TagIcon,
   WrenchScrewdriverIcon,
   LightBulbIcon,
-  CpuChipIcon
+  CpuChipIcon,
+  HomeIcon,
+  BuildingOfficeIcon,
+  GlobeAltIcon,
+  CakeIcon,
+  HeartIcon as HeartHandshakeIcon,
+  UserGroupIcon,
+  IdentificationIcon,
+  ExclamationTriangleIcon,
+  ClipboardDocumentListIcon,
+  BookOpenIcon,
+  StarIcon,
+  ShieldCheckIcon,
+  ChatBubbleLeftRightIcon,
+  BuildingStorefrontIcon,
+  UserCircleIcon,
+  CalendarDaysIcon,
+  ClockIcon as ClockIconSolid,
+  UserIcon as GenderIcon
 } from '@heroicons/react/24/outline';
 
 export default function ClientTherapyPage() {
@@ -57,7 +75,7 @@ export default function ClientTherapyPage() {
   const router = useRouter();
   const { addToast } = useToast();
   const { user } = useAuth();
-  const { clients, loading: clientsLoading, loadClients } = useTherapistClient();
+  const { loadClient, selectedClient, loading: clientLoading, error: clientError } = useTherapistClient();
   const {
     sessions: therapySessions,
     loading: sessionsLoading,
@@ -71,8 +89,6 @@ export default function ClientTherapyPage() {
   } = useTherapySession();
 
   const clientId = params['client-id'] as string;
-  const [client, setClient] = useState<TherapistClient | null>(null);
-  const [loading, setLoading] = useState(true);
 
   // Get consultation data for this client (one per client)
   const clientConsultation = getConsultationByClientId(clientId);
@@ -170,19 +186,19 @@ export default function ClientTherapyPage() {
     },
   });
 
-  // Load clients and sessions on mount
+  // Load client data on mount
   useEffect(() => {
-    if (clients.length === 0 && !clientsLoading) {
-      loadClients();
+    if (clientId && user?.id) {
+      loadClient(clientId);
     }
-  }, [loadClients, clients.length, clientsLoading]);
+  }, [clientId, user?.id, loadClient]);
 
   // Load sessions when client is found
   useEffect(() => {
-    if (client && clientId) {
+    if (selectedClient && clientId) {
       loadSessions(clientId);
     }
-  }, [client, clientId, loadSessions]);
+  }, [selectedClient, clientId, loadSessions]);
 
   // Set default expanded session
   useEffect(() => {
@@ -222,7 +238,7 @@ export default function ClientTherapyPage() {
   // Handle tab change with data refresh
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    if (tab === 'sessions' && client && clientId) {
+    if (tab === 'sessions' && selectedClient && clientId) {
       setIsRefreshing(true);
       loadSessions(clientId).finally(() => {
         setIsRefreshing(false);
@@ -230,35 +246,17 @@ export default function ClientTherapyPage() {
     }
   };
 
-  // Find the client from the clients list
+  // Handle client loading error
   useEffect(() => {
-    // Only proceed if we have user data and clients are not loading
-    if (!user?.id || clientsLoading) {
-      return;
+    if (clientError) {
+      addToast({
+        type: 'error',
+        title: 'Klien Tidak Ditemukan',
+        message: 'Data klien tidak ditemukan atau Anda tidak memiliki akses',
+      });
+      router.push('/portal/therapist/clients');
     }
-
-    // If clients data is available
-    if (clients.length > 0) {
-      const foundClient = clients.find(c => c.id === clientId);
-      if (foundClient) {
-        // TherapistClient data is already filtered for the current therapist
-        setClient(foundClient);
-        setLoading(false);
-      } else {
-        addToast({
-          type: 'error',
-          title: 'Klien Tidak Ditemukan',
-          message: 'Data klien tidak ditemukan atau Anda tidak memiliki akses',
-        });
-        router.push('/portal/therapist/clients');
-        return;
-      }
-    } else {
-      // If clients array is empty but not loading, still set loading to false
-      // This handles the case where there are no clients at all
-      setLoading(false);
-    }
-  }, [clientId, clients, clientsLoading, user?.id, addToast, router]);
+  }, [clientError, addToast, router]);
 
   const handleBackToClients = () => {
     router.push('/portal/therapist/clients');
@@ -709,7 +707,7 @@ export default function ClientTherapyPage() {
     return age;
   };
 
-  if (loading || clientsLoading) {
+  if (clientLoading) {
     return (
       <PageWrapper
         title="Terapi Klien"
@@ -727,7 +725,7 @@ export default function ClientTherapyPage() {
     );
   }
 
-  if (!client) {
+  if (!selectedClient) {
     return (
       <PageWrapper
         title="Terapi Klien"
@@ -746,7 +744,7 @@ export default function ClientTherapyPage() {
 
   return (
     <PageWrapper
-      title={`Terapi - ${client.fullName}`}
+      title={`Terapi - ${selectedClient.fullName}`}
       description="Kelola sesi terapi dan progres klien"
       showBackButton
       onBackClick={handleBackToClients}
@@ -760,16 +758,16 @@ export default function ClientTherapyPage() {
             <CardHeader className="text-center">
               <div className="mx-auto mb-4">
                 <Avatar className="w-20 h-20">
-                  <AvatarImage src="" alt={client.fullName} />
+                  <AvatarImage src="" alt={selectedClient.fullName} />
                   <AvatarFallback className="text-lg">
-                    {getInitials(client.fullName)}
+                    {getInitials(selectedClient.fullName)}
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <CardTitle className="text-xl">{client.fullName}</CardTitle>
+              <CardTitle className="text-xl">{selectedClient.fullName}</CardTitle>
               <CardDescription className="flex items-center justify-center gap-2">
-                <Badge variant="outline" className={`bg-${ClientStatusColors[client.status]}-50 text-${ClientStatusColors[client.status]}-700 border-${ClientStatusColors[client.status]}-200`}>
-                  {ClientStatusLabels[client.status]}
+                <Badge variant="outline" className={`bg-${ClientStatusColors[selectedClient.status]}-50 text-${ClientStatusColors[selectedClient.status]}-700 border-${ClientStatusColors[selectedClient.status]}-200`}>
+                  {ClientStatusLabels[selectedClient.status]}
                 </Badge>
               </CardDescription>
             </CardHeader>
@@ -778,26 +776,27 @@ export default function ClientTherapyPage() {
                 <div className="flex items-center text-sm">
                   <UserIcon className="w-4 h-4 text-gray-400 mr-3" />
                   <span className="text-gray-600">Usia:</span>
-                  <span className="ml-auto font-medium">{formatAge(client.birthDate)} tahun</span>
+                  <span className="ml-auto font-medium">{formatAge(selectedClient.birthDate)} tahun</span>
                 </div>
 
                 <div className="flex items-center text-sm">
+                  <GenderIcon className="w-4 h-4 text-gray-400 mr-3" />
                   <span className="text-gray-600">Jenis Kelamin:</span>
                   <span className="ml-auto font-medium">
-                    {client.gender === ClientGenderEnum.Male ? 'Laki-laki' : 'Perempuan'}
+                    {selectedClient.gender === ClientGenderEnum.Male ? 'Laki-laki' : 'Perempuan'}
                   </span>
                 </div>
 
                 <div className="flex items-center text-sm">
                   <PhoneIcon className="w-4 h-4 text-gray-400 mr-3" />
                   <span className="text-gray-600">Telepon:</span>
-                  <span className="ml-auto font-medium">{client.phone}</span>
+                  <span className="ml-auto font-medium">{selectedClient.phone}</span>
                 </div>
 
                 <div className="flex items-center text-sm">
                   <EnvelopeIcon className="w-4 h-4 text-gray-400 mr-3" />
                   <span className="text-gray-600">Email:</span>
-                  <span className="ml-auto font-medium text-xs">{client.email}</span>
+                  <span className="ml-auto font-medium text-xs">{selectedClient.email}</span>
                 </div>
 
                 <Separator />
@@ -807,21 +806,21 @@ export default function ClientTherapyPage() {
                     <CalendarIcon className="w-4 h-4 text-gray-400 mr-3" />
                     <span className="text-gray-600">Bergabung:</span>
                     <span className="ml-auto font-medium">
-                      {new Date(client.joinDate).toLocaleDateString('id-ID')}
+                      {new Date(selectedClient.joinDate).toLocaleDateString('id-ID')}
                     </span>
                   </div>
 
                   <div className="flex items-center text-sm">
                     <ClockIcon className="w-4 h-4 text-gray-400 mr-3" />
                     <span className="text-gray-600">Total Sesi:</span>
-                    <span className="ml-auto font-medium">{client.sessionCount || client.totalSessions || 0}</span>
+                    <span className="ml-auto font-medium">{selectedClient.sessionCount || selectedClient.totalSessions || 0}</span>
                   </div>
 
-                  {(client.lastSessionDate || client.lastSession) && (
+                  {(selectedClient.lastSessionDate || selectedClient.lastSession) && (
                     <div className="flex items-center text-sm">
                       <span className="text-gray-600">Sesi Terakhir:</span>
                       <span className="ml-auto font-medium">
-                        {new Date(client.lastSessionDate || client.lastSession || '').toLocaleDateString('id-ID')}
+                        {new Date(selectedClient.lastSessionDate || selectedClient.lastSession || '').toLocaleDateString('id-ID')}
                       </span>
                     </div>
                   )}
@@ -840,28 +839,34 @@ export default function ClientTherapyPage() {
                 <div>
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-gray-600">Tingkat Progres</span>
-                    <span className="font-medium">{client.progress || 0}%</span>
+                    <span className="font-medium">{selectedClient.progress || 0}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${client.progress || 0}%` }}
+                      style={{ width: `${selectedClient.progress || 0}%` }}
                     />
                   </div>
                 </div>
-                {(client.progressNotes || client.notes) && (
+                {(selectedClient.progressNotes || selectedClient.notes) && (
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Catatan Progres:</label>
+                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                      <DocumentTextIcon className="w-4 h-4" />
+                      Catatan Progres:
+                    </label>
                     <p className="text-sm text-gray-800 mt-1 p-3 bg-gray-50 rounded-lg">
-                      {client.progressNotes || client.notes}
+                      {selectedClient.progressNotes || selectedClient.notes}
                     </p>
                   </div>
                 )}
-                {client.therapistNotes && (
+                {selectedClient.therapistNotes && (
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Catatan Therapist:</label>
+                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                      <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                      Catatan Therapist:
+                    </label>
                     <p className="text-sm text-gray-800 mt-1 p-3 bg-blue-50 rounded-lg">
-                      {client.therapistNotes}
+                      {selectedClient.therapistNotes}
                     </p>
                   </div>
                 )}
@@ -893,21 +898,25 @@ export default function ClientTherapyPage() {
                     <div className="space-y-4">
                       <div>
                         <label className="text-sm font-medium text-gray-600">Tempat, Tanggal Lahir</label>
-                        <p className="text-gray-900">
-                          {client.birthPlace}, {new Date(client.birthDate).toLocaleDateString('id-ID')}
+                        <p className="text-gray-900 flex items-center gap-2">
+                          <CakeIcon className="w-4 h-4 text-gray-400" />
+                          {selectedClient.birthPlace}, {new Date(selectedClient.birthDate).toLocaleDateString('id-ID')}
                         </p>
                       </div>
 
                       <div>
                         <label className="text-sm font-medium text-gray-600">Agama</label>
-                        <p className="text-gray-900">{client.religion}</p>
+                        <p className="text-gray-900 flex items-center gap-2">
+                          <HeartIcon className="w-4 h-4 text-gray-400" />
+                          {selectedClient.religion}
+                        </p>
                       </div>
 
                       <div>
                         <label className="text-sm font-medium text-gray-600">Pekerjaan</label>
                         <p className="text-gray-900 flex items-center gap-2">
                           <BriefcaseIcon className="w-4 h-4 text-gray-400" />
-                          {client.occupation}
+                          {selectedClient.occupation}
                         </p>
                       </div>
 
@@ -915,10 +924,21 @@ export default function ClientTherapyPage() {
                         <label className="text-sm font-medium text-gray-600">Pendidikan</label>
                         <p className="text-gray-900 flex items-center gap-2">
                           <AcademicCapIcon className="w-4 h-4 text-gray-400" />
-                          {client.education}
-                          {client.educationMajor && ` - ${client.educationMajor}`}
+                          {selectedClient.education}
+                          {selectedClient.educationMajor && ` - ${selectedClient.educationMajor}`}
                         </p>
                       </div>
+
+                      {/* Primary Issue */}
+                      {selectedClient.primaryIssue && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-600">Masalah Utama</label>
+                          <p className="text-gray-900 flex items-center gap-2">
+                            <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />
+                            {selectedClient.primaryIssue}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-4">
@@ -926,50 +946,204 @@ export default function ClientTherapyPage() {
                         <label className="text-sm font-medium text-gray-600">Alamat</label>
                         <p className="text-gray-900 flex items-start gap-2">
                           <MapPinIcon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                          <span>{client.address}</span>
+                          <span>{selectedClient.address}</span>
+                        </p>
+                      </div>
+
+
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Hobi</label>
+                        <p className="text-gray-900 flex items-center gap-2">
+                          <StarIcon className="w-4 h-4 text-gray-400" />
+                          {selectedClient.hobbies}
                         </p>
                       </div>
 
                       <div>
-                        <label className="text-sm font-medium text-gray-600">Provinsi</label>
-                        <p className="text-gray-900">{client.province}</p>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Hobi</label>
-                        <p className="text-gray-900">{client.hobbies}</p>
-                      </div>
-
-                      <div>
                         <label className="text-sm font-medium text-gray-600">Status Pernikahan</label>
-                        <p className="text-gray-900">{client.maritalStatus}</p>
+                        <p className="text-gray-900 flex items-center gap-2">
+                          <HeartHandshakeIcon className="w-4 h-4 text-gray-400" />
+                          {selectedClient.maritalStatus}
+                        </p>
                       </div>
+
+                      {/* Spouse Information */}
+                      {selectedClient.spouseName && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-600">Nama Pasangan</label>
+                          <p className="text-gray-900 flex items-center gap-2">
+                            <UserIcon className="w-4 h-4 text-gray-400" />
+                            {selectedClient.spouseName}
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedClient.relationshipWithSpouse && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-600">Hubungan dengan Pasangan</label>
+                          <p className="text-gray-900 flex items-center gap-2">
+                            <UserGroupIcon className="w-4 h-4 text-gray-400" />
+                            {selectedClient.relationshipWithSpouse}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Emergency Contact */}
-                  {client.emergencyContactName && (
+                  {/* Minor Information */}
+                  {selectedClient.isMinor && (
                     <>
                       <Separator />
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-3">Kontak Darurat</h4>
+                        <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                          <BookOpenIcon className="w-4 h-4" />
+                          Informasi Anak/Remaja
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {selectedClient.school && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-600">Sekolah</label>
+                              <p className="text-gray-900 flex items-center gap-2">
+                                <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
+                                {selectedClient.school}
+                              </p>
+                            </div>
+                          )}
+                          {selectedClient.grade && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-600">Kelas</label>
+                              <p className="text-gray-900 flex items-center gap-2">
+                                <AcademicCapIcon className="w-4 h-4 text-gray-400" />
+                                {selectedClient.grade}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Guardian Information */}
+                  {selectedClient.guardianFullName && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                          <ShieldCheckIcon className="w-4 h-4" />
+                          Informasi Wali
+                        </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-600">Nama:</span>
-                            <span className="ml-2 font-medium">{client.emergencyContactName}</span>
+                          <div className="flex items-center gap-2">
+                            <UserIcon className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-600">Nama Wali:</span>
+                            <span className="ml-2 font-medium">{selectedClient.guardianFullName}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-600">Hubungan:</span>
-                            <span className="ml-2 font-medium">{client.emergencyContactRelationship}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">Telepon:</span>
-                            <span className="ml-2 font-medium">{client.emergencyContactPhone}</span>
-                          </div>
-                          {client.emergencyContactAddress && (
-                            <div className="md:col-span-2">
+                          {selectedClient.guardianRelationship && (
+                            <div className="flex items-center gap-2">
+                              <UserGroupIcon className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-600">Hubungan:</span>
+                              <span className="ml-2 font-medium">{selectedClient.guardianRelationship}</span>
+                            </div>
+                          )}
+                          {selectedClient.guardianPhone && (
+                            <div className="flex items-center gap-2">
+                              <PhoneIcon className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-600">Telepon:</span>
+                              <span className="ml-2 font-medium">{selectedClient.guardianPhone}</span>
+                            </div>
+                          )}
+                          {selectedClient.guardianOccupation && (
+                            <div className="flex items-center gap-2">
+                              <BriefcaseIcon className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-600">Pekerjaan:</span>
+                              <span className="ml-2 font-medium">{selectedClient.guardianOccupation}</span>
+                            </div>
+                          )}
+                          {selectedClient.guardianAddress && (
+                            <div className="md:col-span-2 flex items-start gap-2">
+                              <MapPinIcon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                               <span className="text-gray-600">Alamat:</span>
-                              <span className="ml-2 font-medium">{client.emergencyContactAddress}</span>
+                              <span className="ml-2 font-medium">{selectedClient.guardianAddress}</span>
+                            </div>
+                          )}
+                          {selectedClient.guardianMaritalStatus && (
+                            <div className="flex items-center gap-2">
+                              <HeartHandshakeIcon className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-600">Status Pernikahan:</span>
+                              <span className="ml-2 font-medium">{selectedClient.guardianMaritalStatus}</span>
+                            </div>
+                          )}
+                          {selectedClient.guardianLegalCustody !== undefined && (
+                            <div className="flex items-center gap-2">
+                              <ShieldCheckIcon className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-600">Hak Asuh Legal:</span>
+                              <span className="ml-2 font-medium">{selectedClient.guardianLegalCustody ? 'Ya' : 'Tidak'}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Emergency Contact */}
+                  {selectedClient.emergencyContactName && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                          <ExclamationTriangleIcon className="w-4 h-4" />
+                          Kontak Darurat
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <UserIcon className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-600">Nama:</span>
+                            <span className="ml-2 font-medium">{selectedClient.emergencyContactName}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <UserGroupIcon className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-600">Hubungan:</span>
+                            <span className="ml-2 font-medium">{selectedClient.emergencyContactRelationship}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <PhoneIcon className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-600">Telepon:</span>
+                            <span className="ml-2 font-medium">{selectedClient.emergencyContactPhone}</span>
+                          </div>
+                          {selectedClient.emergencyContactAddress && (
+                            <div className="md:col-span-2 flex items-start gap-2">
+                              <MapPinIcon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <span className="text-gray-600">Alamat:</span>
+                              <span className="ml-2 font-medium">{selectedClient.emergencyContactAddress}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Assigned Therapist Information */}
+                  {selectedClient.assignedTherapistName && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                          <UserCircleIcon className="w-4 h-4" />
+                          Informasi Therapist
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <UserIcon className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-600">Therapist yang Ditugaskan:</span>
+                            <span className="ml-2 font-medium">{selectedClient.assignedTherapistName}</span>
+                          </div>
+                          {selectedClient.assignedDate && (
+                            <div className="flex items-center gap-2">
+                              <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-600">Tanggal Penugasan:</span>
+                              <span className="ml-2 font-medium">
+                                {new Date(selectedClient.assignedDate).toLocaleDateString('id-ID')}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -978,109 +1152,57 @@ export default function ClientTherapyPage() {
                   )}
 
                   {/* Previous Visit Details */}
-                  {!client.firstVisit && client.previousVisitDetails && (
+                  {!selectedClient.firstVisit && selectedClient.previousVisitDetails && (
                     <>
                       <Separator />
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">Riwayat Kunjungan Sebelumnya</h4>
+                        <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
+                          <ClipboardDocumentListIcon className="w-4 h-4" />
+                          Riwayat Kunjungan Sebelumnya
+                        </h4>
                         <p className="text-sm text-gray-700 p-3 bg-gray-50 rounded-lg">
-                          {client.previousVisitDetails}
+                          {selectedClient.previousVisitDetails}
                         </p>
                       </div>
                     </>
                   )}
-                </CardContent>
-              </Card>
 
-              {/* Session History */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ClockIcon className="w-5 h-5" />
-                    Riwayat Sesi Terapi
-                  </CardTitle>
-                  <CardDescription>
-                    History sesi terapi dan konsultasi klien
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {(() => {
-                      // Filter sessions: completed + next scheduled
-                      const clientSessions = mockTherapySessions.filter(session => session.clientId === clientId);
-                      const completedSessions = clientSessions.filter(session => session.status === TherapySessionStatusEnum.Completed);
-                      const nextScheduledSession = clientSessions
-                        .filter(session => session.status === TherapySessionStatusEnum.Scheduled)
-                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-
-                      const sessionsToShow = [...completedSessions];
-                      if (nextScheduledSession) {
-                        sessionsToShow.push(nextScheduledSession);
-                      }
-
-                      return sessionsToShow.length > 0 ? (
-                        sessionsToShow.map((session) => (
-                          <div key={session.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                    Sesi #{session.sessionNumber}
-                                  </Badge>
-                                  <span className="text-sm text-gray-600">
-                                    {new Date(session.date).toLocaleDateString('id-ID')} • {session.time}
-                                  </span>
-                                  <span className="text-sm text-gray-500">
-                                    {session.duration} menit
-                                  </span>
-                                </div>
-                                <h4 className="font-medium text-gray-900 mb-1">{session.title}</h4>
-                                {session.description && (
-                                  <p className="text-gray-700 text-sm mb-2">{session.description}</p>
-                                )}
-                                {session.notes && (
-                                  <p className="text-gray-600 text-sm mb-2 italic">{session.notes}</p>
-                                )}
-                                <div className="flex items-center gap-4 text-sm">
-                                  <div>
-                                    <span className="text-gray-600">Teknik:</span>
-                                    <span className="ml-1 font-medium">{session.techniques?.join(', ') || 'Tidak ada'}</span>
-                                  </div>
-                                  {session.progress && (
-                                    <div>
-                                      <span className="text-gray-600">Progress:</span>
-                                      <span className="ml-1 font-medium">{session.progress}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="ml-4">
-                                <Badge
-                                  variant="outline"
-                                  className={`${session.status === TherapySessionStatusEnum.Completed
-                                    ? 'bg-green-50 text-green-700 border-green-200'
-                                    : session.status === TherapySessionStatusEnum.Scheduled
-                                      ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                      : 'bg-gray-50 text-gray-700 border-gray-200'
-                                    }`}
-                                >
-                                  {session.status === TherapySessionStatusEnum.Completed ? 'Selesai' :
-                                    session.status === TherapySessionStatusEnum.Scheduled ? 'Dijadwalkan' : 'Berlangsung'}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8">
-                          <ClockIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                          <p className="text-gray-600">Belum ada riwayat sesi terapi</p>
+                  {/* System Information */}
+                  <Separator />
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                      <CpuChipIcon className="w-4 h-4" />
+                      Informasi Sistem
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <IdentificationIcon className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-600">ID Klien:</span>
+                        <span className="ml-2 font-medium font-mono text-xs">{selectedClient.id}</span>
+                      </div>
+                      {selectedClient.createdAt && (
+                        <div className="flex items-center gap-2">
+                          <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-600">Tanggal Dibuat:</span>
+                          <span className="ml-2 font-medium">
+                            {new Date(selectedClient.createdAt).toLocaleDateString('id-ID')}
+                          </span>
                         </div>
-                      );
-                    })()}
+                      )}
+                      {selectedClient.updatedAt && (
+                        <div className="flex items-center gap-2">
+                          <ClockIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-600">Terakhir Diperbarui:</span>
+                          <span className="ml-2 font-medium">
+                            {new Date(selectedClient.updatedAt).toLocaleDateString('id-ID')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+
             </TabsContent>
 
             <TabsContent value="consultation" className="space-y-6">
@@ -1552,8 +1674,8 @@ export default function ClientTherapyPage() {
         onOpenChange={setShowConsultationForm}
         title={editingConsultation ? "Edit Base Assessment" : "Buat Base Assessment"}
         description={editingConsultation
-          ? `Edit assessment dasar untuk ${client?.fullName || 'klien'}`
-          : `Buat assessment dasar untuk ${client?.fullName || 'klien'}`
+          ? `Edit assessment dasar untuk ${selectedClient?.fullName || 'klien'}`
+          : `Buat assessment dasar untuk ${selectedClient?.fullName || 'klien'}`
         }
         size="5xl"
         showCloseButton={false}
@@ -1565,7 +1687,7 @@ export default function ClientTherapyPage() {
           isLoading={false}
           mode={editingConsultation ? "edit" : "create"}
           allowTypeChange={!editingConsultation} // Don't allow type change when editing
-          client={client as any} // Type conversion for compatibility
+          client={selectedClient as any} // Type conversion for compatibility
           readOnly={false}
           onCancel={() => setShowConsultationForm(false)}
         />
@@ -1576,7 +1698,7 @@ export default function ClientTherapyPage() {
         open={showSessionSetup}
         onOpenChange={setShowSessionSetup}
         title="Setup Sesi Terapi"
-        description={`Setup sesi terapi untuk ${client?.fullName || 'klien'}`}
+        description={`Setup sesi terapi untuk ${selectedClient?.fullName || 'klien'}`}
         size="6xl"
         showCloseButton={false}
         fitContent={true}

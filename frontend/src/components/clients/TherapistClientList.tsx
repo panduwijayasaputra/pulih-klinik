@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { DataTable, TableAction, TableColumn } from '@/components/ui/data-table';
 import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
-import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
 
 import { TherapistClient } from '@/types/therapistClient';
 import { ClientStatusEnum, ClientStatusLabels } from '@/types/enums';
@@ -20,7 +19,7 @@ export interface TherapistClientListProps {
   error?: string | null;
   onRefresh?: () => void;
   onViewClient?: (clientId: string) => void;
-  onStartTherapy?: (clientId: string) => void;
+  onViewDetails?: (clientId: string) => void;
 }
 
 const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
@@ -30,11 +29,9 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
   error: _error = null,
   onRefresh,
   onViewClient: _onViewClient,
-  onStartTherapy,
+  onViewDetails,
 }) => {
   const [status, setStatus] = useState<'all' | TherapistClient['status']>('all');
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   // Filter clients by status
   const filteredClients = useMemo(() => {
@@ -47,26 +44,10 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
     console.log(clients);
   }, [clients]);
 
-  // Modal handlers
-  const handleCloseDetails = React.useCallback(() => {
-    setShowDetailsModal(false);
-    setSelectedClientId(null);
-  }, []);
-
   // Custom action handlers for therapist context
-  const handleEdit = React.useCallback((client: TherapistClient) => {
-    // Therapists cannot edit clients, so this is a no-op
-  }, []);
-
-  const handleAssign = React.useCallback((clientId: string) => {
-    // Therapists cannot assign clients, so this is a no-op
-  }, []);
-
-  const handleConsultation = React.useCallback((clientId: string) => {
-    // Close modal and start therapy
-    handleCloseDetails();
-    onStartTherapy?.(clientId);
-  }, [handleCloseDetails, onStartTherapy]);
+  const handleViewDetails = React.useCallback((clientId: string) => {
+    onViewDetails?.(clientId);
+  }, [onViewDetails]);
 
   // Define table columns
   const columns: TableColumn<TherapistClient>[] = [
@@ -139,25 +120,14 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
     },
   ];
 
-  // Define table actions - only view for therapists
+  // Define table actions - only details for therapists
   const actions: TableAction<TherapistClient>[] = [
     {
-      key: 'view',
-      label: 'Detail',
+      key: 'details',
+      label: 'Details',
       icon: EyeIcon,
       variant: 'outline',
-      onClick: (client) => {
-        setSelectedClientId(client.id);
-        setShowDetailsModal(true);
-      },
-    },
-    {
-      key: 'therapy',
-      label: 'Terapi',
-      icon: PlayIcon,
-      variant: 'info',
-      onClick: (client) => onStartTherapy?.(client.id),
-      show: (client) => client.status !== ClientStatusEnum.Done,
+      onClick: (client) => handleViewDetails(client.id),
     },
   ];
 
@@ -204,17 +174,6 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
           onClick: onRefresh || (() => { }),
           loading: loading,
         }}
-      />
-
-      {/* Client Details Modal */}
-      <ClientDetailsModal
-        isOpen={showDetailsModal}
-        onClose={handleCloseDetails}
-        clientId={selectedClientId || undefined}
-        isTherapist={true}
-        onEdit={handleEdit}
-        onAssign={handleAssign}
-        onConsultation={handleConsultation}
       />
     </>
   );

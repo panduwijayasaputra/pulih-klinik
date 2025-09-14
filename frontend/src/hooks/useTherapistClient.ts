@@ -23,6 +23,7 @@ export interface UseTherapistClientReturn {
 
   // Actions
   loadClients: (forceRefresh?: boolean) => Promise<void>;
+  loadClient: (clientId: string) => Promise<TherapistClient | null>;
   loadStats: () => Promise<void>;
   loadClientSessions: (clientId: string) => Promise<void>;
   loadClientProgress: (clientId: string) => Promise<void>;
@@ -164,6 +165,34 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
       setError(errorMessage);
     } finally {
       setLoadingProgress(false);
+    }
+  }, [therapistId]);
+
+  // Load single client
+  const loadClient = useCallback(async (clientId: string): Promise<TherapistClient | null> => {
+    if (!therapistId) return null;
+
+    try {
+      setError(null);
+      setLoading(true);
+
+      const response = await TherapistClientAPI.getTherapistClient(therapistId, clientId);
+
+      if (response.success && response.data) {
+        setSelectedClient(response.data);
+        return response.data;
+      } else {
+        setError(response.message || 'Failed to load client details');
+        return null;
+      }
+    } catch (err) {
+      const errorMessage = err instanceof TherapistClientAPIError
+        ? err.message
+        : 'Failed to load client details';
+      setError(errorMessage);
+      return null;
+    } finally {
+      setLoading(false);
     }
   }, [therapistId]);
 
@@ -342,6 +371,7 @@ export const useTherapistClient = (): UseTherapistClientReturn => {
 
     // Actions
     loadClients,
+    loadClient,
     loadStats,
     loadClientSessions,
     loadClientProgress,

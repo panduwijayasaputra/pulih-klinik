@@ -65,9 +65,9 @@ export default function TherapistClientsPage() {
     // router.push(`/portal/therapist/clients/${clientId}`);
   };
 
-  // Handle start therapy
-  const handleStartTherapy = (clientId: string) => {
-    router.push(`/portal/therapist/therapy/${clientId}`);
+  // Handle view details
+  const handleViewDetails = (clientId: string) => {
+    router.push(`/portal/therapist/clients/${clientId}`);
   };
 
   // Refresh clients
@@ -90,7 +90,7 @@ export default function TherapistClientsPage() {
         error={error}
         onRefresh={handleRefresh}
         onViewClient={handleViewClient}
-        onStartTherapy={handleStartTherapy}
+        onViewDetails={handleViewDetails}
       />
     </PageWrapper>
   );

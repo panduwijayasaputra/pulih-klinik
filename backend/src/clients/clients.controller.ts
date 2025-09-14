@@ -170,12 +170,6 @@ export class ClientsController {
     description: 'Filter by marital status',
   })
   @ApiQuery({
-    name: 'province',
-    required: false,
-    type: 'string',
-    description: 'Filter by province',
-  })
-  @ApiQuery({
     name: 'minAge',
     required: false,
     type: 'number',
@@ -344,7 +338,6 @@ export class ClientsController {
   @ApiQuery({ name: 'religion', required: false, type: 'string' })
   @ApiQuery({ name: 'education', required: false, type: 'string' })
   @ApiQuery({ name: 'maritalStatus', required: false, type: 'string' })
-  @ApiQuery({ name: 'province', required: false, type: 'string' })
   @ApiQuery({ name: 'minAge', required: false, type: 'number' })
   @ApiQuery({ name: 'maxAge', required: false, type: 'number' })
   @ApiQuery({ name: 'isMinor', required: false, type: 'boolean' })

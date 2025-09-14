@@ -128,8 +128,6 @@ export class Client {
   @Property({ type: 'text', nullable: true })
   previousVisitDetails?: string;
 
-  @Property({ type: 'varchar', length: 100, nullable: true })
-  province?: string;
 
   // Emergency contact
   @Property({ type: 'varchar', length: 255, nullable: true })

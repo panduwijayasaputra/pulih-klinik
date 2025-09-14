@@ -50,7 +50,6 @@ export const clientBaseSchema = z.object({
 
   firstVisit: z.boolean(),
   previousVisitDetails: z.string().optional(),
-  province: z.string().optional(),
   emergencyContactName: emergencyContactNameValidation,
   emergencyContactPhone: emergencyPhoneValidation,
   emergencyContactRelationship: emergencyContactRelationshipValidation,
@@ -166,7 +165,6 @@ export const clientFiltersSchema = z.object({
     })
     .optional(),
   primaryIssue: z.string().optional(),
-  province: z.string().optional(),
 });
 
 // Assignment

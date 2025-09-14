@@ -26,9 +26,6 @@ export const ClientAPI = {
         if (filters.search) {
           queryParams.append('search', filters.search);
         }
-        if (filters.province) {
-          queryParams.append('province', filters.province);
-        }
         if (filters.gender) {
           queryParams.append('gender', filters.gender);
         }
@@ -66,7 +63,6 @@ export const ClientAPI = {
         relationshipWithSpouse: backendClient.relationshipWithSpouse,
         firstVisit: backendClient.firstVisit,
         previousVisitDetails: backendClient.previousVisitDetails,
-        province: backendClient.province,
         emergencyContactName: backendClient.emergencyContactName,
         emergencyContactPhone: backendClient.emergencyContactPhone,
         emergencyContactRelationship: backendClient.emergencyContactRelationship,
@@ -149,7 +145,6 @@ export const ClientAPI = {
         relationshipWithSpouse: backendClient.relationshipWithSpouse,
         firstVisit: backendClient.firstVisit,
         previousVisitDetails: backendClient.previousVisitDetails,
-        province: backendClient.province,
         emergencyContactName: backendClient.emergencyContactName,
         emergencyContactPhone: backendClient.emergencyContactPhone,
         emergencyContactRelationship: backendClient.emergencyContactRelationship,
@@ -212,7 +207,6 @@ export const ClientAPI = {
         relationshipWithSpouse: data.relationshipWithSpouse,
         firstVisit: data.firstVisit,
         previousVisitDetails: data.previousVisitDetails,
-        province: data.province,
         // Emergency contact information
         emergencyContactName: data.emergencyContactName,
         emergencyContactPhone: data.emergencyContactPhone,
@@ -264,7 +258,6 @@ export const ClientAPI = {
         relationshipWithSpouse: backendClient.relationshipWithSpouse,
         firstVisit: backendClient.firstVisit,
         previousVisitDetails: backendClient.previousVisitDetails,
-        province: backendClient.province,
         emergencyContactName: backendClient.emergencyContactName,
         emergencyContactPhone: backendClient.emergencyContactPhone,
         emergencyContactRelationship: backendClient.emergencyContactRelationship,
@@ -328,7 +321,6 @@ export const ClientAPI = {
       if (data.relationshipWithSpouse !== undefined) updateClientDto.relationshipWithSpouse = data.relationshipWithSpouse;
       if (data.firstVisit !== undefined) updateClientDto.firstVisit = data.firstVisit;
       if (data.previousVisitDetails !== undefined) updateClientDto.previousVisitDetails = data.previousVisitDetails;
-      if (data.province !== undefined) updateClientDto.province = data.province;
       if (data.emergencyContactName !== undefined) updateClientDto.emergencyContactName = data.emergencyContactName;
       if (data.emergencyContactPhone !== undefined) updateClientDto.emergencyContactPhone = data.emergencyContactPhone;
       if (data.emergencyContactRelationship !== undefined) updateClientDto.emergencyContactRelationship = data.emergencyContactRelationship;
@@ -373,7 +365,6 @@ export const ClientAPI = {
         relationshipWithSpouse: backendClient.relationshipWithSpouse,
         firstVisit: backendClient.firstVisit,
         previousVisitDetails: backendClient.previousVisitDetails,
-        province: backendClient.province,
         emergencyContactName: backendClient.emergencyContactName,
         emergencyContactPhone: backendClient.emergencyContactPhone,
         emergencyContactRelationship: backendClient.emergencyContactRelationship,

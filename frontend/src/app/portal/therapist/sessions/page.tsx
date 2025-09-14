@@ -335,7 +335,7 @@ export default function TherapySessionsPage() {
                 variant: 'outline',
                 size: 'sm',
                 onClick: (session) => {
-                  router.push(`/portal/therapist/therapy/${session.clientId}`);
+                  router.push(`/portal/therapist/clients/${session.clientId}`);
                 },
               },
               {
@@ -488,10 +488,6 @@ export default function TherapySessionsPage() {
                                   </Badge>
                                 </div>
                                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                                  <span className="flex items-center gap-1">
-                                    <MapPinIcon className="w-3 h-3" />
-                                    {session.client.province}
-                                  </span>
                                   <span className="flex items-center gap-1">
                                     <PhoneIcon className="w-3 h-3" />
                                     {session.client.phone}

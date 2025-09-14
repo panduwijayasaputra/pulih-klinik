@@ -209,8 +209,7 @@ export const portalBreadcrumbMapping: Record<string, { label: string; parent?: s
 
   // Therapist routes
   '/portal/therapist/clients': { label: 'Klien Saya', parent: '/portal' },
-  '/portal/therapist/clients/[id]': { label: 'Detail Klien', parent: '/portal/therapist/clients' },
-  '/portal/therapist/therapy/[clientId]': { label: 'Terapi', parent: '/portal/therapist/clients' },
+  '/portal/therapist/clients/[client-id]': { label: 'Detail Klien', parent: '/portal/therapist/clients' },
 
 
   // System Admin routes
@@ -252,7 +251,7 @@ export const portalConfigs: Record<UserRole, PortalConfig> = {
     allowedRoutes: [
       '/portal',
       '/portal/therapist/*',
-      '/portal/therapist/therapy/*',
+      '/portal/therapist/clients/*',
 
       '/portal/profile',
       '/portal/settings',

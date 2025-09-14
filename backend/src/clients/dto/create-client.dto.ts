@@ -216,9 +216,6 @@ export class CreateClientDto {
     maxLength: 100,
   })
   @IsOptional()
-  @IsString({ message: 'Province must be a string' })
-  @MaxLength(100, { message: 'Province cannot exceed 100 characters' })
-  province?: string;
 
   // Emergency Contact Information
   @ApiProperty({

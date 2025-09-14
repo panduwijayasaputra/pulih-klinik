@@ -282,24 +282,48 @@ export const useNavigation = () => {
       return breadcrumbs;
     }
 
+    // Helper function to find matching breadcrumb mapping for dynamic routes
+    const findBreadcrumbMapping = (path: string) => {
+      // First try exact match
+      if (portalBreadcrumbMapping[path]) {
+        return { mapping: portalBreadcrumbMapping[path], matchedPath: path };
+      }
+      
+      // Then try pattern matching for dynamic routes
+      for (const [pattern, mapping] of Object.entries(portalBreadcrumbMapping)) {
+        if (pattern.includes('[') && pattern.includes(']')) {
+          // Convert pattern to regex (replace [param] with [^/]+)
+          const patternRegex = pattern.replace(/\[.*?\]/g, '[^/]+');
+          const regex = new RegExp(`^${patternRegex}$`);
+          if (regex.test(path)) {
+            return { mapping, matchedPath: pattern };
+          }
+        }
+      }
+      
+      return null;
+    };
+
     // Use the portal breadcrumb mapping for portal routes
-    const mapping = portalBreadcrumbMapping[pathname];
-    if (mapping) {
+    const mappingResult = findBreadcrumbMapping(pathname);
+    if (mappingResult) {
+      const { mapping } = mappingResult;
       // Build breadcrumb chain
       const chain: BreadcrumbItem[] = [];
       let currentPath = pathname;
       let counter = 0;
       
       while (currentPath && counter < 10) { // Prevent infinite loops
-        const pathMapping = portalBreadcrumbMapping[currentPath];
-        if (pathMapping) {
+        const pathMappingResult = findBreadcrumbMapping(currentPath);
+        if (pathMappingResult) {
+          const { mapping } = pathMappingResult;
           chain.unshift({
             id: `breadcrumb-${counter}`,
-            label: pathMapping.label,
+            label: mapping.label,
             href: currentPath,
             isActive: currentPath === pathname,
           });
-          currentPath = pathMapping.parent || '';
+          currentPath = mapping.parent || '';
         } else {
           break;
         }

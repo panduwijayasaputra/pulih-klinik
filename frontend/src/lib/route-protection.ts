@@ -62,9 +62,9 @@ export const routeConfigs: RouteConfig[] = [
     redirectTo: '/portal/therapist/clients'
   },
   { 
-    path: '/portal/therapist/therapy/[client-id]', 
+    path: '/portal/therapist/clients/[client-id]', 
     requiredRoles: [UserRoleEnum.Therapist],
-    redirectTo: '/portal/therapist'
+    redirectTo: '/portal/therapist/clients'
   },
   { 
     path: '/portal/therapist/sessions/[session-id]', 
