@@ -115,7 +115,6 @@ export class ClientQueryDto {
   })
   maritalStatus?: MaritalStatus;
 
-
   @ApiProperty({
     description: 'Filter by age range - minimum age',
     example: 18,

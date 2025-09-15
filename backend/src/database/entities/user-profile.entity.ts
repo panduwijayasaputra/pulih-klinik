@@ -6,9 +6,6 @@ export class UserProfile {
   @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
   id!: string;
 
-  @Property({ type: 'uuid', unique: true })
-  userId!: string;
-
   @Property({ type: 'varchar', length: 255 })
   name!: string;
 
@@ -34,6 +31,6 @@ export class UserProfile {
   })
   updatedAt: Date = new Date();
 
-  @OneToOne(() => User, { joinColumn: 'userId' })
+  @OneToOne(() => User, { joinColumn: 'user_id' })
   user!: User;
 }

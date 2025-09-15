@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiResponse } from '../dto/api-response.dto';
-import { PaginationMeta } from '../dto/pagination.dto';
+import { ApiResponse, PaginationMeta } from '../dto/api-response.dto';
 
 export interface ResponseData<T = any> {
   data?: T;

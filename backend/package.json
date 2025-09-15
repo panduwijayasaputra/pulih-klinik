@@ -27,9 +27,9 @@
     "schema:create": "mikro-orm schema:create",
     "schema:drop": "mikro-orm schema:drop",
     "schema:update": "mikro-orm schema:update",
-    "seeder:run": "mikro-orm seeder:run --class DemoSeeder",
+    "seeder:run": "mikro-orm seeder:run --class DatabaseSeeder",
     "seeder:create": "mikro-orm seeder:create",
-    "db:fresh": "mikro-orm schema:drop --run && mikro-orm schema:create --run && mikro-orm seeder:run --class DemoSeeder"
+    "db:fresh": "mikro-orm schema:drop --run && mikro-orm schema:create --run && mikro-orm seeder:run --class DatabaseSeeder"
   },
   "dependencies": {
     "@mikro-orm/core": "5.9.7",

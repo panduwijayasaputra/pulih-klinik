@@ -48,7 +48,7 @@ export class User {
   @Property({ type: 'integer', default: 0 })
   emailResendAttempts: number = 0;
 
-  @Property({ type: 'timestamp', nullable: true })
+  @Property({ type: 'timestamptz', nullable: true })
   emailResendCooldownUntil?: Date;
 
   @Property({ type: 'varchar', length: 500, nullable: true })

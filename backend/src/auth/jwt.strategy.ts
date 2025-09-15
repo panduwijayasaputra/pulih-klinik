@@ -4,7 +4,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { EntityManager } from '@mikro-orm/core';
 import { environmentConfig } from '../config/environment.config';
 import { User } from '../database/entities/user.entity';
-import { Therapist } from '../database/entities/therapist.entity';
 import { UserStatus } from '../common/enums';
 
 export interface JwtPayload {
@@ -52,14 +51,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       User,
       { id: userId, email, status: UserStatus.ACTIVE },
       {
-        populate: [
-          'roles',
-          'clinic',
-          'profile',
-          'therapist',
-          'therapist.clinic',
-          'therapist.clinic.subscriptionTier',
-        ],
+        populate: ['roles', 'clinic', 'profile', 'therapist'],
       },
     );
 
@@ -83,8 +75,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       );
     }
 
-    // Get clinic info from user.clinic or fallback to therapist.clinic
-    const clinic = user.clinic || user.therapist.getItems()[0]?.clinic;
+    // Get clinic info from user.clinic
+    const clinic = user.clinic;
 
     // Return validated user with current database role information
     const authUser: AuthUser = {

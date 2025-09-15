@@ -81,6 +81,9 @@ export interface Therapist {
   // Admin Notes
   adminNotes?: string; // Internal notes by clinic admins
   
+  // Role Information
+  hasClinicAdminRole: boolean; // Whether this therapist has clinic admin role
+  
   // Audit
   createdAt: string;
   updatedAt: string;

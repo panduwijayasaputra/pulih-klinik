@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
-  IsPhoneNumber,
   IsEnum,
   IsOptional,
   IsUrl,
@@ -36,10 +35,9 @@ export class CreateTherapistDto {
     description: 'Indonesian phone number',
     example: '+628123456789',
   })
-  @IsPhoneNumber('ID', {
-    message: 'Please provide a valid Indonesian phone number',
-  })
-  phone!: string;
+  @IsString({ message: 'Phone number must be a string' })
+  @IsOptional()
+  phone?: string;
 
   @ApiProperty({
     description: 'Avatar image URL',

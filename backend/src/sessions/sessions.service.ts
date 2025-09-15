@@ -102,8 +102,7 @@ export class SessionsService {
       Therapist,
       {
         id: createSessionDto.therapistId,
-        clinic: clinicId,
-        user: { status: UserStatus.ACTIVE },
+        user: { clinic: { id: clinicId }, status: UserStatus.ACTIVE },
       },
       { populate: ['user'] },
     );
@@ -209,7 +208,7 @@ export class SessionsService {
     totalPages: number;
   }> {
     // Build filter conditions
-    const whereConditions: any = { client: { clinic: clinicId } };
+    const whereConditions: any = { client: { clinic: { id: clinicId } } };
 
     // Role-based filtering
     if (userRole === 'Therapist' && userId) {
@@ -335,7 +334,7 @@ export class SessionsService {
   async findOne(id: string, clinicId: string): Promise<SessionResponse> {
     const session = await this.em.findOne(
       TherapySession,
-      { id, client: { clinic: clinicId } },
+      { id, client: { clinic: { id: clinicId } } },
       {
         populate: [
           'client',
@@ -364,7 +363,7 @@ export class SessionsService {
   ): Promise<SessionResponse> {
     const session = await this.em.findOne(
       TherapySession,
-      { id, client: { clinic: clinicId } },
+      { id, client: { clinic: { id: clinicId } } },
       {
         populate: [
           'client',
@@ -403,7 +402,7 @@ export class SessionsService {
   ): Promise<SessionResponse> {
     const session = await this.em.findOne(
       TherapySession,
-      { id, client: { clinic: clinicId } },
+      { id, client: { clinic: { id: clinicId } } },
       {
         populate: [
           'client',
@@ -435,7 +434,7 @@ export class SessionsService {
   async remove(id: string, clinicId: string): Promise<void> {
     const session = await this.em.findOne(TherapySession, {
       id,
-      client: { clinic: clinicId },
+      client: { clinic: { id: clinicId } },
     });
 
     if (!session) {
@@ -462,7 +461,7 @@ export class SessionsService {
     userId?: string,
   ): Promise<SessionStatsResponse> {
     // Build filter conditions
-    const whereConditions: any = { client: { clinic: clinicId } };
+    const whereConditions: any = { client: { clinic: { id: clinicId } } };
 
     // Role-based filtering
     if (userRole === 'Therapist' && userId) {

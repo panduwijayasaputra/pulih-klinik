@@ -112,7 +112,6 @@ export class RegistrationService {
     const role = new UserRoleEntity();
     role.role = UserRole.CLINIC_ADMIN;
     role.user = user;
-    role.userId = user.id;
 
     // Save role
     await this.em.persistAndFlush(role);
@@ -121,7 +120,6 @@ export class RegistrationService {
     const profile = new UserProfile();
     profile.name = dto.name;
     profile.user = user;
-    profile.userId = user.id;
 
     // Save profile
     await this.em.persistAndFlush(profile);

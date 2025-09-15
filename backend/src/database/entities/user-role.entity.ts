@@ -10,14 +10,11 @@ import { User } from './user.entity';
 import type { UserRoleType } from '../../common/enums';
 
 @Entity({ tableName: 'user_roles' })
-@Index({ properties: ['userId'] })
-@Unique({ properties: ['userId', 'role'] })
+@Index({ properties: ['user'] })
+@Unique({ properties: ['user', 'role'] })
 export class UserRole {
   @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
   id!: string;
-
-  @Property({ type: 'uuid' })
-  userId!: string;
 
   @Property({ type: 'varchar', length: 50 })
   role!: UserRoleType;
@@ -25,6 +22,6 @@ export class UserRole {
   @Property({ type: 'timestamp', defaultRaw: 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();
 
-  @ManyToOne(() => User, { joinColumn: 'userId' })
+  @ManyToOne(() => User, { joinColumn: 'user_id' })
   user!: User;
 }

@@ -6,7 +6,6 @@ import {
   Unique,
 } from '@mikro-orm/core';
 import { User } from './user.entity';
-import { Clinic } from './clinic.entity';
 
 export enum LicenseType {
   PSYCHOLOGIST = 'psychologist',
@@ -18,13 +17,10 @@ export enum LicenseType {
 // TherapistStatus enum moved to UserStatus in common/enums/user-status.enum.ts
 
 @Entity({ tableName: 'therapists' })
-@Unique({ properties: ['clinic', 'licenseNumber'] })
+@Unique({ properties: ['user', 'licenseNumber'] })
 export class Therapist {
   @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
   id!: string;
-
-  @ManyToOne(() => Clinic, { onDelete: 'cascade' })
-  clinic!: Clinic;
 
   @ManyToOne(() => User, { onDelete: 'cascade' })
   user!: User;
@@ -57,23 +53,7 @@ export class Therapist {
   @Property({ type: 'text', nullable: true })
   certifications?: string;
 
-  // Session scheduling preferences
-  @Property({
-    type: 'integer',
-    default: 15,
-    comment: 'Break between sessions in minutes',
-  })
-  breakBetweenSessions: number = 15;
-
-  @Property({ type: 'integer', default: 8 })
-  maxSessionsPerDay: number = 8;
-
-  @Property({
-    type: 'json',
-    defaultRaw: "'[1,2,3,4,5]'",
-    comment: 'Working days (1=Monday to 7=Sunday)',
-  })
-  workingDays: number[] = [1, 2, 3, 4, 5];
+  // Session scheduling preferences - removed as they don't exist in database
 
   // Admin notes
   @Property({ type: 'text', nullable: true })

@@ -28,6 +28,7 @@ const mapBackendTherapistToFrontend = (backendTherapist: any): Therapist => ({
   education: backendTherapist.education,
   certifications: backendTherapist.certifications,
   adminNotes: backendTherapist.adminNotes,
+  hasClinicAdminRole: backendTherapist.hasClinicAdminRole || false,
   createdAt: backendTherapist.createdAt,
   updatedAt: backendTherapist.updatedAt
 });
@@ -91,6 +92,14 @@ export class TherapistAPI {
       // The response is wrapped by ResponseInterceptor: { success: true, data: { therapists, total, page, limit, totalPages }, message: "..." }
       const backendData = response.data.data;
       
+      // Debug: Log backend response to see what data we're receiving
+      console.log('🔍 Backend therapist data:', backendData.therapists.map((t: any) => ({
+        name: t.name,
+        email: t.email,
+        hasClinicAdminRole: t.hasClinicAdminRole,
+        status: t.status
+      })));
+      
       // Convert backend response to frontend format
       const frontendTherapists: Therapist[] = backendData.therapists.map((backendTherapist: any) => ({
         id: backendTherapist.id,
@@ -110,10 +119,12 @@ export class TherapistAPI {
         preferences: {
           languages: ['Indonesian']
         },
+        hasClinicAdminRole: backendTherapist.hasClinicAdminRole || false,
         assignedClients: [],
         schedule: [],
         education: backendTherapist.education,
         certifications: backendTherapist.certifications,
+        adminNotes: backendTherapist.adminNotes,
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       }));
@@ -217,6 +228,7 @@ export class TherapistAPI {
         education: backendTherapist.education,
         certifications: backendTherapist.certifications,
         adminNotes: backendTherapist.adminNotes,
+        hasClinicAdminRole: backendTherapist.hasClinicAdminRole || false,
         createdAt: backendTherapist.createdAt,
         updatedAt: backendTherapist.updatedAt
       };
@@ -273,6 +285,7 @@ export class TherapistAPI {
         preferences: {
           languages: ['Indonesian']
         },
+        hasClinicAdminRole: backendTherapist.hasClinicAdminRole || false,
         assignedClients: [],
         schedule: [],
         education: backendTherapist.education,
@@ -331,6 +344,7 @@ export class TherapistAPI {
         preferences: {
           languages: ['Indonesian']
         },
+        hasClinicAdminRole: backendTherapist.hasClinicAdminRole || false,
         assignedClients: [],
         schedule: [],
         education: backendTherapist.education,
@@ -519,6 +533,7 @@ export class TherapistAPI {
         preferences: {
           languages: ['Indonesian']
         },
+        hasClinicAdminRole: backendTherapist.hasClinicAdminRole || false,
         assignedClients: [],
         schedule: [],
         education: backendTherapist.education,

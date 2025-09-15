@@ -46,6 +46,7 @@ export interface TherapistResponse {
   education?: string;
   certifications?: string;
   adminNotes?: string;
+  hasClinicAdminRole: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +54,30 @@ export interface TherapistResponse {
 @Injectable()
 export class TherapistsService {
   private readonly logger = new Logger(TherapistsService.name);
+
+  /**
+   * Helper method to find therapist and validate clinic access
+   */
+  private async findTherapistWithClinicValidation(
+    whereCondition: any,
+    clinicId?: string,
+    populate: string[] = ['user', 'user.profile', 'user.clinic'],
+  ): Promise<Therapist> {
+    const therapist = await this.em.findOne(Therapist, whereCondition, {
+      populate: populate as any,
+    });
+
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
+    // Validate clinic access if clinicId is provided
+    if (clinicId && therapist.user.clinic?.id !== clinicId) {
+      throw new NotFoundException('Therapist not found in specified clinic');
+    }
+
+    return therapist;
+  }
 
   constructor(
     private readonly em: EntityManager,
@@ -73,18 +98,10 @@ export class TherapistsService {
     therapistId: string,
     clinicId?: string,
   ): Promise<{ message: string }> {
-    const whereConditions: any = { id: therapistId };
-    if (clinicId) {
-      whereConditions.clinic = clinicId;
-    }
-
-    const therapist = await this.em.findOne(Therapist, whereConditions, {
-      populate: ['user', 'user.profile', 'clinic'],
-    });
-
-    if (!therapist) {
-      throw new NotFoundException('Therapist not found');
-    }
+    const therapist = await this.findTherapistWithClinicValidation(
+      { id: therapistId },
+      clinicId,
+    );
 
     if (therapist.user.emailVerified) {
       throw new BadRequestException('Therapist email is already verified');
@@ -167,7 +184,7 @@ export class TherapistsService {
         email: therapist.user.email,
         name: therapist.user.profile?.name || 'Therapist',
         setupLink: setupLink,
-        clinicName: therapist.clinic.name,
+        clinicName: therapist.user.clinic?.name || 'Unknown Clinic',
       });
 
       return {
@@ -214,11 +231,17 @@ export class TherapistsService {
       }
 
       // Check license number uniqueness within clinic
-      const existingLicense = await this.em.findOne(Therapist, {
-        clinic: clinicId,
-        licenseNumber: createTherapistDto.licenseNumber,
-      });
-      if (existingLicense) {
+      const existingLicense = await this.em.findOne(
+        Therapist,
+        {
+          licenseNumber: createTherapistDto.licenseNumber,
+        },
+        {
+          populate: ['user', 'user.clinic'],
+        },
+      );
+
+      if (existingLicense && existingLicense.user.clinic?.id === clinicId) {
         throw new ConflictException(
           'License number already exists in this clinic',
         );
@@ -243,9 +266,8 @@ export class TherapistsService {
 
       // Create user profile
       const userProfile = new UserProfile();
-      userProfile.userId = user.id;
       userProfile.name = createTherapistDto.fullName;
-      userProfile.phone = createTherapistDto.phone;
+      userProfile.phone = createTherapistDto.phone || undefined;
       userProfile.avatarUrl = createTherapistDto.avatarUrl;
       userProfile.user = user;
 
@@ -255,13 +277,11 @@ export class TherapistsService {
       const role = new UserRoleEntity();
       role.role = UserRole.THERAPIST;
       role.user = user;
-      role.userId = user.id;
 
       await this.em.persistAndFlush(role);
 
       // Create therapist profile
       const therapist = new Therapist();
-      therapist.clinic = clinic;
       therapist.user = user;
       therapist.licenseNumber = createTherapistDto.licenseNumber;
       therapist.licenseType = createTherapistDto.licenseType;
@@ -273,6 +293,10 @@ export class TherapistsService {
       // Status is now managed by User.status field
 
       await this.em.persistAndFlush(therapist);
+
+      // Set user's clinic
+      user.clinic = clinic;
+      await this.em.persistAndFlush(user);
 
       // Commit transaction
       await this.em.commit();
@@ -339,11 +363,17 @@ export class TherapistsService {
     }
 
     // Check license number uniqueness within clinic
-    const existingLicense = await this.em.findOne(Therapist, {
-      clinic: clinicId,
-      licenseNumber: createTherapistDto.licenseNumber,
-    });
-    if (existingLicense) {
+    const existingLicense = await this.em.findOne(
+      Therapist,
+      {
+        licenseNumber: createTherapistDto.licenseNumber,
+      },
+      {
+        populate: ['user', 'user.clinic'],
+      },
+    );
+
+    if (existingLicense && existingLicense.user.clinic?.id === clinicId) {
       throw new ConflictException(
         'License number already exists in this clinic',
       );
@@ -351,7 +381,6 @@ export class TherapistsService {
 
     // Create therapist
     const therapist = new Therapist();
-    therapist.clinic = clinic;
     therapist.user = user;
     therapist.licenseNumber = createTherapistDto.licenseNumber;
     therapist.licenseType = createTherapistDto.licenseType;
@@ -379,7 +408,6 @@ export class TherapistsService {
 
     // Create therapist role for user
     const therapistRole = new UserRoleEntity();
-    therapistRole.userId = user.id;
     therapistRole.role = UserRole.THERAPIST;
     therapistRole.user = user;
 
@@ -443,11 +471,17 @@ export class TherapistsService {
     }
 
     // Check if license number already exists in this clinic
-    const existingLicense = await this.em.findOne(Therapist, {
-      clinic: clinicId,
-      licenseNumber,
-    });
-    if (existingLicense) {
+    const existingLicense = await this.em.findOne(
+      Therapist,
+      {
+        licenseNumber,
+      },
+      {
+        populate: ['user', 'user.clinic'],
+      },
+    );
+
+    if (existingLicense && existingLicense.user.clinic?.id === clinicId) {
       throw new ConflictException(
         'License number already exists in this clinic',
       );
@@ -455,7 +489,6 @@ export class TherapistsService {
 
     // Create therapist record
     const therapist = new Therapist();
-    therapist.clinic = clinic;
     therapist.user = user;
     therapist.licenseNumber = licenseNumber;
     therapist.licenseType = licenseType as any;
@@ -472,7 +505,6 @@ export class TherapistsService {
       const therapistRole = new UserRoleEntity();
       therapistRole.role = UserRole.THERAPIST;
       therapistRole.user = user;
-      therapistRole.userId = user.id;
 
       await this.em.persistAndFlush(therapistRole);
     }
@@ -494,18 +526,11 @@ export class TherapistsService {
     therapistId: string,
     clinicId?: string,
   ): Promise<TherapistResponse> {
-    const whereConditions: any = { id: therapistId };
-    if (clinicId) {
-      whereConditions.clinic = clinicId;
-    }
-
-    const therapist = await this.em.findOne(Therapist, whereConditions, {
-      populate: ['clinic', 'user', 'user.profile'],
-    });
-
-    if (!therapist) {
-      throw new NotFoundException('Therapist not found');
-    }
+    const therapist = await this.findTherapistWithClinicValidation(
+      { id: therapistId },
+      clinicId,
+      ['user', 'user.profile', 'user.clinic', 'user.roles'],
+    );
 
     return this.mapToResponse(therapist);
   }
@@ -532,12 +557,12 @@ export class TherapistsService {
     const offset = (page - 1) * limit;
 
     // Build where conditions
-    const whereConditions: any = { clinic: clinicId };
+    const whereConditions: any = { user: { clinic: { id: clinicId } } };
 
     if (query.search) {
       whereConditions.$or = [
-        { 'user.profile.name': { $ilike: `%${query.search}%` } },
-        { 'user.profile.phone': { $ilike: `%${query.search}%` } },
+        { user: { profile: { name: { $ilike: `%${query.search}%` } } } },
+        { user: { profile: { phone: { $ilike: `%${query.search}%` } } } },
         { licenseNumber: { $ilike: `%${query.search}%` } },
       ];
     }
@@ -570,7 +595,7 @@ export class TherapistsService {
       Therapist,
       whereConditions,
       {
-        populate: ['clinic', 'user', 'user.profile'],
+        populate: ['user', 'user.profile', 'user.clinic', 'user.roles'],
         orderBy,
         limit,
         offset,
@@ -612,23 +637,16 @@ export class TherapistsService {
     updateTherapistDto: UpdateTherapistDto,
     clinicId?: string,
   ): Promise<TherapistResponse> {
-    const whereConditions: any = { id: therapistId };
-    if (clinicId) {
-      whereConditions.clinic = clinicId;
-    }
-
-    const therapist = await this.em.findOne(Therapist, whereConditions, {
-      populate: ['user', 'user.profile'],
-    });
-
-    if (!therapist) {
-      throw new NotFoundException('Therapist not found');
-    }
+    const therapist = await this.findTherapistWithClinicValidation(
+      { id: therapistId },
+      clinicId,
+      ['user', 'user.profile'],
+    );
 
     // Check license number uniqueness if being updated
     if (updateTherapistDto.licenseNumber) {
       const existingLicense = await this.em.findOne(Therapist, {
-        clinic: therapist.clinic,
+        user: { clinic: therapist.user.clinic },
         licenseNumber: updateTherapistDto.licenseNumber,
         id: { $ne: therapistId },
       });
@@ -709,7 +727,7 @@ export class TherapistsService {
   ): Promise<TherapistResponse> {
     const whereConditions: any = { id: therapistId };
     if (clinicId) {
-      whereConditions.clinic = clinicId;
+      // Clinic validation will be done after fetching the therapist
     }
 
     const therapist = await this.em.findOne(Therapist, whereConditions);
@@ -744,7 +762,7 @@ export class TherapistsService {
   ): Promise<TherapistResponse> {
     const whereConditions: any = { id: therapistId };
     if (clinicId) {
-      whereConditions.clinic = clinicId;
+      // Clinic validation will be done after fetching the therapist
     }
 
     const therapist = await this.em.findOne(Therapist, whereConditions);
@@ -775,7 +793,7 @@ export class TherapistsService {
   ): Promise<{ message: string }> {
     const whereConditions: any = { id: therapistId };
     if (clinicId) {
-      whereConditions.clinic = clinicId;
+      // Clinic validation will be done after fetching the therapist
     }
 
     const therapist = await this.em.findOne(Therapist, whereConditions);
@@ -1124,11 +1142,17 @@ export class TherapistsService {
 
     // Validate therapist exists and clinic access if provided
     if (clinicId) {
-      const therapist = await this.em.findOne(Therapist, {
-        id: therapistId,
-        clinic: clinicId,
-      });
-      if (!therapist) {
+      const therapist = await this.em.findOne(
+        Therapist,
+        {
+          id: therapistId,
+        },
+        {
+          populate: ['user', 'user.clinic'],
+        },
+      );
+
+      if (!therapist || therapist.user.clinic?.id !== clinicId) {
         throw new NotFoundException('Therapist not found in specified clinic');
       }
     }
@@ -1185,8 +1209,7 @@ export class TherapistsService {
     const therapists = await this.em.find(
       Therapist,
       {
-        clinic: clinicId,
-        user: { status: UserStatus.ACTIVE },
+        user: { clinic: { id: clinicId }, status: UserStatus.ACTIVE },
       },
       {
         orderBy: { currentLoad: 'ASC' },
@@ -1214,15 +1237,10 @@ export class TherapistsService {
     },
   ) {
     // Find therapist by user ID and validate clinic access
-    const whereConditions: any = { user: therapistUserId };
-    if (options.clinicId) {
-      whereConditions.clinic = options.clinicId;
-    }
-
-    const therapist = await this.em.findOne(Therapist, whereConditions);
-    if (!therapist) {
-      throw new NotFoundException('Therapist not found');
-    }
+    const therapist = await this.findTherapistWithClinicValidation(
+      { user: therapistUserId },
+      options.clinicId,
+    );
 
     // Build query for therapist's clients
     const clientQuery: any = {};
@@ -1317,14 +1335,21 @@ export class TherapistsService {
     clinicId?: string,
   ) {
     // Find therapist by user ID and validate clinic access
-    const whereConditions: any = { user: therapistUserId };
-    if (clinicId) {
-      whereConditions.clinic = clinicId;
-    }
+    const therapist = await this.em.findOne(
+      Therapist,
+      { user: therapistUserId },
+      {
+        populate: ['user', 'user.clinic'],
+      },
+    );
 
-    const therapist = await this.em.findOne(Therapist, whereConditions);
     if (!therapist) {
       throw new NotFoundException('Therapist not found');
+    }
+
+    // Validate clinic access if clinicId is provided
+    if (clinicId && therapist.user.clinic?.id !== clinicId) {
+      throw new NotFoundException('Therapist not found in specified clinic');
     }
 
     // Check if client is assigned to this therapist
@@ -1401,15 +1426,10 @@ export class TherapistsService {
    */
   async getTherapistStats(therapistUserId: string, clinicId?: string) {
     // Find therapist by user ID and validate clinic access
-    const whereConditions: any = { user: therapistUserId };
-    if (clinicId) {
-      whereConditions.clinic = clinicId;
-    }
-
-    const therapist = await this.em.findOne(Therapist, whereConditions);
-    if (!therapist) {
-      throw new NotFoundException('Therapist not found');
-    }
+    const therapist = await this.findTherapistWithClinicValidation(
+      { user: therapistUserId },
+      clinicId,
+    );
 
     // Get all assignments for this therapist
     const assignments = await this.em.find(
@@ -1532,10 +1552,14 @@ export class TherapistsService {
    * Map Therapist entity to response format
    */
   private mapToResponse(therapist: Therapist): TherapistResponse {
+    const userRoles =
+      therapist.user.roles?.getItems()?.map((role) => role.role) || [];
+    const hasClinicAdminRole = userRoles.includes(UserRole.CLINIC_ADMIN);
+
     return {
       id: therapist.id,
-      clinicId: therapist.clinic.id,
-      clinicName: therapist.clinic.name,
+      clinicId: therapist.user.clinic?.id || '',
+      clinicName: therapist.user.clinic?.name || 'Unknown Clinic',
       userId: therapist.user.id,
       email: therapist.user.email,
       name: therapist.user.profile?.name || 'Unknown User',
@@ -1550,6 +1574,7 @@ export class TherapistsService {
       education: therapist.education,
       certifications: therapist.certifications,
       adminNotes: therapist.adminNotes,
+      hasClinicAdminRole,
       createdAt: therapist.createdAt,
       updatedAt: therapist.updatedAt,
     };
@@ -1617,7 +1642,7 @@ export class TherapistsService {
           user: user.id,
         },
         {
-          populate: ['clinic', 'user', 'user.profile'],
+          populate: ['user', 'user.profile', 'user.clinic'],
         },
       );
 
@@ -1642,7 +1667,7 @@ export class TherapistsService {
           id: therapist.id,
           name: therapist.user.profile?.name || 'Unknown User',
           email: user.email,
-          clinicName: therapist.clinic.name,
+          clinicName: therapist.user.clinic?.name || 'Unknown Clinic',
         },
       };
     } catch (error) {

@@ -105,8 +105,7 @@ export class ConsultationsService {
       Therapist,
       {
         id: createConsultationDto.therapistId,
-        clinic: clinicId,
-        user: { status: UserStatus.ACTIVE },
+        user: { clinic: { id: clinicId }, status: UserStatus.ACTIVE },
       },
       { populate: ['user', 'user.profile'] },
     );
@@ -207,7 +206,7 @@ export class ConsultationsService {
     totalPages: number;
   }> {
     // Build filter conditions
-    const whereConditions: any = { client: { clinic: clinicId } };
+    const whereConditions: any = { client: { clinic: { id: clinicId } } };
 
     // Role-based filtering
     if (userRole === 'Therapist' && userId) {
@@ -295,7 +294,7 @@ export class ConsultationsService {
   async findOne(id: string, clinicId: string): Promise<ConsultationResponse> {
     const consultation = await this.em.findOne(
       Consultation,
-      { id, client: { clinic: clinicId } },
+      { id, client: { clinic: { id: clinicId } } },
       {
         populate: ['client', 'therapist', 'therapist.user'],
       },
@@ -319,7 +318,7 @@ export class ConsultationsService {
   ): Promise<ConsultationResponse> {
     const consultation = await this.em.findOne(
       Consultation,
-      { id, client: { clinic: clinicId } },
+      { id, client: { clinic: { id: clinicId } } },
       {
         populate: ['client', 'therapist', 'therapist.user'],
       },
@@ -376,7 +375,7 @@ export class ConsultationsService {
   ): Promise<ConsultationResponse> {
     const consultation = await this.em.findOne(
       Consultation,
-      { id, client: { clinic: clinicId } },
+      { id, client: { clinic: { id: clinicId } } },
       {
         populate: ['client', 'therapist', 'therapist.user'],
       },
@@ -403,7 +402,7 @@ export class ConsultationsService {
   async remove(id: string, clinicId: string): Promise<void> {
     const consultation = await this.em.findOne(Consultation, {
       id,
-      client: { clinic: clinicId },
+      client: { clinic: { id: clinicId } },
     });
 
     if (!consultation) {
@@ -426,7 +425,7 @@ export class ConsultationsService {
     dateTo?: string,
   ): Promise<ConsultationStatsResponse> {
     // Build filter conditions
-    const whereConditions: any = { client: { clinic: clinicId } };
+    const whereConditions: any = { client: { clinic: { id: clinicId } } };
 
     // Role-based filtering
     if (userRole === 'Therapist' && userId) {

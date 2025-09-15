@@ -1,1 +1,1 @@
-export { DemoSeeder } from './demo.seeder';
+export { SqlSeeder } from './sql.seeder';

@@ -588,10 +588,11 @@ export class ClinicsService {
 
     // Get therapists count
     const [totalTherapists, activeTherapists] = await Promise.all([
-      this.em.count(Therapist, { clinic: clinicId }),
       this.em.count(Therapist, {
-        clinic: clinicId,
-        user: { status: UserStatus.ACTIVE },
+        user: { clinic: { id: clinicId } },
+      }),
+      this.em.count(Therapist, {
+        user: { clinic: { id: clinicId }, status: UserStatus.ACTIVE },
       }),
     ]);
 
@@ -604,10 +605,10 @@ export class ClinicsService {
     // Get sessions count
     const [totalSessions, thisMonthSessions] = await Promise.all([
       this.em.count(TherapySession, {
-        client: { clinic: clinicId },
+        client: { clinic: { id: clinicId } },
       }),
       this.em.count(TherapySession, {
-        client: { clinic: clinicId },
+        client: { clinic: { id: clinicId } },
         createdAt: {
           $gte: startOfMonth,
           $lte: endOfMonth,

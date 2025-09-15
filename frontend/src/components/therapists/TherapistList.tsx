@@ -142,6 +142,15 @@ export const TherapistList: React.FC = () => {
         const activeTherapists = response.data.items.filter(
           therapist => therapist.status !== UserStatusEnum.DELETED
         );
+        
+        // Debug: Log therapist data to verify hasClinicAdminRole
+        console.log('🔍 Therapist data with hasClinicAdminRole:', activeTherapists.map(t => ({
+          name: t.name,
+          email: t.email,
+          hasClinicAdminRole: t.hasClinicAdminRole,
+          status: t.status
+        })));
+        
         setTherapists(activeTherapists);
       } else {
         addToast({
@@ -603,6 +612,11 @@ export const TherapistList: React.FC = () => {
         hasRole(UserRoleEnum.ClinicAdmin) &&
         therapist.status === UserStatusEnum.ACTIVE,
       loading: (therapist) => actionLoading === therapist.id,
+      disabled: (therapist) => {
+        const isDisabled = therapist.hasClinicAdminRole;
+        console.log(`🔍 Set Inactive button for ${therapist.name}: hasClinicAdminRole=${therapist.hasClinicAdminRole}, disabled=${isDisabled}`);
+        return isDisabled;
+      },
       onClick: (therapist) => handleStatusChangeRequest(therapist.id, 'inactive'),
     },
     {
@@ -614,6 +628,11 @@ export const TherapistList: React.FC = () => {
         hasRole(UserRoleEnum.ClinicAdmin) &&
         therapist.status === UserStatusEnum.INACTIVE,
       loading: (therapist) => actionLoading === therapist.id,
+      disabled: (therapist) => {
+        const isDisabled = therapist.hasClinicAdminRole;
+        console.log(`🔍 Set Active button for ${therapist.name}: hasClinicAdminRole=${therapist.hasClinicAdminRole}, disabled=${isDisabled}`);
+        return isDisabled;
+      },
       onClick: (therapist) => handleStatusChangeRequest(therapist.id, 'active'),
     },
   ];

@@ -73,8 +73,6 @@ export class AuthService {
           'clinic.subscriptionTier',
           'profile',
           'therapist',
-          'therapist.clinic',
-          'therapist.clinic.subscriptionTier',
         ],
       },
     );
@@ -122,8 +120,8 @@ export class AuthService {
 
     const user = validation.user;
 
-    // Get clinic info from user.clinic or fallback to therapist.clinic
-    const clinic = user.clinic || user.therapist.getItems()[0]?.clinic;
+    // Get clinic info from user.clinic
+    const clinic = user.clinic;
 
     const payload: JwtPayload = {
       sub: user.id,
