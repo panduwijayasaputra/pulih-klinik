@@ -34,7 +34,6 @@ import {
   ConsultationQueryDto,
 } from './dto/create-consultation.dto';
 import {
-  RequireAdminOrClinicAdmin,
   RequireAuth,
   RequireClinicAccess,
 } from '../auth/decorators/require-role.decorator';
@@ -137,39 +136,18 @@ export class ConsultationsController {
 
   @Get()
   @RequireAuth()
-  @ApiOperation({ summary: 'Get all consultations with filtering' })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiQuery({ name: 'search', required: false, example: 'anxiety' })
-  @ApiQuery({ name: 'clientId', required: false })
-  @ApiQuery({ name: 'therapistId', required: false })
-  @ApiQuery({
-    name: 'formTypes',
-    required: false,
-    enum: FormType,
-    isArray: true,
-  })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: [...Object.values(ConsultationStatus), 'all'],
-  })
-  @ApiQuery({ name: 'dateFrom', required: false, example: '2024-01-01' })
-  @ApiQuery({ name: 'dateTo', required: false, example: '2024-12-31' })
+  @ApiOperation({ summary: 'Get consultations by client ID (1:1 relationship)' })
+  @ApiQuery({ name: 'clientId', required: false, description: 'Client ID to get consultation for' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Consultations retrieved successfully',
-    type: Object, // Would be paginated ConsultationResponse in a real app
+    type: Object,
   })
   async findAll(
     @Query() query: ConsultationQueryDto,
     @Request() req: any,
   ): Promise<{
     consultations: ConsultationResponse[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
   }> {
     return this.consultationsService.findAll(
       query,
@@ -355,10 +333,8 @@ export class ConsultationsController {
 
   @Get('client/:clientId')
   @RequireAuth()
-  @ApiOperation({ summary: 'Get all consultations for a specific client' })
+  @ApiOperation({ summary: 'Get consultation for a specific client (1:1 relationship)' })
   @ApiParam({ name: 'clientId', description: 'Client ID' })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 20 })
   @ApiQuery({
     name: 'formTypes',
     required: false,
@@ -372,7 +348,7 @@ export class ConsultationsController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Client consultations retrieved successfully',
+    description: 'Client consultation retrieved successfully',
     type: Object,
   })
   async findByClient(
@@ -381,16 +357,10 @@ export class ConsultationsController {
     @Request() req: any,
   ): Promise<{
     consultations: ConsultationResponse[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
   }> {
     const queryWithClient: ConsultationQueryDto = {
       ...query,
       clientId,
-      page: query.page || 1,
-      limit: query.limit || 20,
     };
 
     return this.consultationsService.findAll(
@@ -401,97 +371,7 @@ export class ConsultationsController {
     );
   }
 
-  @Get('therapist/:therapistId')
-  @RequireAdminOrClinicAdmin()
-  @ApiOperation({ summary: 'Get all consultations for a specific therapist' })
-  @ApiParam({ name: 'therapistId', description: 'Therapist ID' })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiQuery({
-    name: 'formTypes',
-    required: false,
-    enum: FormType,
-    isArray: true,
-  })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: [...Object.values(ConsultationStatus), 'all'],
-  })
-  @ApiQuery({ name: 'dateFrom', required: false, example: '2024-01-01' })
-  @ApiQuery({ name: 'dateTo', required: false, example: '2024-12-31' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Therapist consultations retrieved successfully',
-    type: Object,
-  })
-  async findByTherapist(
-    @Param('therapistId', ParseUUIDPipe) therapistId: string,
-    @Query() query: Partial<ConsultationQueryDto>,
-    @Request() req: any,
-  ): Promise<{
-    consultations: ConsultationResponse[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
-    const queryWithTherapist: ConsultationQueryDto = {
-      ...query,
-      therapistId,
-      page: query.page || 1,
-      limit: query.limit || 20,
-    };
 
-    return this.consultationsService.findAll(
-      queryWithTherapist,
-      req.user.clinicId,
-      req.user.role,
-      req.user.id,
-    );
-  }
-
-  @Get('form-type/:formType')
-  @RequireAuth()
-  @ApiOperation({ summary: 'Get consultations by form type' })
-  @ApiParam({ name: 'formType', description: 'Form Type', enum: FormType })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: [...Object.values(ConsultationStatus), 'all'],
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Consultations by form type retrieved successfully',
-    type: Object,
-  })
-  async findByFormType(
-    @Param('formType') formType: FormType,
-    @Query() query: Partial<ConsultationQueryDto>,
-    @Request() req: any,
-  ): Promise<{
-    consultations: ConsultationResponse[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
-    const queryWithFormTypes: ConsultationQueryDto = {
-      ...query,
-      formTypes: [formType],
-      page: query.page || 1,
-      limit: query.limit || 20,
-    };
-
-    return this.consultationsService.findAll(
-      queryWithFormTypes,
-      req.user.clinicId,
-      req.user.role,
-      req.user.id,
-    );
-  }
 
   @Get(':id/form-data')
   @RequireAuth()
@@ -509,14 +389,21 @@ export class ConsultationsController {
   async getFormData(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any,
-  ): Promise<{ formTypes: FormType[]; formData: Record<string, any> | null }> {
+  ): Promise<{ 
+    formTypes: FormType[]; 
+    generalFormData: Record<string, any> | null;
+    drugAddictionFormData: Record<string, any> | null;
+    minorFormData: Record<string, any> | null;
+  }> {
     const consultation = await this.consultationsService.findOne(
       id,
       req.user.clinicId,
     );
     return {
       formTypes: consultation.formTypes,
-      formData: consultation.formData || null,
+      generalFormData: consultation.generalFormData || null,
+      drugAddictionFormData: consultation.drugAddictionFormData || null,
+      minorFormData: consultation.minorFormData || null,
     };
   }
 
@@ -535,12 +422,12 @@ export class ConsultationsController {
   })
   async updateFormData(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() formData: Record<string, any>,
+    @Body() updateData: UpdateConsultationDto,
     @Request() req: any,
   ): Promise<ConsultationResponse> {
     return this.consultationsService.update(
       id,
-      { formData },
+      updateData,
       req.user.clinicId,
     );
   }

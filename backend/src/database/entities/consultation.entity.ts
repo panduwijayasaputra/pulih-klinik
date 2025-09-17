@@ -2,11 +2,10 @@ import {
   Entity,
   PrimaryKey,
   Property,
-  ManyToOne,
+  OneToOne,
   Check,
 } from '@mikro-orm/core';
 import { Client } from './client.entity';
-import { Therapist } from './therapist.entity';
 
 export enum FormType {
   GENERAL = 'general',
@@ -26,11 +25,8 @@ export class Consultation {
   @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
   id!: string;
 
-  @ManyToOne(() => Client, { onDelete: 'cascade' })
+  @OneToOne(() => Client, { onDelete: 'cascade' })
   client!: Client;
-
-  @ManyToOne(() => Therapist, { onDelete: 'cascade' })
-  therapist!: Therapist;
 
   // Basic info
   @Property({ type: 'json' })
@@ -117,9 +113,15 @@ export class Consultation {
   @Property({ type: 'text', nullable: true })
   scriptGenerationPreferences?: string;
 
-  // Form-specific data (JSONB for flexibility)
+  // Form-specific data (separate columns for each form type)
   @Property({ type: 'json', nullable: true })
-  formData?: Record<string, any>;
+  generalFormData?: Record<string, any>;
+
+  @Property({ type: 'json', nullable: true })
+  drugAddictionFormData?: Record<string, any>;
+
+  @Property({ type: 'json', nullable: true })
+  minorFormData?: Record<string, any>;
 
   @Property({ type: 'timestamp', defaultRaw: 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();

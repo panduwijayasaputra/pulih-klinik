@@ -24,7 +24,7 @@ export interface UseConsultationReturn {
   filters: ConsultationFilters;
 
   // Actions
-  loadConsultations: (filters?: Partial<ConsultationFilters>, page?: number, limit?: number) => Promise<void>;
+  loadConsultations: (filters?: Partial<ConsultationFilters>) => Promise<void>;
   loadConsultation: (id: string) => Promise<void>;
   loadStats: (clientId?: string) => Promise<void>;
   createConsultation: (data: CreateConsultationData) => Promise<boolean>;
@@ -37,7 +37,6 @@ export interface UseConsultationReturn {
 
 export const useConsultation = (): UseConsultationReturn => {
   const { user } = useAuth();
-  const therapistId = user?.id;
 
   // State
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -51,34 +50,24 @@ export const useConsultation = (): UseConsultationReturn => {
 
   // Filters
   const [filters, setFiltersState] = useState<ConsultationFilters>({
-    clientId: '',
-    therapistId: '',
-    formTypes: [],
-    status: 'all',
-    dateFrom: '',
-    dateTo: '',
-    search: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
+    clientId: ''
   });
 
   // Load consultations
   const loadConsultations = useCallback(async (
-    customFilters?: Partial<ConsultationFilters>,
-    page = 1,
-    limit = 20
+    customFilters?: Partial<ConsultationFilters>
   ) => {
-    if (!therapistId) return;
 
     try {
       setLoading(true);
       setError(null);
 
       const mergedFilters = { ...filters, ...customFilters };
-      const response = await ConsultationAPI.getConsultations(mergedFilters, page, limit);
+      const response = await ConsultationAPI.getConsultations(mergedFilters);
 
       if (response.success && response.data) {
-        setConsultations(response.data.items);
+        // Backend now returns { consultations: [...] } instead of paginated structure
+        setConsultations(response.data.consultations || []);
       } else {
         setError(response.message || 'Failed to load consultations');
       }
@@ -90,7 +79,7 @@ export const useConsultation = (): UseConsultationReturn => {
     } finally {
       setLoading(false);
     }
-  }, [therapistId, filters]);
+  }, [filters]);
 
   // Load single consultation
   const loadConsultation = useCallback(async (id: string) => {

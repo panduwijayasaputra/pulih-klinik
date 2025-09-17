@@ -4,7 +4,6 @@ import { ConsultationFormTypeEnum, ConsultationStatusEnum } from './enums';
 export interface BaseConsultation {
   id: string;
   clientId: string;
-  therapistId: string;
   formTypes: ConsultationFormTypeEnum[];
   status: ConsultationStatusEnum;
   createdAt: string;
@@ -202,6 +201,11 @@ export const SeverityLevelLabels: Record<1 | 2 | 3 | 4 | 5, string> = {
 };
 
 
+
+// Filters for consultation queries
+export interface ConsultationFilters {
+  clientId?: string;
+}
 
 // Validation error type
 export interface ValidationError {

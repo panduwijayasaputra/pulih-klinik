@@ -10,7 +10,6 @@ import { apiClient } from '../http-client';
 const mapBackendConsultationToFrontend = (backendConsultation: any): Consultation => ({
   id: backendConsultation.id,
   clientId: backendConsultation.client.id,
-  therapistId: backendConsultation.therapist.id,
   formTypes: backendConsultation.formTypes,
   status: backendConsultation.status,
   createdAt: backendConsultation.createdAt,
@@ -60,61 +59,26 @@ export class ConsultationAPI {
   static async getConsultations(
     filters?: {
       clientId?: string;
-      therapistId?: string;
-      formTypes?: string[];
-      status?: string;
-      search?: string;
-      dateFrom?: string;
-      dateTo?: string;
-    },
-    page = 1,
-    pageSize = 10
-  ): Promise<PaginatedResponse<Consultation>> {
+    }
+  ): Promise<{ success: boolean; data?: { consultations: Consultation[] }; message?: string }> {
     try {
       // Build query parameters
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: pageSize.toString(),
-      });
+      const queryParams = new URLSearchParams();
 
-      // Add filters to query params
-      if (filters) {
-        if (filters.clientId) {
-          queryParams.append('clientId', filters.clientId);
-        }
-        if (filters.therapistId) {
-          queryParams.append('therapistId', filters.therapistId);
-        }
-        if (filters.formTypes && filters.formTypes.length > 0) {
-          filters.formTypes.forEach(type => queryParams.append('formTypes', type));
-        }
-        if (filters.status) {
-          queryParams.append('status', filters.status);
-        }
-        if (filters.search) {
-          queryParams.append('search', filters.search);
-        }
-        if (filters.dateFrom) {
-          queryParams.append('dateFrom', filters.dateFrom);
-        }
-        if (filters.dateTo) {
-          queryParams.append('dateTo', filters.dateTo);
-        }
+      // Add filters to query params - only clientId is supported now
+      if (filters && filters.clientId) {
+        queryParams.append('clientId', filters.clientId);
       }
 
       const response = await apiClient.get(`/consultations?${queryParams.toString()}`);
       
-      // The response is wrapped by ResponseInterceptor: { success: true, data: { consultations, total, page, limit, totalPages }, message: "..." }
+      // The response is wrapped by ResponseInterceptor: { success: true, data: { consultations: [...] }, message: "..." }
       const backendData = response.data.data;
       
       return {
         success: true,
         data: {
-          items: backendData.consultations.map(mapBackendConsultationToFrontend),
-          total: backendData.total,
-          page: backendData.page,
-          pageSize: backendData.limit,
-          totalPages: backendData.totalPages,
+          consultations: backendData.consultations.map(mapBackendConsultationToFrontend),
         },
         message: response.data.message,
       };

@@ -10,11 +10,6 @@ import {
   FormType,
 } from '../database/entities/consultation.entity';
 import { Client, ClientStatus } from '../database/entities/client.entity';
-import { Therapist } from '../database/entities/therapist.entity';
-import {
-  ClientTherapistAssignment,
-  AssignmentStatus,
-} from '../database/entities/client-therapist-assignment.entity';
 import {
   CreateConsultationDto,
   CreateGeneralConsultationDto,
@@ -23,7 +18,6 @@ import {
   UpdateConsultationDto,
   ConsultationQueryDto,
 } from './dto/create-consultation.dto';
-import { UserStatus } from 'src/common/enums';
 
 export interface ConsultationResponse {
   id: string;
@@ -33,40 +27,26 @@ export interface ConsultationResponse {
     age?: number;
     gender: string;
   };
-  therapist: {
-    id: string;
-    user: {
-      fullName: string;
-      email: string;
-    };
-  };
   formTypes: FormType[];
   status: ConsultationStatus;
   sessionDate: Date;
   sessionDuration: number;
   consultationNotes?: string;
   previousTherapyExperience: boolean;
-  previousTherapyDetails?: string;
   currentMedications: boolean;
-  currentMedicationsDetails?: string;
   primaryConcern: string;
-  secondaryConcerns?: string[];
   symptomSeverity?: number;
   symptomDuration?: string;
   treatmentGoals?: string[];
   clientExpectations?: string;
-  initialAssessment?: string;
-  recommendedTreatmentPlan?: string;
   previousPsychologicalDiagnosis: boolean;
-  previousPsychologicalDiagnosisDetails?: string;
   significantPhysicalIllness: boolean;
-  significantPhysicalIllnessDetails?: string;
   traumaticExperience: boolean;
-  traumaticExperienceDetails?: string;
   familyPsychologicalHistory: boolean;
-  familyPsychologicalHistoryDetails?: string;
   scriptGenerationPreferences?: string;
-  formData?: Record<string, any>;
+  generalFormData?: Record<string, any>;
+  drugAddictionFormData?: Record<string, any>;
+  minorFormData?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -109,32 +89,14 @@ export class ConsultationsService {
       );
     }
 
-    // Validate therapist exists and belongs to clinic
-    const therapist = await this.em.findOne(
-      Therapist,
-      {
-        id: createConsultationDto.therapistId,
-        user: { clinic: { id: clinicId }, status: UserStatus.ACTIVE },
-      },
-      { populate: ['user', 'user.profile'] },
-    );
-
-    if (!therapist) {
-      throw new NotFoundException(
-        `Active therapist with ID ${createConsultationDto.therapistId} not found in your clinic. Please ensure the therapist exists and is active in your clinic.`,
-      );
-    }
-
-    // Check if client is assigned to therapist
-    const assignment = await this.em.findOne(ClientTherapistAssignment, {
+    // Check if client already has a consultation (1:1 relationship)
+    const existingConsultation = await this.em.findOne(Consultation, {
       client: createConsultationDto.clientId,
-      therapist: createConsultationDto.therapistId,
-      status: AssignmentStatus.ACTIVE,
     });
 
-    if (!assignment) {
+    if (existingConsultation) {
       throw new BadRequestException(
-        'Client must be assigned to therapist before creating consultations',
+        'Client already has a consultation. Only one consultation per client is allowed.',
       );
     }
 
@@ -146,68 +108,62 @@ export class ConsultationsService {
     }
 
     // Validate session date
-    const sessionDate = new Date(createConsultationDto.sessionDate);
-    if (sessionDate > new Date()) {
-      // If session is in the future, we can allow it
-    } else if (sessionDate < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) {
-      // Don't allow consultations more than 7 days in the past
-      throw new BadRequestException(
-        'Session date cannot be more than 7 days in the past',
-      );
+    if (createConsultationDto.sessionDate) {
+      const sessionDate = new Date(createConsultationDto.sessionDate);
+      if (sessionDate > new Date()) {
+        // If session is in the future, we can allow it
+      } else if (sessionDate < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) {
+        // Don't allow consultations more than 7 days in the past
+        throw new BadRequestException(
+          'Session date cannot be more than 7 days in the past',
+        );
+      }
     }
 
     // Validate form-specific data based on form types
-    this.validateFormData(
-      createConsultationDto.formTypes,
-      createConsultationDto.formData,
-    );
+    // Validate form data based on form types
+    this.validateFormDataByType(createConsultationDto);
 
     // Create consultation
     const consultation = new Consultation();
     consultation.client = client;
-    consultation.therapist = therapist;
     consultation.formTypes = createConsultationDto.formTypes;
     consultation.status =
       createConsultationDto.status || ConsultationStatus.DRAFT;
-    consultation.sessionDate = new Date(createConsultationDto.sessionDate);
-    consultation.sessionDuration = createConsultationDto.sessionDuration;
+    if (createConsultationDto.sessionDate) {
+      consultation.sessionDate = new Date(createConsultationDto.sessionDate);
+    }
+    if (createConsultationDto.sessionDuration) {
+      consultation.sessionDuration = createConsultationDto.sessionDuration;
+    }
     consultation.consultationNotes = createConsultationDto.consultationNotes;
     consultation.previousTherapyExperience =
       createConsultationDto.previousTherapyExperience || false;
-    consultation.previousTherapyDetails =
-      createConsultationDto.previousTherapyDetails;
     consultation.currentMedications =
       createConsultationDto.currentMedications || false;
-    consultation.currentMedicationsDetails =
-      createConsultationDto.currentMedicationsDetails;
-    consultation.primaryConcern = createConsultationDto.primaryConcern;
-    consultation.secondaryConcerns = createConsultationDto.secondaryConcerns;
+    if (createConsultationDto.primaryConcern) {
+      consultation.primaryConcern = createConsultationDto.primaryConcern;
+    }
     consultation.symptomSeverity = createConsultationDto.symptomSeverity;
     consultation.symptomDuration = createConsultationDto.symptomDuration;
     consultation.treatmentGoals = createConsultationDto.treatmentGoals;
     consultation.clientExpectations = createConsultationDto.clientExpectations;
-    consultation.initialAssessment = createConsultationDto.initialAssessment;
-    consultation.recommendedTreatmentPlan =
-      createConsultationDto.recommendedTreatmentPlan;
     consultation.previousPsychologicalDiagnosis =
       createConsultationDto.previousPsychologicalDiagnosis || false;
-    consultation.previousPsychologicalDiagnosisDetails =
-      createConsultationDto.previousPsychologicalDiagnosisDetails;
     consultation.significantPhysicalIllness =
       createConsultationDto.significantPhysicalIllness || false;
-    consultation.significantPhysicalIllnessDetails =
-      createConsultationDto.significantPhysicalIllnessDetails;
     consultation.traumaticExperience =
       createConsultationDto.traumaticExperience || false;
-    consultation.traumaticExperienceDetails =
-      createConsultationDto.traumaticExperienceDetails;
     consultation.familyPsychologicalHistory =
       createConsultationDto.familyPsychologicalHistory || false;
-    consultation.familyPsychologicalHistoryDetails =
-      createConsultationDto.familyPsychologicalHistoryDetails;
     consultation.scriptGenerationPreferences =
       createConsultationDto.scriptGenerationPreferences;
-    consultation.formData = createConsultationDto.formData;
+
+    // Set separate form data columns
+    consultation.generalFormData = createConsultationDto.generalFormData;
+    consultation.drugAddictionFormData =
+      createConsultationDto.drugAddictionFormData;
+    consultation.minorFormData = createConsultationDto.minorFormData;
 
     await this.em.persistAndFlush(consultation);
 
@@ -217,7 +173,7 @@ export class ConsultationsService {
       await this.em.flush();
     }
 
-    return this.formatConsultationResponse(consultation, client, therapist);
+    return this.formatConsultationResponse(consultation, client);
   }
 
   async findAll(
@@ -227,12 +183,8 @@ export class ConsultationsService {
     userId?: string,
   ): Promise<{
     consultations: ConsultationResponse[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
   }> {
-    // Special case: if querying by clientId, return single consultation (most recent one)
+    // Special case: if querying by clientId, return single consultation (1:1 relationship)
     if (query.clientId) {
       const consultation = await this.em.findOne(
         Consultation,
@@ -240,8 +192,7 @@ export class ConsultationsService {
           client: { id: query.clientId, clinic: { id: clinicId } },
         },
         {
-          populate: ['client', 'therapist', 'therapist.user'],
-          orderBy: { createdAt: QueryOrder.DESC },
+          populate: ['client'],
         },
       );
 
@@ -251,21 +202,12 @@ export class ConsultationsService {
             this.formatConsultationResponse(
               consultation,
               consultation.client,
-              consultation.therapist,
             ),
           ],
-          total: 1,
-          page: query.page || 1,
-          limit: query.limit || 20,
-          totalPages: 1,
         };
       } else {
         return {
           consultations: [],
-          total: 0,
-          page: query.page || 1,
-          limit: query.limit || 20,
-          totalPages: 0,
         };
       }
     }
@@ -273,69 +215,25 @@ export class ConsultationsService {
     // Build filter conditions
     const whereConditions: any = { client: { clinic: { id: clinicId } } };
 
-    // Role-based filtering
-    if (userRole === 'Therapist' && userId) {
-      const therapist = await this.em.findOne(Therapist, { user: userId });
-      if (therapist) {
-        whereConditions.therapist = therapist.id;
-      }
-    }
+    // Role-based filtering - no longer needed since we removed therapist relationships
 
-    // Apply filters
+    // Apply filters - only clientId is supported now
     if (query.clientId) {
       whereConditions.client = query.clientId;
     }
 
-    if (query.therapistId) {
-      whereConditions.therapist = query.therapistId;
-    }
-
-    if (query.formTypes && query.formTypes.length > 0) {
-      whereConditions.formTypes = { $in: query.formTypes };
-    }
-
-    if (query.status && query.status !== 'all') {
-      whereConditions.status = query.status;
-    }
-
-    if (query.dateFrom) {
-      whereConditions.sessionDate = { $gte: new Date(query.dateFrom) };
-    }
-
-    if (query.dateTo) {
-      if (whereConditions.sessionDate) {
-        whereConditions.sessionDate.$lte = new Date(query.dateTo);
-      } else {
-        whereConditions.sessionDate = { $lte: new Date(query.dateTo) };
-      }
-    }
-
-    if (query.search) {
-      whereConditions.$or = [
-        { consultationNotes: { $ilike: `%${query.search}%` } },
-        { primaryConcern: { $ilike: `%${query.search}%` } },
-        { initialAssessment: { $ilike: `%${query.search}%` } },
-      ];
-    }
-
-    // Apply pagination and sorting
-    const page = query.page || 1;
-    const limit = query.limit || 20;
-    const offset = (page - 1) * limit;
-
+    // Apply sorting (no pagination needed for 1:1 relationship)
     const orderBy = {
       sessionDate: QueryOrder.DESC,
       createdAt: QueryOrder.DESC,
     };
 
-    const [consultations, total] = await this.em.findAndCount(
+    const consultations = await this.em.find(
       Consultation,
       whereConditions,
       {
-        populate: ['client', 'therapist', 'therapist.user'],
+        populate: ['client'],
         orderBy,
-        limit,
-        offset,
       },
     );
 
@@ -343,16 +241,11 @@ export class ConsultationsService {
       return this.formatConsultationResponse(
         consultation,
         consultation.client,
-        consultation.therapist,
       );
     });
 
     return {
       consultations: formattedConsultations,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
     };
   }
 
@@ -361,7 +254,7 @@ export class ConsultationsService {
       Consultation,
       { id, client: { clinic: { id: clinicId } } },
       {
-        populate: ['client', 'therapist', 'therapist.user'],
+        populate: ['client'],
       },
     );
 
@@ -372,7 +265,6 @@ export class ConsultationsService {
     return this.formatConsultationResponse(
       consultation,
       consultation.client,
-      consultation.therapist,
     );
   }
 
@@ -385,7 +277,7 @@ export class ConsultationsService {
       Consultation,
       { id, client: { clinic: { id: clinicId } } },
       {
-        populate: ['client', 'therapist', 'therapist.user'],
+        populate: ['client'],
       },
     );
 
@@ -415,11 +307,12 @@ export class ConsultationsService {
     }
 
     // Validate form data if being updated
-    if (updateConsultationDto.formData) {
-      this.validateFormData(
-        consultation.formTypes,
-        updateConsultationDto.formData,
-      );
+    if (
+      updateConsultationDto.generalFormData ||
+      updateConsultationDto.drugAddictionFormData ||
+      updateConsultationDto.minorFormData
+    ) {
+      this.validateFormDataByType(updateConsultationDto);
     }
 
     // Update consultation
@@ -429,7 +322,6 @@ export class ConsultationsService {
     return this.formatConsultationResponse(
       consultation,
       consultation.client,
-      consultation.therapist,
     );
   }
 
@@ -442,7 +334,7 @@ export class ConsultationsService {
       Consultation,
       { id, client: { clinic: { id: clinicId } } },
       {
-        populate: ['client', 'therapist', 'therapist.user'],
+        populate: ['client'],
       },
     );
 
@@ -460,7 +352,6 @@ export class ConsultationsService {
     return this.formatConsultationResponse(
       consultation,
       consultation.client,
-      consultation.therapist,
     );
   }
 
@@ -492,13 +383,7 @@ export class ConsultationsService {
     // Build filter conditions
     const whereConditions: any = { client: { clinic: { id: clinicId } } };
 
-    // Role-based filtering
-    if (userRole === 'Therapist' && userId) {
-      const therapist = await this.em.findOne(Therapist, { user: userId });
-      if (therapist) {
-        whereConditions.therapist = therapist.id;
-      }
-    }
+    // Role-based filtering - no longer needed since we removed therapist relationships
 
     // Apply date filters
     if (dateFrom) {
@@ -622,55 +507,59 @@ export class ConsultationsService {
     }
   }
 
-  private validateFormData(
-    formTypes: FormType[],
-    formData?: Record<string, any>,
+  private validateFormDataByType(
+    dto:
+      | CreateConsultationDto
+      | CreateGeneralConsultationDto
+      | CreateDrugAddictionConsultationDto
+      | CreateMinorConsultationDto
+      | UpdateConsultationDto,
   ): void {
-    if (!formData) return;
-
-    // Basic validation based on form types
+    // Validate form data based on form types
+    const formTypes = 'formTypes' in dto ? dto.formTypes : [];
     for (const formType of formTypes) {
       switch (formType) {
         case FormType.DRUG_ADDICTION:
           // Validate drug addiction specific fields
-          if (
-            formData.firstUseAge &&
-            (formData.firstUseAge < 5 || formData.firstUseAge > 80)
-          ) {
-            throw new BadRequestException(
-              'First use age must be between 5 and 80',
-            );
-          }
-          if (
-            formData.motivationToQuit &&
-            (formData.motivationToQuit < 1 || formData.motivationToQuit > 10)
-          ) {
-            throw new BadRequestException(
-              'Motivation to quit must be between 1 and 10',
-            );
+          if (dto.drugAddictionFormData) {
+            const data = dto.drugAddictionFormData;
+            if (
+              data.firstUseAge &&
+              (data.firstUseAge < 5 || data.firstUseAge > 80)
+            ) {
+              throw new BadRequestException(
+                'First use age must be between 5 and 80',
+              );
+            }
+            if (
+              data.motivationToQuit &&
+              (data.motivationToQuit < 1 || data.motivationToQuit > 10)
+            ) {
+              throw new BadRequestException(
+                'Motivation to quit must be between 1 and 10',
+              );
+            }
           }
           break;
         case FormType.MINOR:
           // Validate minor-specific fields
-          if (formData.grade && typeof formData.grade !== 'string') {
-            throw new BadRequestException('Grade must be a string');
-          }
-          if (
-            formData.guardianName &&
-            typeof formData.guardianName !== 'string'
-          ) {
-            throw new BadRequestException('Guardian name must be a string');
+          if (dto.minorFormData) {
+            const data = dto.minorFormData;
+            // Add minor-specific validations here if needed
           }
           break;
         case FormType.GENERAL:
           // Validate general form fields
-          if (
-            formData.stressLevel &&
-            (formData.stressLevel < 1 || formData.stressLevel > 10)
-          ) {
-            throw new BadRequestException(
-              'Stress level must be between 1 and 10',
-            );
+          if (dto.generalFormData) {
+            const data = dto.generalFormData;
+            if (
+              data.stressLevel &&
+              (data.stressLevel < 1 || data.stressLevel > 10)
+            ) {
+              throw new BadRequestException(
+                'Stress level must be between 1 and 10',
+              );
+            }
           }
           break;
       }
@@ -680,7 +569,6 @@ export class ConsultationsService {
   private formatConsultationResponse(
     consultation: Consultation,
     client: Client,
-    therapist: Therapist,
   ): ConsultationResponse {
     return {
       id: consultation.id,
@@ -690,44 +578,27 @@ export class ConsultationsService {
         age: client.age,
         gender: client.gender,
       },
-      therapist: {
-        id: therapist.id,
-        user: {
-          fullName: therapist.user.profile?.name || 'Unknown User',
-          email: therapist.user.email,
-        },
-      },
       formTypes: consultation.formTypes,
       status: consultation.status,
       sessionDate: consultation.sessionDate,
       sessionDuration: consultation.sessionDuration,
       consultationNotes: consultation.consultationNotes,
       previousTherapyExperience: consultation.previousTherapyExperience,
-      previousTherapyDetails: consultation.previousTherapyDetails,
       currentMedications: consultation.currentMedications,
-      currentMedicationsDetails: consultation.currentMedicationsDetails,
       primaryConcern: consultation.primaryConcern,
-      secondaryConcerns: consultation.secondaryConcerns,
       symptomSeverity: consultation.symptomSeverity,
       symptomDuration: consultation.symptomDuration,
       treatmentGoals: consultation.treatmentGoals,
       clientExpectations: consultation.clientExpectations,
-      initialAssessment: consultation.initialAssessment,
-      recommendedTreatmentPlan: consultation.recommendedTreatmentPlan,
       previousPsychologicalDiagnosis:
         consultation.previousPsychologicalDiagnosis,
-      previousPsychologicalDiagnosisDetails:
-        consultation.previousPsychologicalDiagnosisDetails,
       significantPhysicalIllness: consultation.significantPhysicalIllness,
-      significantPhysicalIllnessDetails:
-        consultation.significantPhysicalIllnessDetails,
       traumaticExperience: consultation.traumaticExperience,
-      traumaticExperienceDetails: consultation.traumaticExperienceDetails,
       familyPsychologicalHistory: consultation.familyPsychologicalHistory,
-      familyPsychologicalHistoryDetails:
-        consultation.familyPsychologicalHistoryDetails,
       scriptGenerationPreferences: consultation.scriptGenerationPreferences,
-      formData: consultation.formData,
+      generalFormData: consultation.generalFormData,
+      drugAddictionFormData: consultation.drugAddictionFormData,
+      minorFormData: consultation.minorFormData,
       createdAt: consultation.createdAt,
       updatedAt: consultation.updatedAt,
     };

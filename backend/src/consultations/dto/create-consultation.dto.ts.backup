@@ -1,0 +1,2140 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsDateString,
+  IsOptional,
+  IsArray,
+  IsInt,
+  Min,
+  Max,
+  IsEnum,
+  IsBoolean,
+  Length,
+  ArrayMinSize,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  FormType,
+  ConsultationStatus,
+} from '../../database/entities/consultation.entity';
+
+// Form Data Classes
+export class GeneralFormData {
+  @ApiPropertyOptional({
+    description: 'Current stress level (1-10)',
+    example: 7,
+    minimum: 1,
+    maximum: 10,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Stress level must be an integer' })
+  @Min(1, { message: 'Stress level must be at least 1' })
+  @Max(10, { message: 'Stress level cannot exceed 10' })
+  stressLevel?: number;
+
+  @ApiPropertyOptional({
+    description: 'Primary stressors',
+    example: ['Work pressure', 'Financial concerns'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Primary stressors must be an array' })
+  @IsString({ each: true, message: 'Each stressor must be a string' })
+  primaryStressors?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Support system description',
+    example: 'Family and close friends provide emotional support',
+  })
+  @IsOptional()
+  @IsString({ message: 'Support system must be a string' })
+  @Length(0, 500, { message: 'Support system cannot exceed 500 characters' })
+  supportSystem?: string;
+
+  @ApiPropertyOptional({
+    description: 'Daily routine description',
+    example: 'Works 9-5, exercises 3x per week, spends evenings with family',
+  })
+  @IsOptional()
+  @IsString({ message: 'Daily routine must be a string' })
+  @Length(0, 1000, { message: 'Daily routine cannot exceed 1000 characters' })
+  dailyRoutine?: string;
+
+  @ApiPropertyOptional({
+    description: 'Exercise habits',
+    example: 'Gym 3 times per week, morning walks on weekends',
+  })
+  @IsOptional()
+  @IsString({ message: 'Exercise habits must be a string' })
+  @Length(0, 500, { message: 'Exercise habits cannot exceed 500 characters' })
+  exerciseHabits?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sleep patterns',
+    example: 'Sleeps 7-8 hours, occasional insomnia due to stress',
+  })
+  @IsOptional()
+  @IsString({ message: 'Sleep patterns must be a string' })
+  @Length(0, 500, { message: 'Sleep patterns cannot exceed 500 characters' })
+  sleepPatterns?: string;
+
+  @ApiPropertyOptional({
+    description: 'Nutrition habits',
+    example: 'Balanced diet, occasional fast food, drinks 2L water daily',
+  })
+  @IsOptional()
+  @IsString({ message: 'Nutrition habits must be a string' })
+  @Length(0, 500, { message: 'Nutrition habits cannot exceed 500 characters' })
+  nutritionHabits?: string;
+
+  @ApiPropertyOptional({
+    description: 'Hobbies and interests',
+    example: ['Reading', 'Photography', 'Cooking'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Hobbies and interests must be an array' })
+  @IsString({ each: true, message: 'Each hobby must be a string' })
+  hobbiesInterests?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Spiritual beliefs',
+    example: 'Practices meditation daily, attends religious services weekly',
+  })
+  @IsOptional()
+  @IsString({ message: 'Spiritual beliefs must be a string' })
+  @Length(0, 500, { message: 'Spiritual beliefs cannot exceed 500 characters' })
+  spiritualBeliefs?: string;
+
+  @ApiPropertyOptional({
+    description: 'Cultural factors',
+    example: 'First-generation immigrant, values family traditions',
+  })
+  @IsOptional()
+  @IsString({ message: 'Cultural factors must be a string' })
+  @Length(0, 500, { message: 'Cultural factors cannot exceed 500 characters' })
+  culturalFactors?: string;
+
+  @ApiPropertyOptional({
+    description: 'Recent mood state',
+    example: 'neutral',
+    enum: ['excellent', 'good', 'neutral', 'bad', 'very_bad'],
+  })
+  @IsOptional()
+  @IsEnum(['excellent', 'good', 'neutral', 'bad', 'very_bad'], {
+    message: 'Recent mood state must be a valid option',
+  })
+  recentMoodState?: string;
+
+  @ApiPropertyOptional({
+    description: 'Recent mood state details',
+    example: 'Feeling optimistic about new job opportunity',
+  })
+  @IsOptional()
+  @IsString({ message: 'Recent mood state details must be a string' })
+  @Length(0, 1000, {
+    message: 'Recent mood state details cannot exceed 1000 characters',
+  })
+  recentMoodStateDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Frequent emotions',
+    example: ['anxiety', 'sadness', 'irritability'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Frequent emotions must be an array' })
+  @IsString({ each: true, message: 'Each emotion must be a string' })
+  frequentEmotions?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Self-harm thoughts frequency',
+    example: 'never',
+    enum: ['never', 'rarely', 'sometimes', 'often', 'very_often'],
+  })
+  @IsOptional()
+  @IsEnum(['never', 'rarely', 'sometimes', 'often', 'very_often'], {
+    message: 'Self-harm thoughts must be a valid option',
+  })
+  selfHarmThoughts?: string;
+
+  @ApiPropertyOptional({
+    description: 'Self-harm details',
+    example: 'Never had thoughts of self-harm',
+  })
+  @IsOptional()
+  @IsString({ message: 'Self-harm details must be a string' })
+  @Length(0, 1000, {
+    message: 'Self-harm details cannot exceed 1000 characters',
+  })
+  selfHarmDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Daily stress frequency',
+    example: 'sometimes',
+    enum: ['never', 'rarely', 'sometimes', 'often', 'very_often'],
+  })
+  @IsOptional()
+  @IsEnum(['never', 'rarely', 'sometimes', 'often', 'very_often'], {
+    message: 'Daily stress frequency must be a valid option',
+  })
+  dailyStressFrequency?: string;
+
+  @ApiPropertyOptional({
+    description: 'Emotion scale ratings (0-10 for each emotion)',
+    example: {
+      happiness: 7,
+      sadness: 2,
+      anger: 3,
+      fear: 4,
+      anxiety: 5,
+      worry: 3,
+      stress: 6,
+      depression: 2,
+      frustration: 4,
+      disappointment: 3,
+      guilt: 2,
+      shame: 1,
+      envy: 2,
+      jealousy: 3,
+      hatred: 1,
+      loneliness: 4,
+      calmness: 6,
+      confidence: 5,
+      optimism: 7,
+      despair: 2,
+    },
+  })
+  @IsOptional()
+  emotionScale?: Record<string, number>;
+}
+
+export class DrugAddictionFormData {
+  @ApiPropertyOptional({
+    description: 'Types of substances used',
+    example: ['Alcohol', 'Cannabis', 'Prescription drugs'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Substance types must be an array' })
+  @IsString({ each: true, message: 'Each substance type must be a string' })
+  substanceTypes?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Age of first use',
+    example: 16,
+    minimum: 5,
+    maximum: 80,
+  })
+  @IsOptional()
+  @IsInt({ message: 'First use age must be an integer' })
+  @Min(5, { message: 'First use age must be at least 5' })
+  @Max(80, { message: 'First use age cannot exceed 80' })
+  firstUseAge?: number;
+
+  @ApiPropertyOptional({
+    description: 'Usage frequency',
+    example: 'Daily',
+  })
+  @IsOptional()
+  @IsString({ message: 'Usage frequency must be a string' })
+  @Length(0, 100, { message: 'Usage frequency cannot exceed 100 characters' })
+  usageFrequency?: string;
+
+  @ApiPropertyOptional({
+    description: 'Last use date',
+    example: '2024-01-01',
+  })
+  @IsOptional()
+  @IsString({ message: 'Last use date must be a string' })
+  lastUseDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Triggers and relapse factors',
+    example: ['Stress', 'Social situations', 'Work pressure'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Triggers must be an array' })
+  @IsString({ each: true, message: 'Each trigger must be a string' })
+  triggersRelapse?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Previous treatments',
+    example: ['Rehabilitation center', 'Outpatient therapy'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Previous treatments must be an array' })
+  @IsString({ each: true, message: 'Each treatment must be a string' })
+  previousTreatments?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Withdrawal symptoms experienced',
+    example: ['Anxiety', 'Insomnia', 'Nausea'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Withdrawal symptoms must be an array' })
+  @IsString({ each: true, message: 'Each symptom must be a string' })
+  withdrawalSymptoms?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Motivation to quit (1-10)',
+    example: 8,
+    minimum: 1,
+    maximum: 10,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Motivation to quit must be an integer' })
+  @Min(1, { message: 'Motivation to quit must be at least 1' })
+  @Max(10, { message: 'Motivation to quit cannot exceed 10' })
+  motivationToQuit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Support system availability',
+    example: 'Family is supportive, friends are understanding',
+  })
+  @IsOptional()
+  @IsString({ message: 'Support system availability must be a string' })
+  @Length(0, 500, {
+    message: 'Support system availability cannot exceed 500 characters',
+  })
+  supportSystemAvailability?: string;
+
+  @ApiPropertyOptional({
+    description: 'Legal issues related to substance use',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Legal issues must be a boolean' })
+  legalIssues?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Occupational impact',
+    example: 'Has affected work performance and attendance',
+  })
+  @IsOptional()
+  @IsString({ message: 'Occupational impact must be a string' })
+  @Length(0, 500, {
+    message: 'Occupational impact cannot exceed 500 characters',
+  })
+  occupationalImpact?: string;
+
+  @ApiPropertyOptional({
+    description: 'Health complications',
+    example: ['Liver problems', 'Depression', 'Anxiety'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Health complications must be an array' })
+  @IsString({ each: true, message: 'Each complication must be a string' })
+  healthComplications?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Primary substance of concern',
+    example: 'Alcohol',
+  })
+  @IsOptional()
+  @IsString({ message: 'Primary substance must be a string' })
+  @Length(0, 100, { message: 'Primary substance cannot exceed 100 characters' })
+  primarySubstance?: string;
+
+  @ApiPropertyOptional({
+    description: 'Quantity per use',
+    example: '2-3 drinks per session',
+  })
+  @IsOptional()
+  @IsString({ message: 'Quantity per use must be a string' })
+  @Length(0, 200, { message: 'Quantity per use cannot exceed 200 characters' })
+  quantityPerUse?: string;
+
+  @ApiPropertyOptional({
+    description: 'Number of attempts to quit',
+    example: 3,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Attempts to quit must be an integer' })
+  @Min(0, { message: 'Attempts to quit cannot be negative' })
+  attemptsToQuit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Current sobriety period',
+    example: '2 weeks',
+  })
+  @IsOptional()
+  @IsString({ message: 'Current sobriety period must be a string' })
+  @Length(0, 100, {
+    message: 'Current sobriety period cannot exceed 100 characters',
+  })
+  currentSobrietyPeriod?: string;
+
+  @ApiPropertyOptional({
+    description: 'Financial impact',
+    example: 'Spends $200-300 per week on substances',
+  })
+  @IsOptional()
+  @IsString({ message: 'Financial impact must be a string' })
+  @Length(0, 500, { message: 'Financial impact cannot exceed 500 characters' })
+  financialImpact?: string;
+
+  @ApiPropertyOptional({
+    description: 'Desire to quit',
+    example: 'Yes',
+    enum: ['Yes', 'Yes, but unsure', 'No'],
+  })
+  @IsOptional()
+  @IsEnum(['Yes', 'Yes, but unsure', 'No'], {
+    message: 'Desire to quit must be a valid option',
+  })
+  desireToQuit?: string;
+
+  @ApiPropertyOptional({
+    description: 'Recovery goals',
+    example: ['Complete sobriety', 'Better relationships', 'Career stability'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Recovery goals must be an array' })
+  @IsString({ each: true, message: 'Each goal must be a string' })
+  recoveryGoals?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Willingness for follow-up',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Willingness for follow-up must be a boolean' })
+  willingForFollowUp?: boolean;
+}
+
+export class MinorFormData {
+  @ApiPropertyOptional({
+    description: 'Guardian name',
+    example: 'John Doe',
+  })
+  @IsOptional()
+  @IsString({ message: 'Guardian name must be a string' })
+  @Length(0, 100, { message: 'Guardian name cannot exceed 100 characters' })
+  guardianName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Guardian relationship',
+    example: 'Father',
+  })
+  @IsOptional()
+  @IsString({ message: 'Guardian relationship must be a string' })
+  @Length(0, 50, {
+    message: 'Guardian relationship cannot exceed 50 characters',
+  })
+  guardianRelationship?: string;
+
+  @ApiPropertyOptional({
+    description: 'Guardian phone number',
+    example: '+1234567890',
+  })
+  @IsOptional()
+  @IsString({ message: 'Guardian phone must be a string' })
+  @Length(0, 20, { message: 'Guardian phone cannot exceed 20 characters' })
+  guardianPhone?: string;
+
+  @ApiPropertyOptional({
+    description: 'School name',
+    example: 'Lincoln Elementary School',
+  })
+  @IsOptional()
+  @IsString({ message: 'School name must be a string' })
+  @Length(0, 200, { message: 'School name cannot exceed 200 characters' })
+  schoolName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Grade level',
+    example: '5th Grade',
+  })
+  @IsOptional()
+  @IsString({ message: 'Grade must be a string' })
+  @Length(0, 50, { message: 'Grade cannot exceed 50 characters' })
+  grade?: string;
+
+  @ApiPropertyOptional({
+    description: 'School performance',
+    example: 'Generally good, struggles with math',
+  })
+  @IsOptional()
+  @IsString({ message: 'School performance must be a string' })
+  @Length(0, 500, {
+    message: 'School performance cannot exceed 500 characters',
+  })
+  schoolPerformance?: string;
+
+  @ApiPropertyOptional({
+    description: 'Behavior at school',
+    example: 'Usually well-behaved, occasional attention issues',
+  })
+  @IsOptional()
+  @IsString({ message: 'Behavior at school must be a string' })
+  @Length(0, 500, {
+    message: 'Behavior at school cannot exceed 500 characters',
+  })
+  behaviorAtSchool?: string;
+
+  @ApiPropertyOptional({
+    description: 'Behavior at home',
+    example: 'Generally cooperative, has meltdowns when frustrated',
+  })
+  @IsOptional()
+  @IsString({ message: 'Behavior at home must be a string' })
+  @Length(0, 500, { message: 'Behavior at home cannot exceed 500 characters' })
+  behaviorAtHome?: string;
+
+  @ApiPropertyOptional({
+    description: 'Friends and relationships',
+    example: 'Has a few close friends, sometimes struggles with social cues',
+  })
+  @IsOptional()
+  @IsString({ message: 'Friends relationships must be a string' })
+  @Length(0, 500, {
+    message: 'Friends relationships cannot exceed 500 characters',
+  })
+  friendsRelationships?: string;
+
+  @ApiPropertyOptional({
+    description: 'Developmental milestones',
+    example: 'Met most milestones on time, slight delay in speech',
+  })
+  @IsOptional()
+  @IsString({ message: 'Developmental milestones must be a string' })
+  @Length(0, 1000, {
+    message: 'Developmental milestones cannot exceed 1000 characters',
+  })
+  developmentalMilestones?: string;
+
+  @ApiPropertyOptional({
+    description: 'Family dynamics',
+    example: 'Lives with both parents, has two siblings, generally stable home',
+  })
+  @IsOptional()
+  @IsString({ message: 'Family dynamics must be a string' })
+  @Length(0, 1000, { message: 'Family dynamics cannot exceed 1000 characters' })
+  familyDynamics?: string;
+
+  @ApiPropertyOptional({
+    description: 'Parental concerns',
+    example: ['Academic performance', 'Social skills', 'Behavior at home'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Parental concerns must be an array' })
+  @IsString({ each: true, message: 'Each concern must be a string' })
+  parentalConcerns?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Previous professional help',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Previous professional help must be a boolean' })
+  previousProfessionalHelp?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Current medications and supplements',
+    example: ['Multivitamin', 'Omega-3'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Medications and supplements must be an array' })
+  @IsString({ each: true, message: 'Each medication must be a string' })
+  medicationsSupplements?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Special needs or accommodations',
+    example: ['Extra time on tests', 'Preferential seating'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Special needs must be an array' })
+  @IsString({ each: true, message: 'Each need must be a string' })
+  specialNeeds?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Consultation reasons',
+    example: ['Academic difficulties', 'Behavioral concerns', 'Social issues'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Consultation reasons must be an array' })
+  @IsString({ each: true, message: 'Each reason must be a string' })
+  consultationReasons?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Other consultation reason',
+    example: 'Parent wants to understand child better',
+  })
+  @IsOptional()
+  @IsString({ message: 'Other consultation reason must be a string' })
+  @Length(0, 500, {
+    message: 'Other consultation reason cannot exceed 500 characters',
+  })
+  otherConsultationReason?: string;
+
+  @ApiPropertyOptional({
+    description: 'Problem onset',
+    example: 'Started about 6 months ago when school became more challenging',
+  })
+  @IsOptional()
+  @IsString({ message: 'Problem onset must be a string' })
+  @Length(0, 1000, { message: 'Problem onset cannot exceed 1000 characters' })
+  problemOnset?: string;
+
+  @ApiPropertyOptional({
+    description: 'Previous psychological help details',
+    example: 'Saw school counselor for 3 months, helped with anxiety',
+  })
+  @IsOptional()
+  @IsString({ message: 'Previous psychological help details must be a string' })
+  @Length(0, 1000, {
+    message:
+      'Previous psychological help details cannot exceed 1000 characters',
+  })
+  previousPsychologicalHelpDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Current grade level',
+    example: '5th Grade',
+  })
+  @IsOptional()
+  @IsString({ message: 'Current grade level must be a string' })
+  @Length(0, 50, { message: 'Current grade level cannot exceed 50 characters' })
+  currentGradeLevel?: string;
+
+  @ApiPropertyOptional({
+    description: 'Academic performance rating (1-5)',
+    example: 3,
+    minimum: 1,
+    maximum: 5,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Academic performance must be an integer' })
+  @Min(1, { message: 'Academic performance must be at least 1' })
+  @Max(5, { message: 'Academic performance cannot exceed 5' })
+  academicPerformance?: number;
+
+  @ApiPropertyOptional({
+    description: 'School behavior issues',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'School behavior issues must be a boolean' })
+  schoolBehaviorIssues?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'School behavior details',
+    example: 'Occasional talking out of turn, difficulty staying seated',
+  })
+  @IsOptional()
+  @IsString({ message: 'School behavior details must be a string' })
+  @Length(0, 500, {
+    message: 'School behavior details cannot exceed 500 characters',
+  })
+  schoolBehaviorDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Teacher concerns',
+    example: 'Worried about attention span and following instructions',
+  })
+  @IsOptional()
+  @IsString({ message: 'Teacher concerns must be a string' })
+  @Length(0, 500, { message: 'Teacher concerns cannot exceed 500 characters' })
+  teacherConcerns?: string;
+
+  @ApiPropertyOptional({
+    description: 'Bullying history',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Bullying history must be a boolean' })
+  bullyingHistory?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Family structure',
+    example: 'Two-parent household with two children',
+  })
+  @IsOptional()
+  @IsString({ message: 'Family structure must be a string' })
+  @Length(0, 200, { message: 'Family structure cannot exceed 200 characters' })
+  familyStructure?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sibling relationships',
+    example: 'Generally good, occasional conflicts with older sibling',
+  })
+  @IsOptional()
+  @IsString({ message: 'Sibling relationships must be a string' })
+  @Length(0, 500, {
+    message: 'Sibling relationships cannot exceed 500 characters',
+  })
+  siblingRelationships?: string;
+
+  @ApiPropertyOptional({
+    description: 'Peer relationships',
+    example: 'Has a few close friends, sometimes struggles with group dynamics',
+  })
+  @IsOptional()
+  @IsString({ message: 'Peer relationships must be a string' })
+  @Length(0, 500, {
+    message: 'Peer relationships cannot exceed 500 characters',
+  })
+  peerRelationships?: string;
+
+  @ApiPropertyOptional({
+    description: 'Family conflicts',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Family conflicts must be a boolean' })
+  familyConflicts?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Social difficulties',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Social difficulties must be a boolean' })
+  socialDifficulties?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Social difficulties details',
+    example: 'Sometimes has trouble reading social cues and making friends',
+  })
+  @IsOptional()
+  @IsString({ message: 'Social difficulties details must be a string' })
+  @Length(0, 500, {
+    message: 'Social difficulties details cannot exceed 500 characters',
+  })
+  socialDifficultiesDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Attention concerns',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Attention concerns must be a boolean' })
+  attentionConcerns?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Attention details',
+    example: 'Has trouble focusing on tasks for extended periods',
+  })
+  @IsOptional()
+  @IsString({ message: 'Attention details must be a string' })
+  @Length(0, 500, { message: 'Attention details cannot exceed 500 characters' })
+  attentionDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Behavioral concerns',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Behavioral concerns must be a boolean' })
+  behavioralConcerns?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Behavioral details',
+    example: 'Occasional tantrums when frustrated, difficulty with transitions',
+  })
+  @IsOptional()
+  @IsString({ message: 'Behavioral details must be a string' })
+  @Length(0, 500, {
+    message: 'Behavioral details cannot exceed 500 characters',
+  })
+  behavioralDetails?: string;
+}
+
+export class CreateConsultationDto {
+  @ApiProperty({
+    description: 'Client ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID(4, { message: 'Client ID must be a valid UUID' })
+  @IsNotEmpty({ message: 'Client ID is required' })
+  clientId!: string;
+
+  @ApiProperty({
+    description: 'Therapist ID',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
+  @IsUUID(4, { message: 'Therapist ID must be a valid UUID' })
+  @IsNotEmpty({ message: 'Therapist ID is required' })
+  therapistId!: string;
+
+  @ApiProperty({
+    description: 'Types of consultation forms (array)',
+    enum: FormType,
+    isArray: true,
+    example: [FormType.GENERAL],
+  })
+  @IsArray({ message: 'Form types must be an array' })
+  @IsEnum(FormType, {
+    each: true,
+    message: 'Each form type must be a valid consultation form type',
+  })
+  @ArrayMinSize(1, { message: 'At least one form type is required' })
+  formTypes!: FormType[];
+
+  @ApiPropertyOptional({
+    description: 'Initial consultation status',
+    enum: ConsultationStatus,
+    default: ConsultationStatus.DRAFT,
+  })
+  @IsOptional()
+  @IsEnum(ConsultationStatus, {
+    message: 'Status must be a valid consultation status',
+  })
+  status?: ConsultationStatus = ConsultationStatus.DRAFT;
+
+  @ApiProperty({
+    description: 'Session date (YYYY-MM-DD format)',
+    example: '2024-01-15',
+  })
+  @IsDateString(
+    {},
+    { message: 'Session date must be a valid date string (YYYY-MM-DD)' },
+  )
+  sessionDate!: string;
+
+  @ApiProperty({
+    description: 'Session duration in minutes',
+    example: 90,
+    minimum: 30,
+    maximum: 300,
+  })
+  @IsInt({ message: 'Session duration must be an integer' })
+  @Min(30, { message: 'Session duration must be at least 30 minutes' })
+  @Max(300, { message: 'Session duration cannot exceed 300 minutes (5 hours)' })
+  sessionDuration!: number;
+
+  @ApiPropertyOptional({
+    description: 'General consultation notes',
+    example:
+      'Initial consultation to assess client needs and establish therapeutic goals',
+  })
+  @IsOptional()
+  @IsString({ message: 'Consultation notes must be a string' })
+  @Length(0, 2000, {
+    message: 'Consultation notes cannot exceed 2000 characters',
+  })
+  consultationNotes?: string;
+
+  // Client Background
+  @ApiPropertyOptional({
+    description: 'Whether client has previous therapy experience',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Previous therapy experience must be a boolean' })
+  previousTherapyExperience?: boolean = false;
+
+  @ApiPropertyOptional({
+    description: 'Details about previous therapy experience',
+    example: 'Attended CBT sessions for 6 months in 2022',
+  })
+  @IsOptional()
+  @IsString({ message: 'Previous therapy details must be a string' })
+  @Length(0, 1000, {
+    message: 'Previous therapy details cannot exceed 1000 characters',
+  })
+  previousTherapyDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Whether client is currently taking medications',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Current medications must be a boolean' })
+  currentMedications?: boolean = false;
+
+  @ApiPropertyOptional({
+    description: 'Details about current medications',
+    example: 'Taking sertraline 50mg daily for anxiety',
+  })
+  @IsOptional()
+  @IsString({ message: 'Current medications details must be a string' })
+  @Length(0, 1000, {
+    message: 'Current medications details cannot exceed 1000 characters',
+  })
+  currentMedicationsDetails?: string;
+
+  // Presenting Concerns
+  @ApiProperty({
+    description: 'Primary concern or issue',
+    example: 'Experiencing severe anxiety and panic attacks',
+  })
+  @IsString({ message: 'Primary concern must be a string' })
+  @IsNotEmpty({ message: 'Primary concern is required' })
+  @Length(10, 1000, {
+    message: 'Primary concern must be between 10 and 1000 characters',
+  })
+  primaryConcern!: string;
+
+  @ApiPropertyOptional({
+    description: 'Secondary concerns or issues',
+    example: [
+      'Sleep difficulties',
+      'Work-related stress',
+      'Relationship conflicts',
+    ],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Secondary concerns must be an array' })
+  @IsString({ each: true, message: 'Each secondary concern must be a string' })
+  @ArrayMinSize(0, {
+    message: 'Secondary concerns array cannot be empty if provided',
+  })
+  secondaryConcerns?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Severity of symptoms on a scale of 1-5',
+    example: 4,
+    minimum: 1,
+    maximum: 5,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Symptom severity must be an integer' })
+  @Min(1, { message: 'Symptom severity must be at least 1' })
+  @Max(5, { message: 'Symptom severity cannot exceed 5' })
+  symptomSeverity?: number;
+
+  @ApiPropertyOptional({
+    description: 'Duration of symptoms',
+    example: '6 months',
+  })
+  @IsOptional()
+  @IsString({ message: 'Symptom duration must be a string' })
+  @Length(0, 100, { message: 'Symptom duration cannot exceed 100 characters' })
+  symptomDuration?: string;
+
+  // Goals and Expectations
+  @ApiPropertyOptional({
+    description: 'Treatment goals',
+    example: [
+      'Reduce anxiety levels',
+      'Improve sleep quality',
+      'Develop coping strategies',
+    ],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Treatment goals must be an array' })
+  @IsString({ each: true, message: 'Each treatment goal must be a string' })
+  @ArrayMinSize(0, {
+    message: 'Treatment goals array cannot be empty if provided',
+  })
+  treatmentGoals?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Client expectations from therapy',
+    example:
+      'I hope to learn techniques to manage my anxiety and feel more confident in social situations',
+  })
+  @IsOptional()
+  @IsString({ message: 'Client expectations must be a string' })
+  @Length(0, 1000, {
+    message: 'Client expectations cannot exceed 1000 characters',
+  })
+  clientExpectations?: string;
+
+  // Assessment Results
+  @ApiPropertyOptional({
+    description: 'Initial assessment findings',
+    example:
+      'Client shows signs of generalized anxiety disorder with mild depression symptoms',
+  })
+  @IsOptional()
+  @IsString({ message: 'Initial assessment must be a string' })
+  @Length(0, 2000, {
+    message: 'Initial assessment cannot exceed 2000 characters',
+  })
+  initialAssessment?: string;
+
+  @ApiPropertyOptional({
+    description: 'Recommended treatment plan',
+    example:
+      'Weekly CBT sessions for 12 weeks, combined with mindfulness techniques and homework assignments',
+  })
+  @IsOptional()
+  @IsString({ message: 'Recommended treatment plan must be a string' })
+  @Length(0, 2000, {
+    message: 'Recommended treatment plan cannot exceed 2000 characters',
+  })
+  recommendedTreatmentPlan?: string;
+
+  @ApiPropertyOptional({
+    description: 'Form-specific data in JSON format',
+    example: { specialField: 'value', customData: true },
+  })
+  @IsOptional()
+  formData?: Record<string, any>;
+
+  // Additional fields from frontend form
+  @ApiPropertyOptional({
+    description: 'Previous psychological diagnosis',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Previous psychological diagnosis must be a boolean' })
+  previousPsychologicalDiagnosis?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Details about previous psychological diagnosis',
+    example: 'Diagnosed with anxiety disorder in 2020',
+  })
+  @IsOptional()
+  @IsString({
+    message: 'Previous psychological diagnosis details must be a string',
+  })
+  @Length(0, 1000, {
+    message:
+      'Previous psychological diagnosis details cannot exceed 1000 characters',
+  })
+  previousPsychologicalDiagnosisDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Significant physical illness',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Significant physical illness must be a boolean' })
+  significantPhysicalIllness?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Details about significant physical illness',
+    example: 'Diabetes type 2, managed with medication',
+  })
+  @IsOptional()
+  @IsString({
+    message: 'Significant physical illness details must be a string',
+  })
+  @Length(0, 1000, {
+    message:
+      'Significant physical illness details cannot exceed 1000 characters',
+  })
+  significantPhysicalIllnessDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Traumatic experience',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Traumatic experience must be a boolean' })
+  traumaticExperience?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Details about traumatic experience',
+    example: 'Car accident in 2019, no lasting physical injuries',
+  })
+  @IsOptional()
+  @IsString({ message: 'Traumatic experience details must be a string' })
+  @Length(0, 1000, {
+    message: 'Traumatic experience details cannot exceed 1000 characters',
+  })
+  traumaticExperienceDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Family psychological history',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Family psychological history must be a boolean' })
+  familyPsychologicalHistory?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Details about family psychological history',
+    example: 'Mother has depression, father has anxiety',
+  })
+  @IsOptional()
+  @IsString({
+    message: 'Family psychological history details must be a string',
+  })
+  @Length(0, 1000, {
+    message:
+      'Family psychological history details cannot exceed 1000 characters',
+  })
+  familyPsychologicalHistoryDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Script generation preferences for AI',
+    example: 'Client prefers nature metaphors, enjoys music',
+  })
+  @IsOptional()
+  @IsString({ message: 'Script generation preferences must be a string' })
+  @Length(0, 1000, {
+    message: 'Script generation preferences cannot exceed 1000 characters',
+  })
+  scriptGenerationPreferences?: string;
+}
+
+// Specialized DTOs for different form types
+
+// General Consultation Form Data
+export class GeneralFormData {
+  @ApiPropertyOptional({
+    description: 'Current stress level (1-10)',
+    example: 7,
+    minimum: 1,
+    maximum: 10,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Stress level must be an integer' })
+  @Min(1, { message: 'Stress level must be at least 1' })
+  @Max(10, { message: 'Stress level cannot exceed 10' })
+  stressLevel?: number;
+
+  @ApiPropertyOptional({
+    description: 'Primary stressors affecting the client',
+    example: ['Work pressure', 'Financial concerns', 'Relationship issues'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Primary stressors must be an array' })
+  @IsString({ each: true, message: 'Each stressor must be a string' })
+  primaryStressors?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Support system available to the client',
+    example: 'Family and close friends provide emotional support',
+  })
+  @IsOptional()
+  @IsString({ message: 'Support system must be a string' })
+  @Length(0, 500, { message: 'Support system cannot exceed 500 characters' })
+  supportSystem?: string;
+
+  @ApiPropertyOptional({
+    description: 'Daily routine description',
+    example: 'Works 9-5, exercises 3x per week, spends evenings with family',
+  })
+  @IsOptional()
+  @IsString({ message: 'Daily routine must be a string' })
+  @Length(0, 1000, { message: 'Daily routine cannot exceed 1000 characters' })
+  dailyRoutine?: string;
+
+  @ApiPropertyOptional({
+    description: 'Exercise habits and frequency',
+    example: 'Gym 3 times per week, morning walks on weekends',
+  })
+  @IsOptional()
+  @IsString({ message: 'Exercise habits must be a string' })
+  @Length(0, 500, { message: 'Exercise habits cannot exceed 500 characters' })
+  exerciseHabits?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sleep patterns and quality',
+    example: 'Sleeps 7-8 hours, occasional insomnia due to stress',
+  })
+  @IsOptional()
+  @IsString({ message: 'Sleep patterns must be a string' })
+  @Length(0, 500, { message: 'Sleep patterns cannot exceed 500 characters' })
+  sleepPatterns?: string;
+
+  @ApiPropertyOptional({
+    description: 'Nutrition and eating habits',
+    example: 'Balanced diet, occasional fast food, drinks 2L water daily',
+  })
+  @IsOptional()
+  @IsString({ message: 'Nutrition habits must be a string' })
+  @Length(0, 500, { message: 'Nutrition habits cannot exceed 500 characters' })
+  nutritionHabits?: string;
+
+  @ApiPropertyOptional({
+    description: 'Hobbies and interests',
+    example: ['Reading', 'Photography', 'Cooking'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Hobbies and interests must be an array' })
+  @IsString({ each: true, message: 'Each hobby must be a string' })
+  hobbiesInterests?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Spiritual beliefs and practices',
+    example: 'Practices meditation daily, attends religious services weekly',
+  })
+  @IsOptional()
+  @IsString({ message: 'Spiritual beliefs must be a string' })
+  @Length(0, 500, { message: 'Spiritual beliefs cannot exceed 500 characters' })
+  spiritualBeliefs?: string;
+
+  @ApiPropertyOptional({
+    description: 'Cultural factors affecting the client',
+    example: 'First-generation immigrant, values family traditions',
+  })
+  @IsOptional()
+  @IsString({ message: 'Cultural factors must be a string' })
+  @Length(0, 500, { message: 'Cultural factors cannot exceed 500 characters' })
+  culturalFactors?: string;
+
+  @ApiPropertyOptional({
+    description: 'Recent mood state',
+    example: 'good',
+    enum: ['excellent', 'good', 'neutral', 'bad', 'very_bad'],
+  })
+  @IsOptional()
+  @IsEnum(['excellent', 'good', 'neutral', 'bad', 'very_bad'], {
+    message: 'Recent mood state must be a valid option',
+  })
+  recentMoodState?: string;
+
+  @ApiPropertyOptional({
+    description: 'Details about recent mood state',
+    example: 'Feeling optimistic about new job opportunity',
+  })
+  @IsOptional()
+  @IsString({ message: 'Recent mood state details must be a string' })
+  @Length(0, 500, {
+    message: 'Recent mood state details cannot exceed 500 characters',
+  })
+  recentMoodStateDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Frequent emotions experienced',
+    example: ['anxiety', 'sadness', 'irritability'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Frequent emotions must be an array' })
+  @IsString({ each: true, message: 'Each emotion must be a string' })
+  frequentEmotions?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Self-harm thoughts frequency',
+    example: 'never',
+    enum: ['never', 'rarely', 'sometimes', 'often', 'very_often'],
+  })
+  @IsOptional()
+  @IsEnum(['never', 'rarely', 'sometimes', 'often', 'very_often'], {
+    message: 'Self-harm thoughts must be a valid option',
+  })
+  selfHarmThoughts?: string;
+
+  @ApiPropertyOptional({
+    description: 'Details about self-harm thoughts or actions',
+    example: 'Never had thoughts of self-harm',
+  })
+  @IsOptional()
+  @IsString({ message: 'Self-harm details must be a string' })
+  @Length(0, 1000, {
+    message: 'Self-harm details cannot exceed 1000 characters',
+  })
+  selfHarmDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Daily stress frequency',
+    example: 'sometimes',
+    enum: ['never', 'rarely', 'sometimes', 'often', 'very_often'],
+  })
+  @IsOptional()
+  @IsEnum(['never', 'rarely', 'sometimes', 'often', 'very_often'], {
+    message: 'Daily stress frequency must be a valid option',
+  })
+  dailyStressFrequency?: string;
+
+  @ApiPropertyOptional({
+    description: 'Emotion scale ratings (0-10 for each emotion)',
+    example: {
+      happiness: 7,
+      sadness: 2,
+      anger: 3,
+      fear: 4,
+      anxiety: 5,
+      worry: 3,
+      stress: 6,
+      depression: 2,
+      frustration: 4,
+      disappointment: 3,
+      guilt: 2,
+      shame: 1,
+      envy: 2,
+      jealousy: 3,
+      hatred: 1,
+      loneliness: 4,
+      calmness: 6,
+      confidence: 5,
+      optimism: 7,
+      despair: 2,
+    },
+  })
+  @IsOptional()
+  emotionScale?: Record<string, number>;
+
+  // Separate form data sections
+  @ApiPropertyOptional({
+    description: 'General consultation form data',
+    type: GeneralFormData,
+  })
+  @IsOptional()
+  @Type(() => GeneralFormData)
+  generalFormData?: GeneralFormData;
+
+  @ApiPropertyOptional({
+    description: 'Drug addiction consultation form data',
+    type: DrugAddictionFormData,
+  })
+  @IsOptional()
+  @Type(() => DrugAddictionFormData)
+  drugAddictionFormData?: DrugAddictionFormData;
+
+  @ApiPropertyOptional({
+    description: 'Minor consultation form data',
+    type: MinorFormData,
+  })
+  @IsOptional()
+  @Type(() => MinorFormData)
+  minorFormData?: MinorFormData;
+}
+
+export class CreateGeneralConsultationDto extends CreateConsultationDto {
+  @ApiProperty({
+    description: 'Form types (automatically set to GENERAL)',
+    enum: [FormType.GENERAL],
+    isArray: true,
+  })
+  formTypes: [FormType.GENERAL] = [FormType.GENERAL];
+}
+
+// Drug Addiction Consultation Form Data
+export class DrugAddictionFormData {
+  @ApiPropertyOptional({
+    description: 'Types of substances used',
+    example: ['Alcohol', 'Cannabis', 'Prescription drugs'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Substance types must be an array' })
+  @IsString({ each: true, message: 'Each substance type must be a string' })
+  substanceTypes?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Age when first used substances',
+    example: 16,
+    minimum: 1,
+    maximum: 100,
+  })
+  @IsOptional()
+  @IsInt({ message: 'First use age must be an integer' })
+  @Min(1, { message: 'First use age must be at least 1' })
+  @Max(100, { message: 'First use age cannot exceed 100' })
+  firstUseAge?: number;
+
+  @ApiPropertyOptional({
+    description: 'Frequency of substance use',
+    example: 'Daily',
+  })
+  @IsOptional()
+  @IsString({ message: 'Usage frequency must be a string' })
+  @Length(0, 100, { message: 'Usage frequency cannot exceed 100 characters' })
+  usageFrequency?: string;
+
+  @ApiPropertyOptional({
+    description: 'Date of last substance use (YYYY-MM-DD)',
+    example: '2024-01-15',
+  })
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'Last use date must be a valid date string (YYYY-MM-DD)' },
+  )
+  lastUseDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Triggers that lead to relapse',
+    example: ['Stress', 'Social situations', 'Emotional distress'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Triggers must be an array' })
+  @IsString({ each: true, message: 'Each trigger must be a string' })
+  triggersRelapse?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Previous treatment attempts',
+    example: ['Rehabilitation center', 'Outpatient therapy', 'Support groups'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Previous treatments must be an array' })
+  @IsString({ each: true, message: 'Each treatment must be a string' })
+  previousTreatments?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Withdrawal symptoms experienced',
+    example: ['Nausea', 'Anxiety', 'Insomnia', 'Sweating'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Withdrawal symptoms must be an array' })
+  @IsString({ each: true, message: 'Each symptom must be a string' })
+  withdrawalSymptoms?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Motivation level to quit (1-10)',
+    example: 8,
+    minimum: 1,
+    maximum: 10,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Motivation to quit must be an integer' })
+  @Min(1, { message: 'Motivation to quit must be at least 1' })
+  @Max(10, { message: 'Motivation to quit cannot exceed 10' })
+  motivationToQuit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Availability of support system',
+    example: 'Family is supportive, has access to support groups',
+  })
+  @IsOptional()
+  @IsString({ message: 'Support system availability must be a string' })
+  @Length(0, 500, {
+    message: 'Support system availability cannot exceed 500 characters',
+  })
+  supportSystemAvailability?: string;
+
+  @ApiPropertyOptional({
+    description: 'Whether client has legal issues related to substance use',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Legal issues must be a boolean' })
+  legalIssues?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Impact on occupational life',
+    example: 'Lost job due to substance use, currently unemployed',
+  })
+  @IsOptional()
+  @IsString({ message: 'Occupational impact must be a string' })
+  @Length(0, 500, {
+    message: 'Occupational impact cannot exceed 500 characters',
+  })
+  occupationalImpact?: string;
+
+  @ApiPropertyOptional({
+    description: 'Health complications from substance use',
+    example: ['Liver damage', 'Depression', 'Anxiety disorder'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Health complications must be an array' })
+  @IsString({ each: true, message: 'Each complication must be a string' })
+  healthComplications?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Primary substance of concern',
+    example: 'Alcohol',
+  })
+  @IsOptional()
+  @IsString({ message: 'Primary substance must be a string' })
+  @Length(0, 100, { message: 'Primary substance cannot exceed 100 characters' })
+  primarySubstance?: string;
+
+  @ApiPropertyOptional({
+    description: 'Quantity used per session',
+    example: '6-8 drinks per day',
+  })
+  @IsOptional()
+  @IsString({ message: 'Quantity per use must be a string' })
+  @Length(0, 200, { message: 'Quantity per use cannot exceed 200 characters' })
+  quantityPerUse?: string;
+
+  @ApiPropertyOptional({
+    description: 'Number of attempts to quit',
+    example: 3,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Attempts to quit must be an integer' })
+  @Min(0, { message: 'Attempts to quit cannot be negative' })
+  attemptsToQuit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Current sobriety period',
+    example: '2 weeks',
+  })
+  @IsOptional()
+  @IsString({ message: 'Current sobriety period must be a string' })
+  @Length(0, 100, {
+    message: 'Current sobriety period cannot exceed 100 characters',
+  })
+  currentSobrietyPeriod?: string;
+
+  @ApiPropertyOptional({
+    description: 'Financial impact of substance use',
+    example: 'Spends $200-300 per week on substances, has accumulated debt',
+  })
+  @IsOptional()
+  @IsString({ message: 'Financial impact must be a string' })
+  @Length(0, 1000, {
+    message: 'Financial impact cannot exceed 1000 characters',
+  })
+  financialImpact?: string;
+
+  @ApiPropertyOptional({
+    description: 'Desire to quit substance use',
+    example: 'Yes',
+    enum: ['Yes', 'Yes, but unsure', 'No'],
+  })
+  @IsOptional()
+  @IsEnum(['Yes', 'Yes, but unsure', 'No'], {
+    message: 'Desire to quit must be a valid option',
+  })
+  desireToQuit?: string;
+
+  @ApiPropertyOptional({
+    description: 'Recovery goals',
+    example: [
+      'Complete sobriety',
+      'Repair relationships',
+      'Find stable employment',
+    ],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Recovery goals must be an array' })
+  @IsString({ each: true, message: 'Each goal must be a string' })
+  recoveryGoals?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Willingness for follow-up treatment',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Willingness for follow-up must be a boolean' })
+  willingForFollowUp?: boolean;
+}
+
+export class CreateDrugAddictionConsultationDto extends CreateConsultationDto {
+  @ApiProperty({
+    description: 'Form types (automatically set to DRUG_ADDICTION)',
+    enum: [FormType.DRUG_ADDICTION],
+    isArray: true,
+  })
+  formTypes: [FormType.DRUG_ADDICTION] = [FormType.DRUG_ADDICTION];
+}
+
+// Minor Consultation Form Data
+export class MinorFormData {
+  @ApiPropertyOptional({
+    description: 'Guardian name',
+    example: 'John Doe',
+  })
+  @IsOptional()
+  @IsString({ message: 'Guardian name must be a string' })
+  @Length(0, 100, { message: 'Guardian name cannot exceed 100 characters' })
+  guardianName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Relationship to the minor',
+    example: 'Father',
+  })
+  @IsOptional()
+  @IsString({ message: 'Guardian relationship must be a string' })
+  @Length(0, 50, {
+    message: 'Guardian relationship cannot exceed 50 characters',
+  })
+  guardianRelationship?: string;
+
+  @ApiPropertyOptional({
+    description: 'Guardian phone number',
+    example: '+1234567890',
+  })
+  @IsOptional()
+  @IsString({ message: 'Guardian phone must be a string' })
+  @Length(0, 20, { message: 'Guardian phone cannot exceed 20 characters' })
+  guardianPhone?: string;
+
+  @ApiPropertyOptional({
+    description: 'School name',
+    example: 'ABC Elementary School',
+  })
+  @IsOptional()
+  @IsString({ message: 'School name must be a string' })
+  @Length(0, 200, { message: 'School name cannot exceed 200 characters' })
+  schoolName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Current grade level',
+    example: 'Grade 3',
+  })
+  @IsOptional()
+  @IsString({ message: 'Grade must be a string' })
+  @Length(0, 50, { message: 'Grade cannot exceed 50 characters' })
+  grade?: string;
+
+  @ApiPropertyOptional({
+    description: 'Academic performance level',
+    example: 'Above average',
+  })
+  @IsOptional()
+  @IsString({ message: 'School performance must be a string' })
+  @Length(0, 100, {
+    message: 'School performance cannot exceed 100 characters',
+  })
+  schoolPerformance?: string;
+
+  @ApiPropertyOptional({
+    description: 'Behavior at school',
+    example: 'Generally well-behaved, occasional attention-seeking',
+  })
+  @IsOptional()
+  @IsString({ message: 'Behavior at school must be a string' })
+  @Length(0, 500, {
+    message: 'Behavior at school cannot exceed 500 characters',
+  })
+  behaviorAtSchool?: string;
+
+  @ApiPropertyOptional({
+    description: 'Behavior at home',
+    example: 'Cooperative with parents, sometimes defiant with siblings',
+  })
+  @IsOptional()
+  @IsString({ message: 'Behavior at home must be a string' })
+  @Length(0, 500, { message: 'Behavior at home cannot exceed 500 characters' })
+  behaviorAtHome?: string;
+
+  @ApiPropertyOptional({
+    description: 'Friends and relationships',
+    example: 'Has 2-3 close friends, gets along well with peers',
+  })
+  @IsOptional()
+  @IsString({ message: 'Friends relationships must be a string' })
+  @Length(0, 500, {
+    message: 'Friends relationships cannot exceed 500 characters',
+  })
+  friendsRelationships?: string;
+
+  @ApiPropertyOptional({
+    description: 'Developmental milestones',
+    example: 'Met all age-appropriate milestones, advanced in reading',
+  })
+  @IsOptional()
+  @IsString({ message: 'Developmental milestones must be a string' })
+  @Length(0, 1000, {
+    message: 'Developmental milestones cannot exceed 1000 characters',
+  })
+  developmentalMilestones?: string;
+
+  @ApiPropertyOptional({
+    description: 'Family dynamics',
+    example: 'Lives with both parents and one sibling, stable home environment',
+  })
+  @IsOptional()
+  @IsString({ message: 'Family dynamics must be a string' })
+  @Length(0, 500, { message: 'Family dynamics cannot exceed 500 characters' })
+  familyDynamics?: string;
+
+  @ApiPropertyOptional({
+    description: 'Parental concerns',
+    example: ['Difficulty focusing', 'Social anxiety', 'Academic pressure'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Parental concerns must be an array' })
+  @IsString({ each: true, message: 'Each concern must be a string' })
+  parentalConcerns?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Previous professional help received',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Previous professional help must be a boolean' })
+  previousProfessionalHelp?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Current medications or supplements',
+    example: ['Multivitamin', 'Omega-3'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Medications supplements must be an array' })
+  @IsString({ each: true, message: 'Each medication must be a string' })
+  medicationsSupplements?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Special needs or accommodations',
+    example: ['Extra time for tests', 'Quiet study space'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Special needs must be an array' })
+  @IsString({ each: true, message: 'Each need must be a string' })
+  specialNeeds?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Consultation reasons',
+    example: ['Academic difficulties', 'Behavioral issues', 'Social anxiety'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Consultation reasons must be an array' })
+  @IsString({ each: true, message: 'Each reason must be a string' })
+  consultationReasons?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Other consultation reason details',
+    example: "Parent noticed changes in child's behavior after school started",
+  })
+  @IsOptional()
+  @IsString({ message: 'Other consultation reason must be a string' })
+  @Length(0, 500, {
+    message: 'Other consultation reason cannot exceed 500 characters',
+  })
+  otherConsultationReason?: string;
+
+  @ApiPropertyOptional({
+    description: 'When the problem started',
+    example: '3 months ago when school started',
+  })
+  @IsOptional()
+  @IsString({ message: 'Problem onset must be a string' })
+  @Length(0, 200, { message: 'Problem onset cannot exceed 200 characters' })
+  problemOnset?: string;
+
+  @ApiPropertyOptional({
+    description: 'Previous psychological help details',
+    example: 'Saw school counselor for 2 months in 2023',
+  })
+  @IsOptional()
+  @IsString({ message: 'Previous psychological help details must be a string' })
+  @Length(0, 500, {
+    message: 'Previous psychological help details cannot exceed 500 characters',
+  })
+  previousPsychologicalHelpDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Current grade level',
+    example: 'Grade 3',
+  })
+  @IsOptional()
+  @IsString({ message: 'Current grade level must be a string' })
+  @Length(0, 50, { message: 'Current grade level cannot exceed 50 characters' })
+  currentGradeLevel?: string;
+
+  @ApiPropertyOptional({
+    description: 'Academic performance rating (1-5)',
+    example: 4,
+    minimum: 1,
+    maximum: 5,
+  })
+  @IsOptional()
+  @IsInt({ message: 'Academic performance must be an integer' })
+  @Min(1, { message: 'Academic performance must be at least 1' })
+  @Max(5, { message: 'Academic performance cannot exceed 5' })
+  academicPerformance?: number;
+
+  @ApiPropertyOptional({
+    description: 'School behavior issues present',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'School behavior issues must be a boolean' })
+  schoolBehaviorIssues?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'School behavior issues details',
+    example: 'Occasionally disrupts class, difficulty following instructions',
+  })
+  @IsOptional()
+  @IsString({ message: 'School behavior details must be a string' })
+  @Length(0, 500, {
+    message: 'School behavior details cannot exceed 500 characters',
+  })
+  schoolBehaviorDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Teacher concerns',
+    example: 'Concerned about attention span and social interactions',
+  })
+  @IsOptional()
+  @IsString({ message: 'Teacher concerns must be a string' })
+  @Length(0, 500, { message: 'Teacher concerns cannot exceed 500 characters' })
+  teacherConcerns?: string;
+
+  @ApiPropertyOptional({
+    description: 'Bullying history',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Bullying history must be a boolean' })
+  bullyingHistory?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Family structure',
+    example: 'Nuclear family with both parents',
+  })
+  @IsOptional()
+  @IsString({ message: 'Family structure must be a string' })
+  @Length(0, 200, { message: 'Family structure cannot exceed 200 characters' })
+  familyStructure?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sibling relationships',
+    example: 'Gets along well with older sister, sometimes competitive',
+  })
+  @IsOptional()
+  @IsString({ message: 'Sibling relationships must be a string' })
+  @Length(0, 500, {
+    message: 'Sibling relationships cannot exceed 500 characters',
+  })
+  siblingRelationships?: string;
+
+  @ApiPropertyOptional({
+    description: 'Peer relationships',
+    example: 'Has difficulty making friends, prefers to play alone',
+  })
+  @IsOptional()
+  @IsString({ message: 'Peer relationships must be a string' })
+  @Length(0, 500, {
+    message: 'Peer relationships cannot exceed 500 characters',
+  })
+  peerRelationships?: string;
+
+  @ApiPropertyOptional({
+    description: 'Family conflicts present',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Family conflicts must be a boolean' })
+  familyConflicts?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Social difficulties present',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Social difficulties must be a boolean' })
+  socialDifficulties?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Social difficulties details',
+    example: 'Struggles with group activities, prefers individual play',
+  })
+  @IsOptional()
+  @IsString({ message: 'Social difficulties details must be a string' })
+  @Length(0, 500, {
+    message: 'Social difficulties details cannot exceed 500 characters',
+  })
+  socialDifficultiesDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Attention concerns present',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Attention concerns must be a boolean' })
+  attentionConcerns?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Attention concerns details',
+    example: 'Difficulty focusing for more than 10 minutes, easily distracted',
+  })
+  @IsOptional()
+  @IsString({ message: 'Attention details must be a string' })
+  @Length(0, 500, { message: 'Attention details cannot exceed 500 characters' })
+  attentionDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Behavioral concerns present',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Behavioral concerns must be a boolean' })
+  behavioralConcerns?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Behavioral concerns details',
+    example: 'Occasional tantrums when frustrated, generally well-behaved',
+  })
+  @IsOptional()
+  @IsString({ message: 'Behavioral details must be a string' })
+  @Length(0, 500, {
+    message: 'Behavioral details cannot exceed 500 characters',
+  })
+  behavioralDetails?: string;
+}
+
+export class CreateMinorConsultationDto extends CreateConsultationDto {
+  @ApiProperty({
+    description: 'Form types (automatically set to MINOR)',
+    enum: [FormType.MINOR],
+    isArray: true,
+  })
+  formTypes: [FormType.MINOR] = [FormType.MINOR];
+}
+
+export class UpdateConsultationDto {
+  @ApiPropertyOptional({
+    description: 'Updated consultation status',
+    enum: ConsultationStatus,
+  })
+  @IsOptional()
+  @IsEnum(ConsultationStatus, {
+    message: 'Status must be a valid consultation status',
+  })
+  status?: ConsultationStatus;
+
+  @ApiPropertyOptional({
+    description: 'Updated session date',
+  })
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'Session date must be a valid date string (YYYY-MM-DD)' },
+  )
+  sessionDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated session duration',
+  })
+  @IsOptional()
+  @IsInt({ message: 'Session duration must be an integer' })
+  @Min(30, { message: 'Session duration must be at least 30 minutes' })
+  @Max(300, { message: 'Session duration cannot exceed 300 minutes' })
+  sessionDuration?: number;
+
+  @ApiPropertyOptional({
+    description: 'Updated consultation notes',
+  })
+  @IsOptional()
+  @IsString({ message: 'Consultation notes must be a string' })
+  @Length(0, 2000, {
+    message: 'Consultation notes cannot exceed 2000 characters',
+  })
+  consultationNotes?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated client background - previous therapy experience',
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Previous therapy experience must be a boolean' })
+  previousTherapyExperience?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Updated previous therapy details',
+  })
+  @IsOptional()
+  @IsString({ message: 'Previous therapy details must be a string' })
+  @Length(0, 1000, {
+    message: 'Previous therapy details cannot exceed 1000 characters',
+  })
+  previousTherapyDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated current medications status',
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Current medications must be a boolean' })
+  currentMedications?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Updated current medications details',
+  })
+  @IsOptional()
+  @IsString({ message: 'Current medications details must be a string' })
+  @Length(0, 1000, {
+    message: 'Current medications details cannot exceed 1000 characters',
+  })
+  currentMedicationsDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated primary concern',
+  })
+  @IsOptional()
+  @IsString({ message: 'Primary concern must be a string' })
+  @Length(10, 1000, {
+    message: 'Primary concern must be between 10 and 1000 characters',
+  })
+  primaryConcern?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated secondary concerns',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Secondary concerns must be an array' })
+  @IsString({ each: true, message: 'Each secondary concern must be a string' })
+  secondaryConcerns?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Updated symptom severity',
+  })
+  @IsOptional()
+  @IsInt({ message: 'Symptom severity must be an integer' })
+  @Min(1, { message: 'Symptom severity must be at least 1' })
+  @Max(5, { message: 'Symptom severity cannot exceed 5' })
+  symptomSeverity?: number;
+
+  @ApiPropertyOptional({
+    description: 'Updated symptom duration',
+  })
+  @IsOptional()
+  @IsString({ message: 'Symptom duration must be a string' })
+  @Length(0, 100, { message: 'Symptom duration cannot exceed 100 characters' })
+  symptomDuration?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated treatment goals',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Treatment goals must be an array' })
+  @IsString({ each: true, message: 'Each treatment goal must be a string' })
+  treatmentGoals?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Updated client expectations',
+  })
+  @IsOptional()
+  @IsString({ message: 'Client expectations must be a string' })
+  @Length(0, 1000, {
+    message: 'Client expectations cannot exceed 1000 characters',
+  })
+  clientExpectations?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated initial assessment',
+  })
+  @IsOptional()
+  @IsString({ message: 'Initial assessment must be a string' })
+  @Length(0, 2000, {
+    message: 'Initial assessment cannot exceed 2000 characters',
+  })
+  initialAssessment?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated recommended treatment plan',
+  })
+  @IsOptional()
+  @IsString({ message: 'Recommended treatment plan must be a string' })
+  @Length(0, 2000, {
+    message: 'Recommended treatment plan cannot exceed 2000 characters',
+  })
+  recommendedTreatmentPlan?: string;
+
+  @ApiPropertyOptional({
+    description: 'Updated general consultation form data',
+    type: GeneralFormData,
+  })
+  @IsOptional()
+  @Type(() => GeneralFormData)
+  generalFormData?: GeneralFormData;
+
+  @ApiPropertyOptional({
+    description: 'Updated drug addiction consultation form data',
+    type: DrugAddictionFormData,
+  })
+  @IsOptional()
+  @Type(() => DrugAddictionFormData)
+  drugAddictionFormData?: DrugAddictionFormData;
+
+  @ApiPropertyOptional({
+    description: 'Updated minor consultation form data',
+    type: MinorFormData,
+  })
+  @IsOptional()
+  @Type(() => MinorFormData)
+  minorFormData?: MinorFormData;
+}
+
+export class ConsultationQueryDto {
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    example: 1,
+    minimum: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: 'Page must be an integer' })
+  @Min(1, { message: 'Page must be at least 1' })
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    description: 'Number of items per page',
+    example: 20,
+    minimum: 1,
+    maximum: 100,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: 'Limit must be an integer' })
+  @Min(1, { message: 'Limit must be at least 1' })
+  @Max(100, { message: 'Limit cannot exceed 100' })
+  limit?: number = 20;
+
+  @ApiPropertyOptional({
+    description: 'Search term for consultation notes or concerns',
+    example: 'anxiety',
+  })
+  @IsOptional()
+  @IsString({ message: 'Search term must be a string' })
+  search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by client ID',
+  })
+  @IsOptional()
+  @IsUUID(4, { message: 'Client ID must be a valid UUID' })
+  clientId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by therapist ID',
+  })
+  @IsOptional()
+  @IsUUID(4, { message: 'Therapist ID must be a valid UUID' })
+  therapistId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by form types',
+    enum: FormType,
+    isArray: true,
+  })
+  @IsOptional()
+  @IsArray({ message: 'Form types must be an array' })
+  @IsEnum(FormType, {
+    each: true,
+    message: 'Each form type must be a valid consultation form type',
+  })
+  formTypes?: FormType[];
+
+  @ApiPropertyOptional({
+    description: 'Filter by consultation status',
+    enum: [...Object.values(ConsultationStatus), 'all'],
+  })
+  @IsOptional()
+  @IsString({ message: 'Status must be a string' })
+  status?: ConsultationStatus | 'all';
+
+  @ApiPropertyOptional({
+    description: 'Filter consultations from date (YYYY-MM-DD)',
+    example: '2024-01-01',
+  })
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'From date must be a valid date string (YYYY-MM-DD)' },
+  )
+  dateFrom?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter consultations to date (YYYY-MM-DD)',
+    example: '2024-12-31',
+  })
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'To date must be a valid date string (YYYY-MM-DD)' },
+  )
+  dateTo?: string;
+}

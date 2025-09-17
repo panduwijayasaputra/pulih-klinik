@@ -153,7 +153,6 @@ export default function ClientTherapyPage() {
     resolver: zodResolver(consultationFormSchema),
     defaultValues: {
       clientId: clientId,
-      therapistId: currentTherapistId || '',
       formTypes: [],
       status: ConsultationStatusEnum.Draft,
       sessionDate: new Date().toISOString().split('T')[0] || '',
@@ -316,7 +315,6 @@ export default function ClientTherapyPage() {
     setEditingConsultation(false);
     consultationForm.reset({
       clientId: clientId,
-      therapistId: currentTherapistId || '',
       formTypes: [],
       status: ConsultationStatusEnum.Draft,
       sessionDate: new Date().toISOString().split('T')[0] || '',
@@ -369,7 +367,6 @@ export default function ClientTherapyPage() {
       
       const formDataToSet = {
         clientId: consultation.clientId,
-        therapistId: currentTherapistId || consultation.therapistId,
         formTypes: consultation.formTypes,
         status: consultation.status,
         sessionDate: consultation.sessionDate,
@@ -495,14 +492,13 @@ export default function ClientTherapyPage() {
 
       // Debug: Log the user and form data
       console.log('Current user:', user);
-      console.log('Form data therapistId:', data.therapistId);
       console.log('User ID:', user?.id);
-      console.log('Current therapist ID:', currentTherapistId);
+      console.log('Full form data:', data);
+      console.log('Form types:', data.formTypes);
       
       // Transform form data to API format - only include fields supported by backend DTO
       const consultationData = {
         clientId: data.clientId,
-        therapistId: currentTherapistId, // Always use the validated therapist ID
         formTypes: data.formTypes,
         status: data.status,
         sessionDate: data.sessionDate,
@@ -529,87 +525,10 @@ export default function ClientTherapyPage() {
         clientExpectations: data.clientExpectations,
         initialAssessment: data.initialAssessment,
         recommendedTreatmentPlan: data.recommendedTreatmentPlan,
-        // Store additional form-specific data in formData field
-        formData: {
-          // General consultation specific fields
-          emotionScale: data.emotionScale,
-          recentMoodState: data.recentMoodState,
-          recentMoodStateDetails: data.recentMoodStateDetails,
-          frequentEmotions: data.frequentEmotions,
-          selfHarmThoughts: data.selfHarmThoughts,
-          selfHarmDetails: data.selfHarmDetails,
-          dailyStressFrequency: data.dailyStressFrequency,
-          currentLifeStressors: data.currentLifeStressors,
-          supportSystem: data.supportSystem,
-          workLifeBalance: data.workLifeBalance,
-          // Drug addiction fields
-          substanceHistory: data.substanceHistory,
-          otherSubstancesDetails: data.otherSubstancesDetails,
-          primarySubstance: data.primarySubstance,
-          additionalSubstances: data.additionalSubstances,
-          ageOfFirstUse: data.ageOfFirstUse,
-          frequencyOfUse: data.frequencyOfUse,
-          quantityPerUse: data.quantityPerUse,
-          lastUseDate: data.lastUseDate,
-          withdrawalSymptoms: data.withdrawalSymptoms,
-          toleranceLevel: data.toleranceLevel,
-          impactOnDailyLife: data.impactOnDailyLife,
-          attemptsToQuit: data.attemptsToQuit,
-          socialCircleSubstanceUse: data.socialCircleSubstanceUse,
-          triggerSituations: data.triggerSituations,
-          environmentalFactors: data.environmentalFactors,
-          previousTreatmentPrograms: data.previousTreatmentPrograms,
-          previousTreatmentDetails: data.previousTreatmentDetails,
-          currentSobrietyPeriod: data.currentSobrietyPeriod,
-          legalIssuesRelated: data.legalIssuesRelated,
-          legalIssuesDetails: data.legalIssuesDetails,
-          financialImpact: data.financialImpact,
-          desireToQuit: data.desireToQuit,
-          recoveryGoals: data.recoveryGoals,
-          willingForFollowUp: data.willingForFollowUp,
-          // Minor consultation fields
-          guardianName: data.guardianName,
-          guardianRelationship: data.guardianRelationship,
-          guardianPhone: data.guardianPhone,
-          guardianOccupation: data.guardianOccupation,
-          parentalMaritalStatus: data.parentalMaritalStatus,
-          legalCustody: data.legalCustody,
-          guardianAddress: data.guardianAddress,
-          guardianSignatureName: data.guardianSignatureName,
-          guardianSignatureDate: data.guardianSignatureDate,
-          clientCanSign: data.clientCanSign,
-          consultationReasons: data.consultationReasons,
-          otherConsultationReason: data.otherConsultationReason,
-          problemOnset: data.problemOnset,
-          previousPsychologicalHelp: data.previousPsychologicalHelp,
-          previousPsychologicalHelpDetails: data.previousPsychologicalHelpDetails,
-          currentGradeLevel: data.currentGradeLevel,
-          academicPerformance: data.academicPerformance,
-          schoolBehaviorIssues: data.schoolBehaviorIssues,
-          schoolBehaviorDetails: data.schoolBehaviorDetails,
-          teacherConcerns: data.teacherConcerns,
-          bullyingHistory: data.bullyingHistory,
-          bullyingDetails: data.bullyingDetails,
-          familyStructure: data.familyStructure,
-          siblingRelationships: data.siblingRelationships,
-          peerRelationships: data.peerRelationships,
-          familyConflicts: data.familyConflicts,
-          familyConflictsDetails: data.familyConflictsDetails,
-          socialDifficulties: data.socialDifficulties,
-          socialDifficultiesDetails: data.socialDifficultiesDetails,
-          developmentalMilestones: data.developmentalMilestones,
-          attentionConcerns: data.attentionConcerns,
-          attentionDetails: data.attentionDetails,
-          behavioralConcerns: data.behavioralConcerns,
-          behavioralDetails: data.behavioralDetails,
-          // Additional fields that were causing validation errors
-          consentAgreement: data.consentAgreement,
-          clientSignatureName: data.clientSignatureName,
-          clientSignatureDate: data.clientSignatureDate,
-          therapistName: data.therapistName,
-          registrationDate: data.registrationDate,
-          initialRecommendation: data.initialRecommendation,
-        }
+        // Use the form data that's already been organized by the ConsultationForm component
+        generalFormData: data.generalFormData,
+        drugAddictionFormData: data.drugAddictionFormData,
+        minorFormData: data.minorFormData
       };
 
       let success = false;

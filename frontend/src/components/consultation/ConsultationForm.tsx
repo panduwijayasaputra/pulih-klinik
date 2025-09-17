@@ -80,9 +80,164 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   // Handle confirmed submission
   const handleConfirmedSubmit = async () => {
     if (pendingFormData) {
-      await onSubmit(pendingFormData);
+      // Organize form data into separate sections
+      const organizedData = organizeFormData(pendingFormData);
+      await onSubmit(organizedData);
       setPendingFormData(null);
     }
+  };
+
+  // Organize form data into separate sections based on form types
+  const organizeFormData = (data: ConsultationFormData) => {
+    // Get current form values using watch to capture fields that use setValue
+    const currentFormValues = watch() as any;
+    
+    // Create a clean organized data object with only the base consultation fields
+    const organizedData = {
+      clientId: data.clientId,
+      therapistId: data.therapistId,
+      formTypes: data.formTypes,
+      status: data.status,
+      sessionDate: data.sessionDate,
+      sessionDuration: data.sessionDuration,
+      consultationNotes: data.consultationNotes,
+      previousTherapyExperience: data.previousTherapyExperience,
+      currentMedications: data.currentMedications,
+      primaryConcern: data.primaryConcern,
+      symptomSeverity: data.symptomSeverity,
+      symptomDuration: data.symptomDuration,
+      treatmentGoals: data.treatmentGoals,
+      clientExpectations: data.clientExpectations,
+      previousPsychologicalDiagnosis: data.previousPsychologicalDiagnosis,
+      significantPhysicalIllness: data.significantPhysicalIllness,
+      traumaticExperience: data.traumaticExperience,
+      familyPsychologicalHistory: data.familyPsychologicalHistory,
+      scriptGenerationPreferences: data.scriptGenerationPreferences,
+    } as any;
+
+    // Initialize form data sections
+    organizedData.generalFormData = {};
+    organizedData.drugAddictionFormData = {};
+    organizedData.minorFormData = {};
+
+    // Organize General consultation data
+    if (formTypes.includes(ConsultationFormTypeEnum.General)) {
+      organizedData.generalFormData = {
+        // Only include fields that actually exist in the form data
+        stressLevel: (data as any).stressLevel || currentFormValues.stressLevel,
+        primaryStressors: (data as any).primaryStressors || currentFormValues.primaryStressors,
+        supportSystem: (data as any).supportSystem || currentFormValues.supportSystem,
+        dailyRoutine: (data as any).dailyRoutine || currentFormValues.dailyRoutine,
+        exerciseHabits: (data as any).exerciseHabits || currentFormValues.exerciseHabits,
+        sleepPatterns: (data as any).sleepPatterns || currentFormValues.sleepPatterns,
+        nutritionHabits: (data as any).nutritionHabits || currentFormValues.nutritionHabits,
+        hobbiesInterests: (data as any).hobbiesInterests || currentFormValues.hobbiesInterests,
+        spiritualBeliefs: (data as any).spiritualBeliefs || currentFormValues.spiritualBeliefs,
+        culturalFactors: (data as any).culturalFactors || currentFormValues.culturalFactors,
+        recentMoodState: data.recentMoodState || currentFormValues.recentMoodState,
+        recentMoodStateDetails: data.recentMoodStateDetails || currentFormValues.recentMoodStateDetails,
+        frequentEmotions: data.frequentEmotions || currentFormValues.frequentEmotions,
+        selfHarmThoughts: data.selfHarmThoughts || currentFormValues.selfHarmThoughts,
+        selfHarmDetails: data.selfHarmDetails || currentFormValues.selfHarmDetails,
+        dailyStressFrequency: data.dailyStressFrequency || currentFormValues.dailyStressFrequency,
+        // Include emotion scale data
+        emotionScale: data.emotionScale || currentFormValues.emotionScale,
+      };
+
+      // Remove undefined/null values to keep the payload clean
+      Object.keys(organizedData.generalFormData).forEach(key => {
+        if (organizedData.generalFormData[key] === undefined || organizedData.generalFormData[key] === null) {
+          delete organizedData.generalFormData[key];
+        }
+      });
+    }
+
+    // Organize Drug Addiction consultation data
+    if (formTypes.includes(ConsultationFormTypeEnum.DrugAddiction)) {
+      organizedData.drugAddictionFormData = {
+        // Get substance types from substanceHistory
+        substanceTypes: currentFormValues.substanceHistory ? 
+          Object.keys(currentFormValues.substanceHistory).filter(key => currentFormValues.substanceHistory[key] === true) : [],
+        firstUseAge: data.ageOfFirstUse || currentFormValues.ageOfFirstUse,
+        usageFrequency: data.frequencyOfUse || currentFormValues.frequencyOfUse,
+        lastUseDate: data.lastUseDate || currentFormValues.lastUseDate,
+        triggersRelapse: data.triggerSituations || currentFormValues.triggerSituations,
+        previousTreatments: data.previousTreatmentPrograms ? [data.previousTreatmentDetails || ''] : [],
+        withdrawalSymptoms: data.withdrawalSymptoms || currentFormValues.withdrawalSymptoms,
+        motivationToQuit: (data as any).motivationToQuit || currentFormValues.motivationToQuit,
+        supportSystemAvailability: (data as any).supportSystemAvailability || currentFormValues.supportSystemAvailability,
+        legalIssues: data.legalIssuesRelated || currentFormValues.legalIssuesRelated,
+        occupationalImpact: (data as any).occupationalImpact || currentFormValues.occupationalImpact,
+        healthComplications: (data as any).healthComplications || currentFormValues.healthComplications,
+        primarySubstance: data.primarySubstance || currentFormValues.primarySubstance,
+        quantityPerUse: data.quantityPerUse || currentFormValues.quantityPerUse,
+        attemptsToQuit: data.attemptsToQuit || currentFormValues.attemptsToQuit,
+        currentSobrietyPeriod: data.currentSobrietyPeriod || currentFormValues.currentSobrietyPeriod,
+        financialImpact: data.financialImpact || currentFormValues.financialImpact,
+        desireToQuit: data.desireToQuit || currentFormValues.desireToQuit,
+        recoveryGoals: data.recoveryGoals || currentFormValues.recoveryGoals,
+        willingForFollowUp: data.willingForFollowUp || currentFormValues.willingForFollowUp,
+        // Include other substances details if available
+        otherSubstancesDetails: data.otherSubstancesDetails || currentFormValues.otherSubstancesDetails,
+      };
+
+      // Remove undefined/null values to keep the payload clean
+      Object.keys(organizedData.drugAddictionFormData).forEach(key => {
+        if (organizedData.drugAddictionFormData[key] === undefined || organizedData.drugAddictionFormData[key] === null) {
+          delete organizedData.drugAddictionFormData[key];
+        }
+      });
+    }
+
+    // Organize Minor consultation data
+    if (formTypes.includes(ConsultationFormTypeEnum.Minor)) {
+      organizedData.minorFormData = {
+        guardianName: data.guardianName,
+        guardianRelationship: data.guardianRelationship,
+        guardianPhone: data.guardianPhone,
+        schoolName: (data as any).schoolName,
+        grade: (data as any).grade,
+        schoolPerformance: (data as any).schoolPerformance,
+        behaviorAtSchool: (data as any).behaviorAtSchool,
+        behaviorAtHome: (data as any).behaviorAtHome,
+        friendsRelationships: (data as any).friendsRelationships,
+        developmentalMilestones: data.developmentalMilestones,
+        familyDynamics: (data as any).familyDynamics,
+        parentalConcerns: (data as any).parentalConcerns,
+        previousProfessionalHelp: data.previousPsychologicalHelp,
+        medicationsSupplements: (data as any).medicationsSupplements,
+        specialNeeds: (data as any).specialNeeds,
+        consultationReasons: data.consultationReasons,
+        otherConsultationReason: data.otherConsultationReason,
+        problemOnset: data.problemOnset,
+        previousPsychologicalHelpDetails: data.previousPsychologicalHelpDetails,
+        currentGradeLevel: data.currentGradeLevel,
+        academicPerformance: data.academicPerformance,
+        schoolBehaviorIssues: data.schoolBehaviorIssues,
+        schoolBehaviorDetails: data.schoolBehaviorDetails,
+        teacherConcerns: data.teacherConcerns,
+        bullyingHistory: data.bullyingHistory,
+        familyStructure: data.familyStructure,
+        siblingRelationships: data.siblingRelationships,
+        peerRelationships: data.peerRelationships,
+        familyConflicts: data.familyConflicts,
+        socialDifficulties: data.socialDifficulties,
+        socialDifficultiesDetails: data.socialDifficultiesDetails,
+        attentionConcerns: data.attentionConcerns,
+        attentionDetails: data.attentionDetails,
+        behavioralConcerns: data.behavioralConcerns,
+        behavioralDetails: data.behavioralDetails,
+      };
+
+      // Remove undefined/null values to keep the payload clean
+      Object.keys(organizedData.minorFormData).forEach(key => {
+        if (organizedData.minorFormData[key] === undefined || organizedData.minorFormData[key] === null) {
+          delete organizedData.minorFormData[key];
+        }
+      });
+    }
+
+    return organizedData;
   };
   
   // Handle dialog close
