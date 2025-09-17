@@ -649,13 +649,11 @@ export class ConsultationQueryDto {
 
   @ApiPropertyOptional({
     description: 'Filter by consultation status',
-    enum: ConsultationStatus,
+    enum: [...Object.values(ConsultationStatus), 'all'],
   })
   @IsOptional()
-  @IsEnum(ConsultationStatus, {
-    message: 'Status must be a valid consultation status',
-  })
-  status?: ConsultationStatus;
+  @IsString({ message: 'Status must be a string' })
+  status?: ConsultationStatus | 'all';
 
   @ApiPropertyOptional({
     description: 'Filter consultations from date (YYYY-MM-DD)',

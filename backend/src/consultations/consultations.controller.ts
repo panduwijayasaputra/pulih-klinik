@@ -149,7 +149,11 @@ export class ConsultationsController {
     enum: FormType,
     isArray: true,
   })
-  @ApiQuery({ name: 'status', required: false, enum: ConsultationStatus })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: [...Object.values(ConsultationStatus), 'all'],
+  })
   @ApiQuery({ name: 'dateFrom', required: false, example: '2024-01-01' })
   @ApiQuery({ name: 'dateTo', required: false, example: '2024-12-31' })
   @ApiResponse({
@@ -361,7 +365,11 @@ export class ConsultationsController {
     enum: FormType,
     isArray: true,
   })
-  @ApiQuery({ name: 'status', required: false, enum: ConsultationStatus })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: [...Object.values(ConsultationStatus), 'all'],
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Client consultations retrieved successfully',
@@ -405,7 +413,11 @@ export class ConsultationsController {
     enum: FormType,
     isArray: true,
   })
-  @ApiQuery({ name: 'status', required: false, enum: ConsultationStatus })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: [...Object.values(ConsultationStatus), 'all'],
+  })
   @ApiQuery({ name: 'dateFrom', required: false, example: '2024-01-01' })
   @ApiQuery({ name: 'dateTo', required: false, example: '2024-12-31' })
   @ApiResponse({
@@ -445,7 +457,11 @@ export class ConsultationsController {
   @ApiParam({ name: 'formType', description: 'Form Type', enum: FormType })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiQuery({ name: 'status', required: false, enum: ConsultationStatus })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: [...Object.values(ConsultationStatus), 'all'],
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Consultations by form type retrieved successfully',

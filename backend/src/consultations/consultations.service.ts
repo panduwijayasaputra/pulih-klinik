@@ -232,6 +232,44 @@ export class ConsultationsService {
     limit: number;
     totalPages: number;
   }> {
+    // Special case: if querying by clientId, return single consultation (most recent one)
+    if (query.clientId) {
+      const consultation = await this.em.findOne(
+        Consultation,
+        {
+          client: { id: query.clientId, clinic: { id: clinicId } },
+        },
+        {
+          populate: ['client', 'therapist', 'therapist.user'],
+          orderBy: { createdAt: QueryOrder.DESC },
+        },
+      );
+
+      if (consultation) {
+        return {
+          consultations: [
+            this.formatConsultationResponse(
+              consultation,
+              consultation.client,
+              consultation.therapist,
+            ),
+          ],
+          total: 1,
+          page: query.page || 1,
+          limit: query.limit || 20,
+          totalPages: 1,
+        };
+      } else {
+        return {
+          consultations: [],
+          total: 0,
+          page: query.page || 1,
+          limit: query.limit || 20,
+          totalPages: 0,
+        };
+      }
+    }
+
     // Build filter conditions
     const whereConditions: any = { client: { clinic: { id: clinicId } } };
 
@@ -256,7 +294,7 @@ export class ConsultationsService {
       whereConditions.formTypes = { $in: query.formTypes };
     }
 
-    if (query.status) {
+    if (query.status && query.status !== 'all') {
       whereConditions.status = query.status;
     }
 
