@@ -19,12 +19,13 @@ import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTherapistClient } from '@/hooks/useTherapistClient';
 import { useTherapySession } from '@/hooks/useTherapySession';
+import { useConsultation } from '@/hooks/useConsultation';
+import { TherapistAPI } from '@/lib/api/therapist';
 import { ClientStatusLabels, ClientGenderEnum, ConsultationStatusEnum } from '@/types/enums';
 import { ClientStatusColors } from '@/types/clientStatus';
 import type { TherapistClient } from '@/types/therapistClient';
 // import { consultationSchema, type ConsultationFormData } from '@/schemas/consultationSchema'; // Replaced by consultationFormSchema
 import { consultationFormSchema, type ConsultationFormSchemaType } from '@/schemas/consultationFormSchema';
-import { getConsultationByClientId } from '@/lib/mocks/consultation';
 import { mockSessionHistory, mockTherapySessions } from '@/lib/mocks/therapySession';
 import { TherapySessionStatusEnum } from '@/types/therapySession';
 import {
@@ -87,16 +88,25 @@ export default function ClientTherapyPage() {
     generatePredictions,
     setPredictions
   } = useTherapySession();
+  const {
+    consultations,
+    selectedConsultation,
+    loading: consultationLoading,
+    createConsultation,
+    updateConsultation,
+    loadConsultations
+  } = useConsultation();
 
   const clientId = params['client-id'] as string;
 
   // Get consultation data for this client (one per client)
-  const clientConsultation = getConsultationByClientId(clientId);
+  const clientConsultation = consultations.find(c => c.clientId === clientId) || null;
 
   // Consultation form state
   const [showConsultationForm, setShowConsultationForm] = useState(false);
   const [consultationSubmitting, setConsultationSubmitting] = useState(false);
   const [editingConsultation, setEditingConsultation] = useState(false);
+  const [currentTherapistId, setCurrentTherapistId] = useState<string | null>(null);
 
   // Therapy session state
   const [showSessionSetup, setShowSessionSetup] = useState(false);
@@ -143,7 +153,7 @@ export default function ClientTherapyPage() {
     resolver: zodResolver(consultationFormSchema),
     defaultValues: {
       clientId: clientId,
-      therapistId: user?.id || '',
+      therapistId: currentTherapistId || '',
       formTypes: [],
       status: ConsultationStatusEnum.Draft,
       sessionDate: new Date().toISOString().split('T')[0] || '',
@@ -190,8 +200,47 @@ export default function ClientTherapyPage() {
   useEffect(() => {
     if (clientId && user?.id) {
       loadClient(clientId);
+      loadConsultations({ clientId });
     }
-  }, [clientId, user?.id, loadClient]);
+  }, [clientId, user?.id, loadClient, loadConsultations]);
+
+  // Fetch current therapist ID
+  useEffect(() => {
+    const fetchCurrentTherapistId = async () => {
+      if (user?.id) {
+        try {
+          console.log('Fetching current therapist for user:', user?.id);
+          const result = await TherapistAPI.getCurrentTherapist();
+          console.log('getCurrentTherapist result:', result);
+          if (result.success && result.data) {
+            setCurrentTherapistId(result.data.id);
+            console.log('Current therapist ID:', result.data.id);
+          } else {
+            console.error('Failed to get current therapist:', result.message);
+            // Don't fallback to user ID - these are different entities
+            // Show error to user instead
+            addToast({
+              type: 'error',
+              title: 'Therapist Profile Missing',
+              message: 'Your therapist profile is not set up. Please contact your clinic administrator.',
+            });
+            setCurrentTherapistId(null);
+          }
+        } catch (error) {
+          console.error('Error fetching current therapist:', error);
+          // Don't fallback to user ID - show error instead
+          addToast({
+            type: 'error',
+            title: 'Error Loading Therapist Profile',
+            message: 'Unable to load your therapist profile. Please try refreshing the page.',
+          });
+          setCurrentTherapistId(null);
+        }
+      }
+    };
+
+    fetchCurrentTherapistId();
+  }, [user?.id]);
 
   // Load sessions when client is found
   useEffect(() => {
@@ -267,7 +316,7 @@ export default function ClientTherapyPage() {
     setEditingConsultation(false);
     consultationForm.reset({
       clientId: clientId,
-      therapistId: user?.id || '',
+      therapistId: currentTherapistId || '',
       formTypes: [],
       status: ConsultationStatusEnum.Draft,
       sessionDate: new Date().toISOString().split('T')[0] || '',
@@ -309,41 +358,313 @@ export default function ClientTherapyPage() {
       initialRecommendation: [],
     });
     setShowConsultationForm(true);
-  }, [clientId, user?.id, consultationForm]);
+  }, [clientId, user?.id, consultationForm, currentTherapistId]);
 
   const handleEditConsultation = useCallback(() => {
     if (clientConsultation) {
       setEditingConsultation(true);
-      consultationForm.reset(clientConsultation);
+      // Transform consultation data to form format using type assertion
+      const consultation = clientConsultation as any; // Type assertion to access all properties
+      const formData = consultation.formData || {}; // Extract formData if it exists
+      
+      const formDataToSet = {
+        clientId: consultation.clientId,
+        therapistId: currentTherapistId || consultation.therapistId,
+        formTypes: consultation.formTypes,
+        status: consultation.status,
+        sessionDate: consultation.sessionDate,
+        sessionDuration: consultation.sessionDuration,
+        consultationNotes: consultation.consultationNotes,
+        scriptGenerationPreferences: consultation.scriptGenerationPreferences,
+        previousTherapyExperience: consultation.previousTherapyExperience,
+        previousTherapyDetails: consultation.previousTherapyDetails,
+        currentMedications: consultation.currentMedications,
+        currentMedicationsDetails: consultation.currentMedicationsDetails,
+        previousPsychologicalDiagnosis: consultation.previousPsychologicalDiagnosis,
+        previousPsychologicalDiagnosisDetails: consultation.previousPsychologicalDiagnosisDetails,
+        significantPhysicalIllness: consultation.significantPhysicalIllness,
+        significantPhysicalIllnessDetails: consultation.significantPhysicalIllnessDetails,
+        traumaticExperience: consultation.traumaticExperience,
+        traumaticExperienceDetails: consultation.traumaticExperienceDetails,
+        familyPsychologicalHistory: consultation.familyPsychologicalHistory,
+        familyPsychologicalHistoryDetails: consultation.familyPsychologicalHistoryDetails,
+        primaryConcern: consultation.primaryConcern,
+        secondaryConcerns: consultation.secondaryConcerns,
+        symptomSeverity: consultation.symptomSeverity,
+        symptomDuration: consultation.symptomDuration,
+        treatmentGoals: consultation.treatmentGoals,
+        clientExpectations: consultation.clientExpectations,
+        initialAssessment: consultation.initialAssessment,
+        recommendedTreatmentPlan: consultation.recommendedTreatmentPlan,
+        // Extract form-specific data from formData field
+        emotionScale: formData.emotionScale,
+        recentMoodState: formData.recentMoodState,
+        recentMoodStateDetails: formData.recentMoodStateDetails,
+        frequentEmotions: formData.frequentEmotions,
+        selfHarmThoughts: formData.selfHarmThoughts,
+        selfHarmDetails: formData.selfHarmDetails,
+        dailyStressFrequency: formData.dailyStressFrequency,
+        currentLifeStressors: formData.currentLifeStressors,
+        supportSystem: formData.supportSystem,
+        workLifeBalance: formData.workLifeBalance,
+        // Drug addiction fields
+        substanceHistory: formData.substanceHistory,
+        otherSubstancesDetails: formData.otherSubstancesDetails,
+        primarySubstance: formData.primarySubstance,
+        additionalSubstances: formData.additionalSubstances,
+        ageOfFirstUse: formData.ageOfFirstUse,
+        frequencyOfUse: formData.frequencyOfUse,
+        quantityPerUse: formData.quantityPerUse,
+        lastUseDate: formData.lastUseDate,
+        withdrawalSymptoms: formData.withdrawalSymptoms,
+        toleranceLevel: formData.toleranceLevel,
+        impactOnDailyLife: formData.impactOnDailyLife,
+        attemptsToQuit: formData.attemptsToQuit,
+        socialCircleSubstanceUse: formData.socialCircleSubstanceUse,
+        triggerSituations: formData.triggerSituations,
+        environmentalFactors: formData.environmentalFactors,
+        previousTreatmentPrograms: formData.previousTreatmentPrograms,
+        previousTreatmentDetails: formData.previousTreatmentDetails,
+        currentSobrietyPeriod: formData.currentSobrietyPeriod,
+        legalIssuesRelated: formData.legalIssuesRelated,
+        legalIssuesDetails: formData.legalIssuesDetails,
+        financialImpact: formData.financialImpact,
+        desireToQuit: formData.desireToQuit,
+        recoveryGoals: formData.recoveryGoals,
+        willingForFollowUp: formData.willingForFollowUp,
+        // Minor consultation fields
+        guardianName: formData.guardianName,
+        guardianRelationship: formData.guardianRelationship,
+        guardianPhone: formData.guardianPhone,
+        guardianOccupation: formData.guardianOccupation,
+        parentalMaritalStatus: formData.parentalMaritalStatus,
+        legalCustody: formData.legalCustody,
+        guardianAddress: formData.guardianAddress,
+        guardianSignatureName: formData.guardianSignatureName,
+        guardianSignatureDate: formData.guardianSignatureDate,
+        clientCanSign: formData.clientCanSign,
+        consultationReasons: formData.consultationReasons,
+        otherConsultationReason: formData.otherConsultationReason,
+        problemOnset: formData.problemOnset,
+        previousPsychologicalHelp: formData.previousPsychologicalHelp,
+        previousPsychologicalHelpDetails: formData.previousPsychologicalHelpDetails,
+        currentGradeLevel: formData.currentGradeLevel,
+        academicPerformance: formData.academicPerformance,
+        schoolBehaviorIssues: formData.schoolBehaviorIssues,
+        schoolBehaviorDetails: formData.schoolBehaviorDetails,
+        teacherConcerns: formData.teacherConcerns,
+        bullyingHistory: formData.bullyingHistory,
+        bullyingDetails: formData.bullyingDetails,
+        familyStructure: formData.familyStructure,
+        siblingRelationships: formData.siblingRelationships,
+        peerRelationships: formData.peerRelationships,
+        familyConflicts: formData.familyConflicts,
+        familyConflictsDetails: formData.familyConflictsDetails,
+        socialDifficulties: formData.socialDifficulties,
+        socialDifficultiesDetails: formData.socialDifficultiesDetails,
+        developmentalMilestones: formData.developmentalMilestones,
+        attentionConcerns: formData.attentionConcerns,
+        attentionDetails: formData.attentionDetails,
+        behavioralConcerns: formData.behavioralConcerns,
+        behavioralDetails: formData.behavioralDetails,
+        // Additional fields that were causing validation errors
+        consentAgreement: formData.consentAgreement,
+        clientSignatureName: formData.clientSignatureName,
+        clientSignatureDate: formData.clientSignatureDate,
+        therapistName: formData.therapistName,
+        registrationDate: formData.registrationDate,
+        initialRecommendation: formData.initialRecommendation,
+      };
+      
+      consultationForm.reset(formDataToSet);
       setShowConsultationForm(true);
     }
-  }, [clientConsultation, consultationForm]);
+  }, [clientConsultation, consultationForm, currentTherapistId]);
 
   const handleConsultationSubmit = useCallback(async (data: ConsultationFormSchemaType) => {
     setConsultationSubmitting(true);
     try {
-      // console.log('Consultation Data:', data);
+      if (!currentTherapistId) {
+        addToast({
+          type: 'error',
+          title: 'Therapist Profile Required',
+          message: 'Your therapist profile must be set up before creating consultations. Please contact your clinic administrator.',
+        });
+        return;
+      }
 
-      // TODO: Call API to save consultation
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
+      // Debug: Log the user and form data
+      console.log('Current user:', user);
+      console.log('Form data therapistId:', data.therapistId);
+      console.log('User ID:', user?.id);
+      console.log('Current therapist ID:', currentTherapistId);
+      
+      // Transform form data to API format - only include fields supported by backend DTO
+      const consultationData = {
+        clientId: data.clientId,
+        therapistId: currentTherapistId, // Always use the validated therapist ID
+        formTypes: data.formTypes,
+        status: data.status,
+        sessionDate: data.sessionDate,
+        sessionDuration: data.sessionDuration,
+        consultationNotes: data.consultationNotes,
+        scriptGenerationPreferences: data.scriptGenerationPreferences,
+        previousTherapyExperience: data.previousTherapyExperience,
+        previousTherapyDetails: data.previousTherapyDetails,
+        currentMedications: data.currentMedications,
+        currentMedicationsDetails: data.currentMedicationsDetails,
+        previousPsychologicalDiagnosis: data.previousPsychologicalDiagnosis,
+        previousPsychologicalDiagnosisDetails: data.previousPsychologicalDiagnosisDetails,
+        significantPhysicalIllness: data.significantPhysicalIllness,
+        significantPhysicalIllnessDetails: data.significantPhysicalIllnessDetails,
+        traumaticExperience: data.traumaticExperience,
+        traumaticExperienceDetails: data.traumaticExperienceDetails,
+        familyPsychologicalHistory: data.familyPsychologicalHistory,
+        familyPsychologicalHistoryDetails: data.familyPsychologicalHistoryDetails,
+        primaryConcern: data.primaryConcern,
+        secondaryConcerns: data.secondaryConcerns,
+        symptomSeverity: data.symptomSeverity,
+        symptomDuration: data.symptomDuration,
+        treatmentGoals: data.treatmentGoals,
+        clientExpectations: data.clientExpectations,
+        initialAssessment: data.initialAssessment,
+        recommendedTreatmentPlan: data.recommendedTreatmentPlan,
+        // Store additional form-specific data in formData field
+        formData: {
+          // General consultation specific fields
+          emotionScale: data.emotionScale,
+          recentMoodState: data.recentMoodState,
+          recentMoodStateDetails: data.recentMoodStateDetails,
+          frequentEmotions: data.frequentEmotions,
+          selfHarmThoughts: data.selfHarmThoughts,
+          selfHarmDetails: data.selfHarmDetails,
+          dailyStressFrequency: data.dailyStressFrequency,
+          currentLifeStressors: data.currentLifeStressors,
+          supportSystem: data.supportSystem,
+          workLifeBalance: data.workLifeBalance,
+          // Drug addiction fields
+          substanceHistory: data.substanceHistory,
+          otherSubstancesDetails: data.otherSubstancesDetails,
+          primarySubstance: data.primarySubstance,
+          additionalSubstances: data.additionalSubstances,
+          ageOfFirstUse: data.ageOfFirstUse,
+          frequencyOfUse: data.frequencyOfUse,
+          quantityPerUse: data.quantityPerUse,
+          lastUseDate: data.lastUseDate,
+          withdrawalSymptoms: data.withdrawalSymptoms,
+          toleranceLevel: data.toleranceLevel,
+          impactOnDailyLife: data.impactOnDailyLife,
+          attemptsToQuit: data.attemptsToQuit,
+          socialCircleSubstanceUse: data.socialCircleSubstanceUse,
+          triggerSituations: data.triggerSituations,
+          environmentalFactors: data.environmentalFactors,
+          previousTreatmentPrograms: data.previousTreatmentPrograms,
+          previousTreatmentDetails: data.previousTreatmentDetails,
+          currentSobrietyPeriod: data.currentSobrietyPeriod,
+          legalIssuesRelated: data.legalIssuesRelated,
+          legalIssuesDetails: data.legalIssuesDetails,
+          financialImpact: data.financialImpact,
+          desireToQuit: data.desireToQuit,
+          recoveryGoals: data.recoveryGoals,
+          willingForFollowUp: data.willingForFollowUp,
+          // Minor consultation fields
+          guardianName: data.guardianName,
+          guardianRelationship: data.guardianRelationship,
+          guardianPhone: data.guardianPhone,
+          guardianOccupation: data.guardianOccupation,
+          parentalMaritalStatus: data.parentalMaritalStatus,
+          legalCustody: data.legalCustody,
+          guardianAddress: data.guardianAddress,
+          guardianSignatureName: data.guardianSignatureName,
+          guardianSignatureDate: data.guardianSignatureDate,
+          clientCanSign: data.clientCanSign,
+          consultationReasons: data.consultationReasons,
+          otherConsultationReason: data.otherConsultationReason,
+          problemOnset: data.problemOnset,
+          previousPsychologicalHelp: data.previousPsychologicalHelp,
+          previousPsychologicalHelpDetails: data.previousPsychologicalHelpDetails,
+          currentGradeLevel: data.currentGradeLevel,
+          academicPerformance: data.academicPerformance,
+          schoolBehaviorIssues: data.schoolBehaviorIssues,
+          schoolBehaviorDetails: data.schoolBehaviorDetails,
+          teacherConcerns: data.teacherConcerns,
+          bullyingHistory: data.bullyingHistory,
+          bullyingDetails: data.bullyingDetails,
+          familyStructure: data.familyStructure,
+          siblingRelationships: data.siblingRelationships,
+          peerRelationships: data.peerRelationships,
+          familyConflicts: data.familyConflicts,
+          familyConflictsDetails: data.familyConflictsDetails,
+          socialDifficulties: data.socialDifficulties,
+          socialDifficultiesDetails: data.socialDifficultiesDetails,
+          developmentalMilestones: data.developmentalMilestones,
+          attentionConcerns: data.attentionConcerns,
+          attentionDetails: data.attentionDetails,
+          behavioralConcerns: data.behavioralConcerns,
+          behavioralDetails: data.behavioralDetails,
+          // Additional fields that were causing validation errors
+          consentAgreement: data.consentAgreement,
+          clientSignatureName: data.clientSignatureName,
+          clientSignatureDate: data.clientSignatureDate,
+          therapistName: data.therapistName,
+          registrationDate: data.registrationDate,
+          initialRecommendation: data.initialRecommendation,
+        }
+      };
 
-      addToast({
-        type: 'success',
-        title: 'Konsultasi Tersimpan',
-        message: 'Data konsultasi berhasil disimpan.',
-      });
+      let success = false;
+      if (editingConsultation && selectedConsultation) {
+        // Update existing consultation
+        success = await updateConsultation(selectedConsultation.id, consultationData as any);
+      } else {
+        // Create new consultation
+        success = await createConsultation(consultationData as any);
+      }
 
-      setShowConsultationForm(false);
+      if (success) {
+        addToast({
+          type: 'success',
+          title: editingConsultation ? 'Konsultasi Diperbarui' : 'Konsultasi Tersimpan',
+          message: editingConsultation 
+            ? 'Data konsultasi berhasil diperbarui.'
+            : 'Data konsultasi berhasil disimpan.',
+        });
+
+        setShowConsultationForm(false);
+        setEditingConsultation(false);
+        
+        // Reload consultations for this client
+        await loadConsultations({ clientId });
+      } else {
+        addToast({
+          type: 'error',
+          title: 'Gagal Menyimpan',
+          message: 'Terjadi kesalahan saat menyimpan konsultasi.',
+        });
+      }
     } catch (error) {
+      console.error('Consultation submission error:', error);
+      
+      // Extract error message from API response
+      let errorMessage = 'Terjadi kesalahan saat menyimpan konsultasi.';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as any;
+        if (apiError.response?.data?.message) {
+          errorMessage = apiError.response.data.message;
+        } else if (apiError.message) {
+          errorMessage = apiError.message;
+        }
+      }
+      
       addToast({
         type: 'error',
         title: 'Gagal Menyimpan',
-        message: 'Terjadi kesalahan saat menyimpan konsultasi.',
+        message: errorMessage,
       });
     } finally {
       setConsultationSubmitting(false);
     }
-  }, [addToast]);
+  }, [addToast, editingConsultation, selectedConsultation, createConsultation, updateConsultation, loadConsultations, currentTherapistId]);
 
   // Therapy session handlers
   const handleStartTherapySession = useCallback(async () => {
@@ -1680,17 +2001,37 @@ export default function ClientTherapyPage() {
         size="5xl"
         showCloseButton={false}
       >
-        <ConsultationForm
-          form={consultationForm as any} // Type conversion for compatibility
-          onSubmit={handleConsultationSubmit}
-          isSubmitting={consultationSubmitting}
-          isLoading={false}
-          mode={editingConsultation ? "edit" : "create"}
-          allowTypeChange={!editingConsultation} // Don't allow type change when editing
-          client={selectedClient as any} // Type conversion for compatibility
-          readOnly={false}
-          onCancel={() => setShowConsultationForm(false)}
-        />
+        {!currentTherapistId ? (
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="mb-4 rounded-full bg-red-100 p-3">
+              <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">Therapist Profile Required</h3>
+            <p className="mb-4 text-gray-600">
+              Your therapist profile must be set up before creating consultations. Please contact your clinic administrator to set up your therapist profile.
+            </p>
+            <Button
+              onClick={() => setShowConsultationForm(false)}
+              variant="outline"
+            >
+              Close
+            </Button>
+          </div>
+        ) : (
+          <ConsultationForm
+            form={consultationForm as any} // Type conversion for compatibility
+            onSubmit={handleConsultationSubmit}
+            isSubmitting={consultationSubmitting}
+            isLoading={false}
+            mode={editingConsultation ? "edit" : "create"}
+            allowTypeChange={!editingConsultation} // Don't allow type change when editing
+            client={selectedClient as any} // Type conversion for compatibility
+            readOnly={false}
+            onCancel={() => setShowConsultationForm(false)}
+          />
+        )}
       </FormModal>
 
       {/* Session Setup Modal */}

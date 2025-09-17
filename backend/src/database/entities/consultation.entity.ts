@@ -33,8 +33,8 @@ export class Consultation {
   therapist!: Therapist;
 
   // Basic info
-  @Property({ type: 'varchar', length: 50 })
-  formType!: FormType;
+  @Property({ type: 'json' })
+  formTypes!: FormType[];
 
   @Property({ type: 'varchar', length: 20, default: ConsultationStatus.DRAFT })
   status: ConsultationStatus = ConsultationStatus.DRAFT;
@@ -88,6 +88,34 @@ export class Consultation {
 
   @Property({ type: 'text', nullable: true })
   recommendedTreatmentPlan?: string;
+
+  // Additional psychological history fields
+  @Property({ type: 'boolean', default: false })
+  previousPsychologicalDiagnosis: boolean = false;
+
+  @Property({ type: 'text', nullable: true })
+  previousPsychologicalDiagnosisDetails?: string;
+
+  @Property({ type: 'boolean', default: false })
+  significantPhysicalIllness: boolean = false;
+
+  @Property({ type: 'text', nullable: true })
+  significantPhysicalIllnessDetails?: string;
+
+  @Property({ type: 'boolean', default: false })
+  traumaticExperience: boolean = false;
+
+  @Property({ type: 'text', nullable: true })
+  traumaticExperienceDetails?: string;
+
+  @Property({ type: 'boolean', default: false })
+  familyPsychologicalHistory: boolean = false;
+
+  @Property({ type: 'text', nullable: true })
+  familyPsychologicalHistoryDetails?: string;
+
+  @Property({ type: 'text', nullable: true })
+  scriptGenerationPreferences?: string;
 
   // Form-specific data (JSONB for flexibility)
   @Property({ type: 'json', nullable: true })

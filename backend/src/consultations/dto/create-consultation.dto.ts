@@ -38,14 +38,18 @@ export class CreateConsultationDto {
   therapistId!: string;
 
   @ApiProperty({
-    description: 'Type of consultation form',
+    description: 'Types of consultation forms (array)',
     enum: FormType,
-    example: FormType.GENERAL,
+    isArray: true,
+    example: [FormType.GENERAL],
   })
+  @IsArray({ message: 'Form types must be an array' })
   @IsEnum(FormType, {
-    message: 'Form type must be a valid consultation form type',
+    each: true,
+    message: 'Each form type must be a valid consultation form type',
   })
-  formType!: FormType;
+  @ArrayMinSize(1, { message: 'At least one form type is required' })
+  formTypes!: FormType[];
 
   @ApiPropertyOptional({
     description: 'Initial consultation status',
@@ -241,16 +245,114 @@ export class CreateConsultationDto {
   })
   @IsOptional()
   formData?: Record<string, any>;
+
+  // Additional fields from frontend form
+  @ApiPropertyOptional({
+    description: 'Previous psychological diagnosis',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Previous psychological diagnosis must be a boolean' })
+  previousPsychologicalDiagnosis?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Details about previous psychological diagnosis',
+    example: 'Diagnosed with anxiety disorder in 2020',
+  })
+  @IsOptional()
+  @IsString({
+    message: 'Previous psychological diagnosis details must be a string',
+  })
+  @Length(0, 1000, {
+    message:
+      'Previous psychological diagnosis details cannot exceed 1000 characters',
+  })
+  previousPsychologicalDiagnosisDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Significant physical illness',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Significant physical illness must be a boolean' })
+  significantPhysicalIllness?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Details about significant physical illness',
+    example: 'Diabetes type 2, managed with medication',
+  })
+  @IsOptional()
+  @IsString({
+    message: 'Significant physical illness details must be a string',
+  })
+  @Length(0, 1000, {
+    message:
+      'Significant physical illness details cannot exceed 1000 characters',
+  })
+  significantPhysicalIllnessDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Traumatic experience',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Traumatic experience must be a boolean' })
+  traumaticExperience?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Details about traumatic experience',
+    example: 'Car accident in 2019, no lasting physical injuries',
+  })
+  @IsOptional()
+  @IsString({ message: 'Traumatic experience details must be a string' })
+  @Length(0, 1000, {
+    message: 'Traumatic experience details cannot exceed 1000 characters',
+  })
+  traumaticExperienceDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Family psychological history',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Family psychological history must be a boolean' })
+  familyPsychologicalHistory?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Details about family psychological history',
+    example: 'Mother has depression, father has anxiety',
+  })
+  @IsOptional()
+  @IsString({
+    message: 'Family psychological history details must be a string',
+  })
+  @Length(0, 1000, {
+    message:
+      'Family psychological history details cannot exceed 1000 characters',
+  })
+  familyPsychologicalHistoryDetails?: string;
+
+  @ApiPropertyOptional({
+    description: 'Script generation preferences for AI',
+    example: 'Client prefers nature metaphors, enjoys music',
+  })
+  @IsOptional()
+  @IsString({ message: 'Script generation preferences must be a string' })
+  @Length(0, 1000, {
+    message: 'Script generation preferences cannot exceed 1000 characters',
+  })
+  scriptGenerationPreferences?: string;
 }
 
 // Specialized DTOs for different form types
 
 export class CreateGeneralConsultationDto extends CreateConsultationDto {
   @ApiProperty({
-    description: 'Form type (automatically set to GENERAL)',
+    description: 'Form types (automatically set to GENERAL)',
     enum: [FormType.GENERAL],
+    isArray: true,
   })
-  formType: FormType.GENERAL = FormType.GENERAL;
+  formTypes: [FormType.GENERAL] = [FormType.GENERAL];
 
   @ApiPropertyOptional({
     description: 'General consultation specific data',
@@ -272,10 +374,11 @@ export class CreateGeneralConsultationDto extends CreateConsultationDto {
 
 export class CreateDrugAddictionConsultationDto extends CreateConsultationDto {
   @ApiProperty({
-    description: 'Form type (automatically set to DRUG_ADDICTION)',
+    description: 'Form types (automatically set to DRUG_ADDICTION)',
     enum: [FormType.DRUG_ADDICTION],
+    isArray: true,
   })
-  formType: FormType.DRUG_ADDICTION = FormType.DRUG_ADDICTION;
+  formTypes: [FormType.DRUG_ADDICTION] = [FormType.DRUG_ADDICTION];
 
   @ApiPropertyOptional({
     description: 'Drug addiction specific data',
@@ -299,10 +402,11 @@ export class CreateDrugAddictionConsultationDto extends CreateConsultationDto {
 
 export class CreateMinorConsultationDto extends CreateConsultationDto {
   @ApiProperty({
-    description: 'Form type (automatically set to MINOR)',
+    description: 'Form types (automatically set to MINOR)',
     enum: [FormType.MINOR],
+    isArray: true,
   })
-  formType: FormType.MINOR = FormType.MINOR;
+  formTypes: [FormType.MINOR] = [FormType.MINOR];
 
   @ApiPropertyOptional({
     description: 'Minor-specific consultation data',
@@ -531,14 +635,17 @@ export class ConsultationQueryDto {
   therapistId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by form type',
+    description: 'Filter by form types',
     enum: FormType,
+    isArray: true,
   })
   @IsOptional()
+  @IsArray({ message: 'Form types must be an array' })
   @IsEnum(FormType, {
-    message: 'Form type must be a valid consultation form type',
+    each: true,
+    message: 'Each form type must be a valid consultation form type',
   })
-  formType?: FormType;
+  formTypes?: FormType[];
 
   @ApiPropertyOptional({
     description: 'Filter by consultation status',

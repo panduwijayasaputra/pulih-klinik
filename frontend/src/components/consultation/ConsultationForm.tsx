@@ -16,7 +16,7 @@ import { InformationCircleIcon, LightBulbIcon } from '@heroicons/react/24/outlin
 import {
   ConsultationFormTypeLabels,
 } from '@/types/consultation';
-import { ConsultationFormTypeEnum, ConsultationStatusEnum } from '@/types/enums';
+import { ConsultationFormTypeEnum } from '@/types/enums';
 import { ConsultationFormData } from '@/schemas/consultationSchema';
 import { Client } from '@/types/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -56,7 +56,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   readOnly = false,
   onCancel,
 }) => {
-  const { user: _user } = useAuth();
+  const { user } = useAuth();
   const { register, handleSubmit, watch, setValue, formState: { errors, isDirty, isValid } } = form;
   
   // Confirmation dialog state
@@ -66,10 +66,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const formTypes = watch('formTypes') || [];
   const previousTherapyExperience = watch('previousTherapyExperience');
   const currentMedications = watch('currentMedications');
-  const _previousPsychologicalDiagnosis = watch('previousPsychologicalDiagnosis');
-  const _significantPhysicalIllness = watch('significantPhysicalIllness');
-  const _traumaticExperience = watch('traumaticExperience');
-  const _familyPsychologicalHistory = watch('familyPsychologicalHistory');
+  const previousPsychologicalDiagnosis = watch('previousPsychologicalDiagnosis');
+  const significantPhysicalIllness = watch('significantPhysicalIllness');
+  const traumaticExperience = watch('traumaticExperience');
+  const familyPsychologicalHistory = watch('familyPsychologicalHistory');
   
   // Handle form submission with confirmation
   const handleFormSubmit = (data: ConsultationFormData) => {

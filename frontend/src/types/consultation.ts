@@ -5,7 +5,7 @@ export interface BaseConsultation {
   id: string;
   clientId: string;
   therapistId: string;
-  formType: ConsultationFormTypeEnum;
+  formTypes: ConsultationFormTypeEnum[];
   status: ConsultationStatusEnum;
   createdAt: string;
   updatedAt: string;
@@ -34,11 +34,22 @@ export interface BaseConsultation {
   // Assessment results
   initialAssessment?: string;
   recommendedTreatmentPlan?: string;
+  
+  // Additional psychological history fields
+  previousPsychologicalDiagnosis: boolean;
+  previousPsychologicalDiagnosisDetails?: string;
+  significantPhysicalIllness: boolean;
+  significantPhysicalIllnessDetails?: string;
+  traumaticExperience: boolean;
+  traumaticExperienceDetails?: string;
+  familyPsychologicalHistory: boolean;
+  familyPsychologicalHistoryDetails?: string;
+  scriptGenerationPreferences?: string;
 }
 
 // General consultation interface
 export interface GeneralConsultation extends BaseConsultation {
-  formType: ConsultationFormTypeEnum.General;
+  formTypes: [ConsultationFormTypeEnum.General];
   
   // Life circumstances
   currentLifeStressors: string[];
@@ -60,7 +71,7 @@ export interface GeneralConsultation extends BaseConsultation {
 
 // Drug addiction consultation interface
 export interface DrugAddictionConsultation extends BaseConsultation {
-  formType: ConsultationFormTypeEnum.DrugAddiction;
+  formTypes: [ConsultationFormTypeEnum.DrugAddiction];
   
   // Substance use history
   primarySubstance: string;
@@ -94,7 +105,7 @@ export interface DrugAddictionConsultation extends BaseConsultation {
 
 // Minor consultation interface (for clients under 18)
 export interface MinorConsultation extends BaseConsultation {
-  formType: ConsultationFormTypeEnum.Minor;
+  formTypes: [ConsultationFormTypeEnum.Minor];
   
   // Guardian information
   guardianPresent: boolean;

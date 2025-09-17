@@ -40,7 +40,7 @@ export interface ConsultationResponse {
       email: string;
     };
   };
-  formType: FormType;
+  formTypes: FormType[];
   status: ConsultationStatus;
   sessionDate: Date;
   sessionDuration: number;
@@ -57,6 +57,15 @@ export interface ConsultationResponse {
   clientExpectations?: string;
   initialAssessment?: string;
   recommendedTreatmentPlan?: string;
+  previousPsychologicalDiagnosis: boolean;
+  previousPsychologicalDiagnosisDetails?: string;
+  significantPhysicalIllness: boolean;
+  significantPhysicalIllnessDetails?: string;
+  traumaticExperience: boolean;
+  traumaticExperienceDetails?: string;
+  familyPsychologicalHistory: boolean;
+  familyPsychologicalHistoryDetails?: string;
+  scriptGenerationPreferences?: string;
   formData?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
@@ -112,7 +121,7 @@ export class ConsultationsService {
 
     if (!therapist) {
       throw new NotFoundException(
-        `Active therapist with ID ${createConsultationDto.therapistId} not found in your clinic`,
+        `Active therapist with ID ${createConsultationDto.therapistId} not found in your clinic. Please ensure the therapist exists and is active in your clinic.`,
       );
     }
 
@@ -147,9 +156,9 @@ export class ConsultationsService {
       );
     }
 
-    // Validate form-specific data based on form type
+    // Validate form-specific data based on form types
     this.validateFormData(
-      createConsultationDto.formType,
+      createConsultationDto.formTypes,
       createConsultationDto.formData,
     );
 
@@ -157,7 +166,7 @@ export class ConsultationsService {
     const consultation = new Consultation();
     consultation.client = client;
     consultation.therapist = therapist;
-    consultation.formType = createConsultationDto.formType;
+    consultation.formTypes = createConsultationDto.formTypes;
     consultation.status =
       createConsultationDto.status || ConsultationStatus.DRAFT;
     consultation.sessionDate = new Date(createConsultationDto.sessionDate);
@@ -180,6 +189,24 @@ export class ConsultationsService {
     consultation.initialAssessment = createConsultationDto.initialAssessment;
     consultation.recommendedTreatmentPlan =
       createConsultationDto.recommendedTreatmentPlan;
+    consultation.previousPsychologicalDiagnosis =
+      createConsultationDto.previousPsychologicalDiagnosis || false;
+    consultation.previousPsychologicalDiagnosisDetails =
+      createConsultationDto.previousPsychologicalDiagnosisDetails;
+    consultation.significantPhysicalIllness =
+      createConsultationDto.significantPhysicalIllness || false;
+    consultation.significantPhysicalIllnessDetails =
+      createConsultationDto.significantPhysicalIllnessDetails;
+    consultation.traumaticExperience =
+      createConsultationDto.traumaticExperience || false;
+    consultation.traumaticExperienceDetails =
+      createConsultationDto.traumaticExperienceDetails;
+    consultation.familyPsychologicalHistory =
+      createConsultationDto.familyPsychologicalHistory || false;
+    consultation.familyPsychologicalHistoryDetails =
+      createConsultationDto.familyPsychologicalHistoryDetails;
+    consultation.scriptGenerationPreferences =
+      createConsultationDto.scriptGenerationPreferences;
     consultation.formData = createConsultationDto.formData;
 
     await this.em.persistAndFlush(consultation);
@@ -225,8 +252,8 @@ export class ConsultationsService {
       whereConditions.therapist = query.therapistId;
     }
 
-    if (query.formType) {
-      whereConditions.formType = query.formType;
+    if (query.formTypes && query.formTypes.length > 0) {
+      whereConditions.formTypes = { $in: query.formTypes };
     }
 
     if (query.status) {
@@ -352,7 +379,7 @@ export class ConsultationsService {
     // Validate form data if being updated
     if (updateConsultationDto.formData) {
       this.validateFormData(
-        consultation.formType,
+        consultation.formTypes,
         updateConsultationDto.formData,
       );
     }
@@ -463,7 +490,9 @@ export class ConsultationsService {
 
     const consultationsByFormType = consultations.reduce(
       (acc, consultation) => {
-        acc[consultation.formType] = (acc[consultation.formType] || 0) + 1;
+        consultation.formTypes.forEach((formType) => {
+          acc[formType] = (acc[formType] || 0) + 1;
+        });
         return acc;
       },
       {} as Record<FormType, number>,
@@ -556,55 +585,57 @@ export class ConsultationsService {
   }
 
   private validateFormData(
-    formType: FormType,
+    formTypes: FormType[],
     formData?: Record<string, any>,
   ): void {
     if (!formData) return;
 
-    // Basic validation based on form type
-    switch (formType) {
-      case FormType.DRUG_ADDICTION:
-        // Validate drug addiction specific fields
-        if (
-          formData.firstUseAge &&
-          (formData.firstUseAge < 5 || formData.firstUseAge > 80)
-        ) {
-          throw new BadRequestException(
-            'First use age must be between 5 and 80',
-          );
-        }
-        if (
-          formData.motivationToQuit &&
-          (formData.motivationToQuit < 1 || formData.motivationToQuit > 10)
-        ) {
-          throw new BadRequestException(
-            'Motivation to quit must be between 1 and 10',
-          );
-        }
-        break;
-      case FormType.MINOR:
-        // Validate minor-specific fields
-        if (formData.grade && typeof formData.grade !== 'string') {
-          throw new BadRequestException('Grade must be a string');
-        }
-        if (
-          formData.guardianName &&
-          typeof formData.guardianName !== 'string'
-        ) {
-          throw new BadRequestException('Guardian name must be a string');
-        }
-        break;
-      case FormType.GENERAL:
-        // Validate general form fields
-        if (
-          formData.stressLevel &&
-          (formData.stressLevel < 1 || formData.stressLevel > 10)
-        ) {
-          throw new BadRequestException(
-            'Stress level must be between 1 and 10',
-          );
-        }
-        break;
+    // Basic validation based on form types
+    for (const formType of formTypes) {
+      switch (formType) {
+        case FormType.DRUG_ADDICTION:
+          // Validate drug addiction specific fields
+          if (
+            formData.firstUseAge &&
+            (formData.firstUseAge < 5 || formData.firstUseAge > 80)
+          ) {
+            throw new BadRequestException(
+              'First use age must be between 5 and 80',
+            );
+          }
+          if (
+            formData.motivationToQuit &&
+            (formData.motivationToQuit < 1 || formData.motivationToQuit > 10)
+          ) {
+            throw new BadRequestException(
+              'Motivation to quit must be between 1 and 10',
+            );
+          }
+          break;
+        case FormType.MINOR:
+          // Validate minor-specific fields
+          if (formData.grade && typeof formData.grade !== 'string') {
+            throw new BadRequestException('Grade must be a string');
+          }
+          if (
+            formData.guardianName &&
+            typeof formData.guardianName !== 'string'
+          ) {
+            throw new BadRequestException('Guardian name must be a string');
+          }
+          break;
+        case FormType.GENERAL:
+          // Validate general form fields
+          if (
+            formData.stressLevel &&
+            (formData.stressLevel < 1 || formData.stressLevel > 10)
+          ) {
+            throw new BadRequestException(
+              'Stress level must be between 1 and 10',
+            );
+          }
+          break;
+      }
     }
   }
 
@@ -628,7 +659,7 @@ export class ConsultationsService {
           email: therapist.user.email,
         },
       },
-      formType: consultation.formType,
+      formTypes: consultation.formTypes,
       status: consultation.status,
       sessionDate: consultation.sessionDate,
       sessionDuration: consultation.sessionDuration,
@@ -645,6 +676,19 @@ export class ConsultationsService {
       clientExpectations: consultation.clientExpectations,
       initialAssessment: consultation.initialAssessment,
       recommendedTreatmentPlan: consultation.recommendedTreatmentPlan,
+      previousPsychologicalDiagnosis:
+        consultation.previousPsychologicalDiagnosis,
+      previousPsychologicalDiagnosisDetails:
+        consultation.previousPsychologicalDiagnosisDetails,
+      significantPhysicalIllness: consultation.significantPhysicalIllness,
+      significantPhysicalIllnessDetails:
+        consultation.significantPhysicalIllnessDetails,
+      traumaticExperience: consultation.traumaticExperience,
+      traumaticExperienceDetails: consultation.traumaticExperienceDetails,
+      familyPsychologicalHistory: consultation.familyPsychologicalHistory,
+      familyPsychologicalHistoryDetails:
+        consultation.familyPsychologicalHistoryDetails,
+      scriptGenerationPreferences: consultation.scriptGenerationPreferences,
       formData: consultation.formData,
       createdAt: consultation.createdAt,
       updatedAt: consultation.updatedAt,

@@ -143,7 +143,12 @@ export class ConsultationsController {
   @ApiQuery({ name: 'search', required: false, example: 'anxiety' })
   @ApiQuery({ name: 'clientId', required: false })
   @ApiQuery({ name: 'therapistId', required: false })
-  @ApiQuery({ name: 'formType', required: false, enum: FormType })
+  @ApiQuery({
+    name: 'formTypes',
+    required: false,
+    enum: FormType,
+    isArray: true,
+  })
   @ApiQuery({ name: 'status', required: false, enum: ConsultationStatus })
   @ApiQuery({ name: 'dateFrom', required: false, example: '2024-01-01' })
   @ApiQuery({ name: 'dateTo', required: false, example: '2024-12-31' })
@@ -350,7 +355,12 @@ export class ConsultationsController {
   @ApiParam({ name: 'clientId', description: 'Client ID' })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiQuery({ name: 'formType', required: false, enum: FormType })
+  @ApiQuery({
+    name: 'formTypes',
+    required: false,
+    enum: FormType,
+    isArray: true,
+  })
   @ApiQuery({ name: 'status', required: false, enum: ConsultationStatus })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -389,7 +399,12 @@ export class ConsultationsController {
   @ApiParam({ name: 'therapistId', description: 'Therapist ID' })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiQuery({ name: 'formType', required: false, enum: FormType })
+  @ApiQuery({
+    name: 'formTypes',
+    required: false,
+    enum: FormType,
+    isArray: true,
+  })
   @ApiQuery({ name: 'status', required: false, enum: ConsultationStatus })
   @ApiQuery({ name: 'dateFrom', required: false, example: '2024-01-01' })
   @ApiQuery({ name: 'dateTo', required: false, example: '2024-12-31' })
@@ -447,15 +462,15 @@ export class ConsultationsController {
     limit: number;
     totalPages: number;
   }> {
-    const queryWithFormType: ConsultationQueryDto = {
+    const queryWithFormTypes: ConsultationQueryDto = {
       ...query,
-      formType,
+      formTypes: [formType],
       page: query.page || 1,
       limit: query.limit || 20,
     };
 
     return this.consultationsService.findAll(
-      queryWithFormType,
+      queryWithFormTypes,
       req.user.clinicId,
       req.user.role,
       req.user.id,
@@ -478,13 +493,13 @@ export class ConsultationsController {
   async getFormData(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any,
-  ): Promise<{ formType: FormType; formData: Record<string, any> | null }> {
+  ): Promise<{ formTypes: FormType[]; formData: Record<string, any> | null }> {
     const consultation = await this.consultationsService.findOne(
       id,
       req.user.clinicId,
     );
     return {
-      formType: consultation.formType,
+      formTypes: consultation.formTypes,
       formData: consultation.formData || null,
     };
   }

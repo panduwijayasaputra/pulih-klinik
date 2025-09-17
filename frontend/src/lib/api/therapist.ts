@@ -3,6 +3,7 @@ import { UserStatusEnum } from '@/types/status';
 import { ItemResponse, ListResponse, PaginatedResponse, StatusResponse } from './types';
 import { getMockTherapists, getMockTherapistById } from '@/lib/mocks/therapist';
 import { apiClient } from '../http-client';
+import { AuthAPI } from './auth';
 
 // Helper function to map backend therapist to frontend format
 const mapBackendTherapistToFrontend = (backendTherapist: any): Therapist => ({
@@ -193,6 +194,89 @@ export class TherapistAPI {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to create therapist record'
+      };
+    }
+  }
+
+  static async getCurrentTherapist(): Promise<ItemResponse<Therapist>> {
+    try {
+      // Get all therapists and find the one that matches current user
+      const response = await apiClient.get('/therapists');
+      
+      if (response.data.success && response.data.data) {
+        const therapists = response.data.data.therapists || response.data.data;
+        
+        // Get current user ID from the auth context
+        // We need to find the therapist record that belongs to the current user
+        // Since we don't have currentUserId in the response, we'll need to get it from the auth context
+        const currentUserResponse = await AuthAPI.getCurrentUser();
+        if (!currentUserResponse.success || !currentUserResponse.data) {
+          console.error('Failed to get current user:', currentUserResponse);
+          return {
+            success: false,
+            message: 'Unable to get current user information'
+          };
+        }
+        
+        console.log('Current user ID:', currentUserResponse.data.id);
+        console.log('Available therapists:', therapists.map((t: any) => ({ id: t.id, userId: t.userId, name: t.name })));
+        
+        // Find therapist that matches current user ID
+        const currentTherapist = Array.isArray(therapists) 
+          ? therapists.find((t: any) => t.userId === currentUserResponse.data!.id)
+          : null;
+          
+        if (currentTherapist) {
+          // Convert backend response to frontend format
+          const frontendTherapist: Therapist = {
+            id: currentTherapist.id,
+            clinicId: currentTherapist.clinicId,
+            clinicName: currentTherapist.clinicName,
+            userId: currentTherapist.userId,
+            name: currentTherapist.name,
+            email: currentTherapist.email,
+            phone: currentTherapist.phone,
+            avatarUrl: currentTherapist.avatarUrl,
+            licenseNumber: currentTherapist.licenseNumber,
+            licenseType: currentTherapist.licenseType,
+            status: currentTherapist.status as UserStatusEnum,
+            joinDate: currentTherapist.joinDate,
+            currentLoad: currentTherapist.currentLoad,
+            timezone: currentTherapist.timezone,
+            preferences: {
+              languages: ['Indonesian']
+            },
+            assignedClients: [],
+            schedule: [],
+            education: currentTherapist.education,
+            certifications: currentTherapist.certifications,
+            adminNotes: currentTherapist.adminNotes,
+            hasClinicAdminRole: currentTherapist.hasClinicAdminRole || false,
+            createdAt: currentTherapist.createdAt,
+            updatedAt: currentTherapist.updatedAt
+          };
+
+          return {
+            success: true,
+            data: frontendTherapist
+          };
+        } else {
+          return {
+            success: false,
+            message: 'Current user is not set up as a therapist'
+          };
+        }
+      } else {
+        return {
+          success: false,
+          message: 'Failed to load therapist data'
+        };
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch current therapist:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch current therapist'
       };
     }
   }
