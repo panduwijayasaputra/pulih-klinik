@@ -52,7 +52,6 @@ export function useErrorHandler(options: ErrorHandlerOptions = {}) {
   // Log error to console
   const logError = useCallback((errorInfo: ErrorInfo) => {
     if (logToConsole) {
-      console.error('Error handled:', {
         id: errorInfo.id,
         message: errorInfo.error.message,
         stack: errorInfo.error.stack,
@@ -69,7 +68,6 @@ export function useErrorHandler(options: ErrorHandlerOptions = {}) {
     if (reportToMonitoring) {
       // In a real application, you would send this to your error monitoring service
       // Example: Sentry.captureException(errorInfo.error, { extra: errorInfo });
-      console.error('Error reported to monitoring service:', {
         error: errorInfo.error.message,
         stack: errorInfo.error.stack,
         context: errorInfo.context,

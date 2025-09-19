@@ -73,7 +73,6 @@ export const TherapistDetailsModal: React.FC<TherapistDetailsModalProps> = ({
             setTherapistData(response.data);
           }
         } catch (error) {
-          console.error('Failed to fetch therapist details:', error);
         } finally {
           setLoading(false);
         }

@@ -66,11 +66,6 @@ export class TherapistSetupAPI {
    */
   static async completeSetup(data: SetupCompletionData): Promise<SetupCompletionResponse> {
     try {
-      console.log('API: Sending complete setup request:', {
-        token: data.token.substring(0, 10) + '...',
-        passwordLength: data.password.length,
-        confirmPasswordLength: data.confirmPassword.length
-      });
       
       const response = await httpClient.post('/therapists/complete-setup', {
         token: data.token,
@@ -78,13 +73,9 @@ export class TherapistSetupAPI {
         confirmPassword: data.confirmPassword,
       });
       
-      console.log('API: Complete setup response:', response);
-      
       // Extract the data from the response
       const responseData = response.data;
       const result = responseData.data; // The actual data is nested in response.data.data
-      
-      console.log('API: Extracted result:', result);
       
       return {
         success: true,
@@ -92,7 +83,6 @@ export class TherapistSetupAPI {
         therapistId: result.therapistId,
       };
     } catch (error) {
-      console.error('API: Complete setup error:', error);
       const errorData = handleApiError(error);
       
       return {

@@ -87,7 +87,6 @@ const createPersister = () => {
           const sanitizedData = sanitizeDataForPersistence(data);
           return JSON.stringify(sanitizedData);
         } catch (error) {
-          console.warn('Failed to serialize cache data:', error);
           return '{}';
         }
       },
@@ -95,7 +94,6 @@ const createPersister = () => {
         try {
           return JSON.parse(data);
         } catch (error) {
-          console.warn('Failed to deserialize cache data:', error);
           return {};
         }
       },
@@ -103,7 +101,6 @@ const createPersister = () => {
       throttleTime: 2000, // Reduce localStorage writes
     });
   } catch (error) {
-    console.warn('Failed to create query cache persister:', error);
     return null;
   }
 };
@@ -156,7 +153,6 @@ function sanitizeDataForPersistence(data: any): any {
 
 // Global error handler for queries
 const globalErrorHandler = (error: unknown) => {
-  console.error('React Query error:', error);
   
   // Handle authentication errors
   if (error && typeof error === 'object' && 'status' in error) {

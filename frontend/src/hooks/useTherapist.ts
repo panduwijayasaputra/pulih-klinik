@@ -71,7 +71,6 @@ export const useTherapist = () => {
         const registrationToken = 'token-' + Date.now() + '-' + Math.random().toString(36).substring(2, 11);
         const registrationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/therapist/setup?token=${registrationToken}`;
         
-        console.warn('Sending therapist registration email:', {
           to: therapistData.email,
           subject: '🔐 Complete Your Therapist Registration - Pulih Klinik',
           emailTemplate: {
@@ -131,7 +130,6 @@ export const useTherapist = () => {
       }
 
       // Mock sending enhanced confirmation email
-      console.warn('Sending therapist account activation confirmation:', {
         to: email,
         subject: '🎉 Welcome to TeraPin.tar - Your Account is Now Active!',
         emailTemplate: {

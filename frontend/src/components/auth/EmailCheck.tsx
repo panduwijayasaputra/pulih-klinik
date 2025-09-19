@@ -71,7 +71,6 @@ export const EmailCheck: React.FC = () => {
 
       // Status is now handled in the UI based on the emailStatus state
     } catch (error) {
-      console.error('Email check failed:', error);
     } finally {
       setIsChecking(false);
     }

@@ -37,7 +37,6 @@ export const StartOverModal: React.FC<StartOverModalProps> = ({
       setSelectedTherapistId('');
       setReason('');
     } catch (error) {
-      console.error('Error starting over:', error);
     } finally {
       setIsSubmitting(false);
     }

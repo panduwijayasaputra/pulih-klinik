@@ -29,7 +29,6 @@ export const useNavigationStore = create<NavigationStore>()(
         const { availableRoles } = get();
         // Validate that the role is available for the current user
         if (role && !availableRoles.includes(role)) {
-          console.warn(`Role ${role} is not available for current user`);
           return;
         }
         set({ activeRole: role });

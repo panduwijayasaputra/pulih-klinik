@@ -70,11 +70,6 @@ export const useTherapistRegistration = () => {
         throw new Error('Invalid email format');
       }
 
-      console.warn('Resending registration email:', {
-        email,
-        timestamp: new Date().toISOString()
-      });
-
       // Mock checking if therapist exists and is pending
       const therapistExists = email !== 'nonexistent@example.com';
       if (!therapistExists) {
@@ -82,11 +77,7 @@ export const useTherapistRegistration = () => {
       }
 
       // Mock sending new registration email
-      const newToken = 'token-' + Date.now() + '-resent';
-      console.warn('New registration email sent:', {
-        email,
-        newToken: newToken.substring(0, 15) + '...'
-      });
+          const newToken = 'token-' + Date.now() + '-resent';
 
       return {
         success: true,
@@ -117,7 +108,6 @@ export const useTherapistRegistration = () => {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 400));
       
-      console.warn('Checking registration status for:', email);
 
       // Mock status check
       if (email === 'active@example.com') {

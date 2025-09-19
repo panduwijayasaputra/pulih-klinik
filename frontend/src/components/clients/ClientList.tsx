@@ -69,7 +69,6 @@ export const ClientList: React.FC<ClientListProps> = ({
       try {
         await loadClients(true); // Force refresh
       } catch (error) {
-        console.error('Failed to load clients:', error);
         addToast({
           type: 'error',
           title: 'Kesalahan Koneksi',
@@ -89,7 +88,6 @@ export const ClientList: React.FC<ClientListProps> = ({
     try {
       await loadClients(true); // Force refresh
     } catch (error) {
-      console.error('Failed to refresh clients:', error);
       addToast({
         type: 'error',
         title: 'Kesalahan Koneksi',

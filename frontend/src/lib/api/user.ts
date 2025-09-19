@@ -26,14 +26,9 @@ export class UserAPI {
     data: UserStatusUpdateData,
   ): Promise<UserStatusUpdateResponse> {
     try {
-      console.log('UserAPI.updateUserStatus called with:', { userId, data });
       const response = await apiClient.put(`/users/${userId}/status`, data);
-      console.log('UserAPI.updateUserStatus response:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('UserAPI.updateUserStatus error:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to update user status',

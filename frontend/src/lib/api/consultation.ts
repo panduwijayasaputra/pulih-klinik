@@ -95,7 +95,6 @@ export class ConsultationAPI {
         message: response.data.message,
       };
     } catch (error: any) {
-      console.error('Error fetching consultations:', error);
       throw new ConsultationAPIError(
         error.response?.data?.message || 'Failed to fetch consultations',
         error.response?.status,
@@ -114,7 +113,6 @@ export class ConsultationAPI {
         message: response.data.message,
       };
     } catch (error: any) {
-      console.error('Error fetching consultation:', error);
       throw new ConsultationAPIError(
         error.response?.data?.message || 'Failed to fetch consultation',
         error.response?.status,
@@ -133,7 +131,6 @@ export class ConsultationAPI {
         message: response.data.message,
       };
     } catch (error: any) {
-      console.error('Error creating consultation:', error);
       throw new ConsultationAPIError(
         error.response?.data?.message || 'Failed to create consultation',
         error.response?.status,
@@ -155,7 +152,6 @@ export class ConsultationAPI {
         message: response.data.message,
       };
     } catch (error: any) {
-      console.error('Error updating consultation:', error);
       throw new ConsultationAPIError(
         error.response?.data?.message || 'Failed to update consultation',
         error.response?.status,
@@ -173,7 +169,6 @@ export class ConsultationAPI {
         message: response.data.message,
       };
     } catch (error: any) {
-      console.error('Error deleting consultation:', error);
       throw new ConsultationAPIError(
         error.response?.data?.message || 'Failed to delete consultation',
         error.response?.status,
@@ -192,7 +187,6 @@ export class ConsultationAPI {
         message: response.data.message,
       };
     } catch (error: any) {
-      console.error('Error fetching consultation statistics:', error);
       throw new ConsultationAPIError(
         error.response?.data?.message || 'Failed to fetch consultation statistics',
         error.response?.status,

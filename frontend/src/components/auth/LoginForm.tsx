@@ -100,9 +100,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           const { email, rememberMe } = JSON.parse(savedCredentials);
           setValue('email', email);
           setValue('rememberMe', rememberMe);
-          console.log('🔄 Loaded saved email for:', email);
         } catch (error) {
-          console.warn('Failed to parse saved credentials:', error);
           localStorage.removeItem('remember-login');
         }
       }
@@ -132,7 +130,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     if (demoUser) {
       setValue('email', demoUser.email);
       setValue('password', demoUser.password);
-      console.log('🎭 Demo user selected:', demoUser.label);
     }
   };
 
@@ -159,26 +156,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           rememberMe: true,
         };
         localStorage.setItem('remember-login', JSON.stringify(credentialsToSave));
-        console.log('✅ Email saved for next login');
       } else {
         // Remove saved credentials if rememberMe is unchecked
         localStorage.removeItem('remember-login');
-        console.log('🗑️ Saved credentials removed');
       }
     }
     
     // Remove rememberMe from login data (backend doesn't need it)
     const { rememberMe, ...loginData } = data;
-    console.log('🚀 Attempting login with:', loginData.email);
     
     try {
       const success = await login(loginData);
-      console.log('✅ Login success:', success);
       if (success && onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error('❌ Login failed:', error);
       // Error is handled by the auth hook and useEffect will check for email not verified
     }
   };

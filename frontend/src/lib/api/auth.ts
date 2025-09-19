@@ -21,13 +21,6 @@ export class AuthAPI {
       const response = await httpClient.post('/auth/login', credentials);
       const data = handleApiResponse<LoginApiResponse>(response);
       
-      console.log('🔍 Auth API Debug - Raw backend response:', {
-        data: data.data,
-        user: data.data?.user,
-        userRoles: data.data?.user?.roles,
-        userRolesType: typeof data.data?.user?.roles,
-      });
-      
       // Store the token
       if (data.success && data.data?.accessToken) {
         authToken = data.data.accessToken;
@@ -72,12 +65,6 @@ export class AuthAPI {
           ...(data.data.user.clinicName && { clinicName: data.data.user.clinicName }),
         };
 
-        console.log('🔍 Auth API Debug - Mapped user:', {
-          mappedUser,
-          mappedUserRoles: mappedUser.roles,
-          mappedUserRolesType: typeof mappedUser.roles,
-        });
-
         return {
           success: true,
           user: mappedUser,
@@ -115,7 +102,6 @@ export class AuthAPI {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth-storage');
       }
-      console.warn('Logout API call failed:', error);
     }
   }
 
@@ -308,7 +294,6 @@ export class AuthAPI {
           const parsed = JSON.parse(authStorage);
           return parsed.state?.token || null;
         } catch (error) {
-          console.warn('Failed to parse token from storage:', error);
         }
       }
     }

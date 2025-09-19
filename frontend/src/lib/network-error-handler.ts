@@ -129,7 +129,7 @@ export const withRetry = async <T>(
         onRetry(attempt, networkError);
       }
 
-      console.log(`🔄 Retrying in ${delay}ms (attempt ${attempt}/${options.maxRetries}): ${networkError.message}`);
+      // Retrying request
       
       await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -153,12 +153,10 @@ export const setupNetworkStatusListener = (
   onOffline: () => void
 ): (() => void) => {
   const handleOnline = () => {
-    console.log('🌐 Network connection restored');
     onOnline();
   };
 
   const handleOffline = () => {
-    console.log('📴 Network connection lost');
     onOffline();
   };
 

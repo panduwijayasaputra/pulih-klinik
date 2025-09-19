@@ -105,7 +105,6 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
       onRoleChange?.(selectedRole);
       
     } catch (error) {
-      console.error('Error switching role:', error);
     }
   }, [isRoleSwitching, switchToRole, onRoleChange, router, availableRoles, activeRole, user?.roles]);
 

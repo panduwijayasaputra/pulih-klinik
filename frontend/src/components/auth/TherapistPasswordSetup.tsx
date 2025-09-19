@@ -75,16 +75,7 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
   const passwordConfirmation = watch('passwordConfirmation');
   const acceptTerms = watch('acceptTerms');
   
-  // Debug form state
-  useEffect(() => {
-    console.log('Form state:', {
-      password: password ? `${password.substring(0, 3)}...` : 'empty',
-      passwordConfirmation: passwordConfirmation ? `${passwordConfirmation.substring(0, 3)}...` : 'empty',
-      acceptTerms,
-      isValid,
-      errors
-    });
-  }, [password, passwordConfirmation, acceptTerms, isValid, errors]);
+  // Debug form state removed
 
   // Validate token on component mount
   useEffect(() => {
@@ -108,18 +99,14 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
 
   const onSubmit = async (data: PasswordSetupForm) => {
     setIsSubmitting(true);
-    console.log('Form data:', data);
-    console.log('Token:', token);
     
     try {
       const registrationData = {
         token,
         password: data.password
       };
-      console.log('Registration data being sent:', registrationData);
       
       const result = await completeRegistration(registrationData);
-      console.log('Registration result:', result);
 
       if (result.success) {
         // Show success message
@@ -128,13 +115,11 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
         // Redirect to login page with success message
         router.push('/login?message=registration_complete');
       } else {
-        console.log('Registration failed:', result.message);
         setError('root', { 
           message: result.message || 'Gagal menyelesaikan registrasi. Silakan coba lagi.' 
         });
       }
     } catch (error) {
-      console.error('Registration error:', error);
       setError('root', { 
         message: 'Terjadi kesalahan saat menyelesaikan registrasi. Silakan coba lagi.' 
       });
@@ -353,9 +338,6 @@ export const TherapistPasswordSetup: React.FC<TherapistPasswordSetupProps> = ({ 
             className="w-full"
             disabled={loading || isSubmitting}
             onClick={() => {
-              console.log('Submit button clicked');
-              console.log('Form valid:', isValid);
-              console.log('Form errors:', errors);
             }}
           >
             {loading || isSubmitting ? (

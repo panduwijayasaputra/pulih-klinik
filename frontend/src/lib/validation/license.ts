@@ -156,10 +156,10 @@ export const testLicenseFormats = () => {
     'SIP-12',         // Invalid (too short)
   ];
   
-  console.log('License validation test results:');
+  // Test license validation patterns
   testNumbers.forEach(number => {
     const isValid = LICENSE_PATTERNS.ALL.test(number);
     const type = detectLicenseType(number);
-    console.log(`${number}: ${isValid ? '✅ Valid' : '❌ Invalid'} (${type})`);
+    // Validation test completed
   });
 };

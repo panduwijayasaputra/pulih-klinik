@@ -54,7 +54,6 @@ export const TherapistClientAPI = {
         }
       };
     } catch (error: any) {
-      console.error('Error fetching therapist clients:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch therapist clients';
       throw new TherapistClientAPIError(errorMessage);
     }
@@ -91,7 +90,6 @@ export const TherapistClientAPI = {
         data: therapistClient
       };
     } catch (error: any) {
-      console.error('Error fetching therapist client:', error);
       
       if (error.response?.status === 404) {
         return {
@@ -118,7 +116,6 @@ export const TherapistClientAPI = {
         data: response.data.data
       };
     } catch (error: any) {
-      console.error('Error fetching therapist client stats:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch therapist client statistics';
       throw new TherapistClientAPIError(errorMessage);
     }
@@ -143,7 +140,6 @@ export const TherapistClientAPI = {
         data: sessions
       };
     } catch (error) {
-      console.error('Error fetching therapist client sessions:', error);
       throw new TherapistClientAPIError('Failed to fetch therapist client sessions');
     }
   },
@@ -173,7 +169,6 @@ export const TherapistClientAPI = {
         data: progress
       };
     } catch (error) {
-      console.error('Error fetching therapist client progress:', error);
       throw new TherapistClientAPIError('Failed to fetch therapist client progress');
     }
   },
@@ -203,7 +198,6 @@ export const TherapistClientAPI = {
         data: response.data.data
       };
     } catch (error: any) {
-      console.error('Error updating therapist client notes:', error);
       
       if (error.response?.status === 404) {
         return {
@@ -237,7 +231,6 @@ export const TherapistClientAPI = {
         data: response.data.data
       };
     } catch (error: any) {
-      console.error('Error scheduling next session:', error);
       
       if (error.response?.status === 404) {
         return {
@@ -283,7 +276,6 @@ export const TherapistClientAPI = {
         data: updatedClient
       };
     } catch (error) {
-      console.error('Error updating therapist client status:', error);
       throw new TherapistClientAPIError('Failed to update therapist client status');
     }
   }

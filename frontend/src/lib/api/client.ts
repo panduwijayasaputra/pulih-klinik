@@ -102,7 +102,6 @@ export const ClientAPI = {
         }
       };
     } catch (error: any) {
-      console.error('Failed to fetch clients:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch clients',
@@ -178,7 +177,6 @@ export const ClientAPI = {
         data: frontendClient
       };
     } catch (error: any) {
-      console.error('Failed to fetch client:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch client'
@@ -291,7 +289,6 @@ export const ClientAPI = {
         data: frontendClient
       };
     } catch (error: any) {
-      console.error('Failed to create client:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to create client'
@@ -398,7 +395,6 @@ export const ClientAPI = {
         data: frontendClient
       };
     } catch (error: any) {
-      console.error('Failed to update client:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to update client'
@@ -415,7 +411,6 @@ export const ClientAPI = {
         message: response.data.message || 'Client successfully archived'
       };
     } catch (error: any) {
-      console.error('Failed to delete client:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to delete client'
@@ -435,7 +430,6 @@ export const ClientAPI = {
         data: { clientId, therapistId }
       };
     } catch (error: any) {
-      console.error('Failed to assign client to therapist:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to assign client to therapist'
@@ -476,7 +470,6 @@ export const ClientAPI = {
         data: { clientId }
       };
     } catch (error: any) {
-      console.error('Failed to unassign client:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to unassign client'
@@ -496,7 +489,6 @@ export const ClientAPI = {
         }
       };
     } catch (error: any) {
-      console.error('Failed to get therapist capacity:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to get therapist capacity'
@@ -527,7 +519,6 @@ export const ClientAPI = {
         }
       };
     } catch (error: any) {
-      console.error('Failed to get client sessions:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to get client sessions',

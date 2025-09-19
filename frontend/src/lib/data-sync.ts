@@ -109,19 +109,16 @@ export const validateCriticalData = (oldUser: User | null, newUser: User | null)
 
   // Check if clinic was removed
   if (oldUser.clinicId && !newUser.clinicId) {
-    console.warn('🚨 Critical data change: Clinic was removed');
     return false;
   }
 
   // Check if subscription was removed
   if (oldUser.subscriptionTier && !newUser.subscriptionTier) {
-    console.warn('🚨 Critical data change: Subscription was removed');
     return false;
   }
 
   // Check if user was deactivated
   if (oldUser.status === 'active' && newUser.status !== 'active') {
-    console.warn('🚨 Critical data change: User was deactivated');
     return false;
   }
 
@@ -185,7 +182,6 @@ export const syncUserData = (
       changes,
     };
   } catch (error) {
-    console.error('❌ Data sync failed:', error);
     return {
       success: false,
       hasChanges: false,

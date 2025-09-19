@@ -40,7 +40,6 @@ const createHttpClient = (): AxiosInstance => {
               config.headers.Authorization = `Bearer ${token}`;
             }
           } catch (error) {
-            console.warn('Failed to parse auth storage:', error);
             cachedToken = null;
             tokenCacheTime = 0;
           }

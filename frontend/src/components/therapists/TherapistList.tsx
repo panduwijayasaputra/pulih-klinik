@@ -83,7 +83,6 @@ export const TherapistList: React.FC = () => {
           });
         }
       } catch (error) {
-        console.warn(`Failed to load resend status for therapist ${therapist.id}:`, error);
       }
     }
   }, [therapists]);
@@ -143,14 +142,6 @@ export const TherapistList: React.FC = () => {
           therapist => therapist.status !== UserStatusEnum.DELETED
         );
         
-        // Debug: Log therapist data to verify hasClinicAdminRole
-        console.log('🔍 Therapist data with hasClinicAdminRole:', activeTherapists.map(t => ({
-          name: t.name,
-          email: t.email,
-          hasClinicAdminRole: t.hasClinicAdminRole,
-          status: t.status
-        })));
-        
         setTherapists(activeTherapists);
       } else {
         addToast({
@@ -160,7 +151,6 @@ export const TherapistList: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Failed to load therapists:', error);
       addToast({
         type: 'error',
         title: 'Kesalahan Koneksi',
@@ -212,7 +202,6 @@ export const TherapistList: React.FC = () => {
   };
 
   const handleTherapistFormSuccess = async (data: any) => {
-    console.log('Therapist form success:', data);
     try {
       if (therapistFormMode === 'create') {
         // Note: In a real implementation, this would be handled by the API
@@ -281,7 +270,6 @@ export const TherapistList: React.FC = () => {
         throw new Error(response.message || 'Failed to send setup email');
       }
     } catch (error) {
-      console.error('Resend email error:', error);
       addToast({
         type: 'error',
         title: 'Kesalahan Sistem',
@@ -452,7 +440,6 @@ export const TherapistList: React.FC = () => {
         throw new Error(result.message || 'Gagal memperbarui status therapist');
       }
     } catch (error: any) {
-      console.error('Status update error:', error);
 
       // Handle different types of errors
       let errorMessage = 'Terjadi kesalahan tak terduga saat memperbarui status therapist. Silakan coba lagi.';
@@ -614,7 +601,6 @@ export const TherapistList: React.FC = () => {
       loading: (therapist) => actionLoading === therapist.id,
       disabled: (therapist) => {
         const isDisabled = therapist.hasClinicAdminRole;
-        console.log(`🔍 Set Inactive button for ${therapist.name}: hasClinicAdminRole=${therapist.hasClinicAdminRole}, disabled=${isDisabled}`);
         return isDisabled;
       },
       onClick: (therapist) => handleStatusChangeRequest(therapist.id, 'inactive'),
@@ -630,7 +616,6 @@ export const TherapistList: React.FC = () => {
       loading: (therapist) => actionLoading === therapist.id,
       disabled: (therapist) => {
         const isDisabled = therapist.hasClinicAdminRole;
-        console.log(`🔍 Set Active button for ${therapist.name}: hasClinicAdminRole=${therapist.hasClinicAdminRole}, disabled=${isDisabled}`);
         return isDisabled;
       },
       onClick: (therapist) => handleStatusChangeRequest(therapist.id, 'active'),

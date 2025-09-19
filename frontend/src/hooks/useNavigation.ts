@@ -100,17 +100,9 @@ export const useNavigation = () => {
     
     // OLD CODE - DISABLED
     // Skip automatic role detection if we're in the middle of a manual role switch
-    // if (isManualRoleSwitch.current) {
-    //   console.log('⏭️ Skipping auto role detection - manual switch in progress');
-    //   return;
-    // }
     
     // // COMPLETELY DISABLE automatic role switching when there's an active role
     // // This prevents conflicts with manual role switches
-    // if (activeRole) {
-    //   console.log('⏭️ Skipping auto role detection - active role exists:', activeRole);
-    //   return;
-    // }
     
     // // Only run automatic role detection when there's no active role
     // // Determine role based on current path
@@ -122,19 +114,6 @@ export const useNavigation = () => {
     //   roleFromPath = UserRoleEnum.ClinicAdmin;
     // } else if (pathname.startsWith('/portal/therapist')) {
     //   roleFromPath = UserRoleEnum.Therapist;
-    // }
-    
-    // console.log('🔍 Role from path:', roleFromPath);
-    
-    // // Set initial role based on path
-    // if (roleFromPath && effectiveUserRoles.includes(roleFromPath)) {
-    //   console.log('✅ Setting initial active role:', roleFromPath);
-    //   setActiveRole(roleFromPath);
-    // }
-    // // If no specific role path, set to primary role
-    // else if (effectiveUserRoles.length > 0) {
-    //   console.log('✅ Setting primary role:', effectiveUserRoles[0]);
-    //   setActiveRole(effectiveUserRoles[0] as UserRole);
     // }
   }, [pathname, effectiveUserRoles, activeRole, setActiveRole]);
 
@@ -218,7 +197,6 @@ export const useNavigation = () => {
         setRoleSwitching(false);
       }, 1500); // Reduced timeout for better UX
     } else {
-      console.warn(`Cannot switch to role ${role}: not available for current user`);
     }
   }, [availableRoles, setActiveRole, activeRole, setRoleSwitching]);
 

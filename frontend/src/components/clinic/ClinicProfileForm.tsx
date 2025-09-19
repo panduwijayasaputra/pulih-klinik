@@ -176,7 +176,6 @@ export const ClinicProfileForm: React.FC<ClinicProfileFormProps> = ({
         onSaveSuccess?.();
       }
     } catch (err) {
-      console.error('Form submission error:', err);
     }
   };
 

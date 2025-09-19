@@ -41,7 +41,6 @@ const TherapistClientListComponent: React.FC<TherapistClientListProps> = ({
   }, [clients, status]);
 
   useEffect(() => {
-    console.log(clients);
   }, [clients]);
 
   // Custom action handlers for therapist context

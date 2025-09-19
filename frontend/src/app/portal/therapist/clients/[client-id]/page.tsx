@@ -208,14 +208,9 @@ export default function ClientTherapyPage() {
     const fetchCurrentTherapistId = async () => {
       if (user?.id) {
         try {
-          console.log('Fetching current therapist for user:', user?.id);
           const result = await TherapistAPI.getCurrentTherapist();
-          console.log('getCurrentTherapist result:', result);
           if (result.success && result.data) {
             setCurrentTherapistId(result.data.id);
-            console.log('Current therapist ID:', result.data.id);
-          } else {
-            console.error('Failed to get current therapist:', result.message);
             // Don't fallback to user ID - these are different entities
             // Show error to user instead
             addToast({
@@ -226,7 +221,6 @@ export default function ClientTherapyPage() {
             setCurrentTherapistId(null);
           }
         } catch (error) {
-          console.error('Error fetching current therapist:', error);
           // Don't fallback to user ID - show error instead
           addToast({
             type: 'error',
@@ -490,11 +484,6 @@ export default function ClientTherapyPage() {
         return;
       }
 
-      // Debug: Log the user and form data
-      console.log('Current user:', user);
-      console.log('User ID:', user?.id);
-      console.log('Full form data:', data);
-      console.log('Form types:', data.formTypes);
       
       // Transform form data to API format - only include fields supported by backend DTO
       const consultationData = {
@@ -562,7 +551,6 @@ export default function ClientTherapyPage() {
         });
       }
     } catch (error) {
-      console.error('Consultation submission error:', error);
       
       // Extract error message from API response
       let errorMessage = 'Terjadi kesalahan saat menyimpan konsultasi.';
@@ -675,7 +663,6 @@ export default function ClientTherapyPage() {
     });
 
     // TODO: Navigate to actual therapy session or implement session logic
-    console.log('Starting scheduled session:', session);
   }, [therapySessions, addToast]);
 
   // Issue management handlers

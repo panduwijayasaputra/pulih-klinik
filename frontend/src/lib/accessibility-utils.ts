@@ -347,15 +347,12 @@ export const accessibilityUtils = {
 
     for (const [key, value] of Object.entries(attributes)) {
       if (key === 'role' && !validRoles.includes(value as any)) {
-        console.warn(`Invalid ARIA role: ${value}`);
         return false;
       }
       if (key === 'aria-live' && !validLiveRegions.includes(value as any)) {
-        console.warn(`Invalid ARIA live region: ${value}`);
         return false;
       }
       if (key.startsWith('aria-') && !validStates.includes(key as any)) {
-        console.warn(`Invalid ARIA state: ${key}`);
         return false;
       }
     }

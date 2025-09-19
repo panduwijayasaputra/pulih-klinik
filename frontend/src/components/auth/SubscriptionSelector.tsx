@@ -33,7 +33,6 @@ export const SubscriptionSelector: React.FC<SubscriptionSelectorProps> = ({
         }
       } catch (error) {
         setTiersError('Gagal memuat paket subscription');
-        console.error('Error fetching subscription tiers:', error);
       } finally {
         setTiersLoading(false);
       }

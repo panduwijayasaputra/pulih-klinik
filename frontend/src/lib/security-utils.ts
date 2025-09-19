@@ -8,11 +8,6 @@
 export const disableConsoleInProduction = (): void => {
   if (process.env.NODE_ENV === 'production') {
     // Disable all console methods in production
-    console.log = () => {};
-    console.warn = () => {};
-    console.error = () => {};
-    console.info = () => {};
-    console.debug = () => {};
     console.trace = () => {};
     console.table = () => {};
     console.group = () => {};
@@ -67,22 +62,18 @@ export const sanitizeForLogging = (data: any): any => {
 export const safeLog = {
   log: (message: string, data?: any) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.log(message, data ? sanitizeForLogging(data) : '');
     }
   },
   warn: (message: string, data?: any) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.warn(message, data ? sanitizeForLogging(data) : '');
     }
   },
   error: (message: string, data?: any) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.error(message, data ? sanitizeForLogging(data) : '');
     }
   },
   info: (message: string, data?: any) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.info(message, data ? sanitizeForLogging(data) : '');
     }
   },
 };

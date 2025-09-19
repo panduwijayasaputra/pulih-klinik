@@ -219,7 +219,6 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               });
             }
           } catch (error) {
-            console.error('Failed to load client data:', error);
             // Fallback to default values on error
             reset({
               fullName: '',

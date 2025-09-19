@@ -46,7 +46,6 @@ export const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
             setClientData(response.data as TherapistClient);
           }
         } catch (error) {
-          console.error('Failed to fetch client details:', error);
         } finally {
           setLoading(false);
         }

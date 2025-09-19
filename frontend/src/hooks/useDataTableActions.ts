@@ -82,7 +82,6 @@ export const useDataTableActions = <T>(options: UseDataTableActionsOptions<T> = 
             await result;
           }
         } catch (error) {
-          console.error(`Error in action ${key}:`, error);
           throw error;
         } finally {
           if (showLoading) {
@@ -120,7 +119,6 @@ export const useDataTableActions = <T>(options: UseDataTableActionsOptions<T> = 
             await onDetail(item);
           }
         } catch (error) {
-          console.error('Error in detail action:', error);
           throw error;
         } finally {
           if (showLoading) {
@@ -158,7 +156,6 @@ export const useDataTableActions = <T>(options: UseDataTableActionsOptions<T> = 
             await onEdit(item);
           }
         } catch (error) {
-          console.error('Error in edit action:', error);
           throw error;
         } finally {
           if (showLoading) {

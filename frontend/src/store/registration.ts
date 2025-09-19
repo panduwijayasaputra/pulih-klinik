@@ -134,7 +134,6 @@ export const useRegistrationStore = create<RegistrationStore>()(
             }
           });
         } catch (error) {
-          console.error('Failed to resend verification email:', error);
         }
       },
 

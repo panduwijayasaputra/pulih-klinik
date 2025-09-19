@@ -65,7 +65,6 @@ export default function TherapySessionsPage() {
           loadStats()
         ]);
       } catch (error) {
-        console.error('Error loading data:', error);
       }
     };
 
@@ -143,7 +142,6 @@ export default function TherapySessionsPage() {
         loadStats()
       ]);
     } catch (error) {
-      console.error('Error refreshing data:', error);
     }
   }, [loadSessions, loadStats]);
 

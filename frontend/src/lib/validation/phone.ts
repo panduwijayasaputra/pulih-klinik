@@ -135,9 +135,9 @@ export const testPhoneFormats = () => {
     '+62812345678901', // Invalid (too long)
   ];
   
-  console.log('Phone validation test results:');
+  // Test phone validation patterns
   testNumbers.forEach(number => {
     const isValid = PHONE_PATTERNS.INDONESIAN_MOBILE.test(number);
-    console.log(`${number}: ${isValid ? '✅ Valid' : '❌ Invalid'}`);
+    // Validation test completed
   });
 };

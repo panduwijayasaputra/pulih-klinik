@@ -78,7 +78,6 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         setDeleteConfirmId(null);
       }
     } catch (error) {
-      console.error('Failed to delete document:', error);
       // Error is handled by the useClinic hook and will show in documentsError
     } finally {
       setDeletingId(null);
@@ -93,7 +92,6 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         onDownloadDocument?.(document);
       }
     } catch (error) {
-      console.error('Failed to download document:', error);
       // Error is handled by the useClinic hook and will show in documentsError
     } finally {
       setDownloadingId(null);

@@ -236,7 +236,6 @@ export function DataTable<T extends { id: string }>({
                                     await result;
                                   }
                                 } catch (error) {
-                                  console.error(`Error in action ${action.key}:`, error);
                                 }
                               };
                               

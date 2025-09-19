@@ -42,7 +42,6 @@ export const UserForm: React.FC = () => {
       updateUserData(formData);
     } catch (error) {
       // Error is handled by the store
-      console.error('Registration start failed:', error);
     }
   };
 

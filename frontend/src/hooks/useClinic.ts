@@ -457,23 +457,14 @@ export const useClinic = () => {
 
   // Validate stored clinic data against database
   const validateStoredClinicData = useCallback(async () => {
-    console.log('validateStoredClinicData called:', { 
-      isValidating: state.isValidating, 
-      hasValidated: state.hasValidated,
-      hasClinic: !!state.clinic,
-      clinicId: clinicId,
-      userSubscriptionTier: user?.subscriptionTier
-    });
     
     // Prevent multiple validations from running simultaneously or if already validated
     if (state.isValidating || state.hasValidated) {
-      console.log('Validation skipped - already validating or validated');
       return;
     }
 
     // If we have clinic data in state but no clinicId from user, clear stale data
     if (state.clinic && !clinicId) {
-      console.log('Clearing stale clinic data - no clinicId in user data');
       updateState({ clinic: null, hasValidated: true });
       return;
     }
@@ -484,23 +475,12 @@ export const useClinic = () => {
       try {
         const response = await ClinicAPI.getClinicProfile(clinicId);
         if (!response.success || !response.data) {
-          console.log('Stored clinic data is stale - clearing it');
           // Clear stale data from both useClinic state and auth store
           const { setUser, setClinic } = useAuthStore.getState();
           if (user) {
-            console.log('Clearing user data - before:', { 
-              clinicId: user.clinicId, 
-              clinicName: user.clinicName, 
-              subscriptionTier: user.subscriptionTier 
-            });
             const { clinicId: _, clinicName: __, subscriptionTier: ___, ...userWithoutClinic } = user;
             setUser(userWithoutClinic);
             setClinic(null);
-            console.log('Clearing user data - after:', { 
-              clinicId: userWithoutClinic.clinicId, 
-              clinicName: userWithoutClinic.clinicName, 
-              subscriptionTier: userWithoutClinic.subscriptionTier 
-            });
           }
           updateState({ clinic: null, hasValidated: true });
         } else {
@@ -509,23 +489,12 @@ export const useClinic = () => {
         }
       } catch (error: any) {
         if (error?.response?.status === 404 || error?.message?.includes('Clinic not found')) {
-          console.log('Stored clinic data is stale (404) - clearing it');
           // Clear stale data from both useClinic state and auth store
           const { setUser, setClinic } = useAuthStore.getState();
           if (user) {
-            console.log('Clearing user data (404) - before:', { 
-              clinicId: user.clinicId, 
-              clinicName: user.clinicName, 
-              subscriptionTier: user.subscriptionTier 
-            });
             const { clinicId: _, clinicName: __, subscriptionTier: ___, ...userWithoutClinic } = user;
             setUser(userWithoutClinic);
             setClinic(null);
-            console.log('Clearing user data (404) - after:', { 
-              clinicId: userWithoutClinic.clinicId, 
-              clinicName: userWithoutClinic.clinicName, 
-              subscriptionTier: userWithoutClinic.subscriptionTier 
-            });
           }
           updateState({ clinic: null, hasValidated: true });
         } else {
@@ -552,14 +521,8 @@ export const useClinic = () => {
 
   // Validate stored clinic data on onboarding page (only once)
   useEffect(() => {
-    const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
-    console.log('Validation useEffect triggered:', { 
-      isOnOnboardingPage, 
-      hasValidated: state.hasValidated,
-      pathname: typeof window !== 'undefined' ? window.location.pathname : 'undefined'
-    });
+        const isOnOnboardingPage = typeof window !== 'undefined' && window.location.pathname === '/onboarding';
     if (isOnOnboardingPage && !state.hasValidated) {
-      console.log('Calling validateStoredClinicData from useEffect');
       validateStoredClinicData();
     }
   }, [state.hasValidated, validateStoredClinicData]);

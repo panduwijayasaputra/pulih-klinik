@@ -93,13 +93,7 @@ export class TherapistAPI {
       // The response is wrapped by ResponseInterceptor: { success: true, data: { therapists, total, page, limit, totalPages }, message: "..." }
       const backendData = response.data.data;
       
-      // Debug: Log backend response to see what data we're receiving
-      console.log('🔍 Backend therapist data:', backendData.therapists.map((t: any) => ({
-        name: t.name,
-        email: t.email,
-        hasClinicAdminRole: t.hasClinicAdminRole,
-        status: t.status
-      })));
+      // Process backend response
       
       // Convert backend response to frontend format
       const frontendTherapists: Therapist[] = backendData.therapists.map((backendTherapist: any) => ({
@@ -141,7 +135,6 @@ export class TherapistAPI {
         }
       };
     } catch (error: any) {
-      console.error('Failed to fetch therapists:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch therapists',
@@ -160,7 +153,6 @@ export class TherapistAPI {
     try {
       return await getRawBackendTherapist(therapistId);
     } catch (error: any) {
-      console.error('Failed to fetch raw therapist data:', error);
       throw error;
     }
   }
@@ -190,7 +182,6 @@ export class TherapistAPI {
         data: mapBackendTherapistToFrontend(response.data.data)
       };
     } catch (error: any) {
-      console.error('Failed to create therapist for existing user:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to create therapist record'
@@ -211,15 +202,12 @@ export class TherapistAPI {
         // Since we don't have currentUserId in the response, we'll need to get it from the auth context
         const currentUserResponse = await AuthAPI.getCurrentUser();
         if (!currentUserResponse.success || !currentUserResponse.data) {
-          console.error('Failed to get current user:', currentUserResponse);
           return {
             success: false,
             message: 'Unable to get current user information'
           };
         }
         
-        console.log('Current user ID:', currentUserResponse.data.id);
-        console.log('Available therapists:', therapists.map((t: any) => ({ id: t.id, userId: t.userId, name: t.name })));
         
         // Find therapist that matches current user ID
         const currentTherapist = Array.isArray(therapists) 
@@ -273,7 +261,6 @@ export class TherapistAPI {
         };
       }
     } catch (error: any) {
-      console.error('Failed to fetch current therapist:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch current therapist'
@@ -322,7 +309,6 @@ export class TherapistAPI {
         data: frontendTherapist
       };
     } catch (error: any) {
-      console.error('Failed to fetch therapist:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch therapist'
@@ -442,7 +428,6 @@ export class TherapistAPI {
         data: frontendTherapist
       };
     } catch (error: any) {
-      console.error('Failed to update therapist:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to update therapist'
@@ -479,7 +464,6 @@ export class TherapistAPI {
         data: response.data.data
       };
     } catch (error: any) {
-      console.error('Failed to assign client to therapist:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to assign client to therapist'
@@ -508,7 +492,6 @@ export class TherapistAPI {
         data: activeAssignment
       };
     } catch (error: any) {
-      console.error('Failed to get client assignment:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to get client assignment'
@@ -529,7 +512,6 @@ export class TherapistAPI {
         data: response.data.data
       };
     } catch (error: any) {
-      console.error('Failed to transfer client to new therapist:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to transfer client to new therapist'
@@ -631,7 +613,6 @@ export class TherapistAPI {
         data: frontendTherapist
       };
     } catch (error: any) {
-      console.error('Failed to update therapist status:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to update therapist status'

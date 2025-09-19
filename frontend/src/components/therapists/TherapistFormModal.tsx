@@ -115,14 +115,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
   // Prefill form data when creating own therapist profile
   useEffect(() => {
     if (createOwnTherapist && isClinicAdminWithoutTherapist && user) {
-      console.log('Prefilling form with profile data:', { 
-        profile, 
-        user, 
-        profileLoading,
-        profilePhone: profile?.phone,
-        userName: user.name,
-        userEmail: user.email 
-      });
       
       // Prefill form with user's existing data
       const fullName = profile?.name || user.name || user.email?.split('@')[0] || '';
@@ -130,7 +122,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
       const phone = profile?.phone || '';
       const email = user.email || '';
       
-      console.log('About to set form values:', { fullName, phone, email });
       
       // Use setTimeout to ensure the form is ready
       setTimeout(() => {
@@ -138,7 +129,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         setValue('phone', phone, { shouldValidate: true, shouldDirty: true });
         setValue('email', email, { shouldValidate: true, shouldDirty: true });
         
-        console.log('Form values set after timeout:', { fullName, phone, email });
       }, 100);
       
       // Set default values for professional fields if not already set
@@ -159,10 +149,8 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
   // Additional effect to handle profile loading after checkbox is checked
   useEffect(() => {
     if (createOwnTherapist && isClinicAdminWithoutTherapist && profile && !profileLoading) {
-      console.log('Profile loaded, updating phone field:', profile.phone);
       if (profile.phone) {
         setValue('phone', profile.phone, { shouldValidate: true, shouldDirty: true });
-        console.log('Phone field updated with profile phone:', profile.phone);
       }
     }
   }, [profile, profileLoading, createOwnTherapist, isClinicAdminWithoutTherapist, setValue]);
@@ -197,7 +185,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
               licenseType: therapistData.licenseType || TherapistLicenseTypeEnum.Psychologist,
             });
           } catch (error: any) {
-            console.error('Failed to load therapist data:', error);
             addToast({
               type: 'error',
               title: 'Gagal Memuat Data',
@@ -386,9 +373,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
           );
 
           if (result.success) {
-            console.log('✅ Therapist creation successful');
-            console.log('API Response:', result);
-            console.log('Roles changed flag:', (result as any).rolesChanged);
             
             addToast({
               type: 'success',
@@ -400,9 +384,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
             // Check if roles have changed and update user data
             if ((result as any).rolesChanged) {
               try {
-                console.log('🔄 Roles changed detected, updating user roles...');
-                console.log('Current user roles:', user?.roles);
-                console.log('User has therapist role:', user?.roles.includes('therapist'));
                 
                 // Update user roles in the store directly
                 if (user && !user.roles.includes('therapist')) {
@@ -410,15 +391,12 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                     ...user,
                     roles: [...user.roles, 'therapist']
                   };
-                  console.log('Updated user roles:', updatedUser.roles);
                   
                   // Update the user in the auth store
                   const { setUser } = useAuthStore.getState();
                   setUser(updatedUser);
                   
-                  console.log('✅ User roles updated in auth store');
                 } else {
-                  console.log('ℹ️ User already has therapist role or no user found');
                 }
                 
                 addToast({
@@ -428,7 +406,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                   duration: 6000,
                 });
               } catch (error) {
-                console.error('❌ Failed to update user roles after therapist creation:', error);
                 addToast({
                   type: 'warning',
                   title: 'Perhatian',
@@ -437,7 +414,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
                 });
               }
             } else {
-              console.log('ℹ️ No roles changed detected');
             }
 
             onSubmitSuccess?.(data);
@@ -488,7 +464,6 @@ export const TherapistFormModal: React.FC<TherapistFormModalProps> = ({
         }
       }
     } catch (error) {
-      console.error('Form submission error:', error);
       addToast({
         type: 'error',
         title: 'Kesalahan Sistem',

@@ -49,25 +49,20 @@ export const useAuth = () => {
       setIsRefreshingToken(true);
       setError(null);
       
-      console.log('🔄 Attempting to refresh auth token...');
       const response = await AuthAPI.refreshToken();
       
       if (response.success && response.data) {
         updateTokens(response.data.accessToken, response.data.refreshToken);
-        console.log('✅ Token refresh successful');
         return true;
       } else {
-        console.error('❌ Token refresh failed: Invalid response');
         setError('Failed to refresh token');
         return false;
       }
     } catch (error: any) {
-      console.error('❌ Token refresh failed:', error);
       
       // Handle different types of refresh token errors
       if (error.response?.status === 401) {
         // Refresh token is invalid or expired - logout user
-        console.warn('🚨 Refresh token invalid, logging out');
         storeLogout();
         setError('Session expired. Please log in again.');
       } else if (error.code === 'NETWORK_ERROR' || !error.response) {
@@ -94,7 +89,6 @@ export const useAuth = () => {
 
     // Prevent validation during form submissions or if already validating
     if (isLoading || isValidating) {
-      console.log('🔄 Skipping validation - already in progress');
       return;
     }
 
@@ -107,7 +101,6 @@ export const useAuth = () => {
         () => AuthAPI.getCurrentUser(),
         { maxRetries: 3, baseDelay: 1000, maxDelay: 5000, backoffMultiplier: 2 },
         (attempt, error) => {
-          console.log(`🔄 Auth validation retry ${attempt}: ${error.message}`);
         }
       );
       
@@ -116,32 +109,13 @@ export const useAuth = () => {
         const storedUser = user;
         const storedClinic = clinic;
         
-        // Debug: Server response (can be removed in production)
-        console.log('🔍 Server response:', {
-          serverUser: {
-            id: serverUser.id,
-            name: serverUser.name,
-            email: serverUser.email,
-            roles: serverUser.roles,
-            clinicId: serverUser.clinicId,
-            clinicName: serverUser.clinicName,
-          },
-          storedUser: {
-            id: storedUser?.id,
-            name: storedUser?.name,
-            email: storedUser?.email,
-          },
-          storedClinic: storedClinic ? { id: storedClinic.id, name: storedClinic.name } : null,
-        });
+        // Debug: Server response removed
         
         // Check for critical data changes first
         const hasClinicRemoved = storedClinic && !serverUser.clinicId;
         
         if (hasClinicRemoved) {
-          console.warn('🚨 Clinic was removed from server, clearing clinic data');
-          console.log('🔄 Clearing clinic data...');
           setClinic(null);
-          console.log('✅ Clinic data cleared');
           
         }
         
@@ -149,15 +123,11 @@ export const useAuth = () => {
         const syncHandler = createAuthDataSyncHandler(
           (changes) => {
             // Critical data change - clear clinic data instead of logging out
-            console.warn('🚨 Critical data change detected, clearing clinic data:', changes);
-            console.log('🔄 Clearing clinic data...');
             setClinic(null);
-            console.log('✅ Clinic data cleared');
             
           },
           (changes) => {
             // Regular data change - log for debugging
-            console.log('📊 User data updated:', changes);
           }
         );
         
@@ -166,7 +136,6 @@ export const useAuth = () => {
           const syncResult = syncHandler(storedUser, serverUser, storedClinic, null);
           
           if (!syncResult.success) {
-            console.error('❌ Data sync failed:', syncResult.error);
             setError(syncResult.error || 'Failed to sync user data');
             return;
           }
@@ -191,14 +160,11 @@ export const useAuth = () => {
         }
         
         setLastValidated(new Date());
-        console.log('✅ Auth validation and data sync successful');
       } else {
         // Server says user is invalid, logout
-        console.warn('🚨 Server says user is invalid, logging out');
         storeLogout();
       }
     } catch (error: any) {
-      console.error('❌ Auth validation failed:', error);
       
       const networkError = classifyNetworkError(error);
       const userMessage = createUserFriendlyErrorMessage(networkError, 'validation');
@@ -206,7 +172,6 @@ export const useAuth = () => {
       // Handle different types of errors
       if (error.response?.status === 401 || error.response?.status === 404) {
         // Unauthorized or not found - user is invalid
-        console.warn('🚨 User unauthorized, logging out');
         storeLogout();
       } else {
         // Other errors - show user-friendly message
@@ -273,21 +238,20 @@ export const useAuth = () => {
     // For testing: add a manual trigger to force validation
     // You can call this from browser console: window.forceAuthValidation()
     (window as any).forceAuthValidation = () => {
-      console.log('🔄 Manual auth validation triggered');
       checkAuth();
     };
     
     // For testing: add a trigger to check current state
-    (window as any).checkAuthState = () => {
-      const authState = useAuthStore.getState();
-      console.log('🔍 Current auth state:', {
-        user: authState.user,
-        clinic: authState.clinic,
-        isAuthenticated: authState.isAuthenticated,
-        lastValidated: authState.lastValidated,
-        isDataStale: authState.isDataStale(),
-      });
-    };
+        (window as any).checkAuthState = () => {
+          const authState = useAuthStore.getState();
+          return {
+            user: authState.user,
+            clinic: authState.clinic,
+            isAuthenticated: authState.isAuthenticated,
+            lastValidated: authState.lastValidated,
+            isDataStale: authState.isDataStale(),
+          };
+        };
 
     return () => {
       window.removeEventListener('focus', validateOnFocus);
@@ -304,13 +268,11 @@ export const useAuth = () => {
       try {
         const parts = token.split('.');
         if (parts.length !== 3) {
-          console.error('Invalid JWT token format');
           return null;
         }
         
         const base64Url = parts[1];
         if (!base64Url) {
-          console.error('JWT token missing payload');
           return null;
         }
         
@@ -323,7 +285,6 @@ export const useAuth = () => {
         );
         return JSON.parse(jsonPayload);
       } catch (error) {
-        console.error('Failed to parse JWT token:', error);
         return null;
       }
     };
@@ -339,17 +300,14 @@ export const useAuth = () => {
     const refreshTime = Math.max(timeUntilExpiry - 2 * 60 * 1000, 0);
     
     if (refreshTime > 0) {
-      console.log(`🕐 Token will be refreshed in ${Math.round(refreshTime / 1000 / 60)} minutes`);
       
       const refreshTimer = setTimeout(() => {
-        console.log('🔄 Auto-refreshing token before expiry...');
         refreshAuthToken();
       }, refreshTime);
 
       return () => clearTimeout(refreshTimer);
     } else {
       // Token is already expired or about to expire, refresh immediately
-      console.log('🚨 Token expired or about to expire, refreshing immediately...');
       refreshAuthToken();
       return undefined;
     }
@@ -363,13 +321,7 @@ export const useAuth = () => {
       
       const response = await AuthAPI.login(credentials);
       
-      if (response.success && response.user && response.accessToken && response.refreshToken) {
-        console.log('🔍 Login Debug - API Response:', {
-          user: response.user,
-          userRoles: response.user.roles,
-          userRolesType: typeof response.user.roles,
-          userRolesLength: response.user.roles?.length,
-        });
+          if (response.success && response.user && response.accessToken && response.refreshToken) {
 
         // Extract clinic data from user if available
         const clinicData: Clinic | undefined = response.user.clinicId ? {
@@ -411,7 +363,6 @@ export const useAuth = () => {
       await AuthAPI.logout();
     } catch (error: any) {
       // Even if API call fails, we should still logout locally
-      console.warn('Logout API call failed:', error);
     } finally {
       storeLogout();
       setIsLoggingOut(false);

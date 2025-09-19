@@ -67,7 +67,6 @@ export const useLoginMutation = () => {
       });
     },
     onError: (error) => {
-      console.error('Login failed:', error);
     },
   });
 };
@@ -90,7 +89,6 @@ export const useLogoutMutation = () => {
       queryClient.clear();
     },
     onError: (error) => {
-      console.error('Logout failed:', error);
       // Still clear local state even if server logout fails
       storeLogout();
       queryClient.removeQueries({ queryKey: authKeys.all });
@@ -168,7 +166,6 @@ export const useRefreshTokenMutation = () => {
       }
     },
     onError: (error) => {
-      console.error('Token refresh failed:', error);
       // If refresh fails, user needs to log in again
       useAuthStore.getState().logout();
       queryClient.removeQueries({ queryKey: authKeys.all });

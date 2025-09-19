@@ -53,7 +53,6 @@ export class CacheManager {
         return size;
       }, 0);
     } catch (error) {
-      console.warn('Failed to calculate cache size:', error);
       return 0;
     }
   }
@@ -67,7 +66,6 @@ export class CacheManager {
       return;
     }
 
-    console.info('Cache cleanup triggered', { currentSize, threshold });
 
     const cache = queryClient.getQueryCache();
     const queries = cache.getAll();
@@ -95,7 +93,6 @@ export class CacheManager {
       }
     }
 
-    console.info('Cache cleanup completed', { 
       removedQueries: removedCount, 
       newSize: this.getCacheSize() 
     });
@@ -349,7 +346,6 @@ export class BackgroundRefreshManager {
     this.refreshIntervals.forEach((intervalId) => {
       clearInterval(intervalId);
     });
-    console.info('Background refresh paused - offline');
   }
 
   // Resume background refresh (when back online)
@@ -363,7 +359,6 @@ export class BackgroundRefreshManager {
       stale: true 
     });
     
-    console.info('Background refresh resumed - online');
   }
 
   // Handle page becoming visible
@@ -374,7 +369,6 @@ export class BackgroundRefreshManager {
       stale: true 
     });
     
-    console.info('Page visible - refreshing stale queries');
   }
 
   // Clear all refresh intervals
@@ -480,7 +474,6 @@ export class CacheWarmupManager {
       });
 
     } catch (error) {
-      console.warn('Failed to warm up critical data:', error);
     }
   }
 
@@ -518,7 +511,6 @@ export class CacheWarmupManager {
           break;
       }
     } catch (error) {
-      console.warn('Failed to warm up role-specific data:', error);
     }
   }
 }

@@ -138,7 +138,6 @@ export function useCacheInvalidation() {
     try {
       await Promise.allSettled(prefetchPromises);
     } catch (error) {
-      console.warn('Some warmup queries failed:', error);
     }
   }, [queryClient]);
 
