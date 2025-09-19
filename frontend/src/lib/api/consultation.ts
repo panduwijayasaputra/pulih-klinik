@@ -6,6 +6,18 @@ import {
 import { ItemResponse, PaginatedResponse } from './types';
 import { apiClient } from '../http-client';
 
+// Custom error class for consultation API errors
+export class ConsultationAPIError extends Error {
+  constructor(
+    message: string,
+    public statusCode?: number,
+    public response?: any
+  ) {
+    super(message);
+    this.name = 'ConsultationAPIError';
+  }
+}
+
 // Helper function to map backend consultation to frontend format
 const mapBackendConsultationToFrontend = (backendConsultation: any): Consultation => ({
   id: backendConsultation.id,
@@ -84,10 +96,11 @@ export class ConsultationAPI {
       };
     } catch (error: any) {
       console.error('Error fetching consultations:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Failed to fetch consultations',
-      };
+      throw new ConsultationAPIError(
+        error.response?.data?.message || 'Failed to fetch consultations',
+        error.response?.status,
+        error.response?.data
+      );
     }
   }
 
@@ -102,10 +115,11 @@ export class ConsultationAPI {
       };
     } catch (error: any) {
       console.error('Error fetching consultation:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Failed to fetch consultation',
-      };
+      throw new ConsultationAPIError(
+        error.response?.data?.message || 'Failed to fetch consultation',
+        error.response?.status,
+        error.response?.data
+      );
     }
   }
 
@@ -120,10 +134,11 @@ export class ConsultationAPI {
       };
     } catch (error: any) {
       console.error('Error creating consultation:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Failed to create consultation',
-      };
+      throw new ConsultationAPIError(
+        error.response?.data?.message || 'Failed to create consultation',
+        error.response?.status,
+        error.response?.data
+      );
     }
   }
 
@@ -141,10 +156,11 @@ export class ConsultationAPI {
       };
     } catch (error: any) {
       console.error('Error updating consultation:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Failed to update consultation',
-      };
+      throw new ConsultationAPIError(
+        error.response?.data?.message || 'Failed to update consultation',
+        error.response?.status,
+        error.response?.data
+      );
     }
   }
 
@@ -158,10 +174,11 @@ export class ConsultationAPI {
       };
     } catch (error: any) {
       console.error('Error deleting consultation:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Failed to delete consultation',
-      };
+      throw new ConsultationAPIError(
+        error.response?.data?.message || 'Failed to delete consultation',
+        error.response?.status,
+        error.response?.data
+      );
     }
   }
 
@@ -176,10 +193,11 @@ export class ConsultationAPI {
       };
     } catch (error: any) {
       console.error('Error fetching consultation statistics:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Failed to fetch consultation statistics',
-      };
+      throw new ConsultationAPIError(
+        error.response?.data?.message || 'Failed to fetch consultation statistics',
+        error.response?.status,
+        error.response?.data
+      );
     }
   }
 }
