@@ -16,8 +16,9 @@ import { InformationCircleIcon, LightBulbIcon } from '@heroicons/react/24/outlin
 import {
   ConsultationFormTypeLabels,
 } from '@/types/consultation';
-import { ConsultationFormTypeEnum } from '@/types/enums';
-import { ConsultationFormData } from '@/schemas/consultationSchema';
+import { ConsultationFormTypeEnum, DailyStressFrequencyEnum, ProblemFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, SymptomSeverityEnum, SleepQualityEnum, FrequentEmotionsEnum, TherapyPreferenceEnum } from '@/types/enums';
+import { ConsultationFormSchemaType } from '@/schemas/consultationFormSchema';
+import { SelfHarmFrequencyEnum } from '@/types/enums';
 import { Client } from '@/types/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -34,8 +35,8 @@ import {
 } from '@/lib/constants/consultation-options';
 
 export interface ConsultationFormProps {
-  form: UseFormReturn<ConsultationFormData>;
-  onSubmit: (data: ConsultationFormData) => Promise<void>;
+  form: UseFormReturn<ConsultationFormSchemaType>;
+  onSubmit: (data: ConsultationFormSchemaType) => Promise<void>;
   isSubmitting: boolean;
   isLoading: boolean;
   mode?: 'create' | 'edit';
@@ -57,11 +58,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   onCancel,
 }) => {
   const { user } = useAuth();
-  const { register, handleSubmit, watch, setValue, formState: { errors, isDirty, isValid } } = form;
+  const { register, handleSubmit, watch, setValue, trigger, formState: { errors, isDirty, isValid } } = form;
   
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<ConsultationFormData | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<ConsultationFormSchemaType | null>(null);
 
   const formTypes = watch('formTypes') || [];
   const previousTherapyExperience = watch('previousTherapyExperience');
@@ -72,7 +73,15 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const familyPsychologicalHistory = watch('familyPsychologicalHistory');
   
   // Handle form submission with confirmation
-  const handleFormSubmit = (data: ConsultationFormData) => {
+  const handleFormSubmit = async (data: ConsultationFormSchemaType) => {
+    // Trigger validation for all fields to show errors
+    const isValid = await trigger();
+    
+    if (!isValid) {
+      // Form is invalid, errors will be shown automatically
+      return;
+    }
+    
     setPendingFormData(data);
     setShowConfirmDialog(true);
   };
@@ -88,14 +97,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   };
 
   // Organize form data into separate sections based on form types
-  const organizeFormData = (data: ConsultationFormData) => {
+  const organizeFormData = (data: ConsultationFormSchemaType) => {
     // Get current form values using watch to capture fields that use setValue
     const currentFormValues = watch() as any;
     
     // Create a clean organized data object with only the base consultation fields
     const organizedData = {
       clientId: data.clientId,
-      therapistId: data.therapistId,
       formTypes: data.formTypes,
       status: data.status,
       sessionDate: data.sessionDate,
@@ -338,7 +346,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <div>
                     <Label className="text-base font-medium">Sudah Berlangsung *</Label>
                     <Select
-                      value={watch('symptomDuration') || ''}
+                      value={watch('symptomDuration')}
                       onValueChange={(val) => setValue('symptomDuration', val, { shouldDirty: true, shouldValidate: true })}
                       disabled={readOnly}
                     >
@@ -360,7 +368,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
                   <div>
                     <Label className="text-base font-medium">Seberapa Sering</Label>
-                    <Select disabled={readOnly}>
+                    <Select
+                      value={watch('problemFrequency')}
+                      onValueChange={(val) => setValue('problemFrequency', val as ProblemFrequencyEnum, { shouldDirty: true, shouldValidate: true })}
+                      disabled={readOnly}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih frekuensi" />
                       </SelectTrigger>
@@ -372,13 +384,16 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.problemFrequency && (
+                      <p className="mt-1 text-sm text-red-600">{errors.problemFrequency.message}</p>
+                    )}
                   </div>
 
                   <div>
                     <Label className="text-base font-medium">Tingkat Gangguan *</Label>
                     <Select
-                      value={watch('symptomSeverity')?.toString() || ''}
-                      onValueChange={(val) => setValue('symptomSeverity', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true })}
+                      value={watch('symptomSeverity')}
+                      onValueChange={(val) => setValue('symptomSeverity', val as SymptomSeverityEnum, { shouldDirty: true, shouldValidate: true })}
                       disabled={readOnly}
                     >
                       <SelectTrigger>
@@ -386,7 +401,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       </SelectTrigger>
                       <SelectContent>
                         {SYMPTOM_SEVERITY_OPTIONS.map(option => (
-                          <SelectItem key={option.value} value={option.value.toString()}>
+                          <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
@@ -400,7 +415,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
                 {/* Emotion Scale */}
                 <div>
-                  <Label className="text-base font-medium">Kondisi Emosi Saat Ini</Label>
+                  <Label className="text-base font-medium">Kondisi Emosi Saat Ini *</Label>
                   <p className="text-gray-600 mb-6 text-sm">Geser slider untuk menunjukkan tingkat emosi (0 = tidak sama sekali, 10 = sangat kuat)</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {EMOTION_SCALE_OPTIONS.map(emotion => (
@@ -427,6 +442,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       </div>
                     ))}
                   </div>
+                  {errors.emotionScale && (
+                    <p className="mt-2 text-sm text-red-600">{errors.emotionScale?.message}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -662,7 +680,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
                 <div>
                   <Label className="text-base font-medium">Kualitas Tidur</Label>
-                  <Select disabled={readOnly}>
+                  <Select
+                    value={watch('sleepQuality')}
+                    onValueChange={(val) => setValue('sleepQuality', val as SleepQualityEnum, { shouldDirty: true, shouldValidate: true })}
+                    disabled={readOnly}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih kualitas tidur" />
                     </SelectTrigger>
@@ -674,11 +696,18 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.sleepQuality && (
+                    <p className="mt-1 text-sm text-red-600">{errors.sleepQuality.message}</p>
+                  )}
                 </div>
 
                 <div>
                   <Label className="text-base font-medium">Pikiran Menyakiti Diri</Label>
-                  <Select disabled={readOnly}>
+                  <Select
+                    value={watch('selfHarmFrequency')}
+                    onValueChange={(val) => setValue('selfHarmFrequency', val as SelfHarmFrequencyEnum, { shouldDirty: true, shouldValidate: true })}
+                    disabled={readOnly}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih frekuensi" />
                     </SelectTrigger>
@@ -690,6 +719,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.selfHarmFrequency && (
+                    <p className="mt-1 text-sm text-red-600">{errors.selfHarmFrequency.message}</p>
+                  )}
                 </div>
 
               </div>
@@ -707,9 +739,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="feeling-excellent"
-                        checked={watch('recentMoodState') === 'excellent'}
+                        checked={watch('recentMoodState') === RecentMoodStateEnum.Excellent}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('recentMoodState', 'excellent', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('recentMoodState', RecentMoodStateEnum.Excellent, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="feeling-excellent" className="text-sm font-medium cursor-pointer">Sangat baik</Label>
@@ -717,9 +749,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="feeling-good"
-                        checked={watch('recentMoodState') === 'good'}
+                        checked={watch('recentMoodState') === RecentMoodStateEnum.Good}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('recentMoodState', 'good', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('recentMoodState', RecentMoodStateEnum.Good, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="feeling-good" className="text-sm font-medium cursor-pointer">Baik</Label>
@@ -727,9 +759,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="feeling-neutral"
-                        checked={watch('recentMoodState') === 'neutral'}
+                        checked={watch('recentMoodState') === RecentMoodStateEnum.Neutral}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('recentMoodState', 'neutral', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('recentMoodState', RecentMoodStateEnum.Neutral, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="feeling-neutral" className="text-sm font-medium cursor-pointer">Biasa saja</Label>
@@ -737,9 +769,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="feeling-bad"
-                        checked={watch('recentMoodState') === 'bad'}
+                        checked={watch('recentMoodState') === RecentMoodStateEnum.Bad}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('recentMoodState', 'bad', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('recentMoodState', RecentMoodStateEnum.Bad, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="feeling-bad" className="text-sm font-medium cursor-pointer">Buruk</Label>
@@ -747,36 +779,43 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="feeling-very-bad"
-                        checked={watch('recentMoodState') === 'very_bad'}
+                        checked={watch('recentMoodState') === RecentMoodStateEnum.VeryBad}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('recentMoodState', 'very_bad', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('recentMoodState', RecentMoodStateEnum.VeryBad, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="feeling-very-bad" className="text-sm font-medium cursor-pointer">Sangat buruk</Label>
                     </div>
                   </div>
                   <div className="mt-4">
-                    <Label htmlFor="recentMoodStateDetails">Jelaskan secara singkat:</Label>
+                    <Label htmlFor="recentMoodStateDetails">Jelaskan secara singkat: *</Label>
                     <Input
                       id="recentMoodStateDetails"
                       {...register('recentMoodStateDetails')}
                       placeholder="Jelaskan perasaan Anda dalam satu bulan terakhir..."
                       className="mt-1"
+                      disabled={readOnly}
                     />
+                    {errors.recentMoodStateDetails && (
+                      <p className="mt-1 text-sm text-red-600">{errors.recentMoodStateDetails.message}</p>
+                    )}
                   </div>
+                  {errors.recentMoodState && (
+                    <p className="mt-2 text-sm text-red-600">{errors.recentMoodState.message}</p>
+                  )}
                 </div>
 
                 <div>
-                  <Label className="text-base font-medium">Apakah Anda sering mengalami perasaan berikut ini?</Label>
+                  <Label className="text-base font-medium">Apakah Anda sering mengalami perasaan berikut ini? *</Label>
                   <p className="text-gray-600 mb-4 mt-2 text-sm">Pilih semua yang sesuai dengan kondisi Anda (bisa memilih lebih dari satu)</p>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="emotion-prolonged-sadness"
-                        checked={watch('frequentEmotions')?.includes('prolonged_sadness') || false}
+                        checked={watch('frequentEmotions')?.includes(FrequentEmotionsEnum.ProlongedSadness) || false}
                         onCheckedChange={(checked) => {
                           const currentEmotions = watch('frequentEmotions') || [];
-                          const emotion = 'prolonged_sadness';
+                          const emotion = FrequentEmotionsEnum.ProlongedSadness;
                           const newEmotions = checked
                             ? [...currentEmotions, emotion]
                             : currentEmotions.filter(e => e !== emotion);
@@ -790,10 +829,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="emotion-anxiety"
-                        checked={watch('frequentEmotions')?.includes('anxiety_without_reason') || false}
+                        checked={watch('frequentEmotions')?.includes(FrequentEmotionsEnum.AnxietyWithoutReason) || false}
                         onCheckedChange={(checked) => {
                           const currentEmotions = watch('frequentEmotions') || [];
-                          const emotion = 'anxiety_without_reason';
+                          const emotion = FrequentEmotionsEnum.AnxietyWithoutReason;
                           const newEmotions = checked
                             ? [...currentEmotions, emotion]
                             : currentEmotions.filter(e => e !== emotion);
@@ -807,10 +846,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="emotion-loss-interest"
-                        checked={watch('frequentEmotions')?.includes('loss_of_interest') || false}
+                        checked={watch('frequentEmotions')?.includes(FrequentEmotionsEnum.LossOfInterest) || false}
                         onCheckedChange={(checked) => {
                           const currentEmotions = watch('frequentEmotions') || [];
-                          const emotion = 'loss_of_interest';
+                          const emotion = FrequentEmotionsEnum.LossOfInterest;
                           const newEmotions = checked
                             ? [...currentEmotions, emotion]
                             : currentEmotions.filter(e => e !== emotion);
@@ -824,10 +863,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="emotion-irritability"
-                        checked={watch('frequentEmotions')?.includes('irritability') || false}
+                        checked={watch('frequentEmotions')?.includes(FrequentEmotionsEnum.Irritability) || false}
                         onCheckedChange={(checked) => {
                           const currentEmotions = watch('frequentEmotions') || [];
-                          const emotion = 'irritability';
+                          const emotion = FrequentEmotionsEnum.Irritability;
                           const newEmotions = checked
                             ? [...currentEmotions, emotion]
                             : currentEmotions.filter(e => e !== emotion);
@@ -841,10 +880,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="emotion-sleep-issues"
-                        checked={watch('frequentEmotions')?.includes('sleep_problems') || false}
+                        checked={watch('frequentEmotions')?.includes(FrequentEmotionsEnum.SleepProblems) || false}
                         onCheckedChange={(checked) => {
                           const currentEmotions = watch('frequentEmotions') || [];
-                          const emotion = 'sleep_problems';
+                          const emotion = FrequentEmotionsEnum.SleepProblems;
                           const newEmotions = checked
                             ? [...currentEmotions, emotion]
                             : currentEmotions.filter(e => e !== emotion);
@@ -858,10 +897,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="emotion-worthlessness"
-                        checked={watch('frequentEmotions')?.includes('worthlessness_guilt') || false}
+                        checked={watch('frequentEmotions')?.includes(FrequentEmotionsEnum.WorthlessnessGuilt) || false}
                         onCheckedChange={(checked) => {
                           const currentEmotions = watch('frequentEmotions') || [];
-                          const emotion = 'worthlessness_guilt';
+                          const emotion = FrequentEmotionsEnum.WorthlessnessGuilt;
                           const newEmotions = checked
                             ? [...currentEmotions, emotion]
                             : currentEmotions.filter(e => e !== emotion);
@@ -873,6 +912,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       </Label>
                     </div>
                   </div>
+                  {errors.frequentEmotions && (
+                    <p className="mt-2 text-sm text-red-600">{errors.frequentEmotions.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -881,9 +923,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="self-harm-often"
-                        checked={watch('selfHarmThoughts') === 'often'}
+                        checked={watch('selfHarmThoughts') === SelfHarmThoughtsEnum.Often}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('selfHarmThoughts', 'often', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('selfHarmThoughts', SelfHarmThoughtsEnum.Often, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="self-harm-often" className="text-sm font-medium cursor-pointer">Ya, sering</Label>
@@ -891,9 +933,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="self-harm-sometimes"
-                        checked={watch('selfHarmThoughts') === 'sometimes'}
+                        checked={watch('selfHarmThoughts') === SelfHarmThoughtsEnum.Sometimes}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('selfHarmThoughts', 'sometimes', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('selfHarmThoughts', SelfHarmThoughtsEnum.Sometimes, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="self-harm-sometimes" className="text-sm font-medium cursor-pointer">Kadang-kadang</Label>
@@ -901,25 +943,32 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="self-harm-never"
-                        checked={watch('selfHarmThoughts') === 'never'}
+                        checked={watch('selfHarmThoughts') === SelfHarmThoughtsEnum.Never}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('selfHarmThoughts', 'never', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('selfHarmThoughts', SelfHarmThoughtsEnum.Never, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="self-harm-never" className="text-sm font-medium cursor-pointer">Tidak pernah</Label>
                     </div>
                   </div>
-                  {(watch('selfHarmThoughts') === 'often' || watch('selfHarmThoughts') === 'sometimes') && (
+                  {(watch('selfHarmThoughts') === SelfHarmThoughtsEnum.Often || watch('selfHarmThoughts') === SelfHarmThoughtsEnum.Sometimes) && (
                     <div className="mt-4">
-                      <Label htmlFor="selfHarmDetails">Jika Ya, apakah pernah melakukan tindakan? Jelaskan:</Label>
+                      <Label htmlFor="selfHarmDetails">Jika Ya, apakah pernah melakukan tindakan? Jelaskan: *</Label>
                       <Textarea
                         id="selfHarmDetails"
                         {...register('selfHarmDetails')}
                         placeholder="Jelaskan apakah pernah melakukan tindakan menyakiti diri sendiri..."
                         rows={3}
                         className="mt-1"
+                        disabled={readOnly}
                       />
+                      {errors.selfHarmDetails && (
+                        <p className="mt-1 text-sm text-red-600">{errors.selfHarmDetails.message}</p>
+                      )}
                     </div>
+                  )}
+                  {errors.selfHarmThoughts && (
+                    <p className="mt-2 text-sm text-red-600">{errors.selfHarmThoughts.message}</p>
                   )}
                 </div>
 
@@ -929,9 +978,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="stress-never"
-                        checked={watch('dailyStressFrequency') === 'never'}
+                        checked={watch('dailyStressFrequency') === DailyStressFrequencyEnum.Never}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('dailyStressFrequency', 'never', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('dailyStressFrequency', DailyStressFrequencyEnum.Never, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="stress-never" className="text-sm font-medium cursor-pointer">Tidak pernah</Label>
@@ -939,9 +988,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="stress-rarely"
-                        checked={watch('dailyStressFrequency') === 'rarely'}
+                        checked={watch('dailyStressFrequency') === DailyStressFrequencyEnum.Rarely}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('dailyStressFrequency', 'rarely', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('dailyStressFrequency', DailyStressFrequencyEnum.Rarely, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="stress-rarely" className="text-sm font-medium cursor-pointer">Jarang</Label>
@@ -949,9 +998,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="stress-sometimes"
-                        checked={watch('dailyStressFrequency') === 'sometimes'}
+                        checked={watch('dailyStressFrequency') === DailyStressFrequencyEnum.Sometimes}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('dailyStressFrequency', 'sometimes', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('dailyStressFrequency', DailyStressFrequencyEnum.Sometimes, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="stress-sometimes" className="text-sm font-medium cursor-pointer">Kadang-kadang</Label>
@@ -959,9 +1008,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="stress-often"
-                        checked={watch('dailyStressFrequency') === 'often'}
+                        checked={watch('dailyStressFrequency') === DailyStressFrequencyEnum.Often}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('dailyStressFrequency', 'often', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('dailyStressFrequency', DailyStressFrequencyEnum.Often, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="stress-often" className="text-sm font-medium cursor-pointer">Sering</Label>
@@ -969,14 +1018,17 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="stress-very-often"
-                        checked={watch('dailyStressFrequency') === 'very_often'}
+                        checked={watch('dailyStressFrequency') === DailyStressFrequencyEnum.VeryOften}
                         onCheckedChange={(checked) => {
-                          if (checked) setValue('dailyStressFrequency', 'very_often', { shouldDirty: true, shouldValidate: true });
+                          if (checked) setValue('dailyStressFrequency', DailyStressFrequencyEnum.VeryOften, { shouldDirty: true, shouldValidate: true });
                         }}
                       />
                       <Label htmlFor="stress-very-often" className="text-sm font-medium cursor-pointer">Sangat sering</Label>
                     </div>
                   </div>
+                  {errors.dailyStressFrequency && (
+                    <p className="mt-2 text-sm text-red-600">{errors.dailyStressFrequency.message}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1132,19 +1184,27 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 </div>
 
                 <div>
-                  <Label htmlFor="clientExpectations" className="text-base font-medium">Harapan Anda</Label>
+                  <Label htmlFor="clientExpectations" className="text-base font-medium">Harapan Anda *</Label>
                   <Textarea
                     id="clientExpectations"
                     {...register('clientExpectations')}
                     placeholder="Apa yang Anda harapkan dari terapi ini..."
                     rows={3}
                     className="mt-2"
+                    disabled={readOnly}
                   />
+                  {errors.clientExpectations && (
+                    <p className="mt-1 text-sm text-red-600">{errors.clientExpectations.message}</p>
+                  )}
                 </div>
 
                 <div>
                   <Label className="text-base font-medium">Preferensi Jenis Terapi</Label>
-                  <Select disabled={readOnly}>
+                  <Select
+                    value={watch('therapyPreference')}
+                    onValueChange={(val) => setValue('therapyPreference', val as TherapyPreferenceEnum, { shouldDirty: true, shouldValidate: true })}
+                    disabled={readOnly}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih preferensi terapi" />
                     </SelectTrigger>
@@ -1156,6 +1216,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.therapyPreference && (
+                    <p className="mt-1 text-sm text-red-600">{errors.therapyPreference.message}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1185,6 +1248,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     </div>
                   ))}
                 </div>
+                {errors.substanceHistory && (
+                  <p className="mt-1 text-sm text-red-600">{errors.substanceHistory.message}</p>
+                )}
               </div>
 
               {/* Other substances details */}
@@ -1204,7 +1270,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               <div>
                 <Label htmlFor="primarySubstance">Zat Utama yang Saat Ini Menjadi Masalah *</Label>
                 <Select
-                  value={watch('primarySubstance') || ''}
+                  value={watch('primarySubstance')}
                   onValueChange={(val) => setValue('primarySubstance', val, { shouldDirty: true, shouldValidate: true })}
                 >
                   <SelectTrigger>
@@ -1292,6 +1358,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     setValue('withdrawalSymptoms', symptoms, { shouldDirty: true, shouldValidate: true });
                   }}
                 />
+                {errors.withdrawalSymptoms && (
+                  <p className="mt-1 text-sm text-red-600">{errors.withdrawalSymptoms.message}</p>
+                )}
               </div>
 
               <div>
@@ -1326,6 +1395,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     setValue('triggerSituations', triggers, { shouldDirty: true, shouldValidate: true });
                   }}
                 />
+                {errors.triggerSituations && (
+                  <p className="mt-1 text-sm text-red-600">{errors.triggerSituations.message}</p>
+                )}
               </div>
 
               <div>
@@ -1468,6 +1540,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         setValue('recoveryGoals', goals, { shouldDirty: true, shouldValidate: true });
                       }}
                     />
+                    {errors.recoveryGoals && (
+                      <p className="mt-1 text-sm text-red-600">{errors.recoveryGoals.message}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1960,19 +2035,23 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           <p className="text-gray-600 mb-6 text-sm">Catatan dan penilaian dari terapis</p>
 
           <div className="space-y-6">
-            <div>
-              <Label htmlFor="consultationNotes" className="text-base font-medium">Catatan Konsultasi</Label>
-              <Textarea
-                id="consultationNotes"
-                {...register('consultationNotes')}
-                placeholder="Catatan umum tentang sesi konsultasi dan observasi..."
-                rows={4}
-                className="mt-2"
-              />
-            </div>
+                <div>
+                  <Label htmlFor="consultationNotes" className="text-base font-medium">Catatan Konsultasi *</Label>
+                  <Textarea
+                    id="consultationNotes"
+                    {...register('consultationNotes')}
+                    placeholder="Catatan umum tentang sesi konsultasi dan observasi..."
+                    rows={4}
+                    className="mt-2"
+                    disabled={readOnly}
+                  />
+                  {errors.consultationNotes && (
+                    <p className="mt-1 text-sm text-red-600">{errors.consultationNotes.message}</p>
+                  )}
+                </div>
 
             <div>
-              <Label htmlFor="scriptGenerationPreferences" className="text-base font-medium">Preferensi Generasi Script</Label>
+              <Label htmlFor="scriptGenerationPreferences" className="text-base font-medium">Preferensi Generasi Script *</Label>
               <p className="text-gray-600 mb-2 text-sm">Catatan karakteristik klien yang dapat membantu AI menghasilkan script hipnoterapi yang personal</p>
               <Textarea
                 id="scriptGenerationPreferences"
@@ -1982,31 +2061,42 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 className="mt-2"
                 disabled={readOnly}
               />
+              {errors.scriptGenerationPreferences && (
+                <p className="mt-1 text-sm text-red-600">{errors.scriptGenerationPreferences.message}</p>
+              )}
               <p className="mt-1 text-xs text-gray-500">
                 Tips: Masukkan informasi seperti hobi, generasi, kepribadian, atau preferensi yang dapat membantu AI membuat script yang relevan dengan klien
               </p>
             </div>
 
             <div>
-              <Label htmlFor="initialAssessment" className="text-base font-medium">Penilaian Awal</Label>
+              <Label htmlFor="initialAssessment" className="text-base font-medium">Penilaian Awal *</Label>
               <Textarea
                 id="initialAssessment"
                 {...register('initialAssessment')}
                 placeholder="Penilaian awal kondisi klien..."
                 rows={4}
                 className="mt-2"
+                disabled={readOnly}
               />
+              {errors.initialAssessment && (
+                <p className="mt-1 text-sm text-red-600">{errors.initialAssessment.message}</p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="recommendedTreatmentPlan" className="text-base font-medium">Rencana Terapi</Label>
+              <Label htmlFor="recommendedTreatmentPlan" className="text-base font-medium">Rencana Terapi *</Label>
               <Textarea
                 id="recommendedTreatmentPlan"
                 {...register('recommendedTreatmentPlan')}
                 placeholder="Rencana terapi yang direkomendasikan..."
                 rows={4}
                 className="mt-2"
+                disabled={readOnly}
               />
+              {errors.recommendedTreatmentPlan && (
+                <p className="mt-1 text-sm text-red-600">{errors.recommendedTreatmentPlan.message}</p>
+              )}
             </div>
           </div>
         </div>
@@ -2029,7 +2119,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
             <div className="flex space-x-4 ml-auto">
               <Button
                 type="submit"
-                disabled={isSubmitting || isLoading || !isDirty || !isValid}
+                disabled={isSubmitting || isLoading}
               >
                 {isSubmitting ? 'Menyimpan...' : 'Simpan'}
               </Button>
