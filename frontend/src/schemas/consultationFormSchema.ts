@@ -185,7 +185,10 @@ export const consultationFormSchema = z.object({
   }).optional(),
 
   // Legacy fields for backward compatibility - all required
-  substanceHistory: z.any(),
+  substanceHistory: z.record(z.boolean()).refine(
+    (data) => Object.values(data).some(value => value === true),
+    { message: 'Pilih minimal satu jenis zat yang pernah digunakan' }
+  ),
   otherSubstancesDetails: z.string().min(1, 'Jelaskan detail zat lainnya'),
   primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan'),
   additionalSubstances: z.array(z.string()).min(1, 'Pilih minimal satu zat tambahan'),
@@ -208,7 +211,6 @@ export const consultationFormSchema = z.object({
   financialImpact: z.string().min(1, 'Jelaskan dampak finansial'),
   desireToQuit: z.string().min(1, 'Jelaskan keinginan untuk berhenti'),
   recoveryGoals: z.array(z.string()).min(1, 'Pilih minimal satu tujuan pemulihan'),
-  willingForFollowUp: z.boolean(),
   
   // Minor consultation fields - all required
   guardianName: z.string().min(1, 'Masukkan nama lengkap wali'),

@@ -184,7 +184,6 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         financialImpact: data.financialImpact || currentFormValues.financialImpact,
         desireToQuit: data.desireToQuit || currentFormValues.desireToQuit,
         recoveryGoals: data.recoveryGoals || currentFormValues.recoveryGoals,
-        willingForFollowUp: data.willingForFollowUp || currentFormValues.willingForFollowUp,
         // Include other substances details if available
         otherSubstancesDetails: data.otherSubstancesDetails || currentFormValues.otherSubstancesDetails,
       };
@@ -1584,27 +1583,6 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     )}
                   </div>
 
-                  <div>
-                    <Label>Bersedia untuk Follow-up?</Label>
-                    <div className="flex items-center space-x-6 mt-2">
-                      <div className="flex items-center space-x-3">
-                        <Checkbox
-                          id="willingForFollowUp-yes"
-                          checked={watch('willingForFollowUp') === true}
-                          onCheckedChange={(checked) => setValue('willingForFollowUp', checked === true, { shouldDirty: true, shouldValidate: true })}
-                        />
-                        <Label htmlFor="willingForFollowUp-yes" className="text-sm font-medium">Ya</Label>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Checkbox
-                          id="willingForFollowUp-no"
-                          checked={watch('willingForFollowUp') === false}
-                          onCheckedChange={(checked) => setValue('willingForFollowUp', checked !== true, { shouldDirty: true, shouldValidate: true })}
-                        />
-                        <Label htmlFor="willingForFollowUp-no" className="text-sm font-medium">Tidak</Label>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
