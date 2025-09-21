@@ -217,7 +217,7 @@ export const consultationFormSchema = z.object({
   }).optional(),
 
   // Legacy fields for backward compatibility - all required
-  substanceHistory: z.record(z.boolean()).refine(
+  substanceHistory: z.record(z.string(), z.boolean()).refine(
     (data) => Object.values(data).some(value => value === true),
     { message: 'Pilih minimal satu jenis zat yang pernah digunakan' }
   ),
@@ -265,7 +265,7 @@ export const consultationFormSchema = z.object({
   clientCanSign: z.boolean({
     message: 'Pilih apakah klien dapat menandatangani sendiri'
   }),
-  consultationReasons: z.record(z.boolean()).refine(
+  consultationReasons: z.record(z.string(), z.boolean()).refine(
     (data) => Object.values(data).some(value => value === true),
     { message: 'Pilih minimal satu alasan konsultasi' }
   ),
