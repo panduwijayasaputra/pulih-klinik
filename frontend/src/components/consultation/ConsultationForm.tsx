@@ -1783,7 +1783,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       <Checkbox
                         id="previousPsychologicalHelp-yes"
                         checked={watch('previousPsychologicalHelp') === true}
-                        onCheckedChange={(checked) => setValue('previousPsychologicalHelp', checked === true, { shouldDirty: true, shouldValidate: true })}
+                        onCheckedChange={async (checked) => {
+                          console.log('Setting previousPsychologicalHelp to:', checked === true);
+                          setValue('previousPsychologicalHelp', checked === true, { shouldDirty: true, shouldValidate: true });
+                          const result = await trigger('previousPsychologicalHelp');
+                          console.log('previousPsychologicalHelp validation result:', result);
+                          console.log('previousPsychologicalHelp error:', errors.previousPsychologicalHelp?.message);
+                        }}
                       />
                       <Label htmlFor="previousPsychologicalHelp-yes" className="text-sm font-medium">Ya</Label>
                     </div>
@@ -1839,8 +1845,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <Select
                       value={watch('academicPerformance')?.toString() || ''}
                       onValueChange={async (val) => {
+                        console.log('Setting academicPerformance to:', val);
                         setValue('academicPerformance', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true });
-                        await trigger('academicPerformance');
+                        const result = await trigger('academicPerformance');
+                        console.log('academicPerformance validation result:', result);
+                        console.log('academicPerformance error:', errors.academicPerformance?.message);
                       }}
                     >
                       <SelectTrigger>
