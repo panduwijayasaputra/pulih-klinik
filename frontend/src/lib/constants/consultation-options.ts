@@ -16,11 +16,11 @@ export const PROBLEM_FREQUENCY_OPTIONS = [
 ] as const;
 
 export const SYMPTOM_SEVERITY_OPTIONS = [
-  { value: 1, label: 'Tidak mengganggu' },
-  { value: 2, label: 'Sedikit mengganggu' },
-  { value: 3, label: 'Cukup mengganggu' },
-  { value: 4, label: 'Sangat mengganggu' },
-  { value: 5, label: 'Sangat sangat mengganggu' },
+  { value: 'not_disturbing', label: 'Tidak mengganggu' },
+  { value: 'slightly_disturbing', label: 'Sedikit mengganggu' },
+  { value: 'moderately_disturbing', label: 'Cukup mengganggu' },
+  { value: 'very_disturbing', label: 'Sangat mengganggu' },
+  { value: 'extremely_disturbing', label: 'Sangat sangat mengganggu' },
 ] as const;
 
 export const EMOTION_SCALE_OPTIONS = [

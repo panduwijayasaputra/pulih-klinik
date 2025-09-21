@@ -291,6 +291,264 @@ export enum ConsultationFormTypeEnum {
   Minor = 'minor',
 }
 
+// Consultation Form Selection Enums
+export enum SymptomDurationEnum {
+  LessThanOneMonth = '<1 month',
+  OneToThreeMonths = '1-3 months',
+  ThreeToSixMonths = '3-6 months',
+  MoreThanSixMonths = '>6 months',
+}
+
+export const SymptomDurationLabels: Record<SymptomDurationEnum, string> = {
+  [SymptomDurationEnum.LessThanOneMonth]: 'Kurang dari 1 bulan',
+  [SymptomDurationEnum.OneToThreeMonths]: '1-3 bulan',
+  [SymptomDurationEnum.ThreeToSixMonths]: '3-6 bulan',
+  [SymptomDurationEnum.MoreThanSixMonths]: 'Lebih dari 6 bulan',
+};
+
+export enum ProblemFrequencyEnum {
+  Daily = 'Daily',
+  Weekly = 'Weekly',
+  Monthly = 'Monthly',
+  Rare = 'Rare',
+}
+
+export const ProblemFrequencyLabels: Record<ProblemFrequencyEnum, string> = {
+  [ProblemFrequencyEnum.Daily]: 'Harian',
+  [ProblemFrequencyEnum.Weekly]: 'Mingguan',
+  [ProblemFrequencyEnum.Monthly]: 'Bulanan',
+  [ProblemFrequencyEnum.Rare]: 'Jarang',
+};
+
+export enum SymptomSeverityEnum {
+  NotDisturbing = 'not_disturbing',
+  SlightlyDisturbing = 'slightly_disturbing',
+  ModeratelyDisturbing = 'moderately_disturbing',
+  VeryDisturbing = 'very_disturbing',
+  ExtremelyDisturbing = 'extremely_disturbing',
+}
+
+export const SymptomSeverityLabels: Record<SymptomSeverityEnum, string> = {
+  [SymptomSeverityEnum.NotDisturbing]: 'Tidak mengganggu',
+  [SymptomSeverityEnum.SlightlyDisturbing]: 'Sedikit mengganggu',
+  [SymptomSeverityEnum.ModeratelyDisturbing]: 'Cukup mengganggu',
+  [SymptomSeverityEnum.VeryDisturbing]: 'Sangat mengganggu',
+  [SymptomSeverityEnum.ExtremelyDisturbing]: 'Sangat sangat mengganggu',
+};
+
+// Zod-compatible enum values for validation
+export const SymptomSeverityValues = ['not_disturbing', 'slightly_disturbing', 'moderately_disturbing', 'very_disturbing', 'extremely_disturbing'] as const;
+
+export enum SleepQualityEnum {
+  Good = 'Good',
+  Fair = 'Fair',
+  Poor = 'Poor',
+  Disturbed = 'Disturbed',
+}
+
+export const SleepQualityLabels: Record<SleepQualityEnum, string> = {
+  [SleepQualityEnum.Good]: 'Baik',
+  [SleepQualityEnum.Fair]: 'Lumayan',
+  [SleepQualityEnum.Poor]: 'Buruk',
+  [SleepQualityEnum.Disturbed]: 'Terganggu',
+};
+
+export enum SelfHarmFrequencyEnum {
+  Never = 'Never',
+  Sometimes = 'Sometimes',
+  Often = 'Often',
+}
+
+export const SelfHarmFrequencyLabels: Record<SelfHarmFrequencyEnum, string> = {
+  [SelfHarmFrequencyEnum.Never]: 'Tidak pernah',
+  [SelfHarmFrequencyEnum.Sometimes]: 'Kadang-kadang',
+  [SelfHarmFrequencyEnum.Often]: 'Sering',
+};
+
+export enum RecentMoodStateEnum {
+  Excellent = 'excellent',
+  Good = 'good',
+  Neutral = 'neutral',
+  Bad = 'bad',
+  VeryBad = 'very_bad',
+}
+
+export const RecentMoodStateLabels: Record<RecentMoodStateEnum, string> = {
+  [RecentMoodStateEnum.Excellent]: 'Sangat baik',
+  [RecentMoodStateEnum.Good]: 'Baik',
+  [RecentMoodStateEnum.Neutral]: 'Biasa saja',
+  [RecentMoodStateEnum.Bad]: 'Buruk',
+  [RecentMoodStateEnum.VeryBad]: 'Sangat buruk',
+};
+
+export enum SelfHarmThoughtsEnum {
+  Often = 'often',
+  Sometimes = 'sometimes',
+  Never = 'never',
+}
+
+export const SelfHarmThoughtsLabels: Record<SelfHarmThoughtsEnum, string> = {
+  [SelfHarmThoughtsEnum.Often]: 'Ya, sering',
+  [SelfHarmThoughtsEnum.Sometimes]: 'Kadang-kadang',
+  [SelfHarmThoughtsEnum.Never]: 'Tidak pernah',
+};
+
+export enum DailyStressFrequencyEnum {
+  Never = 'never',
+  Rarely = 'rarely',
+  Sometimes = 'sometimes',
+  Often = 'often',
+  VeryOften = 'very_often',
+}
+
+export const DailyStressFrequencyLabels: Record<DailyStressFrequencyEnum, string> = {
+  [DailyStressFrequencyEnum.Never]: 'Tidak pernah',
+  [DailyStressFrequencyEnum.Rarely]: 'Jarang',
+  [DailyStressFrequencyEnum.Sometimes]: 'Kadang-kadang',
+  [DailyStressFrequencyEnum.Often]: 'Sering',
+  [DailyStressFrequencyEnum.VeryOften]: 'Sangat sering',
+};
+
+export enum FrequentEmotionsEnum {
+  ProlongedSadness = 'prolonged_sadness',
+  AnxietyWithoutReason = 'anxiety_without_reason',
+  LossOfInterest = 'loss_of_interest',
+  Irritability = 'irritability',
+  SleepProblems = 'sleep_problems',
+  WorthlessnessGuilt = 'worthlessness_guilt',
+}
+
+export const FrequentEmotionsLabels: Record<FrequentEmotionsEnum, string> = {
+  [FrequentEmotionsEnum.ProlongedSadness]: 'Sedih berkepanjangan',
+  [FrequentEmotionsEnum.AnxietyWithoutReason]: 'Cemas atau takut tanpa alasan yang jelas',
+  [FrequentEmotionsEnum.LossOfInterest]: 'Kehilangan minat terhadap hal-hal yang dulu disukai',
+  [FrequentEmotionsEnum.Irritability]: 'Mudah marah atau tersinggung',
+  [FrequentEmotionsEnum.SleepProblems]: 'Sulit tidur atau terlalu banyak tidur',
+  [FrequentEmotionsEnum.WorthlessnessGuilt]: 'Merasa tidak berharga atau bersalah secara berlebihan',
+};
+
+export enum SubstanceTypeEnum {
+  Alcohol = 'alcohol',
+  Marijuana = 'marijuana',
+  Methamphetamine = 'methamphetamine',
+  Cocaine = 'cocaine',
+  Heroin = 'heroin',
+  Ecstasy = 'ecstasy',
+  Inhalants = 'inhalants',
+  PrescriptionDrugs = 'prescription_drugs',
+  OtherSubstances = 'other_substances',
+}
+
+export const SubstanceTypeLabels: Record<SubstanceTypeEnum, string> = {
+  [SubstanceTypeEnum.Alcohol]: 'Alkohol',
+  [SubstanceTypeEnum.Marijuana]: 'Ganja',
+  [SubstanceTypeEnum.Methamphetamine]: 'Shabu-shabu',
+  [SubstanceTypeEnum.Cocaine]: 'Kokain',
+  [SubstanceTypeEnum.Heroin]: 'Heroin',
+  [SubstanceTypeEnum.Ecstasy]: 'Ekstasi',
+  [SubstanceTypeEnum.Inhalants]: 'Inhalansia',
+  [SubstanceTypeEnum.PrescriptionDrugs]: 'Obat resep (disalahgunakan)',
+  [SubstanceTypeEnum.OtherSubstances]: 'Lainnya',
+};
+
+export enum PrimarySubstanceEnum {
+  Alcohol = 'alcohol',
+  Marijuana = 'marijuana',
+  Methamphetamine = 'methamphetamine',
+  Cocaine = 'cocaine',
+  Heroin = 'heroin',
+  Ecstasy = 'ecstasy',
+  Inhalants = 'inhalants',
+  PrescriptionDrugs = 'prescription_drugs',
+  Other = 'other',
+}
+
+export const PrimarySubstanceLabels: Record<PrimarySubstanceEnum, string> = {
+  [PrimarySubstanceEnum.Alcohol]: 'Alkohol',
+  [PrimarySubstanceEnum.Marijuana]: 'Ganja',
+  [PrimarySubstanceEnum.Methamphetamine]: 'Shabu-shabu',
+  [PrimarySubstanceEnum.Cocaine]: 'Kokain',
+  [PrimarySubstanceEnum.Heroin]: 'Heroin',
+  [PrimarySubstanceEnum.Ecstasy]: 'Ekstasi',
+  [PrimarySubstanceEnum.Inhalants]: 'Inhalansia',
+  [PrimarySubstanceEnum.PrescriptionDrugs]: 'Obat Resep',
+  [PrimarySubstanceEnum.Other]: 'Lainnya',
+};
+
+export enum ToleranceLevelEnum {
+  VeryLow = 1,
+  Low = 2,
+  Medium = 3,
+  High = 4,
+  VeryHigh = 5,
+}
+
+export const ToleranceLevelLabels: Record<ToleranceLevelEnum, string> = {
+  [ToleranceLevelEnum.VeryLow]: 'Sangat rendah',
+  [ToleranceLevelEnum.Low]: 'Rendah',
+  [ToleranceLevelEnum.Medium]: 'Sedang',
+  [ToleranceLevelEnum.High]: 'Tinggi',
+  [ToleranceLevelEnum.VeryHigh]: 'Sangat tinggi',
+};
+
+export enum DesireToQuitEnum {
+  Yes = 'Yes',
+  YesButUnsure = 'Yes, but unsure',
+  No = 'No',
+}
+
+export const DesireToQuitLabels: Record<DesireToQuitEnum, string> = {
+  [DesireToQuitEnum.Yes]: 'Ya, sangat ingin berhenti',
+  [DesireToQuitEnum.YesButUnsure]: 'Ya, tapi masih ragu',
+  [DesireToQuitEnum.No]: 'Belum yakin ingin berhenti',
+};
+
+export enum ConsultationReasonEnum {
+  LearningDifficulties = 'learning_difficulties',
+  EmotionalProblems = 'emotional_problems',
+  SocialProblems = 'social_problems',
+  BehavioralProblems = 'behavioral_problems',
+  Trauma = 'trauma',
+  SleepEatingDisorders = 'sleep_eating_disorders',
+}
+
+export const ConsultationReasonLabels: Record<ConsultationReasonEnum, string> = {
+  [ConsultationReasonEnum.LearningDifficulties]: 'Kesulitan belajar',
+  [ConsultationReasonEnum.EmotionalProblems]: 'Masalah emosi (cemas, sedih, marah berlebihan, dll.)',
+  [ConsultationReasonEnum.SocialProblems]: 'Masalah sosial (kesulitan bergaul, bullying, dll.)',
+  [ConsultationReasonEnum.BehavioralProblems]: 'Gangguan perilaku (agresif, tidak patuh, dll.)',
+  [ConsultationReasonEnum.Trauma]: 'Trauma atau pengalaman buruk',
+  [ConsultationReasonEnum.SleepEatingDisorders]: 'Gangguan tidur/makan',
+};
+
+export enum AcademicPerformanceEnum {
+  Excellent = 5,
+  Good = 4,
+  Fair = 3,
+  Poor = 2,
+  VeryPoor = 1,
+}
+
+export const AcademicPerformanceLabels: Record<AcademicPerformanceEnum, string> = {
+  [AcademicPerformanceEnum.Excellent]: 'Sangat baik',
+  [AcademicPerformanceEnum.Good]: 'Baik',
+  [AcademicPerformanceEnum.Fair]: 'Cukup',
+  [AcademicPerformanceEnum.Poor]: 'Kurang',
+  [AcademicPerformanceEnum.VeryPoor]: 'Sangat kurang',
+};
+
+export enum TherapyPreferenceEnum {
+  CBT = 'CBT',
+  GeneralCounseling = 'General counseling',
+  Undecided = 'Undecided',
+}
+
+export const TherapyPreferenceLabels: Record<TherapyPreferenceEnum, string> = {
+  [TherapyPreferenceEnum.CBT]: 'Cognitive Behavioral Therapy (CBT)',
+  [TherapyPreferenceEnum.GeneralCounseling]: 'Konseling Umum',
+  [TherapyPreferenceEnum.Undecided]: 'Belum yakin',
+};
+
 // ClinicStatusEnum moved to unified ClinicStatusEnum in ./status.ts
 
 

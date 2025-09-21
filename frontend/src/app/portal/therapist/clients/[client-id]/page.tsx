@@ -151,48 +151,50 @@ export default function ClientTherapyPage() {
   // Initialize consultation form
   const consultationForm = useForm<ConsultationFormSchemaType>({
     resolver: zodResolver(consultationFormSchema),
-    defaultValues: {
-      clientId: clientId,
-      formTypes: [],
-      status: ConsultationStatusEnum.Draft,
-      sessionDate: new Date().toISOString().split('T')[0] || '',
-      sessionDuration: 60,
-      consultationNotes: '',
-      scriptGenerationPreferences: '',
-      previousTherapyExperience: false,
-      previousTherapyDetails: '',
-      currentMedications: false,
-      currentMedicationsDetails: '',
-      previousPsychologicalDiagnosis: false,
-      previousPsychologicalDiagnosisDetails: '',
-      significantPhysicalIllness: false,
-      significantPhysicalIllnessDetails: '',
-      traumaticExperience: false,
-      traumaticExperienceDetails: '',
-      familyPsychologicalHistory: false,
-      familyPsychologicalHistoryDetails: '',
-      primaryConcern: 'Assessment awal klien untuk evaluasi kondisi psikologis dan kebutuhan terapi.',
-      secondaryConcerns: [],
-      symptomSeverity: 3,
-      symptomDuration: '1-2 bulan',
-      emotionScale: undefined,
-      recentMoodState: undefined,
-      recentMoodStateDetails: '',
-      frequentEmotions: [],
-      selfHarmThoughts: undefined,
-      selfHarmDetails: '',
-      dailyStressFrequency: undefined,
-      treatmentGoals: ['Meningkatkan kesejahteraan psikologis klien'],
-      clientExpectations: '',
-      initialAssessment: '',
-      recommendedTreatmentPlan: '',
-      consentAgreement: false,
-      clientSignatureName: '',
-      clientSignatureDate: '',
-      therapistName: '',
-      registrationDate: '',
-      initialRecommendation: [],
-    },
+    mode: 'onChange', // Validate on change for better UX
+    reValidateMode: 'onChange', // Re-validate on change
+    // defaultValues: {
+    //   clientId: clientId,
+    //   formTypes: [],
+    //   status: ConsultationStatusEnum.Draft,
+    //   sessionDate: new Date().toISOString().split('T')[0] || '',
+    //   sessionDuration: 60,
+    //   consultationNotes: '',
+    //   scriptGenerationPreferences: '',
+    //   previousTherapyExperience: false,
+    //   previousTherapyDetails: '',
+    //   currentMedications: false,
+    //   currentMedicationsDetails: '',
+    //   previousPsychologicalDiagnosis: false,
+    //   previousPsychologicalDiagnosisDetails: '',
+    //   significantPhysicalIllness: false,
+    //   significantPhysicalIllnessDetails: '',
+    //   traumaticExperience: false,
+    //   traumaticExperienceDetails: '',
+    //   familyPsychologicalHistory: false,
+    //   familyPsychologicalHistoryDetails: '',
+    //   primaryConcern: '',
+    //   secondaryConcerns: [],
+    //   symptomSeverity: undefined,
+    //   symptomDuration: '',
+    //   emotionScale: {},
+    //   recentMoodState: undefined,
+    //   recentMoodStateDetails: '',
+    //   frequentEmotions: [],
+    //   selfHarmThoughts: undefined,
+    //   selfHarmDetails: '',
+    //   dailyStressFrequency: undefined,
+    //   treatmentGoals: [],
+    //   clientExpectations: '',
+    //   initialAssessment: '',
+    //   recommendedTreatmentPlan: '',
+    //   consentAgreement: false,
+    //   clientSignatureName: '',
+    //   clientSignatureDate: '',
+    //   therapistName: '',
+    //   registrationDate: '',
+    //   initialRecommendation: [],
+    // },
   });
 
   // Load client data on mount
@@ -211,8 +213,8 @@ export default function ClientTherapyPage() {
           const result = await TherapistAPI.getCurrentTherapist();
           if (result.success && result.data) {
             setCurrentTherapistId(result.data.id);
-            // Don't fallback to user ID - these are different entities
-            // Show error to user instead
+          } else {
+            // Show error when therapist profile is not found
             addToast({
               type: 'error',
               title: 'Therapist Profile Missing',
@@ -221,7 +223,7 @@ export default function ClientTherapyPage() {
             setCurrentTherapistId(null);
           }
         } catch (error) {
-          // Don't fallback to user ID - show error instead
+          // Show error when there's an exception loading therapist profile
           addToast({
             type: 'error',
             title: 'Error Loading Therapist Profile',
@@ -327,18 +329,18 @@ export default function ClientTherapyPage() {
       traumaticExperienceDetails: '',
       familyPsychologicalHistory: false,
       familyPsychologicalHistoryDetails: '',
-      primaryConcern: 'Assessment awal klien untuk evaluasi kondisi psikologis dan kebutuhan terapi.',
+      primaryConcern: '',
       secondaryConcerns: [],
-      symptomSeverity: 3,
-      symptomDuration: '1-2 bulan',
-      emotionScale: undefined,
+      symptomSeverity: undefined,
+      symptomDuration: '',
+      emotionScale: {},
       recentMoodState: undefined,
       recentMoodStateDetails: '',
       frequentEmotions: [],
       selfHarmThoughts: undefined,
       selfHarmDetails: '',
       dailyStressFrequency: undefined,
-      treatmentGoals: ['Meningkatkan kesejahteraan psikologis klien'],
+      treatmentGoals: [],
       clientExpectations: '',
       initialAssessment: '',
       recommendedTreatmentPlan: '',
@@ -485,7 +487,7 @@ export default function ClientTherapyPage() {
       }
 
       
-      // Transform form data to API format - only include fields supported by backend DTO
+      // Transform form data to API format - include all fields from the form
       const consultationData = {
         clientId: data.clientId,
         formTypes: data.formTypes,
@@ -494,6 +496,8 @@ export default function ClientTherapyPage() {
         sessionDuration: data.sessionDuration,
         consultationNotes: data.consultationNotes,
         scriptGenerationPreferences: data.scriptGenerationPreferences,
+        
+        // Client background information
         previousTherapyExperience: data.previousTherapyExperience,
         previousTherapyDetails: data.previousTherapyDetails,
         currentMedications: data.currentMedications,
@@ -506,6 +510,8 @@ export default function ClientTherapyPage() {
         traumaticExperienceDetails: data.traumaticExperienceDetails,
         familyPsychologicalHistory: data.familyPsychologicalHistory,
         familyPsychologicalHistoryDetails: data.familyPsychologicalHistoryDetails,
+        
+        // Presenting concerns
         primaryConcern: data.primaryConcern,
         secondaryConcerns: data.secondaryConcerns,
         symptomSeverity: data.symptomSeverity,
@@ -514,6 +520,8 @@ export default function ClientTherapyPage() {
         clientExpectations: data.clientExpectations,
         initialAssessment: data.initialAssessment,
         recommendedTreatmentPlan: data.recommendedTreatmentPlan,
+        
+        
         // Use the form data that's already been organized by the ConsultationForm component
         generalFormData: data.generalFormData,
         drugAddictionFormData: data.drugAddictionFormData,

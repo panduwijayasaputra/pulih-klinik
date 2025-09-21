@@ -271,8 +271,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Object.values(ConsultationFormTypeEnum).map(type => {
                   const isMinorType = type === ConsultationFormTypeEnum.Minor;
-                  // const isDisabled = (isMinorType && client && !client.isMinor) || (type === ConsultationFormTypeEnum.General && client && client.isMinor);
-                  const isDisabled = false;
+                  const isDisabled = (isMinorType && client && !client.isMinor) || (type === ConsultationFormTypeEnum.General && client && client.isMinor);
                   const isChecked = formTypes.includes(type);
 
                   return (
@@ -1717,6 +1716,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     placeholder="Sebutkan alasan lain jika ada"
                     className="mt-1"
                   />
+                  {errors.otherConsultationReason && (
+                    <p className="mt-1 text-sm text-red-600">{errors.otherConsultationReason.message}</p>
+                  )}
                 </div>
 
                 <div className="mt-4">
