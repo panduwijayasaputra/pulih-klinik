@@ -123,6 +123,24 @@ export const consultationFormSchema = z.object({
   impactOnDailyLife: z.string().min(1, 'Jelaskan dampak pada kehidupan sehari-hari'),
   financialImpact: z.string().min(1, 'Jelaskan dampak finansial'),
   
+  // Additional fields used at root level in form
+  previousTreatmentDetails: z.string().min(1, 'Jelaskan detail program perawatan sebelumnya'),
+  legalIssuesDetails: z.string().min(1, 'Jelaskan detail masalah hukum'),
+  currentSobrietyPeriod: z.string().min(1, 'Jelaskan periode sobriety saat ini'),
+  otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya'),
+  problemOnset: z.string().min(1, 'Jelaskan kapan masalah muncul'),
+  previousPsychologicalHelpDetails: z.string().min(1, 'Jelaskan detail bantuan psikologis sebelumnya'),
+  currentGradeLevel: z.string().min(1, 'Masukkan tingkat kelas saat ini'),
+  schoolBehaviorDetails: z.string().min(1, 'Jelaskan detail masalah perilaku di sekolah'),
+  teacherConcerns: z.string().min(1, 'Jelaskan kekhawatiran guru'),
+  familyStructure: z.string().min(1, 'Jelaskan struktur keluarga'),
+  siblingRelationships: z.string().min(1, 'Jelaskan hubungan dengan saudara'),
+  peerRelationships: z.string().min(1, 'Jelaskan hubungan dengan teman sebaya'),
+  socialDifficultiesDetails: z.string().min(1, 'Jelaskan detail kesulitan sosial'),
+  developmentalMilestones: z.string().min(1, 'Jelaskan milestone perkembangan'),
+  attentionDetails: z.string().min(1, 'Jelaskan detail masalah perhatian'),
+  behavioralDetails: z.string().min(1, 'Jelaskan detail masalah perilaku'),
+  
   // Separate form data sections - conditionally required based on formTypes
   generalFormData: z.object({
     stressLevel: z.number().min(1, 'Beri penilaian tingkat stres (1-10)').max(10, 'Tingkat stres maksimal 10'),
