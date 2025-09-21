@@ -1300,6 +1300,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     {...register('ageOfFirstUse', { valueAsNumber: true })}
                     className="mt-1"
                   />
+                  {errors.ageOfFirstUse && (
+                    <p className="mt-1 text-sm text-red-600">{errors.ageOfFirstUse.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1310,6 +1313,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     placeholder="Contoh: Setiap hari, 2-3x seminggu"
                     className="mt-1"
                   />
+                  {errors.frequencyOfUse && (
+                    <p className="mt-1 text-sm text-red-600">{errors.frequencyOfUse.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1320,6 +1326,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     placeholder="Contoh: 1 botol, 2 gram"
                     className="mt-1"
                   />
+                  {errors.quantityPerUse && (
+                    <p className="mt-1 text-sm text-red-600">{errors.quantityPerUse.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -1332,6 +1341,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     {...register('lastUseDate')}
                     className="mt-1"
                   />
+                  {errors.lastUseDate && (
+                    <p className="mt-1 text-sm text-red-600">{errors.lastUseDate.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1343,6 +1355,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     {...register('attemptsToQuit', { valueAsNumber: true })}
                     className="mt-1"
                   />
+                  {errors.attemptsToQuit && (
+                    <p className="mt-1 text-sm text-red-600">{errors.attemptsToQuit.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -1381,6 +1396,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <SelectItem value="5">Sangat tinggi</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.toleranceLevel && (
+                  <p className="mt-1 text-sm text-red-600">{errors.toleranceLevel.message}</p>
+                )}
               </div>
 
               <div>
@@ -1409,6 +1427,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   rows={4}
                   className="mt-1"
                 />
+                {errors.impactOnDailyLife && (
+                  <p className="mt-1 text-sm text-red-600">{errors.impactOnDailyLife.message}</p>
+                )}
               </div>
 
               <div>
@@ -1446,6 +1467,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       <Label htmlFor="previousTreatmentPrograms-no" className="text-sm font-medium">Tidak</Label>
                     </div>
                   </div>
+                  {errors.previousTreatmentPrograms && (
+                    <p className="mt-1 text-sm text-red-600">{errors.previousTreatmentPrograms.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1468,6 +1492,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       <Label htmlFor="legalIssuesRelated-no" className="text-sm font-medium">Tidak</Label>
                     </div>
                   </div>
+                  {errors.legalIssuesRelated && (
+                    <p className="mt-1 text-sm text-red-600">{errors.legalIssuesRelated.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -1481,6 +1508,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     rows={3}
                     className="mt-1"
                   />
+                  {errors.previousTreatmentDetails && (
+                    <p className="mt-1 text-sm text-red-600">{errors.previousTreatmentDetails.message}</p>
+                  )}
                 </div>
               )}
 
@@ -1494,6 +1524,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     rows={3}
                     className="mt-1"
                   />
+                  {errors.legalIssuesDetails && (
+                    <p className="mt-1 text-sm text-red-600">{errors.legalIssuesDetails.message}</p>
+                  )}
                 </div>
               )}
 
@@ -1505,6 +1538,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   placeholder="Contoh: 3 hari, 2 minggu, 1 bulan"
                   className="mt-1"
                 />
+                {errors.currentSobrietyPeriod && (
+                  <p className="mt-1 text-sm text-red-600">{errors.currentSobrietyPeriod.message}</p>
+                )}
               </div>
 
               {/* Goals and Motivation */}
@@ -1526,6 +1562,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         <SelectItem value="No">Belum yakin ingin berhenti</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.desireToQuit && (
+                      <p className="mt-1 text-sm text-red-600">{errors.desireToQuit.message}</p>
+                    )}
                   </div>
 
                   <div>
