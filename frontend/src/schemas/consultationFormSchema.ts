@@ -54,14 +54,14 @@ export const consultationFormSchema = z.object({
   // Recent mood and emotions
   recentMoodState: z.enum(RecentMoodStateEnum, {
     message: 'Pilih kondisi mood Anda dalam sebulan terakhir'
-  }).optional(),
+  }),
   recentMoodStateDetails: z.string().min(1, 'Jelaskan kondisi mood Anda secara detail'),
   frequentEmotions: z.array(z.string()).min(1, 'Pilih minimal satu emosi yang sering Anda alami'),
   
   // Self-harm and stress assessment
   selfHarmThoughts: z.enum(SelfHarmThoughtsEnum, {
     message: 'Pilih frekuensi pikiran menyakiti diri'
-  }).optional(),
+  }),
   selfHarmDetails: z.string().min(1, 'Jelaskan detail tentang pikiran menyakiti diri'),
   dailyStressFrequency: z.enum(DailyStressFrequencyEnum, {
     message: 'Pilih seberapa sering Anda merasa stres'
