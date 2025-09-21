@@ -183,7 +183,6 @@ export const consultationFormSchema = z.object({
     }),
     medicationsSupplements: z.array(z.string()).min(1, 'Pilih minimal satu obat/suplemen'),
     specialNeeds: z.array(z.string()).min(1, 'Pilih minimal satu kebutuhan khusus'),
-    consultationReasons: z.array(z.string()).min(1, 'Pilih minimal satu alasan konsultasi'),
     otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya'),
     problemOnset: z.string().min(1, 'Jelaskan kapan masalah muncul'),
     previousPsychologicalHelpDetails: z.string().min(1, 'Jelaskan detail bantuan psikologis sebelumnya'),
@@ -272,24 +271,27 @@ export const consultationFormSchema = z.object({
   ),
   otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya'),
   problemOnset: z.string().min(1, 'Jelaskan kapan masalah muncul'),
+  previousPsychologicalHelpDetails: z.string().min(1, 'Jelaskan detail bantuan psikologis sebelumnya'),
+  currentGradeLevel: z.string().min(1, 'Masukkan tingkat kelas saat ini'),
+  academicPerformance: z.number().min(1, 'Beri penilaian prestasi akademik (1-5)').max(5, 'Prestasi maksimal 5'),
+  schoolBehaviorDetails: z.string().min(1, 'Jelaskan detail masalah perilaku di sekolah'),
+  teacherConcerns: z.string().min(1, 'Jelaskan kekhawatiran guru'),
+  familyStructure: z.string().min(1, 'Jelaskan struktur keluarga'),
+  siblingRelationships: z.string().min(1, 'Jelaskan hubungan dengan saudara'),
+  peerRelationships: z.string().min(1, 'Jelaskan hubungan dengan teman sebaya'),
+  socialDifficultiesDetails: z.string().min(1, 'Jelaskan detail kesulitan sosial'),
+  attentionDetails: z.string().min(1, 'Jelaskan detail masalah perhatian'),
+  behavioralDetails: z.string().min(1, 'Jelaskan detail masalah perilaku'),
   previousPsychologicalHelp: z.boolean({
     message: 'Pilih apakah pernah mendapat bantuan psikologis'
   }),
-  previousPsychologicalHelpDetails: z.string().min(1, 'Jelaskan detail bantuan psikologis sebelumnya'),
-  currentGradeLevel: z.string().min(1, 'Masukkan tingkat kelas saat ini'),
-  academicPerformance: z.number().min(1, 'Beri penilaian prestasi akademik (1-5)'),
   schoolBehaviorIssues: z.boolean({
     message: 'Pilih apakah ada masalah perilaku di sekolah'
   }),
-  schoolBehaviorDetails: z.string().min(1, 'Jelaskan detail masalah perilaku di sekolah'),
-  teacherConcerns: z.string().min(1, 'Jelaskan kekhawatiran guru'),
   bullyingHistory: z.boolean({
     message: 'Pilih apakah pernah mengalami bullying'
   }),
   bullyingDetails: z.string().min(1, 'Jelaskan detail riwayat bullying'),
-  familyStructure: z.string().min(1, 'Jelaskan struktur keluarga'),
-  siblingRelationships: z.string().min(1, 'Jelaskan hubungan dengan saudara'),
-  peerRelationships: z.string().min(1, 'Jelaskan hubungan dengan teman sebaya'),
   familyConflicts: z.boolean({
     message: 'Pilih apakah ada konflik dalam keluarga'
   }),
@@ -297,16 +299,13 @@ export const consultationFormSchema = z.object({
   socialDifficulties: z.boolean({
     message: 'Pilih apakah ada kesulitan dalam bersosialisasi'
   }),
-  socialDifficultiesDetails: z.string().min(1, 'Jelaskan detail kesulitan sosial'),
   developmentalMilestones: z.string().min(1, 'Jelaskan milestone perkembangan'),
   attentionConcerns: z.boolean({
     message: 'Pilih apakah ada masalah perhatian'
   }),
-  attentionDetails: z.string().min(1, 'Jelaskan detail masalah perhatian'),
   behavioralConcerns: z.boolean({
     message: 'Pilih apakah ada masalah perilaku'
   }),
-  behavioralDetails: z.string().min(1, 'Jelaskan detail masalah perilaku'),
 }).refine((data) => {
   // If General form type is selected, generalFormData must be provided
   if (data.formTypes.includes(ConsultationFormTypeEnum.General)) {
