@@ -109,19 +109,7 @@ export const consultationFormSchema = z.object({
   supportSystem: z.string().min(1, 'Jelaskan sistem dukungan yang tersedia'),
   workLifeBalance: z.number().min(1, 'Beri penilaian keseimbangan kerja-hidup (1-10)'),
   
-  // Drug addiction form fields - root level to match form usage
-  substanceHistory: z.record(z.string(), z.boolean()).refine(
-    (data) => Object.values(data).some(value => value === true),
-    { message: 'Pilih minimal satu jenis zat yang pernah digunakan' }
-  ),
-  otherSubstancesDetails: z.string().min(1, 'Jelaskan zat lain yang pernah digunakan'),
-  ageOfFirstUse: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100'),
-  frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan'),
-  quantityPerUse: z.string().min(1, 'Jelaskan jumlah yang digunakan'),
-  lastUseDate: z.string().min(1, 'Pilih tanggal terakhir menggunakan'),
-  attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti'),
-  impactOnDailyLife: z.string().min(1, 'Jelaskan dampak pada kehidupan sehari-hari'),
-  financialImpact: z.string().min(1, 'Jelaskan dampak finansial'),
+  // Drug addiction form fields - moved to nested structure
   
   // Additional fields used at root level in form
   previousTreatmentDetails: z.string().min(1, 'Jelaskan detail program perawatan sebelumnya'),
@@ -186,7 +174,37 @@ export const consultationFormSchema = z.object({
     }),
     occupationalImpact: z.string().min(1, 'Jelaskan dampak pada pekerjaan'),
     healthComplications: z.array(z.string()).min(1, 'Pilih minimal satu komplikasi kesehatan'),
-    // Removed duplicate fields - these are now defined at root level
+    // Fields used in nested structure by the form
+    substanceHistory: z.record(z.string(), z.boolean()).refine(
+      (data) => Object.values(data).some(value => value === true),
+      { message: 'Pilih minimal satu jenis zat yang pernah digunakan' }
+    ),
+    otherSubstancesDetails: z.string().min(1, 'Jelaskan zat lain yang pernah digunakan'),
+    primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan'),
+    ageOfFirstUse: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100'),
+    frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan'),
+    quantityPerUse: z.string().min(1, 'Jelaskan jumlah yang digunakan'),
+    lastUseDate: z.string().min(1, 'Pilih tanggal terakhir menggunakan'),
+    attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti'),
+    toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-10)'),
+    impactOnDailyLife: z.string().min(1, 'Jelaskan dampak pada kehidupan sehari-hari'),
+    socialCircleSubstanceUse: z.boolean({
+      message: 'Pilih apakah lingkungan sosial juga menggunakan zat'
+    }),
+    triggerSituations: z.array(z.string()).min(1, 'Pilih minimal satu situasi pemicu'),
+    environmentalFactors: z.array(z.string()).min(1, 'Pilih minimal satu faktor lingkungan'),
+    previousTreatmentPrograms: z.boolean({
+      message: 'Pilih apakah pernah mengikuti program perawatan'
+    }),
+    previousTreatmentDetails: z.string().min(1, 'Jelaskan detail program perawatan sebelumnya'),
+    currentSobrietyPeriod: z.string().min(1, 'Jelaskan periode sobriety saat ini'),
+    legalIssuesRelated: z.boolean({
+      message: 'Pilih apakah ada masalah hukum terkait'
+    }),
+    legalIssuesDetails: z.string().min(1, 'Jelaskan detail masalah hukum'),
+    financialImpact: z.string().min(1, 'Jelaskan dampak finansial'),
+    desireToQuit: z.string().min(1, 'Jelaskan keinginan untuk berhenti'),
+    recoveryGoals: z.array(z.string()).min(1, 'Pilih minimal satu tujuan pemulihan'),
   }).optional(),
 
   minorFormData: z.object({
@@ -210,24 +228,7 @@ export const consultationFormSchema = z.object({
     // Removed duplicate fields - these are now defined at root level
   }).optional(),
 
-  // Additional drug addiction fields
-  primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan'),
-  additionalSubstances: z.array(z.string()).min(1, 'Pilih minimal satu zat tambahan'),
-  withdrawalSymptoms: z.array(z.string()).min(1, 'Pilih minimal satu gejala withdrawal'),
-  toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-10)'),
-  socialCircleSubstanceUse: z.boolean({
-    message: 'Pilih apakah lingkungan sosial juga menggunakan zat'
-  }),
-  triggerSituations: z.array(z.string()).min(1, 'Pilih minimal satu situasi pemicu'),
-  environmentalFactors: z.array(z.string()).min(1, 'Pilih minimal satu faktor lingkungan'),
-  previousTreatmentPrograms: z.boolean({
-    message: 'Pilih apakah pernah mengikuti program perawatan'
-  }),
-  legalIssuesRelated: z.boolean({
-    message: 'Pilih apakah ada masalah hukum terkait'
-  }),
-  desireToQuit: z.string().min(1, 'Jelaskan keinginan untuk berhenti'),
-  recoveryGoals: z.array(z.string()).min(1, 'Pilih minimal satu tujuan pemulihan'),
+  // Additional drug addiction fields - moved to nested structure
   
   // Additional minor consultation fields
   guardianName: z.string().min(1, 'Masukkan nama lengkap wali'),
