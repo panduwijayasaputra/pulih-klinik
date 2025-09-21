@@ -271,7 +271,8 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Object.values(ConsultationFormTypeEnum).map(type => {
                   const isMinorType = type === ConsultationFormTypeEnum.Minor;
-                  const isDisabled = (isMinorType && client && !client.isMinor) || (type === ConsultationFormTypeEnum.General && client && client.isMinor);
+                  // const isDisabled = (isMinorType && client && !client.isMinor) || (type === ConsultationFormTypeEnum.General && client && client.isMinor);
+                  const isDisabled = false;
                   const isChecked = formTypes.includes(type);
 
                   return (
@@ -1726,6 +1727,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     placeholder="Contoh: 3 bulan yang lalu, sejak kelas 2, dll."
                     className="mt-1"
                   />
+                  {errors.problemOnset && (
+                    <p className="mt-1 text-sm text-red-600">{errors.problemOnset.message}</p>
+                  )}
                 </div>
 
                 <div className="mt-4">
@@ -1748,6 +1752,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       <Label htmlFor="previousPsychologicalHelp-no" className="text-sm font-medium">Tidak</Label>
                     </div>
                   </div>
+                  {errors.previousPsychologicalHelp && (
+                    <p className="mt-1 text-sm text-red-600">{errors.previousPsychologicalHelp.message}</p>
+                  )}
                 </div>
 
                 {watch('previousPsychologicalHelp') && (
@@ -1759,6 +1766,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       placeholder="Sebutkan tempat & tahun: contoh RS. ABC tahun 2023"
                       className="mt-1"
                     />
+                    {errors.previousPsychologicalHelpDetails && (
+                      <p className="mt-1 text-sm text-red-600">{errors.previousPsychologicalHelpDetails.message}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1775,6 +1785,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       placeholder="Contoh: Kelas 3 SD, Kelas 1 SMP"
                       className="mt-1"
                     />
+                    {errors.currentGradeLevel && (
+                      <p className="mt-1 text-sm text-red-600">{errors.currentGradeLevel.message}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1794,6 +1807,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         <SelectItem value="1">Sangat kurang</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.academicPerformance && (
+                      <p className="mt-1 text-sm text-red-600">{errors.academicPerformance.message}</p>
+                    )}
                   </div>
                 </div>
 
@@ -1818,6 +1834,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         <Label htmlFor="schoolBehaviorIssues-no" className="text-sm font-medium">Tidak</Label>
                       </div>
                     </div>
+                    {errors.schoolBehaviorIssues && (
+                      <p className="mt-1 text-sm text-red-600">{errors.schoolBehaviorIssues.message}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1840,6 +1859,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         <Label htmlFor="bullyingHistory-no" className="text-sm font-medium">Tidak</Label>
                       </div>
                     </div>
+                    {errors.bullyingHistory && (
+                      <p className="mt-1 text-sm text-red-600">{errors.bullyingHistory.message}</p>
+                    )}
                   </div>
                 </div>
 
@@ -1853,6 +1875,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       rows={3}
                       className="mt-1"
                     />
+                    {errors.schoolBehaviorDetails && (
+                      <p className="mt-1 text-sm text-red-600">{errors.schoolBehaviorDetails.message}</p>
+                    )}
                   </div>
                 )}
 
@@ -1865,6 +1890,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     rows={3}
                     className="mt-1"
                   />
+                  {errors.teacherConcerns && (
+                    <p className="mt-1 text-sm text-red-600">{errors.teacherConcerns.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -1880,6 +1908,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       placeholder="Contoh: Keluarga inti lengkap, orang tua bercerai, tinggal dengan nenek"
                       className="mt-1"
                     />
+                    {errors.familyStructure && (
+                      <p className="mt-1 text-sm text-red-600">{errors.familyStructure.message}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1891,6 +1922,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       rows={2}
                       className="mt-1"
                     />
+                    {errors.siblingRelationships && (
+                      <p className="mt-1 text-sm text-red-600">{errors.siblingRelationships.message}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1902,6 +1936,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       rows={2}
                       className="mt-1"
                     />
+                    {errors.peerRelationships && (
+                      <p className="mt-1 text-sm text-red-600">{errors.peerRelationships.message}</p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1925,6 +1962,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                           <Label htmlFor="familyConflicts-no" className="text-sm font-medium">Tidak</Label>
                         </div>
                       </div>
+                      {errors.familyConflicts && (
+                        <p className="mt-1 text-sm text-red-600">{errors.familyConflicts.message}</p>
+                      )}
                     </div>
 
                     <div>
@@ -1947,6 +1987,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                           <Label htmlFor="socialDifficulties-no" className="text-sm font-medium">Tidak</Label>
                         </div>
                       </div>
+                      {errors.socialDifficulties && (
+                        <p className="mt-1 text-sm text-red-600">{errors.socialDifficulties.message}</p>
+                      )}
                     </div>
                   </div>
 
@@ -1960,6 +2003,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         rows={3}
                         className="mt-1"
                       />
+                      {errors.socialDifficultiesDetails && (
+                        <p className="mt-1 text-sm text-red-600">{errors.socialDifficultiesDetails.message}</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1978,6 +2024,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       rows={3}
                       className="mt-1"
                     />
+                    {errors.developmentalMilestones && (
+                      <p className="mt-1 text-sm text-red-600">{errors.developmentalMilestones.message}</p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2001,6 +2050,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                           <Label htmlFor="attentionConcerns-no" className="text-sm font-medium">Tidak</Label>
                         </div>
                       </div>
+                      {errors.attentionConcerns && (
+                        <p className="mt-1 text-sm text-red-600">{errors.attentionConcerns.message}</p>
+                      )}
                     </div>
 
                     <div>
@@ -2023,6 +2075,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                           <Label htmlFor="behavioralConcerns-no" className="text-sm font-medium">Tidak</Label>
                         </div>
                       </div>
+                      {errors.behavioralConcerns && (
+                        <p className="mt-1 text-sm text-red-600">{errors.behavioralConcerns.message}</p>
+                      )}
                     </div>
                   </div>
 
@@ -2036,6 +2091,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         rows={3}
                         className="mt-1"
                       />
+                      {errors.attentionDetails && (
+                        <p className="mt-1 text-sm text-red-600">{errors.attentionDetails.message}</p>
+                      )}
                     </div>
                   )}
 
@@ -2049,6 +2107,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         rows={3}
                         className="mt-1"
                       />
+                      {errors.behavioralDetails && (
+                        <p className="mt-1 text-sm text-red-600">{errors.behavioralDetails.message}</p>
+                      )}
                     </div>
                   )}
                 </div>
