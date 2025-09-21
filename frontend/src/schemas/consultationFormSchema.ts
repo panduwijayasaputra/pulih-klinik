@@ -210,22 +210,11 @@ export const consultationFormSchema = z.object({
     // Removed duplicate fields - these are now defined at root level
   }).optional(),
 
-  // Legacy fields for backward compatibility - all required
-  substanceHistory: z.record(z.string(), z.boolean()).refine(
-    (data) => Object.values(data).some(value => value === true),
-    { message: 'Pilih minimal satu jenis zat yang pernah digunakan' }
-  ),
-  otherSubstancesDetails: z.string().min(1, 'Jelaskan detail zat lainnya'),
+  // Additional drug addiction fields
   primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan'),
   additionalSubstances: z.array(z.string()).min(1, 'Pilih minimal satu zat tambahan'),
-  ageOfFirstUse: z.number().min(1, 'Masukkan usia pertama kali menggunakan'),
-  frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan'),
-  quantityPerUse: z.string().min(1, 'Jelaskan jumlah per penggunaan'),
-  lastUseDate: z.string().min(1, 'Pilih tanggal terakhir menggunakan'),
   withdrawalSymptoms: z.array(z.string()).min(1, 'Pilih minimal satu gejala withdrawal'),
   toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-10)'),
-  impactOnDailyLife: z.string().min(1, 'Jelaskan dampak pada kehidupan sehari-hari'),
-  attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti'),
   socialCircleSubstanceUse: z.boolean({
     message: 'Pilih apakah lingkungan sosial juga menggunakan zat'
   }),
@@ -234,17 +223,13 @@ export const consultationFormSchema = z.object({
   previousTreatmentPrograms: z.boolean({
     message: 'Pilih apakah pernah mengikuti program perawatan'
   }),
-  previousTreatmentDetails: z.string().min(1, 'Jelaskan detail perawatan sebelumnya'),
-  currentSobrietyPeriod: z.string().min(1, 'Jelaskan periode sobriety saat ini'),
   legalIssuesRelated: z.boolean({
     message: 'Pilih apakah ada masalah hukum terkait'
   }),
-  legalIssuesDetails: z.string().min(1, 'Jelaskan detail masalah hukum'),
-  financialImpact: z.string().min(1, 'Jelaskan dampak finansial'),
   desireToQuit: z.string().min(1, 'Jelaskan keinginan untuk berhenti'),
   recoveryGoals: z.array(z.string()).min(1, 'Pilih minimal satu tujuan pemulihan'),
   
-  // Minor consultation fields - all required
+  // Additional minor consultation fields
   guardianName: z.string().min(1, 'Masukkan nama lengkap wali'),
   guardianRelationship: z.string().min(1, 'Jelaskan hubungan dengan wali'),
   guardianPhone: z.string().min(1, 'Masukkan nomor telepon wali'),
@@ -263,19 +248,7 @@ export const consultationFormSchema = z.object({
     (data) => Object.values(data).some(value => value === true),
     { message: 'Pilih minimal satu alasan konsultasi' }
   ),
-  otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya'),
-  problemOnset: z.string().min(1, 'Jelaskan kapan masalah muncul'),
-  previousPsychologicalHelpDetails: z.string().min(1, 'Jelaskan detail bantuan psikologis sebelumnya'),
-  currentGradeLevel: z.string().min(1, 'Masukkan tingkat kelas saat ini'),
   academicPerformance: z.number().min(1, 'Beri penilaian prestasi akademik (1-5)').max(5, 'Prestasi maksimal 5'),
-  schoolBehaviorDetails: z.string().min(1, 'Jelaskan detail masalah perilaku di sekolah'),
-  teacherConcerns: z.string().min(1, 'Jelaskan kekhawatiran guru'),
-  familyStructure: z.string().min(1, 'Jelaskan struktur keluarga'),
-  siblingRelationships: z.string().min(1, 'Jelaskan hubungan dengan saudara'),
-  peerRelationships: z.string().min(1, 'Jelaskan hubungan dengan teman sebaya'),
-  socialDifficultiesDetails: z.string().min(1, 'Jelaskan detail kesulitan sosial'),
-  attentionDetails: z.string().min(1, 'Jelaskan detail masalah perhatian'),
-  behavioralDetails: z.string().min(1, 'Jelaskan detail masalah perilaku'),
   previousPsychologicalHelp: z.boolean({
     message: 'Pilih apakah pernah mendapat bantuan psikologis'
   }),
@@ -293,7 +266,6 @@ export const consultationFormSchema = z.object({
   socialDifficulties: z.boolean({
     message: 'Pilih apakah ada kesulitan dalam bersosialisasi'
   }),
-  developmentalMilestones: z.string().min(1, 'Jelaskan milestone perkembangan'),
   attentionConcerns: z.boolean({
     message: 'Pilih apakah ada masalah perhatian'
   }),
