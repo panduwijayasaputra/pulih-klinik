@@ -109,39 +109,19 @@ export const consultationFormSchema = z.object({
   supportSystem: z.string().min(1, 'Jelaskan sistem dukungan yang tersedia'),
   workLifeBalance: z.number().min(1, 'Beri penilaian keseimbangan kerja-hidup (1-10)'),
   
-  // Drug addiction form fields - moved to root level to match form usage
+  // Drug addiction form fields - root level to match form usage
   substanceHistory: z.record(z.string(), z.boolean()).refine(
     (data) => Object.values(data).some(value => value === true),
     { message: 'Pilih minimal satu jenis zat yang pernah digunakan' }
   ),
   otherSubstancesDetails: z.string().min(1, 'Jelaskan zat lain yang pernah digunakan'),
-  primarySubstance: z.string().min(1, 'Pilih zat utama yang menjadi masalah'),
-  additionalSubstances: z.array(z.string()).min(1, 'Pilih minimal satu zat tambahan'),
   ageOfFirstUse: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100'),
   frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan'),
   quantityPerUse: z.string().min(1, 'Jelaskan jumlah yang digunakan'),
   lastUseDate: z.string().min(1, 'Pilih tanggal terakhir menggunakan'),
-  withdrawalSymptoms: z.array(z.string()).min(1, 'Pilih minimal satu gejala withdrawal'),
-  toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-5)').max(5, 'Tingkat toleransi maksimal 5'),
+  attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti'),
   impactOnDailyLife: z.string().min(1, 'Jelaskan dampak pada kehidupan sehari-hari'),
-  attemptsToQuit: z.string().min(1, 'Jelaskan upaya untuk berhenti'),
-  socialCircleSubstanceUse: z.boolean({
-    message: 'Pilih apakah lingkungan sosial juga menggunakan zat'
-  }),
-  triggerSituations: z.array(z.string()).min(1, 'Pilih minimal satu situasi pemicu'),
-  environmentalFactors: z.array(z.string()).min(1, 'Pilih minimal satu faktor lingkungan'),
-  previousTreatmentPrograms: z.boolean({
-    message: 'Pilih apakah pernah mengikuti program perawatan'
-  }),
-  previousTreatmentDetails: z.string().min(1, 'Jelaskan detail program perawatan sebelumnya'),
-  currentSobrietyPeriod: z.string().min(1, 'Jelaskan periode sobriety saat ini'),
-  legalIssuesRelated: z.boolean({
-    message: 'Pilih apakah ada masalah hukum terkait'
-  }),
-  legalIssuesDetails: z.string().min(1, 'Jelaskan detail masalah hukum'),
   financialImpact: z.string().min(1, 'Jelaskan dampak finansial'),
-  desireToQuit: z.string().min(1, 'Pilih tingkat keinginan untuk berhenti'),
-  recoveryGoals: z.array(z.string()).min(1, 'Pilih minimal satu tujuan recovery'),
   
   // Separate form data sections - conditionally required based on formTypes
   generalFormData: z.object({
