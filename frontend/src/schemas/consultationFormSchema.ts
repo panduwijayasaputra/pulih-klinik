@@ -186,15 +186,7 @@ export const consultationFormSchema = z.object({
     }),
     occupationalImpact: z.string().min(1, 'Jelaskan dampak pada pekerjaan'),
     healthComplications: z.array(z.string()).min(1, 'Pilih minimal satu komplikasi kesehatan'),
-    primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan'),
-    quantityPerUse: z.string().min(1, 'Jelaskan jumlah per penggunaan'),
-    attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti'),
-    currentSobrietyPeriod: z.string().min(1, 'Jelaskan periode sobriety saat ini'),
-    financialImpact: z.string().min(1, 'Jelaskan dampak finansial'),
-    desireToQuit: z.enum(DesireToQuitEnum, {
-      message: 'Pilih keinginan untuk berhenti'
-    }),
-    recoveryGoals: z.array(z.string()).min(1, 'Pilih minimal satu tujuan pemulihan'),
+    // Removed duplicate fields - these are now defined at root level
   }).optional(),
 
   minorFormData: z.object({
