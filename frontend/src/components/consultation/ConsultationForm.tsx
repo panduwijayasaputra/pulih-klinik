@@ -346,7 +346,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <Label className="text-base font-medium">Sudah Berlangsung *</Label>
                     <Select
                       value={watch('symptomDuration')}
-                      onValueChange={(val) => setValue('symptomDuration', val, { shouldDirty: true, shouldValidate: true })}
+                      onValueChange={async (val) => {
+                        setValue('symptomDuration', val, { shouldDirty: true, shouldValidate: true });
+                        await trigger('symptomDuration');
+                      }}
                       disabled={readOnly}
                     >
                       <SelectTrigger>
@@ -369,7 +372,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <Label className="text-base font-medium">Seberapa Sering</Label>
                     <Select
                       value={watch('problemFrequency')}
-                      onValueChange={(val) => setValue('problemFrequency', val as ProblemFrequencyEnum, { shouldDirty: true, shouldValidate: true })}
+                      onValueChange={async (val) => {
+                        setValue('problemFrequency', val as ProblemFrequencyEnum, { shouldDirty: true, shouldValidate: true });
+                        await trigger('problemFrequency');
+                      }}
                       disabled={readOnly}
                     >
                       <SelectTrigger>
@@ -392,7 +398,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <Label className="text-base font-medium">Tingkat Gangguan *</Label>
                     <Select
                       value={watch('symptomSeverity')}
-                      onValueChange={(val) => setValue('symptomSeverity', val as SymptomSeverityEnum, { shouldDirty: true, shouldValidate: true })}
+                      onValueChange={async (val) => {
+                        setValue('symptomSeverity', val as SymptomSeverityEnum, { shouldDirty: true, shouldValidate: true });
+                        await trigger('symptomSeverity');
+                      }}
                       disabled={readOnly}
                     >
                       <SelectTrigger>
@@ -442,7 +451,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     ))}
                   </div>
                   {errors.emotionScale && (
-                    <p className="mt-2 text-sm text-red-600">{errors.emotionScale?.message}</p>
+                    <p className="mt-2 text-sm text-red-600">{String(errors.emotionScale.message)}</p>
                   )}
                 </div>
               </div>
@@ -681,7 +690,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <Label className="text-base font-medium">Kualitas Tidur</Label>
                   <Select
                     value={watch('sleepQuality')}
-                    onValueChange={(val) => setValue('sleepQuality', val as SleepQualityEnum, { shouldDirty: true, shouldValidate: true })}
+                    onValueChange={async (val) => {
+                      setValue('sleepQuality', val as SleepQualityEnum, { shouldDirty: true, shouldValidate: true });
+                      await trigger('sleepQuality');
+                    }}
                     disabled={readOnly}
                   >
                     <SelectTrigger>
@@ -704,7 +716,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <Label className="text-base font-medium">Pikiran Menyakiti Diri</Label>
                   <Select
                     value={watch('selfHarmFrequency')}
-                    onValueChange={(val) => setValue('selfHarmFrequency', val as SelfHarmFrequencyEnum, { shouldDirty: true, shouldValidate: true })}
+                    onValueChange={async (val) => {
+                      setValue('selfHarmFrequency', val as SelfHarmFrequencyEnum, { shouldDirty: true, shouldValidate: true });
+                      await trigger('selfHarmFrequency');
+                    }}
                     disabled={readOnly}
                   >
                     <SelectTrigger>
@@ -1201,7 +1216,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <Label className="text-base font-medium">Preferensi Jenis Terapi</Label>
                   <Select
                     value={watch('therapyPreference')}
-                    onValueChange={(val) => setValue('therapyPreference', val as TherapyPreferenceEnum, { shouldDirty: true, shouldValidate: true })}
+                    onValueChange={async (val) => {
+                      setValue('therapyPreference', val as TherapyPreferenceEnum, { shouldDirty: true, shouldValidate: true });
+                      await trigger('therapyPreference');
+                    }}
                     disabled={readOnly}
                   >
                     <SelectTrigger>
@@ -1252,7 +1270,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   ))}
                 </div>
                 {errors.substanceHistory && (
-                  <p className="mt-1 text-sm text-red-600">{errors.substanceHistory.message}</p>
+                  <p className="mt-1 text-sm text-red-600">{String(errors.substanceHistory.message)}</p>
                 )}
               </div>
 
@@ -1274,7 +1292,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 <Label htmlFor="primarySubstance">Zat Utama yang Saat Ini Menjadi Masalah *</Label>
                 <Select
                   value={watch('primarySubstance')}
-                  onValueChange={(val) => setValue('primarySubstance', val, { shouldDirty: true, shouldValidate: true })}
+                  onValueChange={async (val) => {
+                    setValue('primarySubstance', val, { shouldDirty: true, shouldValidate: true });
+                    await trigger('primarySubstance');
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih zat utama" />
@@ -1386,7 +1407,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 <p className="text-sm text-gray-600 mb-2">Seberapa banyak zat yang dibutuhkan untuk merasakan efek yang sama</p>
                 <Select
                   value={watch('toleranceLevel')?.toString() || ''}
-                  onValueChange={(val) => setValue('toleranceLevel', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true })}
+                  onValueChange={async (val) => {
+                    setValue('toleranceLevel', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true });
+                    await trigger('toleranceLevel');
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih tingkat toleransi" />
@@ -1554,7 +1578,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <Label>Keinginan untuk Berhenti Menggunakan Zat</Label>
                     <Select
                       value={watch('desireToQuit') || ''}
-                      onValueChange={(val) => setValue('desireToQuit', val, { shouldDirty: true, shouldValidate: true })}
+                      onValueChange={async (val) => {
+                        setValue('desireToQuit', val, { shouldDirty: true, shouldValidate: true });
+                        await trigger('desireToQuit');
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih tingkat keinginan" />
@@ -1704,7 +1731,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     ))}
                   </div>
                   {errors.consultationReasons && (
-                    <p className="mt-1 text-sm text-red-600">{errors.consultationReasons.message}</p>
+                    <p className="mt-1 text-sm text-red-600">{String(errors.consultationReasons.message)}</p>
                   )}
                 </div>
 
@@ -1796,7 +1823,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <Label>Prestasi Akademik</Label>
                     <Select
                       value={watch('academicPerformance')?.toString() || ''}
-                      onValueChange={(val) => setValue('academicPerformance', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true })}
+                      onValueChange={async (val) => {
+                        setValue('academicPerformance', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true });
+                        await trigger('academicPerformance');
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih prestasi" />
