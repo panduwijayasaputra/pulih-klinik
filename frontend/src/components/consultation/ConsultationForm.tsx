@@ -61,7 +61,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors, isDirty, isValid } } = form;
   
   // Debug: Log errors to see what's happening
-  console.log('Form errors:', JSON.stringify(errors, null, 2));
+  console.log('Form errors:', errors);
+  console.log('Error keys:', Object.keys(errors));
+  console.log('Error values:', Object.values(errors).map(err => err?.message || err));
   
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -342,7 +344,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       console.log('primaryConcern onBlur triggered');
                       const result = await trigger('primaryConcern');
                       console.log('primaryConcern validation result:', result);
-                      console.log('primaryConcern error:', JSON.stringify(errors.primaryConcern, null, 2));
+                      console.log('primaryConcern error:', errors.primaryConcern?.message);
                     }}
                   />
                   {errors.primaryConcern && (
@@ -412,7 +414,8 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         setValue('symptomSeverity', val as SymptomSeverityEnum, { shouldDirty: true, shouldValidate: true });
                         const result = await trigger('symptomSeverity');
                         console.log('Trigger result for symptomSeverity:', result);
-                        console.log('Errors after trigger:', JSON.stringify(errors, null, 2));
+                        console.log('Errors after trigger:', errors);
+                        console.log('symptomSeverity error:', errors.symptomSeverity?.message);
                       }}
                       disabled={readOnly}
                     >
