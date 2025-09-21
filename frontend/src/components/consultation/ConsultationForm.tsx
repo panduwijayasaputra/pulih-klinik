@@ -1241,7 +1241,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       <Checkbox
                         id={`substance-${substance.key}`}
                         checked={watch(`substanceHistory.${substance.key}`) || false}
-                        onCheckedChange={(checked) => setValue(`substanceHistory.${substance.key}`, checked === true, { shouldDirty: true, shouldValidate: true })}
+                        onCheckedChange={(checked) => {
+                          setValue(`substanceHistory.${substance.key}`, checked === true, { shouldDirty: true, shouldValidate: true });
+                          // Trigger validation for the entire substanceHistory field
+                          trigger('substanceHistory');
+                        }}
                       />
                       <Label htmlFor={`substance-${substance.key}`} className="text-sm font-medium flex-1">{substance.label}</Label>
                     </div>
@@ -1689,12 +1693,19 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         <Checkbox
                           id={`consultation-reason-${reason.key}`}
                           checked={watch(`consultationReasons.${reason.key}`) || false}
-                          onCheckedChange={(checked) => setValue(`consultationReasons.${reason.key}`, checked === true, { shouldDirty: true, shouldValidate: true })}
+                          onCheckedChange={(checked) => {
+                            setValue(`consultationReasons.${reason.key}`, checked === true, { shouldDirty: true, shouldValidate: true });
+                            // Trigger validation for the entire consultationReasons field
+                            trigger('consultationReasons');
+                          }}
                         />
                         <Label htmlFor={`consultation-reason-${reason.key}`} className="text-sm font-medium flex-1">{reason.label}</Label>
                       </div>
                     ))}
                   </div>
+                  {errors.consultationReasons && (
+                    <p className="mt-1 text-sm text-red-600">{errors.consultationReasons.message}</p>
+                  )}
                 </div>
 
                 <div className="mt-4">
