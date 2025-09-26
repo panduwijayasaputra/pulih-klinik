@@ -5,7 +5,9 @@ import { ConsultationFormTypeEnum, ConsultationStatusEnum, SymptomSeverityValues
 export const consultationFormSchema = z.object({
   clientId: z.string().min(1, 'ID klien tidak boleh kosong'),
   formTypes: z.array(z.nativeEnum(ConsultationFormTypeEnum)).min(1, 'Pilih minimal satu jenis konsultasi'),
-  status: z.nativeEnum(ConsultationStatusEnum),
+  status: z.nativeEnum(ConsultationStatusEnum, {
+    message: 'Pilih status konsultasi yang sesuai'
+  }),
   
   // Session information
   sessionDate: z.string().min(1, 'Pilih tanggal sesi konsultasi'),
@@ -45,7 +47,7 @@ export const consultationFormSchema = z.object({
   
   // Presenting concerns
   primaryConcern: z.string().min(10, 'Jelaskan keluhan utama minimal 10 karakter'),
-  secondaryConcerns: z.array(z.string()).min(1, 'Pilih minimal satu keluhan tambahan'),
+  secondaryConcerns: z.array(z.string().min(1, 'Keluhan tidak boleh kosong')).min(1, 'Pilih minimal satu keluhan tambahan'),
   symptomSeverity: z.enum(SymptomSeverityValues, {
     message: 'Pilih tingkat keparahan gejala yang sesuai'
   }),
@@ -71,7 +73,7 @@ export const consultationFormSchema = z.object({
     message: 'Pilih kondisi mood Anda dalam sebulan terakhir'
   }),
   recentMoodStateDetails: z.string().min(1, 'Jelaskan kondisi mood Anda secara detail'),
-  frequentEmotions: z.array(z.string()).min(1, 'Pilih minimal satu emosi yang sering Anda alami'),
+  frequentEmotions: z.array(z.string().min(1, 'Emosi tidak boleh kosong')).min(1, 'Pilih minimal satu emosi yang sering Anda alami'),
   
   // Self-harm and stress assessment
   selfHarmThoughts: z.enum(SelfHarmThoughtsEnum, {
@@ -102,61 +104,82 @@ export const consultationFormSchema = z.object({
   clientSignatureDate: z.string().min(1, 'Pilih tanggal tanda tangan'),
   therapistName: z.string().min(1, 'Masukkan nama terapis yang menangani'),
   registrationDate: z.string().min(1, 'Pilih tanggal registrasi'),
-  initialRecommendation: z.array(z.string()).min(1, 'Buatkan minimal satu rekomendasi awal'),
+  initialRecommendation: z.array(z.string().min(1, 'Rekomendasi tidak boleh kosong')).min(1, 'Buatkan minimal satu rekomendasi awal'),
   
   // Additional fields for comprehensive schema compatibility
-  currentLifeStressors: z.array(z.string()).min(1, 'Pilih minimal satu stresor kehidupan saat ini'),
-  supportSystem: z.string().min(1, 'Jelaskan sistem dukungan yang tersedia'),
-  workLifeBalance: z.number().min(1, 'Beri penilaian keseimbangan kerja-hidup (1-10)'),
+  currentLifeStressors: z.array(z.string().min(1, 'Stresor tidak boleh kosong')).min(1, 'Pilih minimal satu stresor kehidupan saat ini').optional(),
+  supportSystem: z.string().min(1, 'Jelaskan sistem dukungan yang tersedia').optional(),
+  workLifeBalance: z.number().min(1, 'Beri penilaian keseimbangan kerja-hidup (1-10)').max(10, 'Penilaian maksimal 10').optional(),
   
-  // Drug addiction form fields - root level (used directly in form)
-  lastUseDate: z.string().min(1, 'Pilih tanggal terakhir menggunakan'),
-  impactOnDailyLife: z.string().min(1, 'Jelaskan dampak pada kehidupan sehari-hari'),
-  financialImpact: z.string().min(1, 'Jelaskan dampak finansial'),
+  // General form fields at root level for form compatibility
+  stressLevel: z.number().min(1, 'Beri penilaian tingkat stres (1-10)').max(10, 'Tingkat stres maksimal 10').optional(),
+  primaryStressors: z.array(z.string().min(1, 'Stresor tidak boleh kosong')).min(1, 'Pilih minimal satu stresor utama').optional(),
+  dailyRoutine: z.string().min(1, 'Jelaskan rutinitas harian Anda').optional(),
+  exerciseHabits: z.string().min(1, 'Jelaskan kebiasaan olahraga Anda').optional(),
+  nutritionHabits: z.string().min(1, 'Jelaskan kebiasaan nutrisi Anda').optional(),
+  hobbiesInterests: z.array(z.string().min(1, 'Hobi tidak boleh kosong')).min(1, 'Pilih minimal satu hobi atau ketertarikan').optional(),
+  spiritualBeliefs: z.string().min(1, 'Jelaskan keyakinan spiritual Anda').optional(),
+  culturalFactors: z.string().min(1, 'Jelaskan faktor budaya yang mempengaruhi').optional(),
+  
+  // Drug addiction form fields - root level (used directly in form) - optional at root level, validated conditionally
+  lastUseDate: z.string().min(1, 'Pilih tanggal terakhir menggunakan').optional(),
+  impactOnDailyLife: z.string().min(1, 'Jelaskan dampak pada kehidupan sehari-hari').optional(),
+  financialImpact: z.string().min(1, 'Jelaskan dampak finansial').optional(),
   previousTreatmentPrograms: z.boolean({
     message: 'Pilih apakah pernah mengikuti program perawatan'
-  }),
-  previousTreatmentDetails: z.string().min(1, 'Jelaskan detail program perawatan sebelumnya'),
+  }).optional(),
+  previousTreatmentDetails: z.string().min(1, 'Jelaskan detail program perawatan sebelumnya').optional(),
   legalIssuesRelated: z.boolean({
     message: 'Pilih apakah ada masalah hukum terkait'
-  }),
-  legalIssuesDetails: z.string().min(1, 'Jelaskan detail masalah hukum'),
-  currentSobrietyPeriod: z.string().min(1, 'Jelaskan periode sobriety saat ini'),
-  desireToQuit: z.string().min(1, 'Jelaskan keinginan untuk berhenti'),
-  recoveryGoals: z.array(z.string()).min(1, 'Pilih minimal satu tujuan pemulihan'),
-  withdrawalSymptoms: z.array(z.string()).min(1, 'Pilih minimal satu gejala withdrawal'),
-  triggerSituations: z.array(z.string()).min(1, 'Pilih minimal satu situasi pemicu'),
-  otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya'),
-  problemOnset: z.string().min(1, 'Jelaskan kapan masalah muncul'),
-  previousPsychologicalHelpDetails: z.string().min(1, 'Jelaskan detail bantuan psikologis sebelumnya'),
-  currentGradeLevel: z.string().min(1, 'Masukkan tingkat kelas saat ini'),
-  schoolBehaviorDetails: z.string().min(1, 'Jelaskan detail masalah perilaku di sekolah'),
-  teacherConcerns: z.string().min(1, 'Jelaskan kekhawatiran guru'),
-  familyStructure: z.string().min(1, 'Jelaskan struktur keluarga'),
-  siblingRelationships: z.string().min(1, 'Jelaskan hubungan dengan saudara'),
-  peerRelationships: z.string().min(1, 'Jelaskan hubungan dengan teman sebaya'),
-  socialDifficultiesDetails: z.string().min(1, 'Jelaskan detail kesulitan sosial'),
-  developmentalMilestones: z.string().min(1, 'Jelaskan milestone perkembangan'),
-  attentionDetails: z.string().min(1, 'Jelaskan detail masalah perhatian'),
-  behavioralDetails: z.string().min(1, 'Jelaskan detail masalah perilaku'),
+  }).optional(),
+  legalIssuesDetails: z.string().min(1, 'Jelaskan detail masalah hukum').optional(),
+  currentSobrietyPeriod: z.string().min(1, 'Jelaskan periode sobriety saat ini').optional(),
+  desireToQuit: z.string().min(1, 'Jelaskan keinginan untuk berhenti').optional(),
+  recoveryGoals: z.array(z.string().min(1, 'Tujuan pemulihan tidak boleh kosong')).min(1, 'Pilih minimal satu tujuan pemulihan').optional(),
+  withdrawalSymptoms: z.string().min(1, 'Jelaskan gejala withdrawal yang dialami').optional(),
+  triggerSituations: z.array(z.string().min(1, 'Situasi pemicu tidak boleh kosong')).min(1, 'Pilih minimal satu situasi pemicu').optional(),
+  
+  // Additional drug addiction fields at root level - with proper validation - optional at root level, validated conditionally
+  substanceHistory: z.array(z.string().min(1, 'Jenis zat tidak boleh kosong')).min(1, 'Pilih minimal satu jenis zat yang pernah digunakan').optional(),
+  otherSubstancesDetails: z.string().min(1, 'Jelaskan zat lain yang pernah digunakan').optional(),
+  primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan').optional(),
+  ageOfFirstUse: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100').optional(),
+  frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan').optional(),
+  quantityPerUse: z.string().min(1, 'Jelaskan jumlah yang digunakan').optional(),
+  attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti').max(999, 'Jumlah percobaan maksimal 999').optional(),
+  toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-10)').max(10, 'Tingkat toleransi maksimal 10').optional(),
+  
+  otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya').optional(),
+  problemOnset: z.string().min(1, 'Jelaskan kapan masalah muncul').optional(),
+  previousPsychologicalHelpDetails: z.string().min(1, 'Jelaskan detail bantuan psikologis sebelumnya').optional(),
+  currentGradeLevel: z.string().min(1, 'Masukkan tingkat kelas saat ini').optional(),
+  schoolBehaviorDetails: z.string().min(1, 'Jelaskan detail masalah perilaku di sekolah').optional(),
+  teacherConcerns: z.string().min(1, 'Jelaskan kekhawatiran guru').optional(),
+  familyStructure: z.string().min(1, 'Jelaskan struktur keluarga').optional(),
+  siblingRelationships: z.string().min(1, 'Jelaskan hubungan dengan saudara').optional(),
+  peerRelationships: z.string().min(1, 'Jelaskan hubungan dengan teman sebaya').optional(),
+  socialDifficultiesDetails: z.string().min(1, 'Jelaskan detail kesulitan sosial').optional(),
+  developmentalMilestones: z.string().min(1, 'Jelaskan milestone perkembangan').optional(),
+  attentionDetails: z.string().min(1, 'Jelaskan detail masalah perhatian').optional(),
+  behavioralDetails: z.string().min(1, 'Jelaskan detail masalah perilaku').optional(),
   
   // Separate form data sections - conditionally required based on formTypes
   generalFormData: z.object({
     stressLevel: z.number().min(1, 'Beri penilaian tingkat stres (1-10)').max(10, 'Tingkat stres maksimal 10'),
-    primaryStressors: z.array(z.string()).min(1, 'Pilih minimal satu stresor utama'),
+    primaryStressors: z.array(z.string().min(1, 'Stresor tidak boleh kosong')).min(1, 'Pilih minimal satu stresor utama'),
     supportSystem: z.string().min(1, 'Jelaskan sistem dukungan yang tersedia'),
     dailyRoutine: z.string().min(1, 'Jelaskan rutinitas harian Anda'),
     exerciseHabits: z.string().min(1, 'Jelaskan kebiasaan olahraga Anda'),
     sleepPatterns: z.string().min(1, 'Jelaskan pola tidur Anda'),
     nutritionHabits: z.string().min(1, 'Jelaskan kebiasaan nutrisi Anda'),
-    hobbiesInterests: z.array(z.string()).min(1, 'Pilih minimal satu hobi atau ketertarikan'),
+    hobbiesInterests: z.array(z.string().min(1, 'Hobi tidak boleh kosong')).min(1, 'Pilih minimal satu hobi atau ketertarikan'),
     spiritualBeliefs: z.string().min(1, 'Jelaskan keyakinan spiritual Anda'),
     culturalFactors: z.string().min(1, 'Jelaskan faktor budaya yang mempengaruhi'),
     recentMoodState: z.enum(RecentMoodStateEnum, {
       message: 'Pilih kondisi mood terbaru Anda'
     }),
     recentMoodStateDetails: z.string().min(1, 'Jelaskan kondisi mood terbaru secara detail'),
-    frequentEmotions: z.array(z.string()).min(1, 'Pilih minimal satu emosi yang sering dialami'),
+    frequentEmotions: z.array(z.string().min(1, 'Emosi tidak boleh kosong')).min(1, 'Pilih minimal satu emosi yang sering dialami'),
     selfHarmThoughts: z.enum(SelfHarmThoughtsEnum, {
       message: 'Pilih frekuensi pikiran menyakiti diri'
     }),
@@ -171,36 +194,33 @@ export const consultationFormSchema = z.object({
   }).optional(),
 
   drugAddictionFormData: z.object({
-    substanceTypes: z.array(z.string()).min(1, 'Pilih minimal satu jenis zat yang pernah digunakan'),
+    substanceTypes: z.array(z.string().min(1, 'Jenis zat tidak boleh kosong')).min(1, 'Pilih minimal satu jenis zat yang pernah digunakan'),
     firstUseAge: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100'),
     usageFrequency: z.string().min(1, 'Jelaskan frekuensi penggunaan'),
     lastUseDate: z.string().min(1, 'Pilih tanggal terakhir menggunakan'),
-    triggersRelapse: z.array(z.string()).min(1, 'Pilih minimal satu pemicu kambuh'),
-    previousTreatments: z.array(z.string()).min(1, 'Pilih minimal satu perawatan sebelumnya'),
-    withdrawalSymptoms: z.array(z.string()).min(1, 'Pilih minimal satu gejala withdrawal'),
+    triggersRelapse: z.array(z.string().min(1, 'Pemicu tidak boleh kosong')).min(1, 'Pilih minimal satu pemicu kambuh'),
+    previousTreatments: z.array(z.string().min(1, 'Perawatan tidak boleh kosong')).min(1, 'Pilih minimal satu perawatan sebelumnya'),
+    withdrawalSymptoms: z.string().min(1, 'Jelaskan gejala withdrawal yang dialami'),
     motivationToQuit: z.number().min(1, 'Beri penilaian motivasi berhenti (1-10)').max(10, 'Motivasi maksimal 10'),
     supportSystemAvailability: z.string().min(1, 'Jelaskan ketersediaan sistem dukungan'),
     legalIssues: z.boolean({
       message: 'Pilih apakah ada masalah hukum terkait penggunaan zat'
     }),
     occupationalImpact: z.string().min(1, 'Jelaskan dampak pada pekerjaan'),
-    healthComplications: z.array(z.string()).min(1, 'Pilih minimal satu komplikasi kesehatan'),
+    healthComplications: z.array(z.string().min(1, 'Komplikasi tidak boleh kosong')).min(1, 'Pilih minimal satu komplikasi kesehatan'),
     // Fields used in nested structure by the form
-    substanceHistory: z.record(z.string(), z.boolean()).refine(
-      (data) => Object.values(data).some(value => value === true),
-      { message: 'Pilih minimal satu jenis zat yang pernah digunakan' }
-    ),
+    substanceHistory: z.array(z.string().min(1, 'Jenis zat tidak boleh kosong')).min(1, 'Pilih minimal satu jenis zat yang pernah digunakan'),
     otherSubstancesDetails: z.string().min(1, 'Jelaskan zat lain yang pernah digunakan'),
     primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan'),
     ageOfFirstUse: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100'),
     frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan'),
     quantityPerUse: z.string().min(1, 'Jelaskan jumlah yang digunakan'),
-    attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti'),
-    toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-10)'),
+    attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti').max(999, 'Jumlah percobaan maksimal 999'),
+    toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-10)').max(10, 'Tingkat toleransi maksimal 10'),
     socialCircleSubstanceUse: z.boolean({
       message: 'Pilih apakah lingkungan sosial juga menggunakan zat'
     }),
-    environmentalFactors: z.array(z.string()).min(1, 'Pilih minimal satu faktor lingkungan'),
+    environmentalFactors: z.array(z.string().min(1, 'Faktor lingkungan tidak boleh kosong')).min(1, 'Pilih minimal satu faktor lingkungan'),
   }).optional(),
 
   minorFormData: z.object({
@@ -215,86 +235,152 @@ export const consultationFormSchema = z.object({
     friendsRelationships: z.string().min(1, 'Jelaskan hubungan dengan teman'),
     developmentalMilestones: z.string().min(1, 'Jelaskan milestone perkembangan'),
     familyDynamics: z.string().min(1, 'Jelaskan dinamika keluarga'),
-    parentalConcerns: z.array(z.string()).min(1, 'Pilih minimal satu kekhawatiran orang tua'),
+    parentalConcerns: z.array(z.string().min(1, 'Kekhawatiran tidak boleh kosong')).min(1, 'Pilih minimal satu kekhawatiran orang tua'),
     previousProfessionalHelp: z.boolean({
       message: 'Pilih apakah pernah mendapat bantuan profesional sebelumnya'
     }),
-    medicationsSupplements: z.array(z.string()).min(1, 'Pilih minimal satu obat/suplemen'),
-    specialNeeds: z.array(z.string()).min(1, 'Pilih minimal satu kebutuhan khusus'),
+    medicationsSupplements: z.array(z.string().min(1, 'Obat/suplemen tidak boleh kosong')).min(1, 'Pilih minimal satu obat/suplemen'),
+    specialNeeds: z.array(z.string().min(1, 'Kebutuhan khusus tidak boleh kosong')).min(1, 'Pilih minimal satu kebutuhan khusus'),
     // Removed duplicate fields - these are now defined at root level
   }).optional(),
 
   // Additional drug addiction fields - moved to nested structure
   
   // Additional minor consultation fields
-  guardianName: z.string().min(1, 'Masukkan nama lengkap wali'),
-  guardianRelationship: z.string().min(1, 'Jelaskan hubungan dengan wali'),
-  guardianPhone: z.string().min(1, 'Masukkan nomor telepon wali'),
-  guardianOccupation: z.string().min(1, 'Masukkan pekerjaan wali'),
-  parentalMaritalStatus: z.string().min(1, 'Pilih status perkawinan orang tua'),
+  guardianName: z.string().min(1, 'Masukkan nama lengkap wali').optional(),
+  guardianRelationship: z.string().min(1, 'Jelaskan hubungan dengan wali').optional(),
+  guardianPhone: z.string().min(1, 'Masukkan nomor telepon wali').optional(),
+  guardianOccupation: z.string().min(1, 'Masukkan pekerjaan wali').optional(),
+  parentalMaritalStatus: z.string().min(1, 'Pilih status perkawinan orang tua').optional(),
   legalCustody: z.boolean({
     message: 'Pilih apakah wali memiliki hak asuh legal'
-  }),
-  guardianAddress: z.string().min(1, 'Masukkan alamat lengkap wali'),
-  guardianSignatureName: z.string().min(1, 'Masukkan nama lengkap untuk tanda tangan wali'),
-  guardianSignatureDate: z.string().min(1, 'Pilih tanggal tanda tangan wali'),
+  }).optional(),
+  guardianAddress: z.string().min(1, 'Masukkan alamat lengkap wali').optional(),
+  guardianSignatureName: z.string().min(1, 'Masukkan nama lengkap untuk tanda tangan wali').optional(),
+  guardianSignatureDate: z.string().min(1, 'Pilih tanggal tanda tangan wali').optional(),
   clientCanSign: z.boolean({
     message: 'Pilih apakah klien dapat menandatangani sendiri'
   }),
   consultationReasons: z.record(z.string(), z.boolean()).refine(
     (data) => Object.values(data).some(value => value === true),
     { message: 'Pilih minimal satu alasan konsultasi' }
-  ),
-  academicPerformance: z.number().min(1, 'Beri penilaian prestasi akademik (1-5)').max(5, 'Prestasi maksimal 5'),
+  ).optional(),
+  academicPerformance: z.number().min(1, 'Beri penilaian prestasi akademik (1-5)').max(5, 'Prestasi maksimal 5').optional(),
   previousPsychologicalHelp: z.boolean({
     message: 'Pilih apakah pernah mendapat bantuan psikologis'
-  }),
+  }).optional(),
   schoolBehaviorIssues: z.boolean({
     message: 'Pilih apakah ada masalah perilaku di sekolah'
-  }),
+  }).optional(),
   bullyingHistory: z.boolean({
     message: 'Pilih apakah pernah mengalami bullying'
-  }),
-  bullyingDetails: z.string().min(1, 'Jelaskan detail riwayat bullying'),
+  }).optional(),
+  bullyingDetails: z.string().min(1, 'Jelaskan detail riwayat bullying').optional(),
   familyConflicts: z.boolean({
     message: 'Pilih apakah ada konflik dalam keluarga'
-  }),
-  familyConflictsDetails: z.string().min(1, 'Jelaskan detail konflik keluarga'),
+  }).optional(),
+  familyConflictsDetails: z.string().min(1, 'Jelaskan detail konflik keluarga').optional(),
   socialDifficulties: z.boolean({
     message: 'Pilih apakah ada kesulitan dalam bersosialisasi'
-  }),
+  }).optional(),
   attentionConcerns: z.boolean({
     message: 'Pilih apakah ada masalah perhatian'
-  }),
+  }).optional(),
   behavioralConcerns: z.boolean({
     message: 'Pilih apakah ada masalah perilaku'
-  }),
-}).refine((data) => {
+  }).optional(),
+}).superRefine((data, ctx) => {
   // If General form type is selected, generalFormData must be provided
   if (data.formTypes.includes(ConsultationFormTypeEnum.General)) {
     if (!data.generalFormData) {
-      return false;
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Data form umum wajib diisi',
+        path: ['generalFormData'],
+      });
     }
   }
   
-  // If DrugAddiction form type is selected, drugAddictionFormData must be provided
+  // If DrugAddiction form type is selected, validate all drug addiction fields
   if (data.formTypes.includes(ConsultationFormTypeEnum.DrugAddiction)) {
     if (!data.drugAddictionFormData) {
-      return false;
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Data form ketergantungan zat wajib diisi',
+        path: ['drugAddictionFormData'],
+      });
+    }
+    
+    // Validate root-level drug addiction fields
+    if (!data.substanceHistory || data.substanceHistory.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih minimal satu jenis zat yang pernah digunakan',
+        path: ['substanceHistory'],
+      });
+    }
+    
+    if (!data.primarySubstance || data.primarySubstance.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Jelaskan zat utama yang digunakan',
+        path: ['primarySubstance'],
+      });
+    }
+    
+    // These fields are now validated by the schema itself, no need for manual validation
+    
+    if (!data.toleranceLevel || data.toleranceLevel < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Beri penilaian tingkat toleransi (1-10)',
+        path: ['toleranceLevel'],
+      });
+    }
+    
+    if (!data.withdrawalSymptoms || data.withdrawalSymptoms.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Jelaskan gejala withdrawal yang dialami',
+        path: ['withdrawalSymptoms'],
+      });
+    }
+    
+    if (!data.triggerSituations || data.triggerSituations.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih minimal satu situasi pemicu',
+        path: ['triggerSituations'],
+      });
+    }
+    
+    if (!data.desireToQuit || data.desireToQuit.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Jelaskan keinginan untuk berhenti',
+        path: ['desireToQuit'],
+      });
+    }
+    
+    if (!data.recoveryGoals || data.recoveryGoals.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih minimal satu tujuan pemulihan',
+        path: ['recoveryGoals'],
+      });
     }
   }
   
   // If Minor form type is selected, minorFormData must be provided
   if (data.formTypes.includes(ConsultationFormTypeEnum.Minor)) {
     if (!data.minorFormData) {
-      return false;
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Data form anak dan remaja wajib diisi',
+        path: ['minorFormData'],
+      });
     }
   }
-  
-  return true;
-}, {
-  message: 'Data form wajib diisi sesuai dengan jenis konsultasi yang dipilih',
-  path: ['generalFormData', 'drugAddictionFormData', 'minorFormData'],
 });
 
 // Export the type

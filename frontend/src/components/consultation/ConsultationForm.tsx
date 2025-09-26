@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -59,9 +59,28 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 }) => {
   const { user } = useAuth();
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors, isDirty, isValid } } = form;
-  
-  
-  
+
+  useEffect(() => {
+    // Debug: Log error count and field names to avoid circular structure
+    if (Object.keys(errors).length > 0) {
+      // console.log('Form has', Object.keys(errors).length, 'errors in fields:', Object.keys(errors));
+      const errorMessages = Object.keys(errors).map(field => {
+        const error = errors[field as keyof typeof errors];
+        return {
+          field,
+          message: error && typeof error === 'object' && 'message' in error ? error.message : 'Unknown error'
+        };
+      });
+      console.log('Error messages:', errorMessages);
+      // console.log('Error messages:', errorMessages.filter(error => error.message == 'Invalid input'));
+      
+      
+    }
+  }, [errors]);
+
+
+
+
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<ConsultationFormSchemaType | null>(null);
@@ -73,21 +92,22 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const significantPhysicalIllness = watch('significantPhysicalIllness');
   const traumaticExperience = watch('traumaticExperience');
   const familyPsychologicalHistory = watch('familyPsychologicalHistory');
-  
+
   // Handle form submission with confirmation
   const handleFormSubmit = async (data: ConsultationFormSchemaType) => {
     // Trigger validation for all fields to show errors
     const isValid = await trigger();
-    
+
     if (!isValid) {
       // Form is invalid, errors will be shown automatically
+      console.log('Form validation failed. Errors:', form.formState.errors);
       return;
     }
-    
+
     setPendingFormData(data);
     setShowConfirmDialog(true);
   };
-  
+
   // Handle confirmed submission
   const handleConfirmedSubmit = async () => {
     if (pendingFormData) {
@@ -102,7 +122,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const organizeFormData = (data: ConsultationFormSchemaType) => {
     // Get current form values using watch to capture fields that use setValue
     const currentFormValues = watch() as any;
-    
+
     // Create a clean organized data object with only the base consultation fields
     const organizedData = {
       clientId: data.clientId,
@@ -166,8 +186,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
     if (formTypes.includes(ConsultationFormTypeEnum.DrugAddiction)) {
       organizedData.drugAddictionFormData = {
         // Get substance types from substanceHistory
-        substanceTypes: currentFormValues.substanceHistory ? 
-          Object.keys(currentFormValues.substanceHistory).filter(key => currentFormValues.substanceHistory[key] === true) : [],
+        substanceTypes: currentFormValues.substanceHistory || [],
         firstUseAge: data.ageOfFirstUse || currentFormValues.ageOfFirstUse,
         usageFrequency: data.frequencyOfUse || currentFormValues.frequencyOfUse,
         lastUseDate: data.lastUseDate || currentFormValues.lastUseDate,
@@ -248,7 +267,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
     return organizedData;
   };
-  
+
   // Handle dialog close
   const handleDialogClose = () => {
     setShowConfirmDialog(false);
@@ -456,6 +475,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <p className="mt-2 text-sm text-red-600">{String(errors.emotionScale.message)}</p>
                   )}
                 </div>
+                {errors.generalFormData && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {typeof errors.generalFormData.message === 'string' ? errors.generalFormData.message : 'Data form umum wajib diisi'}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -743,7 +767,277 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               </div>
             </div>
 
-            {/* 4. Emotional Condition Section - Only for General Consultation */}
+            {/* 4. Lifestyle and Daily Routine Section - Only for General Consultation */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Gaya Hidup dan Rutinitas</h3>
+              <p className="text-gray-600 mb-6 text-sm">Informasi tentang gaya hidup dan rutinitas harian Anda</p>
+
+              <div className="space-y-6">
+                <div>
+                  <Label className="text-base font-medium">Tingkat Stres Saat Ini *</Label>
+                  <p className="text-gray-600 mb-4 text-sm">Beri penilaian tingkat stres Anda (1-10)</p>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm text-gray-600">Sangat rendah</span>
+                    <Input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      className="flex-1 accent-blue-500"
+                      {...register('stressLevel', { valueAsNumber: true })}
+                      disabled={readOnly}
+                    />
+                    <span className="text-sm text-gray-600">Sangat tinggi</span>
+                    <span className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      {watch('stressLevel') || 1}
+                    </span>
+                  </div>
+                  {errors.stressLevel && (
+                    <p className="mt-1 text-sm text-red-600">{errors.stressLevel.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="supportSystem" className="text-base font-medium">Sistem Dukungan *</Label>
+                  <Textarea
+                    id="supportSystem"
+                    {...register('supportSystem')}
+                    placeholder="Jelaskan sistem dukungan yang tersedia (keluarga, teman, komunitas, dll.)"
+                    rows={3}
+                    className="mt-1"
+                    disabled={readOnly}
+                  />
+                  {errors.supportSystem && (
+                    <p className="mt-1 text-sm text-red-600">{errors.supportSystem.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="dailyRoutine" className="text-base font-medium">Rutinitas Harian *</Label>
+                  <Textarea
+                    id="dailyRoutine"
+                    {...register('dailyRoutine')}
+                    placeholder="Jelaskan rutinitas harian Anda (bangun tidur, makan, kerja, dll.)"
+                    rows={3}
+                    className="mt-1"
+                    disabled={readOnly}
+                  />
+                  {errors.dailyRoutine && (
+                    <p className="mt-1 text-sm text-red-600">{errors.dailyRoutine.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="exerciseHabits" className="text-base font-medium">Kebiasaan Olahraga *</Label>
+                  <Textarea
+                    id="exerciseHabits"
+                    {...register('exerciseHabits')}
+                    placeholder="Jelaskan kebiasaan olahraga Anda (jenis, frekuensi, durasi)"
+                    rows={3}
+                    className="mt-1"
+                    disabled={readOnly}
+                  />
+                  {errors.exerciseHabits && (
+                    <p className="mt-1 text-sm text-red-600">{errors.exerciseHabits.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="nutritionHabits" className="text-base font-medium">Kebiasaan Nutrisi *</Label>
+                  <Textarea
+                    id="nutritionHabits"
+                    {...register('nutritionHabits')}
+                    placeholder="Jelaskan kebiasaan nutrisi Anda (makanan, minuman, suplemen)"
+                    rows={3}
+                    className="mt-1"
+                    disabled={readOnly}
+                  />
+                  {errors.nutritionHabits && (
+                    <p className="mt-1 text-sm text-red-600">{errors.nutritionHabits.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="spiritualBeliefs" className="text-base font-medium">Keyakinan Spiritual *</Label>
+                  <Textarea
+                    id="spiritualBeliefs"
+                    {...register('spiritualBeliefs')}
+                    placeholder="Jelaskan keyakinan spiritual atau agama Anda"
+                    rows={3}
+                    className="mt-1"
+                    disabled={readOnly}
+                  />
+                  {errors.spiritualBeliefs && (
+                    <p className="mt-1 text-sm text-red-600">{errors.spiritualBeliefs.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="culturalFactors" className="text-base font-medium">Faktor Budaya *</Label>
+                  <Textarea
+                    id="culturalFactors"
+                    {...register('culturalFactors')}
+                    placeholder="Jelaskan faktor budaya yang mempengaruhi kehidupan Anda"
+                    rows={3}
+                    className="mt-1"
+                    disabled={readOnly}
+                  />
+                  {errors.culturalFactors && (
+                    <p className="mt-1 text-sm text-red-600">{errors.culturalFactors.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Stresor Utama *</Label>
+                  <p className="text-gray-600 mb-4 text-sm">Pilih stresor utama yang Anda alami (boleh lebih dari satu)</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="stressor-work"
+                        checked={watch('primaryStressors')?.includes('Pekerjaan') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('primaryStressors') || [];
+                          const stressor = 'Pekerjaan';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('primaryStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="stressor-work" className="text-sm font-medium cursor-pointer">Pekerjaan</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="stressor-family"
+                        checked={watch('primaryStressors')?.includes('Keluarga') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('primaryStressors') || [];
+                          const stressor = 'Keluarga';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('primaryStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="stressor-family" className="text-sm font-medium cursor-pointer">Keluarga</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="stressor-finance"
+                        checked={watch('primaryStressors')?.includes('Keuangan') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('primaryStressors') || [];
+                          const stressor = 'Keuangan';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('primaryStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="stressor-finance" className="text-sm font-medium cursor-pointer">Keuangan</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="stressor-health"
+                        checked={watch('primaryStressors')?.includes('Kesehatan') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('primaryStressors') || [];
+                          const stressor = 'Kesehatan';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('primaryStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="stressor-health" className="text-sm font-medium cursor-pointer">Kesehatan</Label>
+                    </div>
+                  </div>
+                  {errors.primaryStressors && (
+                    <p className="mt-2 text-sm text-red-600">{errors.primaryStressors.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Hobi dan Ketertarikan *</Label>
+                  <p className="text-gray-600 mb-4 text-sm">Pilih hobi dan ketertarikan Anda (boleh lebih dari satu)</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="hobby-music"
+                        checked={watch('hobbiesInterests')?.includes('Musik') || false}
+                        onCheckedChange={(checked) => {
+                          const currentHobbies = watch('hobbiesInterests') || [];
+                          const hobby = 'Musik';
+                          const newHobbies = checked
+                            ? [...currentHobbies, hobby]
+                            : currentHobbies.filter(h => h !== hobby);
+                          setValue('hobbiesInterests', newHobbies, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="hobby-music" className="text-sm font-medium cursor-pointer">Musik</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="hobby-sports"
+                        checked={watch('hobbiesInterests')?.includes('Olahraga') || false}
+                        onCheckedChange={(checked) => {
+                          const currentHobbies = watch('hobbiesInterests') || [];
+                          const hobby = 'Olahraga';
+                          const newHobbies = checked
+                            ? [...currentHobbies, hobby]
+                            : currentHobbies.filter(h => h !== hobby);
+                          setValue('hobbiesInterests', newHobbies, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="hobby-sports" className="text-sm font-medium cursor-pointer">Olahraga</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="hobby-reading"
+                        checked={watch('hobbiesInterests')?.includes('Membaca') || false}
+                        onCheckedChange={(checked) => {
+                          const currentHobbies = watch('hobbiesInterests') || [];
+                          const hobby = 'Membaca';
+                          const newHobbies = checked
+                            ? [...currentHobbies, hobby]
+                            : currentHobbies.filter(h => h !== hobby);
+                          setValue('hobbiesInterests', newHobbies, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="hobby-reading" className="text-sm font-medium cursor-pointer">Membaca</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="hobby-travel"
+                        checked={watch('hobbiesInterests')?.includes('Traveling') || false}
+                        onCheckedChange={(checked) => {
+                          const currentHobbies = watch('hobbiesInterests') || [];
+                          const hobby = 'Traveling';
+                          const newHobbies = checked
+                            ? [...currentHobbies, hobby]
+                            : currentHobbies.filter(h => h !== hobby);
+                          setValue('hobbiesInterests', newHobbies, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="hobby-travel" className="text-sm font-medium cursor-pointer">Traveling</Label>
+                    </div>
+                  </div>
+                  {errors.hobbiesInterests && (
+                    <p className="mt-2 text-sm text-red-600">{errors.hobbiesInterests.message}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Emotional Condition Section - Only for General Consultation */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Kondisi Emosional</h3>
               <p className="text-gray-600 mb-6 text-sm">Informasi tentang kondisi emosional dan perasaan Anda saat ini</p>
@@ -1260,24 +1554,35 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <div key={substance.key} className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-all duration-200">
                       <Checkbox
                         id={`substance-${substance.key}`}
-                        checked={watch(`substanceHistory.${substance.key}`) || false}
+                        checked={watch('substanceHistory')?.includes(substance.key) || false}
                         onCheckedChange={(checked) => {
-                          setValue(`substanceHistory.${substance.key}`, checked === true, { shouldDirty: true, shouldValidate: true });
-                          // Trigger validation for the entire substanceHistory field
-                          trigger('substanceHistory');
+                          const currentSubstances = watch('substanceHistory') || [];
+                          const substanceKey = substance.key;
+                          const newSubstances = checked
+                            ? [...currentSubstances, substanceKey]
+                            : currentSubstances.filter(s => s !== substanceKey);
+                          setValue('substanceHistory', newSubstances, { shouldDirty: true, shouldValidate: true });
                         }}
+                        disabled={readOnly}
                       />
-                      <Label htmlFor={`substance-${substance.key}`} className="text-sm font-medium flex-1">{substance.label}</Label>
+                      <Label htmlFor={`substance-${substance.key}`} className="text-sm font-medium flex-1 cursor-pointer">{substance.label}</Label>
                     </div>
                   ))}
                 </div>
                 {errors.substanceHistory && (
-                  <p className="mt-1 text-sm text-red-600">{String(errors.substanceHistory.message)}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {typeof errors.substanceHistory.message === 'string' ? errors.substanceHistory.message : 'Pilih minimal satu jenis zat yang pernah digunakan'}
+                  </p>
+                )}
+                {errors.drugAddictionFormData && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {typeof errors.drugAddictionFormData.message === 'string' ? errors.drugAddictionFormData.message : 'Data form ketergantungan zat wajib diisi'}
+                  </p>
                 )}
               </div>
 
               {/* Other substances details */}
-              {watch('substanceHistory.other_substances') && (
+              {watch('substanceHistory')?.includes('other_substances') && (
                 <div>
                   <Label htmlFor="otherSubstancesDetails">Sebutkan Zat Lainnya</Label>
                   <Input
@@ -1285,7 +1590,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     {...register('otherSubstancesDetails')}
                     placeholder="Sebutkan zat lain yang pernah digunakan"
                     className="mt-1"
+                    disabled={readOnly}
                   />
+                  {errors.otherSubstancesDetails && (
+                    <p className="mt-1 text-sm text-red-600">{errors.otherSubstancesDetails.message}</p>
+                  )}
                 </div>
               )}
 
@@ -1293,7 +1602,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               <div>
                 <Label htmlFor="primarySubstance">Zat Utama yang Saat Ini Menjadi Masalah *</Label>
                 <Select
-                  value={watch('primarySubstance')}
+                  value={watch('primarySubstance') || ''}
                   onValueChange={async (val) => {
                     setValue('primarySubstance', val, { shouldDirty: true, shouldValidate: true });
                     await trigger('primarySubstance');
@@ -1311,7 +1620,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   </SelectContent>
                 </Select>
                 {errors.primarySubstance && (
-                  <p className="mt-1 text-sm text-red-600">{errors.primarySubstance.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {typeof errors.primarySubstance.message === 'string' ? errors.primarySubstance.message : 'Jelaskan zat utama yang digunakan'}
+                  </p>
                 )}
               </div>
 
@@ -1325,9 +1636,12 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     max="100"
                     {...register('ageOfFirstUse', { valueAsNumber: true })}
                     className="mt-1"
+                    disabled={readOnly}
                   />
                   {errors.ageOfFirstUse && (
-                    <p className="mt-1 text-sm text-red-600">{errors.ageOfFirstUse.message}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {typeof errors.ageOfFirstUse.message === 'string' ? errors.ageOfFirstUse.message : 'Masukkan usia pertama kali menggunakan'}
+                    </p>
                   )}
                 </div>
 
@@ -1338,6 +1652,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     {...register('frequencyOfUse')}
                     placeholder="Contoh: Setiap hari, 2-3x seminggu"
                     className="mt-1"
+                    disabled={readOnly}
                   />
                   {errors.frequencyOfUse && (
                     <p className="mt-1 text-sm text-red-600">{errors.frequencyOfUse.message}</p>
@@ -1351,6 +1666,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     {...register('quantityPerUse')}
                     placeholder="Contoh: 1 botol, 2 gram"
                     className="mt-1"
+                    disabled={readOnly}
                   />
                   {errors.quantityPerUse && (
                     <p className="mt-1 text-sm text-red-600">{errors.quantityPerUse.message}</p>
@@ -1380,9 +1696,12 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     min="0"
                     {...register('attemptsToQuit', { valueAsNumber: true })}
                     className="mt-1"
+                    disabled={readOnly}
                   />
                   {errors.attemptsToQuit && (
-                    <p className="mt-1 text-sm text-red-600">{errors.attemptsToQuit.message}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {typeof errors.attemptsToQuit.message === 'string' ? errors.attemptsToQuit.message : 'Masukkan jumlah percobaan berhenti'}
+                    </p>
                   )}
                 </div>
               </div>
@@ -1391,13 +1710,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 <Label htmlFor="withdrawalSymptoms">Gejala Withdrawal yang Dialami</Label>
                 <Textarea
                   id="withdrawalSymptoms"
-                  placeholder="Contoh: Gemetar, berkeringat, mual, gelisah, dll. (pisahkan dengan koma)"
+                  placeholder="Jelaskan gejala withdrawal yang pernah dialami"
                   rows={3}
+                  {...register('withdrawalSymptoms')}
                   className="mt-1"
-                  onChange={(e) => {
-                    const symptoms = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
-                    setValue('withdrawalSymptoms', symptoms, { shouldDirty: true, shouldValidate: true });
-                  }}
+                  disabled={readOnly}
                 />
                 {errors.withdrawalSymptoms && (
                   <p className="mt-1 text-sm text-red-600">{errors.withdrawalSymptoms.message}</p>
@@ -1437,9 +1754,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   placeholder="Contoh: Stress kerja, masalah keluarga, tekanan teman, dll. (pisahkan dengan koma)"
                   rows={3}
                   className="mt-1"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const triggers = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
                     setValue('triggerSituations', triggers, { shouldDirty: true, shouldValidate: true });
+                    await trigger('triggerSituations');
                   }}
                 />
                 {errors.triggerSituations && (
@@ -1606,9 +1924,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       placeholder="Sebutkan tujuan-tujuan yang ingin dicapai dalam proses pemulihan (pisahkan dengan enter)"
                       rows={3}
                       className="mt-1"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const goals = e.target.value.split('\n').filter(goal => goal.trim() !== '');
                         setValue('recoveryGoals', goals, { shouldDirty: true, shouldValidate: true });
+                        await trigger('recoveryGoals');
                       }}
                     />
                     {errors.recoveryGoals && (
@@ -2149,6 +2468,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 </div>
               </div>
             </div>
+            {errors.minorFormData && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">
+                  {typeof errors.minorFormData.message === 'string' ? errors.minorFormData.message : 'Data form anak dan remaja wajib diisi'}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -2158,20 +2484,20 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           <p className="text-gray-600 mb-6 text-sm">Catatan dan penilaian dari terapis</p>
 
           <div className="space-y-6">
-                <div>
-                  <Label htmlFor="consultationNotes" className="text-base font-medium">Catatan Konsultasi *</Label>
-                  <Textarea
-                    id="consultationNotes"
-                    {...register('consultationNotes')}
-                    placeholder="Catatan umum tentang sesi konsultasi dan observasi..."
-                    rows={4}
-                    className="mt-2"
-                    disabled={readOnly}
-                  />
-                  {errors.consultationNotes && (
-                    <p className="mt-1 text-sm text-red-600">{errors.consultationNotes.message}</p>
-                  )}
-                </div>
+            <div>
+              <Label htmlFor="consultationNotes" className="text-base font-medium">Catatan Konsultasi *</Label>
+              <Textarea
+                id="consultationNotes"
+                {...register('consultationNotes')}
+                placeholder="Catatan umum tentang sesi konsultasi dan observasi..."
+                rows={4}
+                className="mt-2"
+                disabled={readOnly}
+              />
+              {errors.consultationNotes && (
+                <p className="mt-1 text-sm text-red-600">{errors.consultationNotes.message}</p>
+              )}
+            </div>
 
             <div>
               <Label htmlFor="scriptGenerationPreferences" className="text-base font-medium">Preferensi Generasi Script *</Label>
@@ -2224,6 +2550,283 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           </div>
         </div>
 
+        {/* 7. Additional Required Fields */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Informasi Tambahan</h3>
+          <p className="text-gray-600 mb-6 text-sm">Informasi tambahan yang diperlukan untuk melengkapi konsultasi</p>
+
+          <div className="space-y-6">
+            {/* Secondary Concerns */}
+            <div>
+              <Label className="text-base font-medium">Keluhan Tambahan *</Label>
+              <p className="text-gray-600 mb-4 text-sm">Pilih keluhan tambahan yang dialami (boleh lebih dari satu)</p>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="secondary-concern-anxiety"
+                    checked={watch('secondaryConcerns')?.includes('Kecemasan berlebihan') || false}
+                    onCheckedChange={(checked) => {
+                      const currentConcerns = watch('secondaryConcerns') || [];
+                      const concern = 'Kecemasan berlebihan';
+                      const newConcerns = checked
+                        ? [...currentConcerns, concern]
+                        : currentConcerns.filter(c => c !== concern);
+                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="secondary-concern-anxiety" className="text-sm font-medium cursor-pointer">
+                    Kecemasan berlebihan
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="secondary-concern-depression"
+                    checked={watch('secondaryConcerns')?.includes('Depresi') || false}
+                    onCheckedChange={(checked) => {
+                      const currentConcerns = watch('secondaryConcerns') || [];
+                      const concern = 'Depresi';
+                      const newConcerns = checked
+                        ? [...currentConcerns, concern]
+                        : currentConcerns.filter(c => c !== concern);
+                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="secondary-concern-depression" className="text-sm font-medium cursor-pointer">
+                    Depresi
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="secondary-concern-sleep"
+                    checked={watch('secondaryConcerns')?.includes('Gangguan tidur') || false}
+                    onCheckedChange={(checked) => {
+                      const currentConcerns = watch('secondaryConcerns') || [];
+                      const concern = 'Gangguan tidur';
+                      const newConcerns = checked
+                        ? [...currentConcerns, concern]
+                        : currentConcerns.filter(c => c !== concern);
+                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="secondary-concern-sleep" className="text-sm font-medium cursor-pointer">
+                    Gangguan tidur
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="secondary-concern-relationships"
+                    checked={watch('secondaryConcerns')?.includes('Masalah hubungan') || false}
+                    onCheckedChange={(checked) => {
+                      const currentConcerns = watch('secondaryConcerns') || [];
+                      const concern = 'Masalah hubungan';
+                      const newConcerns = checked
+                        ? [...currentConcerns, concern]
+                        : currentConcerns.filter(c => c !== concern);
+                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="secondary-concern-relationships" className="text-sm font-medium cursor-pointer">
+                    Masalah hubungan
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="secondary-concern-work"
+                    checked={watch('secondaryConcerns')?.includes('Masalah pekerjaan') || false}
+                    onCheckedChange={(checked) => {
+                      const currentConcerns = watch('secondaryConcerns') || [];
+                      const concern = 'Masalah pekerjaan';
+                      const newConcerns = checked
+                        ? [...currentConcerns, concern]
+                        : currentConcerns.filter(c => c !== concern);
+                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="secondary-concern-work" className="text-sm font-medium cursor-pointer">
+                    Masalah pekerjaan
+                  </Label>
+                </div>
+              </div>
+              {errors.secondaryConcerns && (
+                <p className="mt-2 text-sm text-red-600">{errors.secondaryConcerns.message}</p>
+              )}
+            </div>
+
+            {/* Initial Recommendations */}
+            <div>
+              <Label className="text-base font-medium">Rekomendasi Awal *</Label>
+              <p className="text-gray-600 mb-4 text-sm">Pilih rekomendasi awal yang sesuai (boleh lebih dari satu)</p>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="recommendation-therapy"
+                    checked={watch('initialRecommendation')?.includes('Terapi individual') || false}
+                    onCheckedChange={(checked) => {
+                      const currentRecommendations = watch('initialRecommendation') || [];
+                      const recommendation = 'Terapi individual';
+                      const newRecommendations = checked
+                        ? [...currentRecommendations, recommendation]
+                        : currentRecommendations.filter(r => r !== recommendation);
+                      setValue('initialRecommendation', newRecommendations, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="recommendation-therapy" className="text-sm font-medium cursor-pointer">
+                    Terapi individual
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="recommendation-group"
+                    checked={watch('initialRecommendation')?.includes('Terapi kelompok') || false}
+                    onCheckedChange={(checked) => {
+                      const currentRecommendations = watch('initialRecommendation') || [];
+                      const recommendation = 'Terapi kelompok';
+                      const newRecommendations = checked
+                        ? [...currentRecommendations, recommendation]
+                        : currentRecommendations.filter(r => r !== recommendation);
+                      setValue('initialRecommendation', newRecommendations, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="recommendation-group" className="text-sm font-medium cursor-pointer">
+                    Terapi kelompok
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="recommendation-medication"
+                    checked={watch('initialRecommendation')?.includes('Konsultasi medis') || false}
+                    onCheckedChange={(checked) => {
+                      const currentRecommendations = watch('initialRecommendation') || [];
+                      const recommendation = 'Konsultasi medis';
+                      const newRecommendations = checked
+                        ? [...currentRecommendations, recommendation]
+                        : currentRecommendations.filter(r => r !== recommendation);
+                      setValue('initialRecommendation', newRecommendations, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="recommendation-medication" className="text-sm font-medium cursor-pointer">
+                    Konsultasi medis
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="recommendation-followup"
+                    checked={watch('initialRecommendation')?.includes('Follow-up dalam 2 minggu') || false}
+                    onCheckedChange={(checked) => {
+                      const currentRecommendations = watch('initialRecommendation') || [];
+                      const recommendation = 'Follow-up dalam 2 minggu';
+                      const newRecommendations = checked
+                        ? [...currentRecommendations, recommendation]
+                        : currentRecommendations.filter(r => r !== recommendation);
+                      setValue('initialRecommendation', newRecommendations, { shouldDirty: true, shouldValidate: true });
+                    }}
+                    disabled={readOnly}
+                  />
+                  <Label htmlFor="recommendation-followup" className="text-sm font-medium cursor-pointer">
+                    Follow-up dalam 2 minggu
+                  </Label>
+                </div>
+              </div>
+              {errors.initialRecommendation && (
+                <p className="mt-2 text-sm text-red-600">{errors.initialRecommendation.message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 8. Consent and Signature */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Persetujuan dan Tanda Tangan</h3>
+          <p className="text-gray-600 mb-6 text-sm">Konfirmasi persetujuan dan informasi tanda tangan</p>
+
+          <div className="space-y-6">
+            {/* Consent Agreement */}
+            <div>
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="consentAgreement"
+                  checked={watch('consentAgreement') || false}
+                  onCheckedChange={(checked) => setValue('consentAgreement', checked === true, { shouldDirty: true, shouldValidate: true })}
+                  disabled={readOnly}
+                />
+                <Label htmlFor="consentAgreement" className="text-sm font-medium cursor-pointer">
+                  Saya menyetujui untuk mengikuti konsultasi dan terapi sesuai dengan prosedur yang telah dijelaskan *
+                </Label>
+              </div>
+              {errors.consentAgreement && (
+                <p className="mt-1 text-sm text-red-600">{errors.consentAgreement.message}</p>
+              )}
+            </div>
+
+            {/* Signature Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="clientSignatureName" className="text-base font-medium">Nama Lengkap Klien *</Label>
+                <Input
+                  id="clientSignatureName"
+                  {...register('clientSignatureName')}
+                  placeholder="Tuliskan nama lengkap untuk tanda tangan"
+                  className="mt-1"
+                  disabled={readOnly}
+                />
+                {errors.clientSignatureName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.clientSignatureName.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="clientSignatureDate" className="text-base font-medium">Tanggal Tanda Tangan *</Label>
+                <Input
+                  id="clientSignatureDate"
+                  type="date"
+                  {...register('clientSignatureDate')}
+                  className="mt-1"
+                  disabled={readOnly}
+                />
+                {errors.clientSignatureDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.clientSignatureDate.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="therapistName" className="text-base font-medium">Nama Terapis *</Label>
+                <Input
+                  id="therapistName"
+                  {...register('therapistName')}
+                  placeholder="Masukkan nama terapis yang menangani"
+                  className="mt-1"
+                  disabled={readOnly}
+                />
+                {errors.therapistName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.therapistName.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="registrationDate" className="text-base font-medium">Tanggal Registrasi *</Label>
+                <Input
+                  id="registrationDate"
+                  type="date"
+                  {...register('registrationDate')}
+                  className="mt-1"
+                  disabled={readOnly}
+                />
+                {errors.registrationDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.registrationDate.message}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Form Actions */}
         {!readOnly && (
           <div className="flex justify-between space-x-4">
@@ -2264,14 +2867,14 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         variant="info"
         confirmButtonProps={{ disabled: isSubmitting }}
       >
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <InformationCircleIcon className="h-5 w-5 text-blue-600" />
-                </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <InformationCircleIcon className="h-5 w-5 text-blue-600" />
+            </div>
             <div className="flex-1">
               <h4 className="text-sm font-medium text-blue-900 mb-2">
-              Sistem AI akan memproses data konsultasi ini untuk menghasilkan script hipnoterapi yang sesuai pada sesi terapi berikutnya:
+                Sistem AI akan memproses data konsultasi ini untuk menghasilkan script hipnoterapi yang sesuai pada sesi terapi berikutnya:
               </h4>
               <div className="text-sm text-blue-800 space-y-2">
                 <ul className="list-disc list-inside space-y-1 ml-2">

@@ -1,6 +1,5 @@
 import { 
   RegistrationStepEnum, 
-  BillingCycleEnum, 
 } from './enums';
 
 type EnumValue<T> = T[keyof T];

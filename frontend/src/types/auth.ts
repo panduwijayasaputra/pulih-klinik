@@ -1,4 +1,3 @@
-import { SubscriptionTierEnum, UserRoleEnum } from './enums';
 import { UserStatusEnum, ClinicStatusEnum } from './status';
 
 type EnumValue<T> = T[keyof T];
