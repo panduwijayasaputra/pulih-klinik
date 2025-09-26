@@ -83,6 +83,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
     }
   }, [errors]);
 
+  useEffect(() => {
+    console.log('Form values:', form.watch());
+  }, [form]);
+
   // Trigger validation for conditional fields when DrugAddiction form type is selected
   // useEffect(() => {
   //   if (formTypes.includes(ConsultationFormTypeEnum.DrugAddiction)) {

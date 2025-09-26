@@ -155,18 +155,27 @@ export const consultationFormSchema = z.object({
   substanceHistory: z.array(z.string().min(1, 'Jenis zat tidak boleh kosong')).min(1, 'Pilih minimal satu jenis zat yang pernah digunakan').optional(),
   otherSubstancesDetails: z.string().min(1, 'Jelaskan zat lain yang pernah digunakan').optional(),
   primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan').optional(),
-  ageOfFirstUse: z.union([
-    z.coerce.number()
-      .min(5, 'Usia pertama kali menggunakan tidak valid')
-      .max(100, 'Usia pertama kali menggunakan tidak valid'),
-  ]).optional(),
+  
+  ageOfFirstUse: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number({
+      message: "Usia pertama kali menggunakan tidak valid",
+    })
+      .min(5, "Usia pertama kali menggunakan minimal 5")
+      .max(100, "Usia pertama kali menggunakan maksimal 100")
+  ).optional(),
+
+  attemptsToQuit: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number({
+      message: "Jumlah percobaan berhenti tidak valid"
+    })
+      .min(0, "Jumlah percobaan berhenti tidak boleh negatif")
+      .max(50, "Jumlah percobaan berhenti tidak realistis")
+  ).optional(),
+  
   frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan').optional(),
   quantityPerUse: z.string().min(1, 'Jelaskan jumlah yang digunakan').optional(),
-  attemptsToQuit: z.union([
-    z.coerce.number()
-      .min(0, 'Jumlah percobaan berhenti tidak boleh negatif')
-      .max(50, 'Jumlah percobaan berhenti tidak realistis'),
-  ]).optional(),
   toleranceLevel: z.nativeEnum(ToleranceLevelEnum, {
     message: 'Pilih tingkat toleransi yang sesuai'
   }).optional(),
