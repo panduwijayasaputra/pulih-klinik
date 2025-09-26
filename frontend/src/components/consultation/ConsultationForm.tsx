@@ -16,7 +16,7 @@ import { InformationCircleIcon, LightBulbIcon } from '@heroicons/react/24/outlin
 import {
   ConsultationFormTypeLabels,
 } from '@/types/consultation';
-import { ConsultationFormTypeEnum, DailyStressFrequencyEnum, ProblemFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, SymptomSeverityEnum, SleepQualityEnum, FrequentEmotionsEnum, TherapyPreferenceEnum } from '@/types/enums';
+import { ConsultationFormTypeEnum, DailyStressFrequencyEnum, ProblemFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, SymptomSeverityEnum, SleepQualityEnum, FrequentEmotionsEnum, TherapyPreferenceEnum, ToleranceLevelEnum, ToleranceLevelLabels } from '@/types/enums';
 import { ConsultationFormSchemaType } from '@/schemas/consultationFormSchema';
 import { SelfHarmFrequencyEnum } from '@/types/enums';
 import { Client } from '@/types/client';
@@ -84,12 +84,12 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   }, [errors]);
 
   // Trigger validation for conditional fields when DrugAddiction form type is selected
-  useEffect(() => {
-    if (formTypes.includes(ConsultationFormTypeEnum.DrugAddiction)) {
-      // Trigger validation for drug addiction fields
-      trigger(['ageOfFirstUse', 'attemptsToQuit', 'toleranceLevel', 'triggerSituations', 'recoveryGoals']);
-    }
-  }, [formTypes, trigger]);
+  // useEffect(() => {
+  //   if (formTypes.includes(ConsultationFormTypeEnum.DrugAddiction)) {
+  //     // Trigger validation for drug addiction fields
+  //     trigger(['ageOfFirstUse', 'attemptsToQuit', 'toleranceLevel', 'triggerSituations', 'recoveryGoals']);
+  //   }
+  // }, [formTypes, trigger]);
 
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -195,16 +195,14 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
       organizedData.drugAddictionFormData = {
         // Get substance types from substanceHistory
         substanceTypes: currentFormValues.substanceHistory || [],
-        firstUseAge: data.ageOfFirstUse || currentFormValues.ageOfFirstUse,
-        usageFrequency: data.frequencyOfUse || currentFormValues.frequencyOfUse,
+        ageOfFirstUse: data.ageOfFirstUse || currentFormValues.ageOfFirstUse,
+        frequencyOfUse: data.frequencyOfUse || currentFormValues.frequencyOfUse,
         lastUseDate: data.lastUseDate || currentFormValues.lastUseDate,
-        triggersRelapse: (data.triggerSituations || currentFormValues.triggerSituations) ? 
-          (data.triggerSituations || currentFormValues.triggerSituations).split(',').map((s: string) => s.trim()).filter((s: string) => s !== '') : [],
-        previousTreatments: data.previousTreatmentPrograms ? [data.previousTreatmentDetails || ''] : [],
+        previousTreatmentPrograms: data.previousTreatmentPrograms ? [data.previousTreatmentDetails || ''] : [],
         withdrawalSymptoms: data.withdrawalSymptoms || currentFormValues.withdrawalSymptoms,
         motivationToQuit: (data as any).motivationToQuit || currentFormValues.motivationToQuit,
         supportSystemAvailability: (data as any).supportSystemAvailability || currentFormValues.supportSystemAvailability,
-        legalIssues: data.legalIssuesRelated || currentFormValues.legalIssuesRelated,
+        legalIssuesRelated: data.legalIssuesRelated || currentFormValues.legalIssuesRelated,
         occupationalImpact: (data as any).occupationalImpact || currentFormValues.occupationalImpact,
         healthComplications: (data as any).healthComplications || currentFormValues.healthComplications,
         primarySubstance: data.primarySubstance || currentFormValues.primarySubstance,
@@ -322,11 +320,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                             });
                             
                             // Trigger validation for conditional fields when DrugAddiction is selected/deselected
-                            if (type === ConsultationFormTypeEnum.DrugAddiction) {
-                              setTimeout(() => {
-                                trigger(['ageOfFirstUse', 'attemptsToQuit', 'toleranceLevel', 'triggerSituations', 'recoveryGoals']);
-                              }, 100);
-                            }
+                            // if (type === ConsultationFormTypeEnum.DrugAddiction) {
+                            //   setTimeout(() => {
+                            //     trigger(['ageOfFirstUse', 'attemptsToQuit', 'toleranceLevel', 'triggerSituations', 'recoveryGoals']);
+                            //   }, 100);
+                            // }
                           }
                         }}
                       />
@@ -1744,7 +1742,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 <Select
                   value={watch('toleranceLevel')?.toString() || ''}
                   onValueChange={async (val) => {
-                    setValue('toleranceLevel', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true });
+                    setValue('toleranceLevel', parseInt(val) as ToleranceLevelEnum, { shouldDirty: true, shouldValidate: true });
                     await trigger('toleranceLevel');
                   }}
                 >
@@ -1752,11 +1750,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <SelectValue placeholder="Pilih tingkat toleransi" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Sangat rendah</SelectItem>
-                    <SelectItem value="2">Rendah</SelectItem>
-                    <SelectItem value="3">Sedang</SelectItem>
-                    <SelectItem value="4">Tinggi</SelectItem>
-                    <SelectItem value="5">Sangat tinggi</SelectItem>
+                    {Object.values(ToleranceLevelEnum)
+                      .filter((level): level is ToleranceLevelEnum => typeof level === 'number')
+                      .map(level => (
+                        <SelectItem key={level} value={level.toString()}>
+                          {ToleranceLevelLabels[level]}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
                 {errors.toleranceLevel && (
