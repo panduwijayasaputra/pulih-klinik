@@ -60,6 +60,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const { user } = useAuth();
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors, isDirty, isValid } } = form;
 
+  // Watch form types for conditional validation
+  const formTypes = watch('formTypes') || [];
+
   useEffect(() => {
     // Debug: Log error count and field names to avoid circular structure
     if (Object.keys(errors).length > 0) {
@@ -68,7 +71,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         const error = errors[field as keyof typeof errors];
         return {
           field,
-          message: error && typeof error === 'object' && 'message' in error ? error.message : 'Unknown error'
+          message: error && typeof error === 'object' && 'message' in error ? error.message : 'Unknown error',
+          errorType: typeof error,
+          errorKeys: error && typeof error === 'object' ? Object.keys(error) : 'not object'
         };
       });
       console.log('Error messages:', errorMessages);
@@ -78,14 +83,17 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
     }
   }, [errors]);
 
-
-
+  // Trigger validation for conditional fields when DrugAddiction form type is selected
+  useEffect(() => {
+    if (formTypes.includes(ConsultationFormTypeEnum.DrugAddiction)) {
+      // Trigger validation for drug addiction fields
+      trigger(['ageOfFirstUse', 'attemptsToQuit', 'toleranceLevel', 'triggerSituations', 'recoveryGoals']);
+    }
+  }, [formTypes, trigger]);
 
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<ConsultationFormSchemaType | null>(null);
-
-  const formTypes = watch('formTypes') || [];
   const previousTherapyExperience = watch('previousTherapyExperience');
   const currentMedications = watch('currentMedications');
   const previousPsychologicalDiagnosis = watch('previousPsychologicalDiagnosis');
@@ -190,7 +198,8 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         firstUseAge: data.ageOfFirstUse || currentFormValues.ageOfFirstUse,
         usageFrequency: data.frequencyOfUse || currentFormValues.frequencyOfUse,
         lastUseDate: data.lastUseDate || currentFormValues.lastUseDate,
-        triggersRelapse: data.triggerSituations || currentFormValues.triggerSituations,
+        triggersRelapse: (data.triggerSituations || currentFormValues.triggerSituations) ? 
+          (data.triggerSituations || currentFormValues.triggerSituations).split(',').map((s: string) => s.trim()).filter((s: string) => s !== '') : [],
         previousTreatments: data.previousTreatmentPrograms ? [data.previousTreatmentDetails || ''] : [],
         withdrawalSymptoms: data.withdrawalSymptoms || currentFormValues.withdrawalSymptoms,
         motivationToQuit: (data as any).motivationToQuit || currentFormValues.motivationToQuit,
@@ -204,7 +213,8 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         currentSobrietyPeriod: data.currentSobrietyPeriod || currentFormValues.currentSobrietyPeriod,
         financialImpact: data.financialImpact || currentFormValues.financialImpact,
         desireToQuit: data.desireToQuit || currentFormValues.desireToQuit,
-        recoveryGoals: data.recoveryGoals || currentFormValues.recoveryGoals,
+        recoveryGoals: (data.recoveryGoals || currentFormValues.recoveryGoals) ? 
+          (data.recoveryGoals || currentFormValues.recoveryGoals).split('\n').filter((goal: string) => goal.trim() !== '') : [],
         // Include other substances details if available
         otherSubstancesDetails: data.otherSubstancesDetails || currentFormValues.otherSubstancesDetails,
       };
@@ -310,6 +320,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                               shouldDirty: true,
                               shouldValidate: true
                             });
+                            
+                            // Trigger validation for conditional fields when DrugAddiction is selected/deselected
+                            if (type === ConsultationFormTypeEnum.DrugAddiction) {
+                              setTimeout(() => {
+                                trigger(['ageOfFirstUse', 'attemptsToQuit', 'toleranceLevel', 'triggerSituations', 'recoveryGoals']);
+                              }, 100);
+                            }
                           }
                         }}
                       />
@@ -1640,7 +1657,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   />
                   {errors.ageOfFirstUse && (
                     <p className="mt-1 text-sm text-red-600">
-                      {typeof errors.ageOfFirstUse.message === 'string' ? errors.ageOfFirstUse.message : 'Masukkan usia pertama kali menggunakan'}
+                      {errors.ageOfFirstUse.message || 'Masukkan usia pertama kali menggunakan'}
                     </p>
                   )}
                 </div>
@@ -1700,7 +1717,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   />
                   {errors.attemptsToQuit && (
                     <p className="mt-1 text-sm text-red-600">
-                      {typeof errors.attemptsToQuit.message === 'string' ? errors.attemptsToQuit.message : 'Masukkan jumlah percobaan berhenti'}
+                      {errors.attemptsToQuit.message || 'Masukkan jumlah percobaan berhenti'}
                     </p>
                   )}
                 </div>
@@ -1754,9 +1771,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   placeholder="Contoh: Stress kerja, masalah keluarga, tekanan teman, dll. (pisahkan dengan koma)"
                   rows={3}
                   className="mt-1"
+                  {...register('triggerSituations')}
                   onChange={async (e) => {
-                    const triggers = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
-                    setValue('triggerSituations', triggers, { shouldDirty: true, shouldValidate: true });
+                    setValue('triggerSituations', e.target.value, { shouldDirty: true, shouldValidate: true });
                     await trigger('triggerSituations');
                   }}
                 />
@@ -1924,9 +1941,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       placeholder="Sebutkan tujuan-tujuan yang ingin dicapai dalam proses pemulihan (pisahkan dengan enter)"
                       rows={3}
                       className="mt-1"
+                      {...register('recoveryGoals')}
                       onChange={async (e) => {
-                        const goals = e.target.value.split('\n').filter(goal => goal.trim() !== '');
-                        setValue('recoveryGoals', goals, { shouldDirty: true, shouldValidate: true });
+                        setValue('recoveryGoals', e.target.value, { shouldDirty: true, shouldValidate: true });
                         await trigger('recoveryGoals');
                       }}
                     />

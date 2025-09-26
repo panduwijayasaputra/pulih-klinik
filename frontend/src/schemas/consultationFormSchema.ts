@@ -109,10 +109,16 @@ export const consultationFormSchema = z.object({
   // Additional fields for comprehensive schema compatibility
   currentLifeStressors: z.array(z.string().min(1, 'Stresor tidak boleh kosong')).min(1, 'Pilih minimal satu stresor kehidupan saat ini').optional(),
   supportSystem: z.string().min(1, 'Jelaskan sistem dukungan yang tersedia').optional(),
-  workLifeBalance: z.number().min(1, 'Beri penilaian keseimbangan kerja-hidup (1-10)').max(10, 'Penilaian maksimal 10').optional(),
+  workLifeBalance: z.coerce.number()
+    .min(1, 'Beri penilaian keseimbangan kerja-hidup (1-10)')
+    .max(10, 'Penilaian maksimal 10')
+    .optional(),
   
   // General form fields at root level for form compatibility
-  stressLevel: z.number().min(1, 'Beri penilaian tingkat stres (1-10)').max(10, 'Tingkat stres maksimal 10').optional(),
+  stressLevel: z.coerce.number()
+    .min(1, 'Beri penilaian tingkat stres (1-10)')
+    .max(10, 'Tingkat stres maksimal 10')
+    .optional(),
   primaryStressors: z.array(z.string().min(1, 'Stresor tidak boleh kosong')).min(1, 'Pilih minimal satu stresor utama').optional(),
   dailyRoutine: z.string().min(1, 'Jelaskan rutinitas harian Anda').optional(),
   exerciseHabits: z.string().min(1, 'Jelaskan kebiasaan olahraga Anda').optional(),
@@ -135,19 +141,29 @@ export const consultationFormSchema = z.object({
   legalIssuesDetails: z.string().min(1, 'Jelaskan detail masalah hukum').optional(),
   currentSobrietyPeriod: z.string().min(1, 'Jelaskan periode sobriety saat ini').optional(),
   desireToQuit: z.string().min(1, 'Jelaskan keinginan untuk berhenti').optional(),
-  recoveryGoals: z.array(z.string().min(1, 'Tujuan pemulihan tidak boleh kosong')).min(1, 'Pilih minimal satu tujuan pemulihan').optional(),
-  withdrawalSymptoms: z.string().min(1, 'Jelaskan gejala withdrawal yang dialami').optional(),
-  triggerSituations: z.array(z.string().min(1, 'Situasi pemicu tidak boleh kosong')).min(1, 'Pilih minimal satu situasi pemicu').optional(),
+  recoveryGoals: z.string().min(1, 'Jelaskan dampak finansial').optional(),
+  withdrawalSymptoms: z.string().min(1, 'Tujuan pemulihan tidak boleh kosong').optional(),
+  triggerSituations: z.string().min(1, 'Situasi pemicu tidak boleh kosong').optional(),
   
   // Additional drug addiction fields at root level - with proper validation - optional at root level, validated conditionally
   substanceHistory: z.array(z.string().min(1, 'Jenis zat tidak boleh kosong')).min(1, 'Pilih minimal satu jenis zat yang pernah digunakan').optional(),
   otherSubstancesDetails: z.string().min(1, 'Jelaskan zat lain yang pernah digunakan').optional(),
   primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan').optional(),
-  ageOfFirstUse: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100').optional(),
+  ageOfFirstUse: z.coerce.number()
+    .min(5, 'Usia pertama kali menggunakan tidak valid')
+    .max(100, 'Usia pertama kali menggunakan tidak valid')
+    .optional(),
   frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan').optional(),
   quantityPerUse: z.string().min(1, 'Jelaskan jumlah yang digunakan').optional(),
-  attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti').max(999, 'Jumlah percobaan maksimal 999').optional(),
-  toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-10)').max(10, 'Tingkat toleransi maksimal 10').optional(),
+  attemptsToQuit: z.coerce.number()
+    .min(0, 'Jumlah percobaan berhenti tidak boleh negatif')
+    .max(50, 'Jumlah percobaan berhenti tidak realistis')
+    .optional(),
+  toleranceLevel: z.union([
+    z.number()
+      .min(1, 'Tingkat toleransi minimal 1')
+      .max(5, 'Tingkat toleransi maksimal 5') as z.ZodType<1 | 2 | 3 | 4 | 5>,
+  ]).optional(),
   
   otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya').optional(),
   problemOnset: z.string().min(1, 'Jelaskan kapan masalah muncul').optional(),
@@ -194,11 +210,14 @@ export const consultationFormSchema = z.object({
   }).optional(),
 
   drugAddictionFormData: z.object({
-    substanceTypes: z.array(z.string().min(1, 'Jenis zat tidak boleh kosong')).min(1, 'Pilih minimal satu jenis zat yang pernah digunakan'),
     firstUseAge: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100'),
     usageFrequency: z.string().min(1, 'Jelaskan frekuensi penggunaan'),
     lastUseDate: z.string().min(1, 'Pilih tanggal terakhir menggunakan'),
-    triggersRelapse: z.array(z.string().min(1, 'Pemicu tidak boleh kosong')).min(1, 'Pilih minimal satu pemicu kambuh'),
+    triggersRelapse: z.union([
+      z.string().min(1, 'Situasi pemicu tidak boleh kosong'),
+      z.literal(''),
+      z.undefined()
+    ]).optional(),
     previousTreatments: z.array(z.string().min(1, 'Perawatan tidak boleh kosong')).min(1, 'Pilih minimal satu perawatan sebelumnya'),
     withdrawalSymptoms: z.string().min(1, 'Jelaskan gejala withdrawal yang dialami'),
     motivationToQuit: z.number().min(1, 'Beri penilaian motivasi berhenti (1-10)').max(10, 'Motivasi maksimal 10'),
@@ -209,14 +228,6 @@ export const consultationFormSchema = z.object({
     occupationalImpact: z.string().min(1, 'Jelaskan dampak pada pekerjaan'),
     healthComplications: z.array(z.string().min(1, 'Komplikasi tidak boleh kosong')).min(1, 'Pilih minimal satu komplikasi kesehatan'),
     // Fields used in nested structure by the form
-    substanceHistory: z.array(z.string().min(1, 'Jenis zat tidak boleh kosong')).min(1, 'Pilih minimal satu jenis zat yang pernah digunakan'),
-    otherSubstancesDetails: z.string().min(1, 'Jelaskan zat lain yang pernah digunakan'),
-    primarySubstance: z.string().min(1, 'Jelaskan zat utama yang digunakan'),
-    ageOfFirstUse: z.number().min(1, 'Masukkan usia pertama kali menggunakan').max(100, 'Usia maksimal 100'),
-    frequencyOfUse: z.string().min(1, 'Jelaskan frekuensi penggunaan'),
-    quantityPerUse: z.string().min(1, 'Jelaskan jumlah yang digunakan'),
-    attemptsToQuit: z.number().min(0, 'Masukkan jumlah percobaan berhenti').max(999, 'Jumlah percobaan maksimal 999'),
-    toleranceLevel: z.number().min(1, 'Beri penilaian tingkat toleransi (1-10)').max(10, 'Tingkat toleransi maksimal 10'),
     socialCircleSubstanceUse: z.boolean({
       message: 'Pilih apakah lingkungan sosial juga menggunakan zat'
     }),
@@ -261,11 +272,19 @@ export const consultationFormSchema = z.object({
   clientCanSign: z.boolean({
     message: 'Pilih apakah klien dapat menandatangani sendiri'
   }),
-  consultationReasons: z.record(z.string(), z.boolean()).refine(
-    (data) => Object.values(data).some(value => value === true),
-    { message: 'Pilih minimal satu alasan konsultasi' }
-  ).optional(),
-  academicPerformance: z.number().min(1, 'Beri penilaian prestasi akademik (1-5)').max(5, 'Prestasi maksimal 5').optional(),
+  consultationReasons: z.record(z.string(), z.boolean())
+    .refine(
+      (data) => Object.values(data).some(value => value === true),
+      { message: 'Pilih minimal satu alasan konsultasi' }
+    )
+    .optional()
+    .or(z.record(z.string(), z.boolean()))
+    .or(z.undefined()),
+  academicPerformance: z.union([
+    z.number().min(1, 'Beri penilaian prestasi akademik (1-5)').max(5, 'Prestasi maksimal 5'),
+    z.literal(''),
+    z.undefined()
+  ]).optional(),
   previousPsychologicalHelp: z.boolean({
     message: 'Pilih apakah pernah mendapat bantuan psikologis'
   }).optional(),
@@ -311,61 +330,43 @@ export const consultationFormSchema = z.object({
       });
     }
     
-    // Validate root-level drug addiction fields
-    if (!data.substanceHistory || data.substanceHistory.length === 0) {
+    // Validate required drug addiction fields when DrugAddiction form type is selected
+    if (!data.ageOfFirstUse || data.ageOfFirstUse === 0 || isNaN(data.ageOfFirstUse)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Pilih minimal satu jenis zat yang pernah digunakan',
-        path: ['substanceHistory'],
+        message: 'Usia pertama kali menggunakan wajib diisi',
+        path: ['ageOfFirstUse'],
       });
     }
     
-    if (!data.primarySubstance || data.primarySubstance.trim() === '') {
+    if (!data.attemptsToQuit || data.attemptsToQuit === 0 || isNaN(data.attemptsToQuit)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Jelaskan zat utama yang digunakan',
-        path: ['primarySubstance'],
+        message: 'Jumlah percobaan berhenti wajib diisi',
+        path: ['attemptsToQuit'],
       });
     }
     
-    // These fields are now validated by the schema itself, no need for manual validation
-    
-    if (!data.toleranceLevel || data.toleranceLevel < 1) {
+    if (!data.toleranceLevel || data.toleranceLevel === undefined || (typeof data.toleranceLevel === 'string' && data.toleranceLevel === '')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Beri penilaian tingkat toleransi (1-10)',
+        message: 'Tingkat toleransi wajib diisi',
         path: ['toleranceLevel'],
       });
     }
     
-    if (!data.withdrawalSymptoms || data.withdrawalSymptoms.trim() === '') {
+    if (!data.triggerSituations || data.triggerSituations.trim() === '') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Jelaskan gejala withdrawal yang dialami',
-        path: ['withdrawalSymptoms'],
-      });
-    }
-    
-    if (!data.triggerSituations || data.triggerSituations.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Pilih minimal satu situasi pemicu',
+        message: 'Situasi pemicu wajib diisi',
         path: ['triggerSituations'],
       });
     }
     
-    if (!data.desireToQuit || data.desireToQuit.trim() === '') {
+    if (!data.recoveryGoals || data.recoveryGoals.trim() === '') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Jelaskan keinginan untuk berhenti',
-        path: ['desireToQuit'],
-      });
-    }
-    
-    if (!data.recoveryGoals || data.recoveryGoals.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Pilih minimal satu tujuan pemulihan',
+        message: 'Tujuan pemulihan wajib diisi',
         path: ['recoveryGoals'],
       });
     }
