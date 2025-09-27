@@ -16,7 +16,7 @@ import { InformationCircleIcon, LightBulbIcon } from '@heroicons/react/24/outlin
 import {
   ConsultationFormTypeLabels,
 } from '@/types/consultation';
-import { ConsultationFormTypeEnum, DailyStressFrequencyEnum, ProblemFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, SymptomSeverityEnum, SleepQualityEnum, FrequentEmotionsEnum, TherapyPreferenceEnum, ToleranceLevelEnum, ToleranceLevelLabels } from '@/types/enums';
+import { ConsultationFormTypeEnum, DailyStressFrequencyEnum, ProblemFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, SymptomSeverityEnum, SleepQualityEnum, FrequentEmotionsEnum, TherapyPreferenceEnum, ToleranceLevelEnum, ToleranceLevelLabels, ConsultationReasonEnum, ConsultationReasonLabels, AcademicPerformanceEnum, AcademicPerformanceLabels } from '@/types/enums';
 import { ConsultationFormSchemaType } from '@/schemas/consultationFormSchema';
 import { SelfHarmFrequencyEnum } from '@/types/enums';
 import { Client } from '@/types/client';
@@ -2057,38 +2057,69 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <Label>Apa alasan utama membawa anak ke layanan Hipnoterapi? *</Label>
                   <p className="text-sm text-gray-600 mb-3">Centang semua yang sesuai</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border-2 border-gray-200 rounded-lg">
-                    {CONSULTATION_REASON_OPTIONS.map(reason => (
-                      <div key={reason.key} className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-all duration-200">
-                        <Checkbox
-                          id={`consultation-reason-${reason.key}`}
-                          checked={watch(`consultationReasons.${reason.key}`) || false}
-                          onCheckedChange={(checked) => {
-                            setValue(`consultationReasons.${reason.key}`, checked === true, { shouldDirty: true, shouldValidate: true });
-                            // Trigger validation for the entire consultationReasons field
-                            trigger('consultationReasons');
-                          }}
-                        />
-                        <Label htmlFor={`consultation-reason-${reason.key}`} className="text-sm font-medium flex-1">{reason.label}</Label>
-                      </div>
-                    ))}
+                    {Object.values(ConsultationReasonEnum)
+                      .filter((reason): reason is ConsultationReasonEnum => reason !== ConsultationReasonEnum.Other)
+                      .map(reason => (
+                        <div key={reason} className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-all duration-200">
+                          <Checkbox
+                            id={`consultation-reason-${reason}`}
+                            checked={watch('consultationReasons')?.includes(reason) || false}
+                            onCheckedChange={(checked) => {
+                              const currentReasons = watch('consultationReasons') || [];
+                              const newReasons = checked
+                                ? [...currentReasons, reason]
+                                : currentReasons.filter(r => r !== reason);
+                              setValue('consultationReasons', newReasons, { shouldDirty: true, shouldValidate: true });
+                              trigger('consultationReasons');
+                            }}
+                          />
+                          <Label htmlFor={`consultation-reason-${reason}`} className="text-sm font-medium flex-1">
+                            {ConsultationReasonLabels[reason]}
+                          </Label>
+                        </div>
+                      ))}
+                    
+                    {/* Other option */}
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-all duration-200">
+                      <Checkbox
+                        id="consultation-reason-other"
+                        checked={watch('consultationReasons')?.includes(ConsultationReasonEnum.Other) || false}
+                        onCheckedChange={(checked) => {
+                          const currentReasons = watch('consultationReasons') || [];
+                          const newReasons = checked
+                            ? [...currentReasons, ConsultationReasonEnum.Other]
+                            : currentReasons.filter(r => r !== ConsultationReasonEnum.Other);
+                          setValue('consultationReasons', newReasons, { shouldDirty: true, shouldValidate: true });
+                          trigger('consultationReasons');
+                        }}
+                      />
+                      <Label htmlFor="consultation-reason-other" className="text-sm font-medium flex-1">
+                        {ConsultationReasonLabels[ConsultationReasonEnum.Other]}
+                      </Label>
+                    </div>
                   </div>
+                  
+                  {/* Other consultation reason text field */}
+                  {watch('consultationReasons')?.includes(ConsultationReasonEnum.Other) && (
+                    <div className="mt-4">
+                      <Label htmlFor="otherConsultationReason">Jelaskan alasan lainnya *</Label>
+                      <Input
+                        id="otherConsultationReason"
+                        {...register('otherConsultationReason')}
+                        placeholder="Sebutkan alasan konsultasi lainnya..."
+                        className="mt-1"
+                      />
+                      {errors.otherConsultationReason && (
+                        <p className="mt-1 text-sm text-red-600">{errors.otherConsultationReason.message}</p>
+                      )}
+                    </div>
+                  )}
+                  
                   {errors.consultationReasons && (
                     <p className="mt-1 text-sm text-red-600">{String(errors.consultationReasons.message)}</p>
                   )}
                 </div>
 
-                <div className="mt-4">
-                  <Label htmlFor="otherConsultationReason">Alasan Lainnya</Label>
-                  <Input
-                    id="otherConsultationReason"
-                    {...register('otherConsultationReason')}
-                    placeholder="Sebutkan alasan lain jika ada"
-                    className="mt-1"
-                  />
-                  {errors.otherConsultationReason && (
-                    <p className="mt-1 text-sm text-red-600">{errors.otherConsultationReason.message}</p>
-                  )}
-                </div>
 
                 <div className="mt-4">
                   <Label htmlFor="problemOnset">Sejak kapan masalah ini muncul?</Label>
@@ -2164,9 +2195,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <div>
                     <Label>Prestasi Akademik</Label>
                     <Select
-                      value={watch('academicPerformance')?.toString() || ''}
+                      value={watch('academicPerformance') || ''}
                       onValueChange={async (val) => {
-                        setValue('academicPerformance', parseInt(val) as 1 | 2 | 3 | 4 | 5, { shouldDirty: true, shouldValidate: true });
+                        setValue('academicPerformance', val as AcademicPerformanceEnum, { shouldDirty: true, shouldValidate: true });
                         await trigger('academicPerformance');
                       }}
                     >
@@ -2174,11 +2205,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                         <SelectValue placeholder="Pilih prestasi" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="5">Sangat baik</SelectItem>
-                        <SelectItem value="4">Baik</SelectItem>
-                        <SelectItem value="3">Cukup</SelectItem>
-                        <SelectItem value="2">Kurang</SelectItem>
-                        <SelectItem value="1">Sangat kurang</SelectItem>
+                        {Object.values(AcademicPerformanceEnum)
+                          .filter((performance): performance is AcademicPerformanceEnum => typeof performance === 'string')
+                          .map(performance => (
+                            <SelectItem key={performance} value={performance}>
+                              {AcademicPerformanceLabels[performance]}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     {errors.academicPerformance && (

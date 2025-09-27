@@ -510,6 +510,7 @@ export enum ConsultationReasonEnum {
   BehavioralProblems = 'behavioral_problems',
   Trauma = 'trauma',
   SleepEatingDisorders = 'sleep_eating_disorders',
+  Other = 'other',
 }
 
 export const ConsultationReasonLabels: Record<ConsultationReasonEnum, string> = {
@@ -519,14 +520,15 @@ export const ConsultationReasonLabels: Record<ConsultationReasonEnum, string> = 
   [ConsultationReasonEnum.BehavioralProblems]: 'Gangguan perilaku (agresif, tidak patuh, dll.)',
   [ConsultationReasonEnum.Trauma]: 'Trauma atau pengalaman buruk',
   [ConsultationReasonEnum.SleepEatingDisorders]: 'Gangguan tidur/makan',
+  [ConsultationReasonEnum.Other]: 'Lainnya',
 };
 
 export enum AcademicPerformanceEnum {
-  Excellent = 5,
-  Good = 4,
-  Fair = 3,
-  Poor = 2,
-  VeryPoor = 1,
+  Excellent = 'excellent',
+  Good = 'good',
+  Fair = 'fair',
+  Poor = 'poor',
+  VeryPoor = 'very_poor',
 }
 
 export const AcademicPerformanceLabels: Record<AcademicPerformanceEnum, string> = {
@@ -550,6 +552,7 @@ export const TherapyPreferenceLabels: Record<TherapyPreferenceEnum, string> = {
 };
 
 // ClinicStatusEnum moved to unified ClinicStatusEnum in ./status.ts
+
 
 
 

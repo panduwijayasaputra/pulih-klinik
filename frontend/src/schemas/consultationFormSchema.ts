@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ConsultationFormTypeEnum, ConsultationStatusEnum, SymptomSeverityValues, TherapyPreferenceEnum, SleepQualityEnum, SelfHarmFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, DailyStressFrequencyEnum, DesireToQuitEnum, ProblemFrequencyEnum, ToleranceLevelEnum } from '@/types/enums';
+import { ConsultationFormTypeEnum, ConsultationStatusEnum, SymptomSeverityValues, TherapyPreferenceEnum, SleepQualityEnum, SelfHarmFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, DailyStressFrequencyEnum, DesireToQuitEnum, ProblemFrequencyEnum, ToleranceLevelEnum, ConsultationReasonEnum, AcademicPerformanceEnum } from '@/types/enums';
 
 // Comprehensive consultation form schema with all fields required
 export const consultationFormSchema = z.object({
@@ -180,7 +180,6 @@ export const consultationFormSchema = z.object({
     message: 'Pilih tingkat toleransi yang sesuai'
   }).optional(),
 
-  otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya').optional(),
   problemOnset: z.string().min(1, 'Jelaskan kapan masalah muncul').optional(),
   previousPsychologicalHelpDetails: z.string().min(1, 'Jelaskan detail bantuan psikologis sebelumnya').optional(),
   currentGradeLevel: z.string().min(1, 'Masukkan tingkat kelas saat ini').optional(),
@@ -282,19 +281,13 @@ export const consultationFormSchema = z.object({
   clientCanSign: z.boolean({
     message: 'Pilih apakah klien dapat menandatangani sendiri'
   }),
-  consultationReasons: z.union([
-    z.record(z.string(), z.boolean())
-      .refine(
-        (data) => Object.values(data).some(value => value === true),
-        { message: 'Pilih minimal satu alasan konsultasi' }
-      ),
-    z.undefined()
-  ]).optional(),
-  academicPerformance: z.union([
-    z.number().min(1, 'Beri penilaian prestasi akademik (1-5)').max(5, 'Prestasi maksimal 5'),
-    z.literal(''),
-    z.undefined()
-  ]).optional(),
+  consultationReasons: z.array(z.nativeEnum(ConsultationReasonEnum))
+    .min(1, 'Pilih minimal satu alasan konsultasi')
+    .optional(),
+  otherConsultationReason: z.string().min(1, 'Jelaskan alasan konsultasi lainnya').optional(),
+  academicPerformance: z.nativeEnum(AcademicPerformanceEnum, {
+    message: 'Pilih tingkat prestasi akademik yang sesuai'
+  }).optional(),
   previousPsychologicalHelp: z.boolean({
     message: 'Pilih apakah pernah mendapat bantuan psikologis'
   }).optional(),
@@ -348,6 +341,119 @@ export const consultationFormSchema = z.object({
         code: z.ZodIssueCode.custom,
         message: 'Data form anak dan remaja wajib diisi',
         path: ['minorFormData'],
+      });
+    }
+
+    // Validate required minor fields when Minor form type is selected
+    if (!data.guardianName || data.guardianName.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Nama lengkap wali wajib diisi',
+        path: ['guardianName'],
+      });
+    }
+
+    if (!data.guardianRelationship || data.guardianRelationship.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Hubungan dengan wali wajib diisi',
+        path: ['guardianRelationship'],
+      });
+    }
+
+    if (!data.guardianPhone || data.guardianPhone.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Nomor telepon wali wajib diisi',
+        path: ['guardianPhone'],
+      });
+    }
+
+    if (!data.currentGradeLevel || data.currentGradeLevel.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Tingkat kelas saat ini wajib diisi',
+        path: ['currentGradeLevel'],
+      });
+    }
+
+    if (!data.academicPerformance || data.academicPerformance === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Prestasi akademik wajib diisi',
+        path: ['academicPerformance'],
+      });
+    }
+
+    if (data.schoolBehaviorIssues === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih apakah ada masalah perilaku di sekolah',
+        path: ['schoolBehaviorIssues'],
+      });
+    }
+
+    if (data.bullyingHistory === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih apakah ada riwayat bullying',
+        path: ['bullyingHistory'],
+      });
+    }
+
+    if (!data.familyStructure || data.familyStructure.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Struktur keluarga wajib diisi',
+        path: ['familyStructure'],
+      });
+    }
+
+    if (!data.siblingRelationships || data.siblingRelationships.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Hubungan dengan saudara wajib diisi',
+        path: ['siblingRelationships'],
+      });
+    }
+
+    if (!data.peerRelationships || data.peerRelationships.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Hubungan dengan teman sebaya wajib diisi',
+        path: ['peerRelationships'],
+      });
+    }
+
+    if (data.familyConflicts === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih apakah ada konflik keluarga',
+        path: ['familyConflicts'],
+      });
+    }
+
+    if (data.socialDifficulties === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih apakah ada kesulitan sosial',
+        path: ['socialDifficulties'],
+      });
+    }
+
+    if (data.attentionConcerns === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih apakah ada masalah perhatian',
+        path: ['attentionConcerns'],
+      });
+    }
+
+    if (data.behavioralConcerns === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Pilih apakah ada masalah perilaku',
+        path: ['behavioralConcerns'],
       });
     }
   }
