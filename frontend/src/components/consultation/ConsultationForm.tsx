@@ -175,6 +175,8 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
         // Only include fields that actually exist in the form data
         stressLevel: (data as any).stressLevel || currentFormValues.stressLevel,
         primaryStressors: (data as any).primaryStressors || currentFormValues.primaryStressors,
+        currentLifeStressors: (data as any).currentLifeStressors || currentFormValues.currentLifeStressors,
+        workLifeBalance: (data as any).workLifeBalance || currentFormValues.workLifeBalance,
         supportSystem: (data as any).supportSystem || currentFormValues.supportSystem,
         dailyRoutine: (data as any).dailyRoutine || currentFormValues.dailyRoutine,
         exerciseHabits: (data as any).exerciseHabits || currentFormValues.exerciseHabits,
@@ -905,6 +907,135 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   />
                   {errors.culturalFactors && (
                     <p className="mt-1 text-sm text-red-600">{errors.culturalFactors.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="sleepPatterns" className="text-base font-medium">Pola Tidur *</Label>
+                  <Textarea
+                    id="sleepPatterns"
+                    {...register('sleepPatterns')}
+                    placeholder="Jelaskan pola tidur Anda (jam tidur, kualitas tidur, gangguan tidur)"
+                    rows={3}
+                    className="mt-1"
+                    disabled={readOnly}
+                  />
+                  {errors.sleepPatterns && (
+                    <p className="mt-1 text-sm text-red-600">{errors.sleepPatterns.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Stresor Kehidupan Saat Ini *</Label>
+                  <p className="text-gray-600 mb-4 text-sm">Pilih stresor kehidupan yang sedang Anda alami (boleh lebih dari satu)</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="life-stressor-work"
+                        checked={watch('currentLifeStressors')?.includes('Pekerjaan') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('currentLifeStressors') || [];
+                          const stressor = 'Pekerjaan';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('currentLifeStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="life-stressor-work" className="text-sm font-medium cursor-pointer">Pekerjaan</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="life-stressor-family"
+                        checked={watch('currentLifeStressors')?.includes('Keluarga') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('currentLifeStressors') || [];
+                          const stressor = 'Keluarga';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('currentLifeStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="life-stressor-family" className="text-sm font-medium cursor-pointer">Keluarga</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="life-stressor-finance"
+                        checked={watch('currentLifeStressors')?.includes('Keuangan') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('currentLifeStressors') || [];
+                          const stressor = 'Keuangan';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('currentLifeStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="life-stressor-finance" className="text-sm font-medium cursor-pointer">Keuangan</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="life-stressor-health"
+                        checked={watch('currentLifeStressors')?.includes('Kesehatan') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('currentLifeStressors') || [];
+                          const stressor = 'Kesehatan';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('currentLifeStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="life-stressor-health" className="text-sm font-medium cursor-pointer">Kesehatan</Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="life-stressor-relationship"
+                        checked={watch('currentLifeStressors')?.includes('Hubungan') || false}
+                        onCheckedChange={(checked) => {
+                          const currentStressors = watch('currentLifeStressors') || [];
+                          const stressor = 'Hubungan';
+                          const newStressors = checked
+                            ? [...currentStressors, stressor]
+                            : currentStressors.filter(s => s !== stressor);
+                          setValue('currentLifeStressors', newStressors, { shouldDirty: true, shouldValidate: true });
+                        }}
+                        disabled={readOnly}
+                      />
+                      <Label htmlFor="life-stressor-relationship" className="text-sm font-medium cursor-pointer">Hubungan</Label>
+                    </div>
+                  </div>
+                  {errors.currentLifeStressors && (
+                    <p className="mt-2 text-sm text-red-600">{errors.currentLifeStressors.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Keseimbangan Kerja-Hidup *</Label>
+                  <p className="text-gray-600 mb-4 text-sm">Beri penilaian keseimbangan kerja-hidup Anda (1-10)</p>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm text-gray-600">Sangat buruk</span>
+                    <Input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      className="flex-1 accent-blue-500"
+                      {...register('workLifeBalance', { valueAsNumber: true })}
+                      disabled={readOnly}
+                    />
+                    <span className="text-sm text-gray-600">Sangat baik</span>
+                    <span className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      {watch('workLifeBalance') || 1}
+                    </span>
+                  </div>
+                  {errors.workLifeBalance && (
+                    <p className="mt-1 text-sm text-red-600">{errors.workLifeBalance.message}</p>
                   )}
                 </div>
 
