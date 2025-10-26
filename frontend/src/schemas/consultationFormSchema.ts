@@ -325,6 +325,69 @@ export const consultationFormSchema = BaseConsultationSchema
           path: ['workLifeBalance'],
         });
       }
+      if (!data.stressLevel || data.stressLevel < 1 || data.stressLevel > 10) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Beri penilaian tingkat stres (1-10)',
+          path: ['stressLevel'],
+        });
+      }
+      if (!data.primaryStressors || data.primaryStressors.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih minimal satu stresor utama',
+          path: ['primaryStressors'],
+        });
+      }
+      if (!data.dailyRoutine || data.dailyRoutine.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jelaskan rutinitas harian Anda',
+          path: ['dailyRoutine'],
+        });
+      }
+      if (!data.exerciseHabits || data.exerciseHabits.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jelaskan kebiasaan olahraga Anda',
+          path: ['exerciseHabits'],
+        });
+      }
+      if (!data.nutritionHabits || data.nutritionHabits.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jelaskan kebiasaan nutrisi Anda',
+          path: ['nutritionHabits'],
+        });
+      }
+      if (!data.hobbiesInterests || data.hobbiesInterests.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih minimal satu hobi atau ketertarikan',
+          path: ['hobbiesInterests'],
+        });
+      }
+      if (!data.spiritualBeliefs || data.spiritualBeliefs.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jelaskan keyakinan spiritual Anda',
+          path: ['spiritualBeliefs'],
+        });
+      }
+      if (!data.culturalFactors || data.culturalFactors.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jelaskan faktor budaya yang mempengaruhi',
+          path: ['culturalFactors'],
+        });
+      }
+      if (!data.sleepPatterns || data.sleepPatterns.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jelaskan pola tidur Anda',
+          path: ['sleepPatterns'],
+        });
+      }
     }
 
     // If DrugAddiction form type is selected, validate drug addiction fields
