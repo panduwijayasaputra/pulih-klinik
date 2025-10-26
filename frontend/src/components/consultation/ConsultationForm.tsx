@@ -123,10 +123,19 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   // Handle confirmed submission
   const handleConfirmedSubmit = async () => {
     if (pendingFormData) {
-      // Organize form data into separate sections
-      const organizedData = organizeFormData(pendingFormData);
-      await onSubmit(organizedData);
-      setPendingFormData(null);
+      try {
+        console.log('=== ORGANIZING FORM DATA ===');
+        console.log('Pending form data:', pendingFormData);
+        
+        // Organize form data into separate sections
+        const organizedData = organizeFormData(pendingFormData);
+        console.log('Organized data:', organizedData);
+        
+        await onSubmit(organizedData);
+        setPendingFormData(null);
+      } catch (error) {
+        console.error('Error in handleConfirmedSubmit:', error);
+      }
     }
   };
 
@@ -2585,197 +2594,6 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           </div>
         </div>
 
-        {/* 8. Additional Required Fields */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Informasi Tambahan</h3>
-          <p className="text-gray-600 mb-6 text-sm">Informasi tambahan yang diperlukan untuk melengkapi konsultasi</p>
-
-          <div className="space-y-6">
-            {/* Secondary Concerns */}
-            <div>
-              <Label className="text-base font-medium">Keluhan Tambahan *</Label>
-              <p className="text-gray-600 mb-4 text-sm">Pilih keluhan tambahan yang dialami (boleh lebih dari satu)</p>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="secondary-concern-anxiety"
-                    checked={watch('secondaryConcerns')?.includes('Kecemasan berlebihan') || false}
-                    onCheckedChange={(checked) => {
-                      const currentConcerns = watch('secondaryConcerns') || [];
-                      const concern = 'Kecemasan berlebihan';
-                      const newConcerns = checked
-                        ? [...currentConcerns, concern]
-                        : currentConcerns.filter(c => c !== concern);
-                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="secondary-concern-anxiety" className="text-sm font-medium cursor-pointer">
-                    Kecemasan berlebihan
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="secondary-concern-depression"
-                    checked={watch('secondaryConcerns')?.includes('Depresi') || false}
-                    onCheckedChange={(checked) => {
-                      const currentConcerns = watch('secondaryConcerns') || [];
-                      const concern = 'Depresi';
-                      const newConcerns = checked
-                        ? [...currentConcerns, concern]
-                        : currentConcerns.filter(c => c !== concern);
-                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="secondary-concern-depression" className="text-sm font-medium cursor-pointer">
-                    Depresi
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="secondary-concern-sleep"
-                    checked={watch('secondaryConcerns')?.includes('Gangguan tidur') || false}
-                    onCheckedChange={(checked) => {
-                      const currentConcerns = watch('secondaryConcerns') || [];
-                      const concern = 'Gangguan tidur';
-                      const newConcerns = checked
-                        ? [...currentConcerns, concern]
-                        : currentConcerns.filter(c => c !== concern);
-                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="secondary-concern-sleep" className="text-sm font-medium cursor-pointer">
-                    Gangguan tidur
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="secondary-concern-relationships"
-                    checked={watch('secondaryConcerns')?.includes('Masalah hubungan') || false}
-                    onCheckedChange={(checked) => {
-                      const currentConcerns = watch('secondaryConcerns') || [];
-                      const concern = 'Masalah hubungan';
-                      const newConcerns = checked
-                        ? [...currentConcerns, concern]
-                        : currentConcerns.filter(c => c !== concern);
-                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="secondary-concern-relationships" className="text-sm font-medium cursor-pointer">
-                    Masalah hubungan
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="secondary-concern-work"
-                    checked={watch('secondaryConcerns')?.includes('Masalah pekerjaan') || false}
-                    onCheckedChange={(checked) => {
-                      const currentConcerns = watch('secondaryConcerns') || [];
-                      const concern = 'Masalah pekerjaan';
-                      const newConcerns = checked
-                        ? [...currentConcerns, concern]
-                        : currentConcerns.filter(c => c !== concern);
-                      setValue('secondaryConcerns', newConcerns, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="secondary-concern-work" className="text-sm font-medium cursor-pointer">
-                    Masalah pekerjaan
-                  </Label>
-                </div>
-              </div>
-              {errors.secondaryConcerns && (
-                <p className="mt-2 text-sm text-red-600">{errors.secondaryConcerns.message}</p>
-              )}
-            </div>
-
-            {/* Initial Recommendations */}
-            <div>
-              <Label className="text-base font-medium">Rekomendasi Awal *</Label>
-              <p className="text-gray-600 mb-4 text-sm">Pilih rekomendasi awal yang sesuai (boleh lebih dari satu)</p>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="recommendation-therapy"
-                    checked={watch('initialRecommendation')?.includes('Terapi individual') || false}
-                    onCheckedChange={(checked) => {
-                      const currentRecommendations = watch('initialRecommendation') || [];
-                      const recommendation = 'Terapi individual';
-                      const newRecommendations = checked
-                        ? [...currentRecommendations, recommendation]
-                        : currentRecommendations.filter(r => r !== recommendation);
-                      setValue('initialRecommendation', newRecommendations, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="recommendation-therapy" className="text-sm font-medium cursor-pointer">
-                    Terapi individual
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="recommendation-group"
-                    checked={watch('initialRecommendation')?.includes('Terapi kelompok') || false}
-                    onCheckedChange={(checked) => {
-                      const currentRecommendations = watch('initialRecommendation') || [];
-                      const recommendation = 'Terapi kelompok';
-                      const newRecommendations = checked
-                        ? [...currentRecommendations, recommendation]
-                        : currentRecommendations.filter(r => r !== recommendation);
-                      setValue('initialRecommendation', newRecommendations, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="recommendation-group" className="text-sm font-medium cursor-pointer">
-                    Terapi kelompok
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="recommendation-medication"
-                    checked={watch('initialRecommendation')?.includes('Konsultasi medis') || false}
-                    onCheckedChange={(checked) => {
-                      const currentRecommendations = watch('initialRecommendation') || [];
-                      const recommendation = 'Konsultasi medis';
-                      const newRecommendations = checked
-                        ? [...currentRecommendations, recommendation]
-                        : currentRecommendations.filter(r => r !== recommendation);
-                      setValue('initialRecommendation', newRecommendations, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="recommendation-medication" className="text-sm font-medium cursor-pointer">
-                    Konsultasi medis
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="recommendation-followup"
-                    checked={watch('initialRecommendation')?.includes('Follow-up dalam 2 minggu') || false}
-                    onCheckedChange={(checked) => {
-                      const currentRecommendations = watch('initialRecommendation') || [];
-                      const recommendation = 'Follow-up dalam 2 minggu';
-                      const newRecommendations = checked
-                        ? [...currentRecommendations, recommendation]
-                        : currentRecommendations.filter(r => r !== recommendation);
-                      setValue('initialRecommendation', newRecommendations, { shouldDirty: true, shouldValidate: true });
-                    }}
-                    disabled={readOnly}
-                  />
-                  <Label htmlFor="recommendation-followup" className="text-sm font-medium cursor-pointer">
-                    Follow-up dalam 2 minggu
-                  </Label>
-                </div>
-              </div>
-              {errors.initialRecommendation && (
-                <p className="mt-2 text-sm text-red-600">{errors.initialRecommendation.message}</p>
-              )}
-            </div>
-          </div>
-        </div>
 
 
         {/* Form Actions */}

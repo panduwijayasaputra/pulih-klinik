@@ -157,8 +157,12 @@ export default function ClientTherapyPage() {
       clientId: clientId,
       formTypes: [],
       status: ConsultationStatusEnum.Draft,
+      // Basic required fields
       consultationNotes: '',
       scriptGenerationPreferences: '',
+      initialAssessment: '',
+      recommendedTreatmentPlan: '',
+      // Optional fields - will be set by user when needed
       previousTherapyExperience: false,
       previousTherapyDetails: '',
       currentMedications: false,
@@ -172,18 +176,21 @@ export default function ClientTherapyPage() {
       familyPsychologicalHistory: false,
       familyPsychologicalHistoryDetails: '',
       primaryConcern: '',
-      secondaryConcerns: [],
-      substanceHistory: [], // Initialize as empty array
+      symptomSeverity: undefined,
       symptomDuration: '',
+      problemFrequency: undefined,
+      sleepQuality: undefined,
+      selfHarmFrequency: undefined,
       emotionScale: {},
+      recentMoodState: undefined,
       recentMoodStateDetails: '',
       frequentEmotions: [],
+      selfHarmThoughts: undefined,
       selfHarmDetails: '',
+      dailyStressFrequency: undefined,
       treatmentGoals: [],
       clientExpectations: '',
-      initialAssessment: '',
-      recommendedTreatmentPlan: '',
-      initialRecommendation: [],
+      therapyPreference: undefined,
     },
   });
 
@@ -303,8 +310,12 @@ export default function ClientTherapyPage() {
       clientId: clientId,
       formTypes: [],
       status: ConsultationStatusEnum.Draft,
+      // Basic required fields
       consultationNotes: '',
       scriptGenerationPreferences: '',
+      initialAssessment: '',
+      recommendedTreatmentPlan: '',
+      // Optional fields - will be set by user when needed
       previousTherapyExperience: false,
       previousTherapyDetails: '',
       currentMedications: false,
@@ -318,69 +329,21 @@ export default function ClientTherapyPage() {
       familyPsychologicalHistory: false,
       familyPsychologicalHistoryDetails: '',
       primaryConcern: '',
-      secondaryConcerns: [],
-      substanceHistory: [], // Initialize as empty array
-      primarySubstance: '',
-            ageOfFirstUse: 0,
-      frequencyOfUse: '',
-      quantityPerUse: '',
-      lastUseDate: '',
-      withdrawalSymptoms: '',
-      toleranceLevel: undefined,
-      impactOnDailyLife: '',
-      attemptsToQuit: 0,
-      triggerSituations: '',
-      previousTreatmentPrograms: false,
-      previousTreatmentDetails: '',
-      currentSobrietyPeriod: '',
-      legalIssuesRelated: false,
-      legalIssuesDetails: '',
-      financialImpact: '',
-      desireToQuit: '',
-      recoveryGoals: '',
-      guardianName: '',
-      guardianRelationship: '',
-      guardianPhone: '',
-      guardianOccupation: '',
-      parentalMaritalStatus: '',
-      legalCustody: false,
-      guardianAddress: '',
-      guardianSignatureName: '',
-      guardianSignatureDate: '',
-      clientCanSign: false,
-      consultationReasons: [],
-      otherConsultationReason: '',
-      problemOnset: '',
-      previousPsychologicalHelp: false,
-      previousPsychologicalHelpDetails: '',
-      currentGradeLevel: '',
-      academicPerformance: undefined,
-      schoolBehaviorIssues: false,
-      schoolBehaviorDetails: '',
-      teacherConcerns: '',
-      bullyingHistory: false,
-      bullyingDetails: '',
-      familyStructure: '',
-      siblingRelationships: '',
-      peerRelationships: '',
-      familyConflicts: false,
-      familyConflictsDetails: '',
-      socialDifficulties: false,
-      socialDifficultiesDetails: '',
-      developmentalMilestones: '',
-      attentionConcerns: false,
-      attentionDetails: '',
-      behavioralConcerns: false,
+      symptomSeverity: undefined,
       symptomDuration: '',
+      problemFrequency: undefined,
+      sleepQuality: undefined,
+      selfHarmFrequency: undefined,
       emotionScale: {},
+      recentMoodState: undefined,
       recentMoodStateDetails: '',
       frequentEmotions: [],
+      selfHarmThoughts: undefined,
       selfHarmDetails: '',
+      dailyStressFrequency: undefined,
       treatmentGoals: [],
       clientExpectations: '',
-      initialAssessment: '',
-      recommendedTreatmentPlan: '',
-      initialRecommendation: [],
+      therapyPreference: undefined,
     });
     setShowConsultationForm(true);
   }, [clientId, user?.id, consultationForm, currentTherapistId]);
@@ -506,52 +469,34 @@ export default function ClientTherapyPage() {
       }
 
       
-      // Transform form data to API format - include all fields from the form
-      const consultationData = {
-        clientId: data.clientId,
-        formTypes: data.formTypes,
-        status: data.status,
-        consultationNotes: data.consultationNotes,
-        scriptGenerationPreferences: data.scriptGenerationPreferences,
-        
-        // Client background information
-        previousTherapyExperience: data.previousTherapyExperience,
-        previousTherapyDetails: data.previousTherapyDetails,
-        currentMedications: data.currentMedications,
-        currentMedicationsDetails: data.currentMedicationsDetails,
-        previousPsychologicalDiagnosis: data.previousPsychologicalDiagnosis,
-        previousPsychologicalDiagnosisDetails: data.previousPsychologicalDiagnosisDetails,
-        significantPhysicalIllness: data.significantPhysicalIllness,
-        significantPhysicalIllnessDetails: data.significantPhysicalIllnessDetails,
-        traumaticExperience: data.traumaticExperience,
-        traumaticExperienceDetails: data.traumaticExperienceDetails,
-        familyPsychologicalHistory: data.familyPsychologicalHistory,
-        familyPsychologicalHistoryDetails: data.familyPsychologicalHistoryDetails,
-        
-        // Presenting concerns
-        primaryConcern: data.primaryConcern,
-        secondaryConcerns: data.secondaryConcerns,
-        symptomSeverity: data.symptomSeverity,
-        symptomDuration: data.symptomDuration,
-        treatmentGoals: data.treatmentGoals,
-        clientExpectations: data.clientExpectations,
-        initialAssessment: data.initialAssessment,
-        recommendedTreatmentPlan: data.recommendedTreatmentPlan,
-        
-        
-        // Use the form data that's already been organized by the ConsultationForm component
-        generalFormData: data.generalFormData,
-        drugAddictionFormData: data.drugAddictionFormData,
-        minorFormData: data.minorFormData
-      };
+      // The data is already organized by the ConsultationForm component
+      // Use it directly as the consultation data
+      const consultationData = data;
+      
+      console.log('=== CONSULTATION FORM SUBMISSION ===');
+      console.log('Form data received:', data);
+      console.log('Form types:', data.formTypes);
+      console.log('Status:', data.status);
 
       let success = false;
-      if (editingConsultation && selectedConsultation) {
-        // Update existing consultation
-        success = await updateConsultation(selectedConsultation.id, consultationData as any);
-      } else {
-        // Create new consultation
-        success = await createConsultation(consultationData as any);
+      try {
+        if (editingConsultation && selectedConsultation) {
+          // Update existing consultation
+          console.log('Updating consultation with ID:', selectedConsultation.id);
+          success = await updateConsultation(selectedConsultation.id, consultationData as any);
+        } else {
+          // Create new consultation
+          console.log('Creating new consultation');
+          success = await createConsultation(consultationData as any);
+        }
+      } catch (error) {
+        console.error('Error during consultation submission:', error);
+        addToast({
+          type: 'error',
+          title: 'Submission Error',
+          message: 'An error occurred while saving the consultation. Please try again.',
+        });
+        return;
       }
 
       if (success) {
