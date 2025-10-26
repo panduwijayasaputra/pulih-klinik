@@ -140,8 +140,6 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
       clientId: data.clientId,
       formTypes: data.formTypes,
       status: data.status,
-      sessionDate: data.sessionDate,
-      sessionDuration: data.sessionDuration,
       consultationNotes: data.consultationNotes,
       previousTherapyExperience: data.previousTherapyExperience,
       currentMedications: data.currentMedications,
@@ -290,7 +288,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   return (
     <div className={`space-y-8 ${readOnly ? 'pointer-events-none select-none opacity-80' : ''}`}>
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-        {/* 1. Consultation Information */}
+        {/* 1. Consultation Types */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Jenis Konsultasi</h3>
           <p className="text-gray-600 mb-6 text-sm">Pilih jenis layanan konsultasi yang dibutuhkan</p>
@@ -494,11 +492,6 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <p className="mt-2 text-sm text-red-600">{String(errors.emotionScale.message)}</p>
                   )}
                 </div>
-                {errors.generalFormData && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {typeof errors.generalFormData.message === 'string' ? errors.generalFormData.message : 'Data form umum wajib diisi'}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -1362,7 +1355,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               </div>
             </div>
 
-            {/* 5. Goals and Treatment Section */}
+            {/* 6. Goals and Treatment Section */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Tujuan Terapi</h3>
               <p className="text-gray-600 mb-6 text-sm">Apa yang ingin Anda capai dari terapi ini</p>
@@ -1591,11 +1584,6 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 {errors.substanceHistory && (
                   <p className="mt-1 text-sm text-red-600">
                     {typeof errors.substanceHistory.message === 'string' ? errors.substanceHistory.message : 'Pilih minimal satu jenis zat yang pernah digunakan'}
-                  </p>
-                )}
-                {errors.drugAddictionFormData && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {typeof errors.drugAddictionFormData.message === 'string' ? errors.drugAddictionFormData.message : 'Data form ketergantungan zat wajib diisi'}
                   </p>
                 )}
               </div>
@@ -2522,17 +2510,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 </div>
               </div>
             </div>
-            {errors.minorFormData && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">
-                  {typeof errors.minorFormData.message === 'string' ? errors.minorFormData.message : 'Data form anak dan remaja wajib diisi'}
-                </p>
-              </div>
-            )}
           </div>
         )}
 
-        {/* 6. Notes and Assessment */}
+        {/* 7. Notes and Assessment */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Catatan Terapis</h3>
           <p className="text-gray-600 mb-6 text-sm">Catatan dan penilaian dari terapis</p>
@@ -2604,7 +2585,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           </div>
         </div>
 
-        {/* 7. Additional Required Fields */}
+        {/* 8. Additional Required Fields */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Informasi Tambahan</h3>
           <p className="text-gray-600 mb-6 text-sm">Informasi tambahan yang diperlukan untuk melengkapi konsultasi</p>
@@ -2796,90 +2777,6 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           </div>
         </div>
 
-        {/* 8. Consent and Signature */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Persetujuan dan Tanda Tangan</h3>
-          <p className="text-gray-600 mb-6 text-sm">Konfirmasi persetujuan dan informasi tanda tangan</p>
-
-          <div className="space-y-6">
-            {/* Consent Agreement */}
-            <div>
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="consentAgreement"
-                  checked={watch('consentAgreement') || false}
-                  onCheckedChange={(checked) => setValue('consentAgreement', checked === true, { shouldDirty: true, shouldValidate: true })}
-                  disabled={readOnly}
-                />
-                <Label htmlFor="consentAgreement" className="text-sm font-medium cursor-pointer">
-                  Saya menyetujui untuk mengikuti konsultasi dan terapi sesuai dengan prosedur yang telah dijelaskan *
-                </Label>
-              </div>
-              {errors.consentAgreement && (
-                <p className="mt-1 text-sm text-red-600">{errors.consentAgreement.message}</p>
-              )}
-            </div>
-
-            {/* Signature Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="clientSignatureName" className="text-base font-medium">Nama Lengkap Klien *</Label>
-                <Input
-                  id="clientSignatureName"
-                  {...register('clientSignatureName')}
-                  placeholder="Tuliskan nama lengkap untuk tanda tangan"
-                  className="mt-1"
-                  disabled={readOnly}
-                />
-                {errors.clientSignatureName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.clientSignatureName.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="clientSignatureDate" className="text-base font-medium">Tanggal Tanda Tangan *</Label>
-                <Input
-                  id="clientSignatureDate"
-                  type="date"
-                  {...register('clientSignatureDate')}
-                  className="mt-1"
-                  disabled={readOnly}
-                />
-                {errors.clientSignatureDate && (
-                  <p className="mt-1 text-sm text-red-600">{errors.clientSignatureDate.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="therapistName" className="text-base font-medium">Nama Terapis *</Label>
-                <Input
-                  id="therapistName"
-                  {...register('therapistName')}
-                  placeholder="Masukkan nama terapis yang menangani"
-                  className="mt-1"
-                  disabled={readOnly}
-                />
-                {errors.therapistName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.therapistName.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="registrationDate" className="text-base font-medium">Tanggal Registrasi *</Label>
-                <Input
-                  id="registrationDate"
-                  type="date"
-                  {...register('registrationDate')}
-                  className="mt-1"
-                  disabled={readOnly}
-                />
-                {errors.registrationDate && (
-                  <p className="mt-1 text-sm text-red-600">{errors.registrationDate.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Form Actions */}
         {!readOnly && (

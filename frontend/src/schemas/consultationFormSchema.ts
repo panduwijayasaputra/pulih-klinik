@@ -10,10 +10,6 @@ export const consultationFormSchema = z.object({
   }),
 
   // Session information
-  sessionDate: z.string().min(1, 'Pilih tanggal sesi konsultasi'),
-  sessionDuration: z.number()
-    .min(15, 'Durasi sesi minimal 15 menit')
-    .max(180, 'Durasi sesi maksimal 180 menit'),
   consultationNotes: z.string().min(1, 'Tuliskan catatan konsultasi'),
   scriptGenerationPreferences: z.string().min(1, 'Jelaskan preferensi untuk generasi script'),
 
@@ -95,15 +91,6 @@ export const consultationFormSchema = z.object({
   // Assessment results
   initialAssessment: z.string().min(1, 'Tuliskan penilaian awal kondisi klien'),
   recommendedTreatmentPlan: z.string().min(1, 'Buatkan rencana terapi yang direkomendasikan'),
-
-  // Consent and signature
-  consentAgreement: z.boolean().refine(val => val === true, {
-    message: 'Centang persetujuan untuk melanjutkan'
-  }),
-  clientSignatureName: z.string().min(1, 'Tuliskan nama lengkap untuk tanda tangan'),
-  clientSignatureDate: z.string().min(1, 'Pilih tanggal tanda tangan'),
-  therapistName: z.string().min(1, 'Masukkan nama terapis yang menangani'),
-  registrationDate: z.string().min(1, 'Pilih tanggal registrasi'),
   initialRecommendation: z.array(z.string().min(1, 'Rekomendasi tidak boleh kosong')).min(1, 'Buatkan minimal satu rekomendasi awal'),
 
   // Additional fields for comprehensive schema compatibility
