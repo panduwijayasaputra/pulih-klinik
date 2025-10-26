@@ -285,6 +285,17 @@ export const consultationFormSchema = BaseConsultationSchema
           path: ['treatmentGoals'],
         });
       }
+      // Check if "Lainnya" goal has details
+      if (data.treatmentGoals && data.treatmentGoals.some(goal => goal.startsWith('Lainnya:'))) {
+        const lainnyaGoal = data.treatmentGoals.find(goal => goal.startsWith('Lainnya:'));
+        if (!lainnyaGoal || lainnyaGoal === 'Lainnya:' || lainnyaGoal.trim() === 'Lainnya:') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Jelaskan tujuan lainnya yang ingin dicapai',
+            path: ['treatmentGoals'],
+          });
+        }
+      }
       if (!data.clientExpectations || data.clientExpectations.trim() === '') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -386,6 +397,77 @@ export const consultationFormSchema = BaseConsultationSchema
           code: z.ZodIssueCode.custom,
           message: 'Jelaskan pola tidur Anda',
           path: ['sleepPatterns'],
+        });
+      }
+      if (!data.problemFrequency) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih seberapa sering masalah terjadi',
+          path: ['problemFrequency'],
+        });
+      }
+      if (!data.sleepQuality) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih kualitas tidur Anda',
+          path: ['sleepQuality'],
+        });
+      }
+      if (!data.selfHarmFrequency) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih frekuensi pikiran menyakiti diri',
+          path: ['selfHarmFrequency'],
+        });
+      }
+      if (!data.recentMoodState) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih kondisi mood Anda dalam sebulan terakhir',
+          path: ['recentMoodState'],
+        });
+      }
+      if (!data.recentMoodStateDetails || data.recentMoodStateDetails.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jelaskan kondisi mood Anda secara detail',
+          path: ['recentMoodStateDetails'],
+        });
+      }
+      if (!data.frequentEmotions || data.frequentEmotions.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih minimal satu emosi yang sering dialami',
+          path: ['frequentEmotions'],
+        });
+      }
+      if (!data.selfHarmThoughts) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih frekuensi pikiran menyakiti diri',
+          path: ['selfHarmThoughts'],
+        });
+      }
+      // selfHarmDetails is required when selfHarmThoughts is not "never"
+      if (data.selfHarmThoughts && data.selfHarmThoughts !== 'never' && (!data.selfHarmDetails || data.selfHarmDetails.trim() === '')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jelaskan detail pikiran menyakiti diri',
+          path: ['selfHarmDetails'],
+        });
+      }
+      if (!data.dailyStressFrequency) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih seberapa sering Anda merasa stres',
+          path: ['dailyStressFrequency'],
+        });
+      }
+      if (!data.therapyPreference) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Pilih preferensi jenis terapi',
+          path: ['therapyPreference'],
         });
       }
     }
