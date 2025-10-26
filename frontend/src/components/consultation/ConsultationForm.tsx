@@ -16,7 +16,7 @@ import { InformationCircleIcon, LightBulbIcon } from '@heroicons/react/24/outlin
 import {
   ConsultationFormTypeLabels,
 } from '@/types/consultation';
-import { ConsultationFormTypeEnum, DailyStressFrequencyEnum, ProblemFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, SymptomSeverityEnum, SleepQualityEnum, FrequentEmotionsEnum, TherapyPreferenceEnum, ToleranceLevelEnum, ToleranceLevelLabels, ConsultationReasonEnum, ConsultationReasonLabels, AcademicPerformanceEnum, AcademicPerformanceLabels } from '@/types/enums';
+import { ConsultationFormTypeEnum, DailyStressFrequencyEnum, ProblemFrequencyEnum, RecentMoodStateEnum, SelfHarmThoughtsEnum, SymptomSeverityEnum, SleepQualityEnum, FrequentEmotionsEnum, TherapyPreferenceEnum, ToleranceLevelEnum, ToleranceLevelLabels, ConsultationReasonEnum, ConsultationReasonLabels, AcademicPerformanceEnum, AcademicPerformanceLabels, SymptomDurationEnum } from '@/types/enums';
 import { ConsultationFormSchemaType } from '@/schemas/consultationFormSchema';
 import { SelfHarmFrequencyEnum } from '@/types/enums';
 import { Client } from '@/types/client';
@@ -394,7 +394,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <div>
                     <Label className="text-base font-medium">Sudah Berlangsung *</Label>
                     <Select
-                      value={watch('symptomDuration')}
+                      value={watch('symptomDuration') as SymptomDurationEnum | undefined || ''}
                       onValueChange={async (val) => {
                         setValue('symptomDuration', val, { shouldDirty: true, shouldValidate: true });
                         await trigger('symptomDuration');
@@ -420,7 +420,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <div>
                     <Label className="text-base font-medium">Seberapa Sering</Label>
                     <Select
-                      value={watch('problemFrequency')}
+                      value={watch('problemFrequency') as ProblemFrequencyEnum | undefined || ''}
                       onValueChange={async (val) => {
                         setValue('problemFrequency', val as ProblemFrequencyEnum, { shouldDirty: true, shouldValidate: true });
                         await trigger('problemFrequency');
@@ -446,7 +446,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <div>
                     <Label className="text-base font-medium">Tingkat Gangguan *</Label>
                     <Select
-                      value={watch('symptomSeverity')}
+                      value={watch('symptomSeverity') as SymptomSeverityEnum | undefined || ''}
                       onValueChange={async (val) => {
                         setValue('symptomSeverity', val as SymptomSeverityEnum, { shouldDirty: true, shouldValidate: true });
                         await trigger('symptomSeverity');
@@ -738,7 +738,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 <div>
                   <Label className="text-base font-medium">Kualitas Tidur</Label>
                   <Select
-                    value={watch('sleepQuality')}
+                    value={watch('sleepQuality') as SleepQualityEnum | undefined || ''}
                     onValueChange={async (val) => {
                       setValue('sleepQuality', val as SleepQualityEnum, { shouldDirty: true, shouldValidate: true });
                       await trigger('sleepQuality');
@@ -764,7 +764,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 <div>
                   <Label className="text-base font-medium">Pikiran Menyakiti Diri</Label>
                   <Select
-                    value={watch('selfHarmFrequency')}
+                    value={watch('selfHarmFrequency') as SelfHarmFrequencyEnum | undefined || ''}
                     onValueChange={async (val) => {
                       setValue('selfHarmFrequency', val as SelfHarmFrequencyEnum, { shouldDirty: true, shouldValidate: true });
                       await trigger('selfHarmFrequency');
@@ -1249,6 +1249,9 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       <Label htmlFor="feeling-very-bad" className="text-sm font-medium cursor-pointer">Sangat buruk</Label>
                     </div>
                   </div>
+                  {errors.recentMoodState && (
+                    <p className="mt-2 text-sm text-red-600">{errors.recentMoodState.message}</p>
+                  )}
                   <div className="mt-4">
                     <Label htmlFor="recentMoodStateDetails">Jelaskan secara singkat: *</Label>
                     <Input
@@ -1262,9 +1265,6 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       <p className="mt-1 text-sm text-red-600">{errors.recentMoodStateDetails.message}</p>
                     )}
                   </div>
-                  {errors.recentMoodState && (
-                    <p className="mt-2 text-sm text-red-600">{errors.recentMoodState.message}</p>
-                  )}
                 </div>
 
                 <div>
@@ -1663,7 +1663,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 <div>
                   <Label className="text-base font-medium">Preferensi Jenis Terapi</Label>
                   <Select
-                    value={watch('therapyPreference')}
+                    value={watch('therapyPreference') as TherapyPreferenceEnum | undefined || ''}
                     onValueChange={async (val) => {
                       setValue('therapyPreference', val as TherapyPreferenceEnum, { shouldDirty: true, shouldValidate: true });
                       await trigger('therapyPreference');
